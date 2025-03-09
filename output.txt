@@ -1,0 +1,288 @@
+2025-03-05 22:29:41,551 - purification_tests - INFO - ================================================================================
+2025-03-05 22:29:41,551 - purification_tests - INFO - TerabyteFeatureExtractor Purification Tests
+2025-03-05 22:29:41,551 - purification_tests - INFO - ================================================================================
+2025-03-05 22:29:41,551 - purification_tests - INFO - 
+================================================================================
+2025-03-05 22:29:41,551 - purification_tests - INFO - Running Unit Tests
+2025-03-05 22:29:41,551 - purification_tests - INFO - ================================================================================
+2025-03-05 22:29:41,551 - purification_tests - INFO - Running unit tests for purified implementation...
+test_data_splitting (tests.test_terabyte_feature_extractor_purified_v2.TestTerabyteFeatureExtractorPurifiedV2.test_data_splitting)
+Test that data splitting produces equivalent results. ... /Volumes/stuff/Projects/LNNDemo/tests/test_terabyte_feature_extractor_purified_v2.py:53: FutureWarning: 'H' is deprecated and will be removed in a future version, please use 'h' instead.
+  'datetime_col': pd.date_range(start='2023-01-01', periods=1000, freq='H')
+2025-03-05 22:29:41,664 - terabyte_feature_extractor - INFO - Using torch backend for computation
+2025-03-05 22:29:41,665 - emberharmony.utils.backend - INFO - Set random seed to 42 for torch backend
+2025-03-05 22:29:41,666 - terabyte_feature_extractor - INFO - Initialized TerabyteFeatureExtractor with chunk_size=100, max_memory_gb=1.0
+2025-03-05 22:29:41,666 - terabyte_feature_extractor - INFO - Using torch backend for computation
+2025-03-05 22:29:41,666 - emberharmony.utils.backend - INFO - Set random seed to 42 for torch backend
+2025-03-05 22:29:41,666 - terabyte_feature_extractor - INFO - Initialized TerabyteFeatureExtractor with chunk_size=100, max_memory_gb=1.0
+2025-03-05 22:29:41,666 - terabyte_feature_extractor - INFO - Using torch backend for computation
+2025-03-05 22:29:41,666 - terabyte_feature_extractor - INFO - Initialized TerabyteTemporalStrideProcessor with window_size=3, stride_perspectives=[1, 2], batch_size=100
+2025-03-05 22:29:41,666 - terabyte_feature_extractor - INFO - Using torch backend for computation
+2025-03-05 22:29:41,666 - terabyte_feature_extractor - INFO - Initialized TerabyteTemporalStrideProcessor with window_size=3, stride_perspectives=[1, 2], batch_size=100
+2025-03-05 22:29:41,666 - emberharmony.utils.backend - INFO - Set random seed to 42 for torch backend
+2025-03-05 22:29:41,666 - terabyte_feature_extractor - INFO - Splitting data with 1000 rows
+2025-03-05 22:29:41,667 - terabyte_feature_extractor - INFO - Random split ratios: 80/20 (train/temp)
+2025-03-05 22:29:41,668 - terabyte_feature_extractor - INFO - Validation/test split ratios: 50/50 from temp
+2025-03-05 22:29:41,668 - terabyte_feature_extractor - INFO - Split result: 817 train, 87 validation, 96 test rows
+2025-03-05 22:29:41,669 - emberharmony.utils.backend - INFO - Set random seed to 42 for torch backend
+2025-03-05 22:29:41,669 - terabyte_feature_extractor - INFO - Splitting data with 1000 rows
+2025-03-05 22:29:41,669 - terabyte_feature_extractor - INFO - Random split ratios: 80/20 (train/temp)
+2025-03-05 22:29:41,670 - terabyte_feature_extractor - INFO - Validation/test split ratios: 50/50 from temp
+2025-03-05 22:29:41,670 - terabyte_feature_extractor - INFO - Split result: 817 train, 87 validation, 96 test rows
+2025-03-05 22:29:41,670 - test_terabyte_feature_extractor - INFO - Data splitting: Original: 0.0023s, Purified: 0.0013s
+2025-03-05 22:29:41,670 - test_terabyte_feature_extractor - INFO - Speedup: 1.78x
+ok
+test_datetime_feature_creation (tests.test_terabyte_feature_extractor_purified_v2.TestTerabyteFeatureExtractorPurifiedV2.test_datetime_feature_creation)
+Test that datetime feature creation produces equivalent results. ... /Volumes/stuff/Projects/LNNDemo/tests/test_terabyte_feature_extractor_purified_v2.py:53: FutureWarning: 'H' is deprecated and will be removed in a future version, please use 'h' instead.
+  'datetime_col': pd.date_range(start='2023-01-01', periods=1000, freq='H')
+2025-03-05 22:29:41,685 - terabyte_feature_extractor - INFO - Using torch backend for computation
+2025-03-05 22:29:41,686 - emberharmony.utils.backend - INFO - Set random seed to 42 for torch backend
+2025-03-05 22:29:41,686 - terabyte_feature_extractor - INFO - Initialized TerabyteFeatureExtractor with chunk_size=100, max_memory_gb=1.0
+2025-03-05 22:29:41,686 - terabyte_feature_extractor - INFO - Using torch backend for computation
+2025-03-05 22:29:41,686 - emberharmony.utils.backend - INFO - Set random seed to 42 for torch backend
+2025-03-05 22:29:41,686 - terabyte_feature_extractor - INFO - Initialized TerabyteFeatureExtractor with chunk_size=100, max_memory_gb=1.0
+2025-03-05 22:29:41,686 - terabyte_feature_extractor - INFO - Using torch backend for computation
+2025-03-05 22:29:41,686 - terabyte_feature_extractor - INFO - Initialized TerabyteTemporalStrideProcessor with window_size=3, stride_perspectives=[1, 2], batch_size=100
+2025-03-05 22:29:41,686 - terabyte_feature_extractor - INFO - Using torch backend for computation
+2025-03-05 22:29:41,686 - terabyte_feature_extractor - INFO - Initialized TerabyteTemporalStrideProcessor with window_size=3, stride_perspectives=[1, 2], batch_size=100
+2025-03-05 22:29:41,702 - terabyte_feature_extractor - INFO - Created cyclical features for datetime column 'datetime_col' using torch backend
+2025-03-05 22:29:41,707 - terabyte_feature_extractor - INFO - Created cyclical features for datetime column 'datetime_col' using torch backend
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+2025-03-05 22:29:41,729 - test_terabyte_feature_extractor - INFO - Datetime feature creation: Original: 0.0158s, Purified: 0.0048s
+2025-03-05 22:29:41,729 - test_terabyte_feature_extractor - INFO - Speedup: 3.30x
+ok
+test_end_to_end (tests.test_terabyte_feature_extractor_purified_v2.TestTerabyteFeatureExtractorPurifiedV2.test_end_to_end)
+Test end-to-end processing with both implementations. ... /Volumes/stuff/Projects/LNNDemo/tests/test_terabyte_feature_extractor_purified_v2.py:53: FutureWarning: 'H' is deprecated and will be removed in a future version, please use 'h' instead.
+  'datetime_col': pd.date_range(start='2023-01-01', periods=1000, freq='H')
+2025-03-05 22:29:41,743 - terabyte_feature_extractor - INFO - Using torch backend for computation
+2025-03-05 22:29:41,743 - emberharmony.utils.backend - INFO - Set random seed to 42 for torch backend
+2025-03-05 22:29:41,743 - terabyte_feature_extractor - INFO - Initialized TerabyteFeatureExtractor with chunk_size=100, max_memory_gb=1.0
+2025-03-05 22:29:41,743 - terabyte_feature_extractor - INFO - Using torch backend for computation
+2025-03-05 22:29:41,744 - emberharmony.utils.backend - INFO - Set random seed to 42 for torch backend
+2025-03-05 22:29:41,744 - terabyte_feature_extractor - INFO - Initialized TerabyteFeatureExtractor with chunk_size=100, max_memory_gb=1.0
+2025-03-05 22:29:41,744 - terabyte_feature_extractor - INFO - Using torch backend for computation
+2025-03-05 22:29:41,744 - terabyte_feature_extractor - INFO - Initialized TerabyteTemporalStrideProcessor with window_size=3, stride_perspectives=[1, 2], batch_size=100
+2025-03-05 22:29:41,744 - terabyte_feature_extractor - INFO - Using torch backend for computation
+2025-03-05 22:29:41,744 - terabyte_feature_extractor - INFO - Initialized TerabyteTemporalStrideProcessor with window_size=3, stride_perspectives=[1, 2], batch_size=100
+2025-03-05 22:29:41,744 - terabyte_feature_extractor - INFO - Processing batch 1 with 20 rows
+2025-03-05 22:29:41,744 - terabyte_feature_extractor - INFO - Updated state buffer with 6 rows
+2025-03-05 22:29:41,745 - terabyte_feature_extractor - INFO - Fitting PCA for stride 1 with 2 components
+2025-03-05 22:29:41,747 - terabyte_feature_extractor - INFO - Created 18 windows with stride 1, shape after PCA: (18, 2)
+2025-03-05 22:29:41,748 - terabyte_feature_extractor - INFO - Fitting PCA for stride 2 with 2 components
+2025-03-05 22:29:41,749 - terabyte_feature_extractor - INFO - Created 9 windows with stride 2, shape after PCA: (9, 2)
+2025-03-05 22:29:41,865 - terabyte_feature_extractor - INFO - Processing batch 2 with 20 rows
+2025-03-05 22:29:41,870 - terabyte_feature_extractor - INFO - Added state buffer, new batch size: 26
+2025-03-05 22:29:41,871 - terabyte_feature_extractor - INFO - Updated state buffer with 6 rows
+2025-03-05 22:29:41,874 - terabyte_feature_extractor - INFO - Created 24 windows with stride 1, shape after PCA: (24, 2)
+2025-03-05 22:29:41,877 - terabyte_feature_extractor - INFO - Created 12 windows with stride 2, shape after PCA: (12, 2)
+2025-03-05 22:29:41,977 - terabyte_feature_extractor - INFO - Processing batch 3 with 20 rows
+2025-03-05 22:29:41,979 - terabyte_feature_extractor - INFO - Added state buffer, new batch size: 26
+2025-03-05 22:29:41,979 - terabyte_feature_extractor - INFO - Updated state buffer with 6 rows
+2025-03-05 22:29:41,983 - terabyte_feature_extractor - INFO - Created 24 windows with stride 1, shape after PCA: (24, 2)
+2025-03-05 22:29:41,986 - terabyte_feature_extractor - INFO - Created 12 windows with stride 2, shape after PCA: (12, 2)
+2025-03-05 22:29:42,085 - terabyte_feature_extractor - INFO - Processing batch 4 with 20 rows
+2025-03-05 22:29:42,087 - terabyte_feature_extractor - INFO - Added state buffer, new batch size: 26
+2025-03-05 22:29:42,087 - terabyte_feature_extractor - INFO - Updated state buffer with 6 rows
+2025-03-05 22:29:42,091 - terabyte_feature_extractor - INFO - Created 24 windows with stride 1, shape after PCA: (24, 2)
+2025-03-05 22:29:42,094 - terabyte_feature_extractor - INFO - Created 12 windows with stride 2, shape after PCA: (12, 2)
+2025-03-05 22:29:42,197 - terabyte_feature_extractor - INFO - Processing batch 5 with 20 rows
+2025-03-05 22:29:42,199 - terabyte_feature_extractor - INFO - Added state buffer, new batch size: 26
+2025-03-05 22:29:42,199 - terabyte_feature_extractor - INFO - Updated state buffer with 6 rows
+2025-03-05 22:29:42,203 - terabyte_feature_extractor - INFO - Created 24 windows with stride 1, shape after PCA: (24, 2)
+2025-03-05 22:29:42,207 - terabyte_feature_extractor - INFO - Created 12 windows with stride 2, shape after PCA: (12, 2)
+2025-03-05 22:29:42,315 - terabyte_feature_extractor - INFO - Combined results for stride 1: (114, 2)
+2025-03-05 22:29:42,317 - terabyte_feature_extractor - INFO - Combined results for stride 2: (57, 2)
+2025-03-05 22:29:42,317 - terabyte_feature_extractor - INFO - Processing batch 1 with 20 rows
+2025-03-05 22:29:42,318 - terabyte_feature_extractor - INFO - Updated state buffer with 6 rows
+2025-03-05 22:29:42,320 - terabyte_feature_extractor - INFO - Fitting PCA for stride 1 with 2 components
+2025-03-05 22:29:42,322 - terabyte_feature_extractor - INFO - Created 18 windows with stride 1, shape after PCA: (18, 2)
+2025-03-05 22:29:42,324 - terabyte_feature_extractor - INFO - Fitting PCA for stride 2 with 2 components
+2025-03-05 22:29:42,326 - terabyte_feature_extractor - INFO - Created 9 windows with stride 2, shape after PCA: (9, 2)
+2025-03-05 22:29:42,426 - terabyte_feature_extractor - INFO - Processing batch 2 with 20 rows
+2025-03-05 22:29:42,428 - terabyte_feature_extractor - INFO - Added state buffer, new batch size: 26
+2025-03-05 22:29:42,429 - terabyte_feature_extractor - INFO - Updated state buffer with 6 rows
+2025-03-05 22:29:42,432 - terabyte_feature_extractor - INFO - Created 24 windows with stride 1, shape after PCA: (24, 2)
+2025-03-05 22:29:42,436 - terabyte_feature_extractor - INFO - Created 12 windows with stride 2, shape after PCA: (12, 2)
+2025-03-05 22:29:42,536 - terabyte_feature_extractor - INFO - Processing batch 3 with 20 rows
+2025-03-05 22:29:42,537 - terabyte_feature_extractor - INFO - Added state buffer, new batch size: 26
+2025-03-05 22:29:42,538 - terabyte_feature_extractor - INFO - Updated state buffer with 6 rows
+2025-03-05 22:29:42,541 - terabyte_feature_extractor - INFO - Created 24 windows with stride 1, shape after PCA: (24, 2)
+2025-03-05 22:29:42,545 - terabyte_feature_extractor - INFO - Created 12 windows with stride 2, shape after PCA: (12, 2)
+2025-03-05 22:29:42,650 - terabyte_feature_extractor - INFO - Processing batch 4 with 20 rows
+2025-03-05 22:29:42,651 - terabyte_feature_extractor - INFO - Added state buffer, new batch size: 26
+2025-03-05 22:29:42,652 - terabyte_feature_extractor - INFO - Updated state buffer with 6 rows
+2025-03-05 22:29:42,655 - terabyte_feature_extractor - INFO - Created 24 windows with stride 1, shape after PCA: (24, 2)
+2025-03-05 22:29:42,659 - terabyte_feature_extractor - INFO - Created 12 windows with stride 2, shape after PCA: (12, 2)
+2025-03-05 22:29:42,759 - terabyte_feature_extractor - INFO - Processing batch 5 with 20 rows
+2025-03-05 22:29:42,761 - terabyte_feature_extractor - INFO - Added state buffer, new batch size: 26
+2025-03-05 22:29:42,761 - terabyte_feature_extractor - INFO - Updated state buffer with 6 rows
+2025-03-05 22:29:42,765 - terabyte_feature_extractor - INFO - Created 24 windows with stride 1, shape after PCA: (24, 2)
+2025-03-05 22:29:42,768 - terabyte_feature_extractor - INFO - Created 12 windows with stride 2, shape after PCA: (12, 2)
+2025-03-05 22:29:42,869 - terabyte_feature_extractor - INFO - Combined results for stride 1: (114, 2)
+2025-03-05 22:29:42,870 - terabyte_feature_extractor - INFO - Combined results for stride 2: (57, 2)
+2025-03-05 22:29:42,871 - test_terabyte_feature_extractor - INFO - End-to-end processing: Original: 0.5733s, Purified: 0.5531s
+2025-03-05 22:29:42,871 - test_terabyte_feature_extractor - INFO - Speedup: 1.04x
+ok
+test_pca_blend (tests.test_terabyte_feature_extractor_purified_v2.TestTerabyteFeatureExtractorPurifiedV2.test_pca_blend)
+Test that PCA blending produces equivalent results. ... /Volumes/stuff/Projects/LNNDemo/tests/test_terabyte_feature_extractor_purified_v2.py:53: FutureWarning: 'H' is deprecated and will be removed in a future version, please use 'h' instead.
+  'datetime_col': pd.date_range(start='2023-01-01', periods=1000, freq='H')
+2025-03-05 22:29:42,895 - terabyte_feature_extractor - INFO - Using torch backend for computation
+2025-03-05 22:29:42,895 - emberharmony.utils.backend - INFO - Set random seed to 42 for torch backend
+2025-03-05 22:29:42,895 - terabyte_feature_extractor - INFO - Initialized TerabyteFeatureExtractor with chunk_size=100, max_memory_gb=1.0
+2025-03-05 22:29:42,895 - terabyte_feature_extractor - INFO - Using torch backend for computation
+2025-03-05 22:29:42,895 - emberharmony.utils.backend - INFO - Set random seed to 42 for torch backend
+2025-03-05 22:29:42,895 - terabyte_feature_extractor - INFO - Initialized TerabyteFeatureExtractor with chunk_size=100, max_memory_gb=1.0
+2025-03-05 22:29:42,895 - terabyte_feature_extractor - INFO - Using torch backend for computation
+2025-03-05 22:29:42,895 - terabyte_feature_extractor - INFO - Initialized TerabyteTemporalStrideProcessor with window_size=3, stride_perspectives=[1, 2], batch_size=100
+2025-03-05 22:29:42,895 - terabyte_feature_extractor - INFO - Using torch backend for computation
+2025-03-05 22:29:42,895 - terabyte_feature_extractor - INFO - Initialized TerabyteTemporalStrideProcessor with window_size=3, stride_perspectives=[1, 2], batch_size=100
+2025-03-05 22:29:42,895 - terabyte_feature_extractor - INFO - Fitting PCA for stride 1 with 2 components
+2025-03-05 22:29:42,897 - terabyte_feature_extractor - INFO - Fitting PCA for stride 1 with 2 components
+2025-03-05 22:29:42,905 - test_terabyte_feature_extractor - INFO - PCA blending: Original: 0.0010s, Purified: 0.0009s
+2025-03-05 22:29:42,905 - test_terabyte_feature_extractor - INFO - Speedup: 1.06x
+ok
+test_process_batch (tests.test_terabyte_feature_extractor_purified_v2.TestTerabyteFeatureExtractorPurifiedV2.test_process_batch)
+Test that batch processing produces equivalent results. ... /Volumes/stuff/Projects/LNNDemo/tests/test_terabyte_feature_extractor_purified_v2.py:53: FutureWarning: 'H' is deprecated and will be removed in a future version, please use 'h' instead.
+  'datetime_col': pd.date_range(start='2023-01-01', periods=1000, freq='H')
+2025-03-05 22:29:42,916 - terabyte_feature_extractor - INFO - Using torch backend for computation
+2025-03-05 22:29:42,917 - emberharmony.utils.backend - INFO - Set random seed to 42 for torch backend
+2025-03-05 22:29:42,917 - terabyte_feature_extractor - INFO - Initialized TerabyteFeatureExtractor with chunk_size=100, max_memory_gb=1.0
+2025-03-05 22:29:42,917 - terabyte_feature_extractor - INFO - Using torch backend for computation
+2025-03-05 22:29:42,917 - emberharmony.utils.backend - INFO - Set random seed to 42 for torch backend
+2025-03-05 22:29:42,917 - terabyte_feature_extractor - INFO - Initialized TerabyteFeatureExtractor with chunk_size=100, max_memory_gb=1.0
+2025-03-05 22:29:42,917 - terabyte_feature_extractor - INFO - Using torch backend for computation
+2025-03-05 22:29:42,917 - terabyte_feature_extractor - INFO - Initialized TerabyteTemporalStrideProcessor with window_size=3, stride_perspectives=[1, 2], batch_size=100
+2025-03-05 22:29:42,917 - terabyte_feature_extractor - INFO - Using torch backend for computation
+2025-03-05 22:29:42,917 - terabyte_feature_extractor - INFO - Initialized TerabyteTemporalStrideProcessor with window_size=3, stride_perspectives=[1, 2], batch_size=100
+2025-03-05 22:29:42,918 - terabyte_feature_extractor - INFO - Fitting PCA for stride 1 with 2 components
+2025-03-05 22:29:42,919 - terabyte_feature_extractor - INFO - Created 98 windows with stride 1, shape after PCA: (98, 2)
+2025-03-05 22:29:42,919 - terabyte_feature_extractor - INFO - Fitting PCA for stride 2 with 2 components
+2025-03-05 22:29:42,920 - terabyte_feature_extractor - INFO - Created 49 windows with stride 2, shape after PCA: (49, 2)
+2025-03-05 22:29:42,921 - terabyte_feature_extractor - INFO - Fitting PCA for stride 1 with 2 components
+2025-03-05 22:29:42,922 - terabyte_feature_extractor - INFO - Created 98 windows with stride 1, shape after PCA: (98, 2)
+2025-03-05 22:29:42,922 - terabyte_feature_extractor - INFO - Fitting PCA for stride 2 with 2 components
+2025-03-05 22:29:42,923 - terabyte_feature_extractor - INFO - Created 49 windows with stride 2, shape after PCA: (49, 2)
+2025-03-05 22:29:42,923 - test_terabyte_feature_extractor - INFO - Batch processing: Original: 0.0031s, Purified: 0.0029s
+2025-03-05 22:29:42,923 - test_terabyte_feature_extractor - INFO - Speedup: 1.05x
+ok
+test_strided_sequences (tests.test_terabyte_feature_extractor_purified_v2.TestTerabyteFeatureExtractorPurifiedV2.test_strided_sequences)
+Test that strided sequence creation produces equivalent results. ... /Volumes/stuff/Projects/LNNDemo/tests/test_terabyte_feature_extractor_purified_v2.py:53: FutureWarning: 'H' is deprecated and will be removed in a future version, please use 'h' instead.
+  'datetime_col': pd.date_range(start='2023-01-01', periods=1000, freq='H')
+2025-03-05 22:29:42,935 - terabyte_feature_extractor - INFO - Using torch backend for computation
+2025-03-05 22:29:42,935 - emberharmony.utils.backend - INFO - Set random seed to 42 for torch backend
+2025-03-05 22:29:42,935 - terabyte_feature_extractor - INFO - Initialized TerabyteFeatureExtractor with chunk_size=100, max_memory_gb=1.0
+2025-03-05 22:29:42,935 - terabyte_feature_extractor - INFO - Using torch backend for computation
+2025-03-05 22:29:42,935 - emberharmony.utils.backend - INFO - Set random seed to 42 for torch backend
+2025-03-05 22:29:42,935 - terabyte_feature_extractor - INFO - Initialized TerabyteFeatureExtractor with chunk_size=100, max_memory_gb=1.0
+2025-03-05 22:29:42,935 - terabyte_feature_extractor - INFO - Using torch backend for computation
+2025-03-05 22:29:42,935 - terabyte_feature_extractor - INFO - Initialized TerabyteTemporalStrideProcessor with window_size=3, stride_perspectives=[1, 2], batch_size=100
+2025-03-05 22:29:42,935 - terabyte_feature_extractor - INFO - Using torch backend for computation
+2025-03-05 22:29:42,935 - terabyte_feature_extractor - INFO - Initialized TerabyteTemporalStrideProcessor with window_size=3, stride_perspectives=[1, 2], batch_size=100
+2025-03-05 22:29:42,938 - test_terabyte_feature_extractor - INFO - Strided sequences: Original: 0.0000s, Purified: 0.0010s
+2025-03-05 22:29:42,938 - test_terabyte_feature_extractor - INFO - Speedup: 0.01x
+ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 1.386s
+
+OK
+2025-03-05 22:29:42,938 - purification_tests - INFO - All tests passed!
+2025-03-05 22:29:42,938 - purification_tests - INFO - 
+================================================================================
+2025-03-05 22:29:42,938 - purification_tests - INFO - Demonstrating Usage
+2025-03-05 22:29:42,938 - purification_tests - INFO - ================================================================================
+2025-03-05 22:29:42,938 - purification_tests - INFO - Demonstrating usage of original and purified implementations...
+/Volumes/stuff/Projects/LNNDemo/run_purification_tests_v2.py:78: FutureWarning: 'H' is deprecated and will be removed in a future version, please use 'h' instead.
+  'datetime_col': pd.date_range(start='2023-01-01', periods=1000, freq='H')
+2025-03-05 22:29:42,949 - purification_tests - INFO - Using original implementation:
+2025-03-05 22:29:42,949 - terabyte_feature_extractor - INFO - Using torch backend for computation
+2025-03-05 22:29:42,949 - emberharmony.utils.backend - INFO - Set random seed to 42 for torch backend
+2025-03-05 22:29:42,949 - terabyte_feature_extractor - INFO - Initialized TerabyteFeatureExtractor with chunk_size=100, max_memory_gb=1.0
+2025-03-05 22:29:42,954 - terabyte_feature_extractor - INFO - Created cyclical features for datetime column 'datetime_col' using torch backend
+2025-03-05 22:29:42,954 - purification_tests - INFO - Original implementation took 0.0051 seconds
+2025-03-05 22:29:42,954 - purification_tests - INFO - Original result columns: ['datetime_col', 'datetime_col_sin_hour', 'datetime_col_cos_hour', 'datetime_col_sin_dayofweek', 'datetime_col_cos_dayofweek', 'datetime_col_sin_day', 'datetime_col_cos_day', 'datetime_col_sin_month', 'datetime_col_cos_month']
+2025-03-05 22:29:42,954 - purification_tests - INFO - 
+Using purified implementation:
+2025-03-05 22:29:42,954 - terabyte_feature_extractor - INFO - Using torch backend for computation
+2025-03-05 22:29:42,954 - emberharmony.utils.backend - INFO - Set random seed to 42 for torch backend
+2025-03-05 22:29:42,955 - terabyte_feature_extractor - INFO - Initialized TerabyteFeatureExtractor with chunk_size=100, max_memory_gb=1.0
+2025-03-05 22:29:42,959 - terabyte_feature_extractor - INFO - Created cyclical features for datetime column 'datetime_col' using torch backend
+2025-03-05 22:29:42,959 - purification_tests - INFO - Purified implementation took 0.0044 seconds
+2025-03-05 22:29:42,959 - purification_tests - INFO - Purified result columns: ['datetime_col', 'datetime_col_sin_hour', 'datetime_col_cos_hour', 'datetime_col_sin_dayofweek', 'datetime_col_cos_dayofweek', 'datetime_col_sin_day', 'datetime_col_cos_day', 'datetime_col_sin_month', 'datetime_col_cos_month']
+2025-03-05 22:29:42,959 - purification_tests - INFO - 
+Speedup: 1.15x
+2025-03-05 22:29:42,959 - purification_tests - INFO - 
+Demonstrating TerabyteTemporalStrideProcessor:
+2025-03-05 22:29:42,959 - terabyte_feature_extractor - INFO - Using torch backend for computation
+2025-03-05 22:29:42,959 - terabyte_feature_extractor - INFO - Initialized TerabyteTemporalStrideProcessor with window_size=3, stride_perspectives=[1, 2], batch_size=100
+2025-03-05 22:29:42,959 - terabyte_feature_extractor - INFO - Fitting PCA for stride 1 with 2 components
+2025-03-05 22:29:42,960 - terabyte_feature_extractor - INFO - Created 98 windows with stride 1, shape after PCA: (98, 2)
+2025-03-05 22:29:42,961 - terabyte_feature_extractor - INFO - Fitting PCA for stride 2 with 2 components
+2025-03-05 22:29:42,961 - terabyte_feature_extractor - INFO - Created 49 windows with stride 2, shape after PCA: (49, 2)
+2025-03-05 22:29:42,961 - purification_tests - INFO - Original implementation took 0.0024 seconds
+2025-03-05 22:29:42,961 - purification_tests - INFO - Original result strides: [1, 2]
+2025-03-05 22:29:42,961 - purification_tests - INFO -   Stride 1 shape: torch.Size([98, 2])
+2025-03-05 22:29:42,961 - purification_tests - INFO -   Stride 2 shape: torch.Size([49, 2])
+2025-03-05 22:29:42,961 - terabyte_feature_extractor - INFO - Using torch backend for computation
+2025-03-05 22:29:42,962 - terabyte_feature_extractor - INFO - Initialized TerabyteTemporalStrideProcessor with window_size=3, stride_perspectives=[1, 2], batch_size=100
+2025-03-05 22:29:42,962 - terabyte_feature_extractor - INFO - Fitting PCA for stride 1 with 2 components
+2025-03-05 22:29:42,963 - terabyte_feature_extractor - INFO - Created 98 windows with stride 1, shape after PCA: (98, 2)
+2025-03-05 22:29:42,964 - terabyte_feature_extractor - INFO - Fitting PCA for stride 2 with 2 components
+2025-03-05 22:29:42,964 - terabyte_feature_extractor - INFO - Created 49 windows with stride 2, shape after PCA: (49, 2)
+2025-03-05 22:29:42,964 - purification_tests - INFO - Purified implementation took 0.0029 seconds
+2025-03-05 22:29:42,964 - purification_tests - INFO - Purified result strides: [1, 2]
+2025-03-05 22:29:42,965 - purification_tests - INFO -   Stride 1 shape: (98, 2)
+2025-03-05 22:29:42,965 - purification_tests - INFO -   Stride 2 shape: (49, 2)
+2025-03-05 22:29:42,965 - purification_tests - INFO - 
+Speedup: 0.83x
+2025-03-05 22:29:42,965 - purification_tests - INFO - 
+================================================================================
+2025-03-05 22:29:42,965 - purification_tests - INFO - All tests completed successfully!
+2025-03-05 22:29:42,965 - purification_tests - INFO - ================================================================================
+MLX Metal device info: {'architecture': 'applegpu_g14s', 'max_buffer_length': 17179869184, 'max_recommended_working_set_size': 22906503168, 'memory_size': 34359738368, 'resource_limit': 499000}
+MLX Metal device info: {'architecture': 'applegpu_g14s', 'max_buffer_length': 17179869184, 'max_recommended_working_set_size': 22906503168, 'memory_size': 34359738368, 'resource_limit': 499000}
+Current backend: torch
+Device: unknown
+Test operation: tensor([[1., 1.],
+        [1., 1.]], device='mps:0') @ tensor([[1., 1.],
+        [1., 1.]], device='mps:0') = tensor([[2., 2.],
+        [2., 2.]], device='mps:0')
+Current backend: torch
+Device: unknown
+Test operation: tensor([[1., 1.],
+        [1., 1.]], device='mps:0') @ tensor([[1., 1.],
+        [1., 1.]], device='mps:0') = tensor([[2., 2.],
+        [2., 2.]], device='mps:0')
+Current backend: torch
+Device: unknown
+Test operation: tensor([[1., 1.],
+        [1., 1.]], device='mps:0') @ tensor([[1., 1.],
+        [1., 1.]], device='mps:0') = tensor([[2., 2.],
+        [2., 2.]], device='mps:0')
+Current backend: torch
+Device: unknown
+Test operation: tensor([[1., 1.],
+        [1., 1.]], device='mps:0') @ tensor([[1., 1.],
+        [1., 1.]], device='mps:0') = tensor([[2., 2.],
+        [2., 2.]], device='mps:0')
+Current backend: torch
+Device: unknown
+Test operation: tensor([[1., 1.],
+        [1., 1.]], device='mps:0') @ tensor([[1., 1.],
+        [1., 1.]], device='mps:0') = tensor([[2., 2.],
+        [2., 2.]], device='mps:0')
+Current backend: torch
+Device: unknown
+Test operation: tensor([[1., 1.],
+        [1., 1.]], device='mps:0') @ tensor([[1., 1.],
+        [1., 1.]], device='mps:0') = tensor([[2., 2.],
+        [2., 2.]], device='mps:0')
+Current backend: torch
+Device: unknown
+Test operation: tensor([[1., 1.],
+        [1., 1.]], device='mps:0') @ tensor([[1., 1.],
+        [1., 1.]], device='mps:0') = tensor([[2., 2.],
+        [2., 2.]], device='mps:0')
