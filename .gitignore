@@ -1,0 +1,156 @@
+# Python build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Distribution / packaging
+MANIFEST
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project specific directories that may contain large or generated files
+logs/*
+!logs/README.md
+outputs/*
+!outputs/README.md
+!outputs/animations/
+!outputs/models/
+!outputs/plots/
+models/*
+!models/README.md
+
+# MLX specific
+.mlx_cache/
+
+# Torch specific
+*.pt
+*.pth
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~.nib
+
+# Credentials and personal information
+**/sydney-bach.json
+**/*credentials*.json
+**/*credential*.json
+**/*secret*.json
+**/*key*.json
+**/*auth*.json
+
+# BigQuery related files
+**/bigquery_*.py
+**/BigQuery*.py
+**/terabyte_feature_extractor_bigframes.py
+
+# Built objects
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs and databases
+*.log
+*.sql
+*.sqlite
+logs/
