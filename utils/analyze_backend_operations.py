@@ -18,27 +18,30 @@ import pandas as pd
 
 # Paths to backend implementation files and folders
 BACKEND_PATHS = {
-    "numpy": ["emberharmony/backend/numpy_backend.py", "emberharmony/backend/numpy"],
-    "torch": ["emberharmony/backend/torch_backend.py", "emberharmony/backend/torch"],
-    "mlx": ["emberharmony/backend/mlx_backend.py", "emberharmony/backend/mlx"]
+    "numpy": ["ember_ml/backend/numpy"],
+    "torch": ["ember_ml/backend/torch"],
+    "mlx": ["ember_ml/backend/mlx"]
 }
 
-# Paths to ops implementation directories
+# Paths to ops implementation directories (legacy, may not exist in new structure)
+# These are no longer used in the new structure, but kept for backward compatibility
 OPS_PATHS = {
-    "numpy": "emberharmony/ops/numpy",
-    "torch": "emberharmony/ops/torch",
-    "mlx": "emberharmony/ops/mlx"
+    "numpy": "ember_ml/backend/numpy",
+    "torch": "ember_ml/backend/torch",
+    "mlx": "ember_ml/backend/mlx"
 }
 
 # Paths to frontend abstraction files
 FRONTEND_PATHS = {
-    "tensor": "emberharmony/ops/tensor_ops.py",
-    "math": "emberharmony/ops/math_ops.py",
-    "random": "emberharmony/ops/random_ops.py",
-    "comparison": "emberharmony/ops/comparison_ops.py",
-    "dtype": "emberharmony/ops/dtype_ops.py",
-    "device": "emberharmony/ops/device_ops.py",
-    "solver": "emberharmony/ops/solver_ops.py"
+    "tensor": "ember_ml/ops/interfaces/tensor_ops.py",
+    "math": "ember_ml/ops/interfaces/math_ops.py",
+    "random": "ember_ml/ops/interfaces/random_ops.py",
+    "comparison": "ember_ml/ops/interfaces/comparison_ops.py",
+    "dtype": "ember_ml/ops/interfaces/dtype_ops.py",
+    "device": "ember_ml/ops/interfaces/device_ops.py",
+    "solver": "ember_ml/ops/interfaces/solver_ops.py",
+    "feature": "ember_ml/ops/interfaces/feature_ops.py",
+    "io": "ember_ml/ops/interfaces/io_ops.py"
 }
 
 def extract_operations_from_file(file_path: str) -> Set[str]:
@@ -102,19 +105,14 @@ def analyze_backends(backend_paths: Optional[Dict[str, List[str]]] = None,
     operations_by_backend = {}
     all_operations = set()
     
-    # Extract operations from backend files and directories
+    # Extract operations from backend directories
     for backend, paths in backend_paths.items():
         operations = set()
         
-        # Check if the first path (file) exists
+        # Check if the directory exists
         if isinstance(paths, list) and len(paths) > 0 and os.path.exists(paths[0]):
-            file_operations = extract_operations_from_file(paths[0])
-            operations.update(file_operations)
-        
-        # Check if the second path (directory) exists
-        if isinstance(paths, list) and len(paths) > 1 and os.path.exists(paths[1]):
             dir_operations = set()
-            for file_path, file_operations in extract_operations_from_directory(paths[1]).items():
+            for file_path, file_operations in extract_operations_from_directory(paths[0]).items():
                 dir_operations.update(file_operations)
             operations.update(dir_operations)
         
@@ -277,29 +275,24 @@ def generate_migration_plan(operations_to_migrate: Dict[str, Set[str]],
                     # Determine target file based on operation type
                     target_file = ""
                     if isinstance(backend_paths[backend], list) and len(backend_paths[backend]) > 0:
-                        # Use the single file if it exists
-                        if os.path.exists(backend_paths[backend][0]):
-                            target_file = backend_paths[backend][0]
-                        # Use the directory structure if it exists
-                        elif len(backend_paths[backend]) > 1 and os.path.exists(backend_paths[backend][1]):
-                            # Create the appropriate file in the directory structure
-                            target_dir = backend_paths[backend][1]
-                            if operation_type == "math":
-                                target_file = os.path.join(target_dir, "math_ops.py")
-                            elif operation_type == "tensor":
-                                target_file = os.path.join(target_dir, "tensor_ops.py")
-                            elif operation_type == "random":
-                                target_file = os.path.join(target_dir, "random_ops.py")
-                            elif operation_type == "comparison":
-                                target_file = os.path.join(target_dir, "comparison_ops.py")
-                            elif operation_type == "dtype":
-                                target_file = os.path.join(target_dir, "dtype_ops.py")
-                            elif operation_type == "device":
-                                target_file = os.path.join(target_dir, "device_ops.py")
-                            elif operation_type == "solver":
-                                target_file = os.path.join(target_dir, "solver_ops.py")
-                            else:
-                                target_file = os.path.join(target_dir, "other_ops.py")
+                        # Use the directory structure
+                        target_dir = backend_paths[backend][0]
+                        if operation_type == "math":
+                            target_file = os.path.join(target_dir, "math_ops.py")
+                        elif operation_type == "tensor":
+                            target_file = os.path.join(target_dir, "tensor_ops.py")
+                        elif operation_type == "random":
+                            target_file = os.path.join(target_dir, "random_ops.py")
+                        elif operation_type == "comparison":
+                            target_file = os.path.join(target_dir, "comparison_ops.py")
+                        elif operation_type == "dtype":
+                            target_file = os.path.join(target_dir, "dtype_ops.py")
+                        elif operation_type == "device":
+                            target_file = os.path.join(target_dir, "device_ops.py")
+                        elif operation_type == "solver":
+                            target_file = os.path.join(target_dir, "solver_ops.py")
+                        else:
+                            target_file = os.path.join(target_dir, "other_ops.py")
                     
                     # Add to migration plan
                     backend_plan.append({
@@ -411,7 +404,7 @@ def generate_report(operations_by_backend: Dict[str, Set[str]],
     return summary
 
 def check_backend_consistency(file_path: str, operations_by_backend: Dict[str, Set[str]],
-                              all_operations: Set[str]) -> Dict[str, Any]:
+                               all_operations: Set[str]) -> Dict[str, Any]:
     """Check if a file has operations that are inconsistent across backends."""
     # Extract operations from the file
     file_operations = extract_operations_from_file(file_path)
@@ -424,34 +417,21 @@ def check_backend_consistency(file_path: str, operations_by_backend: Dict[str, S
             # Extract the class name and method name
             class_name, method_name = op.split('.', 1)
             
-            # Check if the class name contains "SolverOps" - this is a special case
-            # where different backends use different class names but same methods
-            if "SolverOps" in class_name:
-                # For SolverOps, check if the method exists in any class in each backend
-                available_in = []
-                for backend, ops in operations_by_backend.items():
-                    # Check if any operation in this backend ends with the method name
-                    method_exists = any(o.endswith('.' + method_name) for o in ops)
-                    if method_exists:
-                        available_in.append(backend)
-                
-                if len(available_in) < len(operations_by_backend):
-                    missing_in = [backend for backend in operations_by_backend.keys() if backend not in available_in]
-                    inconsistent_operations.append({
-                        "operation": op,
-                        "available_in": available_in,
-                        "missing_in": missing_in
-                    })
-            else:
-                # For other class methods, check exact match
-                available_in = [backend for backend, ops in operations_by_backend.items() if op in ops]
-                if len(available_in) < len(operations_by_backend):
-                    missing_in = [backend for backend in operations_by_backend.keys() if backend not in available_in]
-                    inconsistent_operations.append({
-                        "operation": op,
-                        "available_in": available_in,
-                        "missing_in": missing_in
-                    })
+            # For class methods, check if the method exists in any class in each backend
+            available_in = []
+            for backend, ops in operations_by_backend.items():
+                # Check if any operation in this backend ends with the method name
+                method_exists = any(o.endswith('.' + method_name) for o in ops)
+                if method_exists:
+                    available_in.append(backend)
+            
+            if len(available_in) < len(operations_by_backend):
+                missing_in = [backend for backend in operations_by_backend.keys() if backend not in available_in]
+                inconsistent_operations.append({
+                    "operation": op,  # Keep the full operation name for reference
+                    "available_in": available_in,
+                    "missing_in": missing_in
+                })
         else:
             # For non-class methods, check exact match
             available_in = [backend for backend, ops in operations_by_backend.items() if op in ops]
@@ -476,12 +456,16 @@ def migrate_operation(operation: str, source_file: str, target_file: str, functi
         # Extract the function name (without class prefix)
         function_name = operation.split('.')[-1]
         
-        # Check if target file is in a folder structure
-        if "/numpy/" in target_file or "/torch/" in target_file or "/mlx/" in target_file:
-            print(f"WARNING: Target file {target_file} is in a folder structure.")
-            print(f"Automatic migration from single file to folder structure is disabled.")
-            print(f"Please manually migrate {operation} from {source_file} to the appropriate file in the folder structure.")
-            return False
+        # Check if target file exists
+        if not os.path.exists(os.path.dirname(target_file)):
+            os.makedirs(os.path.dirname(target_file), exist_ok=True)
+            print(f"Created directory {os.path.dirname(target_file)}")
+            
+        # Create the file if it doesn't exist
+        if not os.path.exists(target_file):
+            with open(target_file, 'w', encoding='utf-8') as f:
+                f.write(f'"""\n{os.path.basename(target_file)} for {backend} backend.\n"""\n\n')
+            print(f"Created file {target_file}")
         
         # Check if the operation already exists in the target file
         with open(target_file, 'r', encoding='utf-8') as f:

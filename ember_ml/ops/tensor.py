@@ -1,11 +1,11 @@
 """
-Tensor wrapper for emberharmony.
+Tensor wrapper for ember_ml.
 
 This module provides a backend-agnostic tensor wrapper that can be used
 across different backends (NumPy, PyTorch, MLX).
 """
 
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, List, Optional, Sequence, Tuple, Union
 from ember_ml import ops
 from ember_ml.backend import get_backend
 
@@ -121,6 +121,7 @@ class EmberTensor:
     
     def numpy(self) -> Any:
         """Convert the tensor to a NumPy array."""
+        # ops.to_numpy should return a NumPy array
         return ops.to_numpy(self._data)
     
     def __repr__(self) -> str:

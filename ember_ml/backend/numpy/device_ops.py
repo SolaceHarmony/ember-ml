@@ -1,5 +1,5 @@
 """
-NumPy device operations for EmberHarmony.
+NumPy device operations for ember_ml.
 
 This module provides NumPy implementations of device operations.
 """

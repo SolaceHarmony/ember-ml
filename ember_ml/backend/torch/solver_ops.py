@@ -1,5 +1,5 @@
 """
-PyTorch solver operations for EmberHarmony.
+PyTorch solver operations for ember_ml.
 
 This module provides PyTorch implementations of solver operations.
 """

@@ -1,5 +1,5 @@
 """
-Data handling components for emberharmony.
+Data handling components for ember_ml.
 
 This module provides tools for loading and preprocessing data.
 """

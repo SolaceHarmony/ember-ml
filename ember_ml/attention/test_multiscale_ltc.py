@@ -21,7 +21,7 @@ def generate_synthetic_data(num_samples=1000, num_features=10, seed=42):
     Returns:
         X_train, X_val, X_test, y_train, y_val, y_test
     """
-    nl.set_random_seed(seed)
+    nl.set_seed(seed)
     
     # Generate features with different frequencies
     t = ops.linspace(0, 4 * ops.pi, num_samples)

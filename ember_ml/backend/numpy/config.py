@@ -1,5 +1,5 @@
 """
-NumPy backend configuration for EmberHarmony.
+NumPy backend configuration for ember_ml.
 
 This module provides configuration settings for the NumPy backend.
 """

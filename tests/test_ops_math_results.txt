@@ -70,11 +70,11 @@ backend = 'torch'
 
 test_ops_math.py:157: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../emberharmony/ops/__init__.py:129: in <lambda>
+../ember_ml/ops/__init__.py:129: in <lambda>
     arange = lambda *args, **kwargs: tensor_ops().arange(*args, **kwargs)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <emberharmony.ops.torch.tensor_ops.TorchTensorOps object at 0x3446ff350>
+self = <ember_ml.ops.torch.tensor_ops.TorchTensorOps object at 0x3446ff350>
 start = 12, stop = None, step = 1, dtype = None, device = None
 
     def arange(self, start: int, stop: Optional[int] = None, step: int = 1, dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
@@ -97,7 +97,7 @@ E        * (Number end, *, Tensor out = None, torch.dtype dtype = None, torch.la
 E        * (Number start, Number end, *, torch.dtype dtype = None, torch.layout layout = None, torch.device device = None, bool pin_memory = False, bool requires_grad = False)
 E        * (Number start, Number end, Number step = 1, *, Tensor out = None, torch.dtype dtype = None, torch.layout layout = None, torch.device device = None, bool pin_memory = False, bool requires_grad = False)
 
-../emberharmony/ops/torch/tensor_ops.py:111: TypeError
+../ember_ml/ops/torch/tensor_ops.py:111: TypeError
 ____________________ TestReductionOperations.test_mean[mlx] ____________________
 
 self = <test_ops_math.TestReductionOperations object at 0x3446410d0>
@@ -110,11 +110,11 @@ backend = 'mlx'
 
 test_ops_math.py:157: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../emberharmony/ops/__init__.py:129: in <lambda>
+../ember_ml/ops/__init__.py:129: in <lambda>
     arange = lambda *args, **kwargs: tensor_ops().arange(*args, **kwargs)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <emberharmony.ops.mlx.tensor_ops.MLXTensorOps object at 0x3446ff050>
+self = <ember_ml.ops.mlx.tensor_ops.MLXTensorOps object at 0x3446ff050>
 start = 12, stop = None, step = 1, dtype = None, device = None
 
     def arange(self, start: int, stop: Optional[int] = None, step: int = 1, dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
@@ -138,7 +138,7 @@ E           2. arange(stop : Union[int, float], step : Union[None, int, float] =
 E       
 E       Invoked with types: int, NoneType, int, kwargs = { dtype: NoneType }
 
-../emberharmony/ops/mlx/tensor_ops.py:117: TypeError
+../ember_ml/ops/mlx/tensor_ops.py:117: TypeError
 ___________________ TestReductionOperations.test_sum[torch] ____________________
 
 self = <test_ops_math.TestReductionOperations object at 0x344640f20>
@@ -151,11 +151,11 @@ backend = 'torch'
 
 test_ops_math.py:182: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../emberharmony/ops/__init__.py:129: in <lambda>
+../ember_ml/ops/__init__.py:129: in <lambda>
     arange = lambda *args, **kwargs: tensor_ops().arange(*args, **kwargs)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <emberharmony.ops.torch.tensor_ops.TorchTensorOps object at 0x37d8140b0>
+self = <ember_ml.ops.torch.tensor_ops.TorchTensorOps object at 0x37d8140b0>
 start = 12, stop = None, step = 1, dtype = None, device = None
 
     def arange(self, start: int, stop: Optional[int] = None, step: int = 1, dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
@@ -178,7 +178,7 @@ E        * (Number end, *, Tensor out = None, torch.dtype dtype = None, torch.la
 E        * (Number start, Number end, *, torch.dtype dtype = None, torch.layout layout = None, torch.device device = None, bool pin_memory = False, bool requires_grad = False)
 E        * (Number start, Number end, Number step = 1, *, Tensor out = None, torch.dtype dtype = None, torch.layout layout = None, torch.device device = None, bool pin_memory = False, bool requires_grad = False)
 
-../emberharmony/ops/torch/tensor_ops.py:111: TypeError
+../ember_ml/ops/torch/tensor_ops.py:111: TypeError
 ____________________ TestReductionOperations.test_sum[mlx] _____________________
 
 self = <test_ops_math.TestReductionOperations object at 0x344641400>
@@ -191,11 +191,11 @@ backend = 'mlx'
 
 test_ops_math.py:182: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../emberharmony/ops/__init__.py:129: in <lambda>
+../ember_ml/ops/__init__.py:129: in <lambda>
     arange = lambda *args, **kwargs: tensor_ops().arange(*args, **kwargs)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <emberharmony.ops.mlx.tensor_ops.MLXTensorOps object at 0x37d816060>
+self = <ember_ml.ops.mlx.tensor_ops.MLXTensorOps object at 0x37d816060>
 start = 12, stop = None, step = 1, dtype = None, device = None
 
     def arange(self, start: int, stop: Optional[int] = None, step: int = 1, dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
@@ -219,7 +219,7 @@ E           2. arange(stop : Union[int, float], step : Union[None, int, float] =
 E       
 E       Invoked with types: int, NoneType, int, kwargs = { dtype: NoneType }
 
-../emberharmony/ops/mlx/tensor_ops.py:117: TypeError
+../ember_ml/ops/mlx/tensor_ops.py:117: TypeError
 __________________ TestElementWiseOperations.test_clip[torch] __________________
 
 self = <test_ops_math.TestElementWiseOperations object at 0x344642cc0>
@@ -232,11 +232,11 @@ backend = 'torch'
 
 test_ops_math.py:274: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../emberharmony/ops/__init__.py:129: in <lambda>
+../ember_ml/ops/__init__.py:129: in <lambda>
     arange = lambda *args, **kwargs: tensor_ops().arange(*args, **kwargs)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <emberharmony.ops.torch.tensor_ops.TorchTensorOps object at 0x37d816360>
+self = <ember_ml.ops.torch.tensor_ops.TorchTensorOps object at 0x37d816360>
 start = 12, stop = None, step = 1, dtype = None, device = None
 
     def arange(self, start: int, stop: Optional[int] = None, step: int = 1, dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
@@ -259,7 +259,7 @@ E        * (Number end, *, Tensor out = None, torch.dtype dtype = None, torch.la
 E        * (Number start, Number end, *, torch.dtype dtype = None, torch.layout layout = None, torch.device device = None, bool pin_memory = False, bool requires_grad = False)
 E        * (Number start, Number end, Number step = 1, *, Tensor out = None, torch.dtype dtype = None, torch.layout layout = None, torch.device device = None, bool pin_memory = False, bool requires_grad = False)
 
-../emberharmony/ops/torch/tensor_ops.py:111: TypeError
+../ember_ml/ops/torch/tensor_ops.py:111: TypeError
 ___________________ TestElementWiseOperations.test_clip[mlx] ___________________
 
 self = <test_ops_math.TestElementWiseOperations object at 0x344642f30>
@@ -272,11 +272,11 @@ backend = 'mlx'
 
 test_ops_math.py:274: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../emberharmony/ops/__init__.py:129: in <lambda>
+../ember_ml/ops/__init__.py:129: in <lambda>
     arange = lambda *args, **kwargs: tensor_ops().arange(*args, **kwargs)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <emberharmony.ops.mlx.tensor_ops.MLXTensorOps object at 0x37d233d40>
+self = <ember_ml.ops.mlx.tensor_ops.MLXTensorOps object at 0x37d233d40>
 start = 12, stop = None, step = 1, dtype = None, device = None
 
     def arange(self, start: int, stop: Optional[int] = None, step: int = 1, dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
@@ -300,7 +300,7 @@ E           2. arange(stop : Union[int, float], step : Union[None, int, float] =
 E       
 E       Invoked with types: int, NoneType, int, kwargs = { dtype: NoneType }
 
-../emberharmony/ops/mlx/tensor_ops.py:117: TypeError
+../ember_ml/ops/mlx/tensor_ops.py:117: TypeError
 ___________________ TestActivationFunctions.test_relu[torch] ___________________
 
 self = <test_ops_math.TestActivationFunctions object at 0x3446435c0>
@@ -313,11 +313,11 @@ backend = 'torch'
 
 test_ops_math.py:297: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../emberharmony/ops/__init__.py:129: in <lambda>
+../ember_ml/ops/__init__.py:129: in <lambda>
     arange = lambda *args, **kwargs: tensor_ops().arange(*args, **kwargs)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <emberharmony.ops.torch.tensor_ops.TorchTensorOps object at 0x37d8169c0>
+self = <ember_ml.ops.torch.tensor_ops.TorchTensorOps object at 0x37d8169c0>
 start = 12, stop = None, step = 1, dtype = None, device = None
 
     def arange(self, start: int, stop: Optional[int] = None, step: int = 1, dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
@@ -340,7 +340,7 @@ E        * (Number end, *, Tensor out = None, torch.dtype dtype = None, torch.la
 E        * (Number start, Number end, *, torch.dtype dtype = None, torch.layout layout = None, torch.device device = None, bool pin_memory = False, bool requires_grad = False)
 E        * (Number start, Number end, Number step = 1, *, Tensor out = None, torch.dtype dtype = None, torch.layout layout = None, torch.device device = None, bool pin_memory = False, bool requires_grad = False)
 
-../emberharmony/ops/torch/tensor_ops.py:111: TypeError
+../ember_ml/ops/torch/tensor_ops.py:111: TypeError
 ____________________ TestActivationFunctions.test_relu[mlx] ____________________
 
 self = <test_ops_math.TestActivationFunctions object at 0x344643050>
@@ -353,11 +353,11 @@ backend = 'mlx'
 
 test_ops_math.py:297: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../emberharmony/ops/__init__.py:129: in <lambda>
+../ember_ml/ops/__init__.py:129: in <lambda>
     arange = lambda *args, **kwargs: tensor_ops().arange(*args, **kwargs)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <emberharmony.ops.mlx.tensor_ops.MLXTensorOps object at 0x37d817530>
+self = <ember_ml.ops.mlx.tensor_ops.MLXTensorOps object at 0x37d817530>
 start = 12, stop = None, step = 1, dtype = None, device = None
 
     def arange(self, start: int, stop: Optional[int] = None, step: int = 1, dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
@@ -381,7 +381,7 @@ E           2. arange(stop : Union[int, float], step : Union[None, int, float] =
 E       
 E       Invoked with types: int, NoneType, int, kwargs = { dtype: NoneType }
 
-../emberharmony/ops/mlx/tensor_ops.py:117: TypeError
+../ember_ml/ops/mlx/tensor_ops.py:117: TypeError
 _________________ TestActivationFunctions.test_softmax[torch] __________________
 
 self = <test_ops_math.TestActivationFunctions object at 0x344643ad0>
@@ -394,11 +394,11 @@ backend = 'torch'
 
 test_ops_math.py:317: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../emberharmony/ops/__init__.py:129: in <lambda>
+../ember_ml/ops/__init__.py:129: in <lambda>
     arange = lambda *args, **kwargs: tensor_ops().arange(*args, **kwargs)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <emberharmony.ops.torch.tensor_ops.TorchTensorOps object at 0x37d8179b0>
+self = <ember_ml.ops.torch.tensor_ops.TorchTensorOps object at 0x37d8179b0>
 start = 12, stop = None, step = 1, dtype = None, device = None
 
     def arange(self, start: int, stop: Optional[int] = None, step: int = 1, dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
@@ -421,7 +421,7 @@ E        * (Number end, *, Tensor out = None, torch.dtype dtype = None, torch.la
 E        * (Number start, Number end, *, torch.dtype dtype = None, torch.layout layout = None, torch.device device = None, bool pin_memory = False, bool requires_grad = False)
 E        * (Number start, Number end, Number step = 1, *, Tensor out = None, torch.dtype dtype = None, torch.layout layout = None, torch.device device = None, bool pin_memory = False, bool requires_grad = False)
 
-../emberharmony/ops/torch/tensor_ops.py:111: TypeError
+../ember_ml/ops/torch/tensor_ops.py:111: TypeError
 __________________ TestActivationFunctions.test_softmax[mlx] ___________________
 
 self = <test_ops_math.TestActivationFunctions object at 0x344643d40>
@@ -434,11 +434,11 @@ backend = 'mlx'
 
 test_ops_math.py:317: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../emberharmony/ops/__init__.py:129: in <lambda>
+../ember_ml/ops/__init__.py:129: in <lambda>
     arange = lambda *args, **kwargs: tensor_ops().arange(*args, **kwargs)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <emberharmony.ops.mlx.tensor_ops.MLXTensorOps object at 0x37d816a20>
+self = <ember_ml.ops.mlx.tensor_ops.MLXTensorOps object at 0x37d816a20>
 start = 12, stop = None, step = 1, dtype = None, device = None
 
     def arange(self, start: int, stop: Optional[int] = None, step: int = 1, dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
@@ -462,7 +462,7 @@ E           2. arange(stop : Union[int, float], step : Union[None, int, float] =
 E       
 E       Invoked with types: int, NoneType, int, kwargs = { dtype: NoneType }
 
-../emberharmony/ops/mlx/tensor_ops.py:117: TypeError
+../ember_ml/ops/mlx/tensor_ops.py:117: TypeError
 =============================== warnings summary ===============================
 <frozen importlib._bootstrap>:488
   <frozen importlib._bootstrap>:488: DeprecationWarning: Type google._upb._message.MessageMapContainer uses PyType_Spec with a metaclass that has custom tp_new. This is deprecated and will no longer be allowed in Python 3.14.

@@ -1,12 +1,12 @@
-# EmberHarmony Tests
+# ember_ml Tests
 
-This directory contains tests for the EmberHarmony library. The tests are organized by functionality and are designed to ensure that the library works correctly across different backends. All tests have been converted to use pytest for better reporting and organization.
+This directory contains tests for the ember_ml library. The tests are organized by functionality and are designed to ensure that the library works correctly across different backends. All tests have been converted to use pytest for better reporting and organization.
 
 ## Test Organization
 
 The tests are organized into the following files:
 
-- `test_plan.md`: A comprehensive test plan that outlines the testing strategy for the EmberHarmony library.
+- `test_plan.md`: A comprehensive test plan that outlines the testing strategy for the ember_ml library.
 - `test_ops_tensor.py`: Tests for tensor operations across different backends.
 - `test_ops_math.py`: Tests for math operations across different backends.
 - `test_backend.py`: Tests for backend selection and switching functionality.
@@ -78,7 +78,7 @@ pytest test_backend.py::TestBackendSelection::test_default_backend
 pytest --html=report.html --self-contained-html
 
 # Run with coverage
-pytest --cov=emberharmony --cov-report=html
+pytest --cov=ember_ml --cov-report=html
 
 # Run with verbose output
 pytest -v
@@ -234,4 +234,4 @@ When adding new tests, follow these guidelines:
 
 ## Test Plan
 
-For a comprehensive testing strategy, refer to the `test_plan.md` file, which outlines the testing approach for the EmberHarmony library.
+For a comprehensive testing strategy, refer to the `test_plan.md` file, which outlines the testing approach for the ember_ml library.

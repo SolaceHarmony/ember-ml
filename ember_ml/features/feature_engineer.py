@@ -5,9 +5,8 @@ This module provides a class for creating features based on detected column type
 """
 
 import pandas as pd
-import numpy as np
-from typing import Dict, List
-
+from typing import Dict, List, Any
+from ember_ml import ops
 
 class GenericFeatureEngineer:
     """
@@ -30,7 +29,7 @@ class GenericFeatureEngineer:
         """
         self.max_categories = max_categories
         self.handle_unknown = handle_unknown
-        self.categorical_mappings = {}  # Store mappings for categorical columns
+        self.categorical_mappings: Dict[str, Any] = {}  # Store mappings for categorical columns
         
     def engineer_features(self,
                          df: pd.DataFrame,
@@ -95,20 +94,23 @@ class GenericFeatureEngineer:
         
         # Create cyclical features using sine and cosine transformations
         # Hour of day (0-23)
-        df[f'{col}_sin_hour'] = np.sin(2 * np.pi * df[col].dt.hour / 23.0)
-        df[f'{col}_cos_hour'] = np.cos(2 * np.pi * df[col].dt.hour / 23.0)
+        two_pi = ops.multiply(ops.convert_to_tensor(2.0), ops.pi)
+        
+        # Hour of day (0-23)
+        df[f'{col}_sin_hour'] = ops.sin(ops.multiply(two_pi, ops.divide(ops.convert_to_tensor(df[col].dt.hour), ops.convert_to_tensor(23.0))))
+        df[f'{col}_cos_hour'] = ops.cos(ops.multiply(two_pi, ops.divide(ops.convert_to_tensor(df[col].dt.hour), ops.convert_to_tensor(23.0))))
         
         # Day of week (0-6)
-        df[f'{col}_sin_dayofweek'] = np.sin(2 * np.pi * df[col].dt.dayofweek / 6.0)
-        df[f'{col}_cos_dayofweek'] = np.cos(2 * np.pi * df[col].dt.dayofweek / 6.0)
+        df[f'{col}_sin_dayofweek'] = ops.sin(ops.multiply(two_pi, ops.divide(ops.convert_to_tensor(df[col].dt.dayofweek), ops.convert_to_tensor(6.0))))
+        df[f'{col}_cos_dayofweek'] = ops.cos(ops.multiply(two_pi, ops.divide(ops.convert_to_tensor(df[col].dt.dayofweek), ops.convert_to_tensor(6.0))))
         
         # Day of month (1-31)
-        df[f'{col}_sin_day'] = np.sin(2 * np.pi * (df[col].dt.day - 1) / 30.0)
-        df[f'{col}_cos_day'] = np.cos(2 * np.pi * (df[col].dt.day - 1) / 30.0)
+        df[f'{col}_sin_day'] = ops.sin(ops.multiply(two_pi, ops.divide(ops.subtract(ops.convert_to_tensor(df[col].dt.day), ops.convert_to_tensor(1)), ops.convert_to_tensor(30.0))))
+        df[f'{col}_cos_day'] = ops.cos(ops.multiply(two_pi, ops.divide(ops.subtract(ops.convert_to_tensor(df[col].dt.day), ops.convert_to_tensor(1)), ops.convert_to_tensor(30.0))))
         
         # Month (1-12)
-        df[f'{col}_sin_month'] = np.sin(2 * np.pi * (df[col].dt.month - 1) / 11.0)
-        df[f'{col}_cos_month'] = np.cos(2 * np.pi * (df[col].dt.month - 1) / 11.0)
+        df[f'{col}_sin_month'] = ops.sin(ops.multiply(two_pi, ops.divide(ops.subtract(ops.convert_to_tensor(df[col].dt.month), ops.convert_to_tensor(1)), ops.convert_to_tensor(11.0))))
+        df[f'{col}_cos_month'] = ops.cos(ops.multiply(two_pi, ops.divide(ops.subtract(ops.convert_to_tensor(df[col].dt.month), ops.convert_to_tensor(1)), ops.convert_to_tensor(11.0))))
         
         print(f"Created cyclical features for datetime column '{col}'")
         return df

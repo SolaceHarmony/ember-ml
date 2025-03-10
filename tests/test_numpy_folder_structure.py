@@ -174,10 +174,10 @@ class TestNumPyFolderStructure:
         backend_module = get_backend_module()
         
         # Set seed using the backend module
-        if hasattr(backend_module, 'set_random_seed'):
-            backend_module.set_random_seed(42)
+        if hasattr(backend_module, 'set_seed'):
+            backend_module.set_seed(42)
             x1 = ops.random_normal(shape)
-            backend_module.set_random_seed(42)
+            backend_module.set_seed(42)
             x2 = ops.random_normal(shape)
             assert np.allclose(ops.to_numpy(x1), ops.to_numpy(x2))
 

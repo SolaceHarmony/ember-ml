@@ -27,7 +27,7 @@ Available Layers
 
 Usage Examples
 -------------
->>> from emberharmony.keras_3_8.layers import create_ltc_rnn
+>>> from ember_ml.keras_3_8.layers import create_ltc_rnn
 
 # Create and use LTC-RNN
 >>> rnn = create_ltc_rnn(

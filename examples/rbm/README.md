@@ -1,6 +1,6 @@
 # Restricted Boltzmann Machine (RBM) Examples
 
-This directory contains example implementations and applications of Restricted Boltzmann Machines (RBMs) using the EmberHarmony framework.
+This directory contains example implementations and applications of Restricted Boltzmann Machines (RBMs) using the ember_ml framework.
 
 ## Files
 
@@ -34,4 +34,4 @@ RBMs have been used for:
 - Anomaly detection
 - Collaborative filtering
 
-The examples in this directory demonstrate these capabilities using the EmberHarmony framework.
+The examples in this directory demonstrate these capabilities using the ember_ml framework.

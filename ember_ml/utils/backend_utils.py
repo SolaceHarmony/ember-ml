@@ -1,7 +1,7 @@
 """
-Backend Utilities for emberharmony
+Backend Utilities for ember_ml
 
-This module provides utility functions for working with emberharmony's backend system,
+This module provides utility functions for working with ember_ml's backend system,
 making it easier to convert between NumPy arrays and backend tensors, and to perform
 common operations in a backend-agnostic way.
 """
@@ -10,17 +10,17 @@ import logging
 from typing import Any, List, Optional, Tuple, Union, Dict
 
 # Set up logging
-logger = logging.getLogger('emberharmony.utils.backend')
+logger = logging.getLogger('ember_ml.utils.backend')
 
 # Backend module paths
 _BACKENDS = {
-    'numpy': 'emberharmony.backend.numpy_backend',
-    'torch': 'emberharmony.backend.torch_backend',
-    'torch_optimized': 'emberharmony.backend.torch_backend_optimized',
-    'mlx': 'emberharmony.backend.mlx_backend'
+    'numpy': 'ember_ml.backend.numpy',
+    'torch': 'ember_ml.backend.torch',
+    'torch_optimized': 'ember_ml.backend.torch_backend_optimized',
+    'mlx': 'ember_ml.backend.mlx'
 }
 
-# Import emberharmony backend
+# Import ember_ml backend
 # Use relative imports to ensure availability within the package
 try:
     # Try absolute import first (for installed package)
@@ -32,9 +32,9 @@ except ImportError:
         from ..backend import get_backend, set_backend
         from .. import ops
     except ImportError:
-        # Critical failure - emberharmony backend is required
-        logger.error("CRITICAL ERROR: emberharmony backend not available. This is a required dependency.")
-        raise ImportError("emberharmony backend is required but not available. Please ensure the package is properly installed.")
+        # Critical failure - ember_ml backend is required
+        logger.error("CRITICAL ERROR: ember_ml backend not available. This is a required dependency.")
+        raise ImportError("ember_ml backend is required but not available. Please ensure the package is properly installed.")
 
 def get_current_backend() -> str:
     """
@@ -56,7 +56,7 @@ def set_preferred_backend(backend_name: Optional[str] = None) -> str:
         str: Name of the actually set backend
     """
     if backend_name is None:
-        # Let emberharmony choose the best available backend
+        # Let ember_ml choose the best available backend
         return get_backend()
     
     try:
@@ -101,7 +101,7 @@ def convert_to_tensor_safe(data: Any) -> Any:
         return ops.convert_to_tensor(data)
     except Exception as e:
         logger.warning(f"Error converting to tensor: {e}")
-        # Re-raise the exception since emberharmony is required
+        # Re-raise the exception since ember_ml is required
         raise
 
 def tensor_to_numpy_safe(tensor: Any) -> Any:
@@ -141,7 +141,7 @@ def tensor_to_numpy_safe(tensor: Any) -> Any:
             return ops.to_numpy(tensor)
     except Exception as e:
         logger.warning(f"Error converting tensor to NumPy: {e}")
-        # Re-raise the exception since emberharmony is required
+        # Re-raise the exception since ember_ml is required
         raise
 
 def random_uniform(shape: Union[int, Tuple[int, ...]], low: float = 0.0, high: float = 1.0) -> Any:

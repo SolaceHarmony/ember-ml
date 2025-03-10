@@ -1,11 +1,11 @@
 """
-NumPy math operations for EmberHarmony.
+NumPy math operations for ember_ml.
 
 This module provides NumPy implementations of math operations.
 """
 
 import numpy as np
-from typing import Optional, Union, Sequence
+from typing import Optional, Union, Sequence, List
 from ember_ml.backend.numpy.tensor_ops import convert_to_tensor
 
 # Type aliases
@@ -389,6 +389,22 @@ def mod(x: ArrayLike, y: ArrayLike) -> np.ndarray:
     return remainder
 
 
+def floor_divide(x: ArrayLike, y: ArrayLike) -> np.ndarray:
+    """
+    Element-wise integer division.
+    
+    If either array is a floating point type then it is equivalent to calling floor() after divide().
+    
+    Args:
+        x: First array
+        y: Second array
+        
+    Returns:
+        Element-wise integer quotient (a // b)
+    """
+    return np.floor_divide(x, y)
+
+
 def sort(x: ArrayLike, axis: int = -1) -> np.ndarray:
     """
     Sort a NumPy array along a specified axis.
@@ -401,6 +417,31 @@ def sort(x: ArrayLike, axis: int = -1) -> np.ndarray:
         Sorted array
     """
     return np.sort(convert_to_tensor(x), axis=axis)
+
+
+def gradient(f: ArrayLike, *varargs, axis: Optional[Union[int, Sequence[int]]] = None,
+            edge_order: int = 1) -> Union[np.ndarray, List[np.ndarray]]:
+    """
+    Return the gradient of an N-dimensional array.
+    
+    The gradient is computed using second order accurate central differences in the interior
+    points and either first or second order accurate one-sides (forward or backwards)
+    differences at the boundaries. The returned gradient hence has the same shape as the input array.
+    
+    Args:
+        f: An N-dimensional array containing samples of a scalar function.
+        *varargs: Spacing between f values. Default unitary spacing for all dimensions.
+        axis: Gradient is calculated only along the given axis or axes.
+            The default (axis = None) is to calculate the gradient for all the axes of the input array.
+        edge_order: Gradient is calculated using N-th order accurate differences at the boundaries.
+            Must be 1 or 2.
+            
+    Returns:
+        A tensor or tuple of tensors corresponding to the derivatives of f with respect to each dimension.
+        Each derivative has the same shape as f.
+    """
+    f_tensor = convert_to_tensor(f)
+    return np.gradient(f_tensor, *varargs, axis=axis, edge_order=edge_order)
 
 
 def softmax(x: ArrayLike, axis: int = -1) -> np.ndarray:
@@ -705,9 +746,17 @@ class NumpyMathOps:
         """Compute the remainder of division of x by y element-wise."""
         return mod(x, y)
     
+    def floor_divide(self, x, y):
+        """Element-wise integer division."""
+        return floor_divide(x, y)
+    
     def sort(self, x, axis=-1):
         """Sort an array along a specified axis."""
         return sort(x, axis=axis)
+        
+    def gradient(self, f, *varargs, axis=None, edge_order=1):
+        """Return the gradient of an N-dimensional array."""
+        return gradient(f, *varargs, axis=axis, edge_order=edge_order)
 
     def pi(self):
         """Return the mathematical constant pi."""

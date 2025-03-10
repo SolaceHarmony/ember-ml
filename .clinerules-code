@@ -1,8 +1,8 @@
-# EmberHarmony Code Mode Rules
+# Ember ML Code Mode Rules
 
 ## Core Principles
 
-As a Code mode for the EmberHarmony project, you must strictly adhere to the following principles:
+As a Code mode for the Ember ML project, you must strictly adhere to the following principles:
 
 1. **Backend Purity**: All code must be backend-agnostic, using the ops abstraction layer instead of direct framework calls
 2. **Code Style**: Follow PEP 8 and project-specific style guidelines
@@ -14,7 +14,7 @@ As a Code mode for the EmberHarmony project, you must strictly adhere to the fol
 
 **EVERY CODE CHANGE MUST BE VALIDATED WITH EMBERLINT BEFORE SUBMISSION**
 
-The `utils/emberlint.py` tool is the definitive authority on code correctness in the EmberHarmony project. You must run this tool on every file you modify and ensure it passes all checks before considering your work complete.
+The `utils/emberlint.py` tool is the definitive authority on code correctness in the Ember ML project. You must run this tool on every file you modify and ensure it passes all checks before considering your work complete.
 
 ```bash
 python utils/emberlint.py path/to/modified/file.py --verbose
@@ -30,7 +30,7 @@ python utils/emberlint.py path/to/modified/file.py --verbose
 - Converting tensors to NumPy arrays (`.numpy()`, `np.array(tensor)`)
 
 ✅ **REQUIRED**:
-- Import ops from emberharmony (`from emberharmony import ops`)
+- Import ops from ember_ml (`from ember_ml import ops`)
 - Use ops functions for all mathematical operations (`ops.sin()`, `ops.matmul()`)
 - Use ops for tensor creation and manipulation (`ops.convert_to_tensor()`)
 
@@ -44,7 +44,7 @@ python utils/emberlint.py path/to/modified/file.py --verbose
 
 ✅ **REQUIRED**:
 - Use `ops.cast()` with appropriate dtype
-- Use dtype constants from `emberharmony.ops.dtypes`
+- Use dtype constants from `ember_ml.ops.dtypes`
 
 ### 3. NO DIRECT PYTHON OPERATORS
 
@@ -72,13 +72,55 @@ python utils/emberlint.py path/to/modified/file.py --verbose
 
 ### Frontend-Backend Separation
 
-The EmberHarmony framework uses a strict separation between frontend abstractions and backend implementations:
+The Ember ML framework uses a strict separation between frontend abstractions and backend implementations:
 
 1. **Frontend Abstractions**: The `ops` and `nn.*` (and other folders and classes) are generally abstract interfaces (stubs) that define the API but do not contain actual implementations
 2. **Backend Implementations**: The actual implementations reside in the backend directory, with specific implementations for each supported backend (NumPy, PyTorch, MLX)
 3. **Dispatch Mechanism**: The frontend abstractions dispatch calls to the appropriate backend implementation based on the currently selected backend
 
 This architecture allows MLX, PyTorch, and NumPy layers, operations, solvers, etc. to be used natively through a consistent API.
+
+### Backend Folder Structure
+
+The backend implementations are organized in a modular folder structure:
+
+```
+ember_ml/backend/
+├── numpy/             # NumPy backend implementations
+│   ├── tensor_ops.py  # Tensor operations
+│   ├── math_ops.py    # Math operations
+│   ├── random_ops.py  # Random operations
+│   ├── io_ops.py      # I/O operations
+│   └── ...
+├── torch/             # PyTorch backend implementations
+│   ├── tensor_ops.py
+│   ├── math_ops.py
+│   ├── random_ops.py
+│   ├── io_ops.py
+│   └── ...
+├── mlx/               # MLX backend implementations
+│   ├── tensor_ops.py
+│   ├── math_ops.py
+│   ├── random_ops.py
+│   ├── io_ops.py
+│   └── ...
+└── ...
+```
+
+Each backend folder contains implementation files that correspond to the operation categories defined in the frontend interfaces. This modular structure makes it easier to maintain and extend the backend implementations.
+
+### Interface Definition and Implementation
+
+For each operation category, there is:
+
+1. **Interface Definition**: An abstract class in `ember_ml/ops/interfaces/` that defines the API
+2. **Frontend Exposure**: Functions in `ember_ml/ops/__init__.py` that expose the operations to users
+3. **Backend Implementation**: Concrete implementations in each backend folder
+
+For example, for I/O operations:
+- Interface: `ember_ml/ops/interfaces/io_ops.py` defines the `IOOps` interface
+- Frontend: `ember_ml/ops/__init__.py` exposes `save()` and `load()` functions
+- Backends: `ember_ml/backend/numpy/io_ops.py`, `ember_ml/backend/torch/io_ops.py`, and `ember_ml/backend/mlx/io_ops.py` provide the implementations
 
 ### Key Architectural Rules
 
@@ -126,7 +168,7 @@ def sin(x):
 Follow the established module structure:
 
 ```
-emberharmony/
+ember_ml/
 ├── backend/       # Backend abstraction system
 ├── ops/           # Operations (math, tensor, random)
 ├── nn/            # Neural network components
@@ -211,7 +253,7 @@ def process_data(data):
 
 ✅ **CORRECT**:
 ```python
-from emberharmony import ops
+from ember_ml import ops
 
 def process_data(data):
     tensor = ops.convert_to_tensor(data)
@@ -228,7 +270,7 @@ def normalize(x):
 
 ✅ **CORRECT**:
 ```python
-from emberharmony import ops
+from ember_ml import ops
 
 def normalize(x):
     x_tensor = ops.convert_to_tensor(x)
@@ -245,7 +287,7 @@ def add_tensors(a, b):
 
 ✅ **CORRECT**:
 ```python
-from emberharmony import ops
+from ember_ml import ops
 
 def add_tensors(a, b):
     return ops.add(a, b)
@@ -266,7 +308,7 @@ def extract_features(data):
 ✅ **CORRECT**:
 ```python
 # In features/extractor.py
-from emberharmony import ops
+from ember_ml import ops
 
 def extract_features(data):
     # Use ops abstraction
@@ -274,6 +316,16 @@ def extract_features(data):
 ```
 
 ## Implementation Guidelines
+
+### I/O Operations
+
+When implementing I/O operations:
+
+1. **Use the Abstraction Layer**: Always use the `ops.save()` and `ops.load()` functions from the ops abstraction layer
+2. **Never Import Backend Directly**: Never use `from ember_ml import backend as K` or similar direct backend imports
+3. **Implement in Backend Folders**: Implement I/O operations in the appropriate backend folder (e.g., `backend/numpy/io_ops.py`)
+4. **Define Interfaces**: Define interfaces in `ops/interfaces/io_ops.py` before implementing in backends
+5. **Expose in ops/__init__.py**: Expose I/O functions in `ops/__init__.py` using the dispatch mechanism
 
 ### Feature Extraction
 
@@ -355,4 +407,102 @@ Before submitting any code, verify that:
 
 **REMEMBER: ALWAYS RUN EMBERLINT ON EVERY FILE YOU MODIFY**
 
-The quality and consistency of the EmberHarmony codebase depends on strict adherence to these rules. Backend purity is especially critical to ensure the framework works consistently across different computational backends.
+The quality and consistency of the Ember ML codebase depends on strict adherence to these rules. Backend purity is especially critical to ensure the framework works consistently across different computational backends.
+
+## Step-by-Step Guide for Adding a New Function
+
+When adding a new function to the Ember ML library, follow these steps precisely to ensure proper implementation across the frontend abstraction and backend implementations:
+
+### 1. Define the Interface
+
+1. Identify the appropriate interface file in `ember_ml/ops/interfaces/` (e.g., `math_ops.py` for mathematical operations)
+2. Add the new method to the abstract class with:
+   - Proper type annotations
+   - Comprehensive docstring following Google style
+   - `@abstractmethod` decorator
+   - `pass` statement for the implementation
+
+Example:
+```python
+@abstractmethod
+def new_function(self, x: Any, y: Any) -> Any:
+    """
+    Short description of the function.
+    
+    Longer description explaining the purpose and behavior.
+    
+    Args:
+        x: Description of x
+        y: Description of y
+        
+    Returns:
+        Description of return value
+    """
+    pass
+```
+
+### 2. Expose the Function in the Frontend
+
+1. Open `ember_ml/ops/__init__.py`
+2. Add a lambda function that calls the appropriate backend method:
+   ```python
+   new_function = lambda *args, **kwargs: math_ops().new_function(*args, **kwargs)
+   ```
+3. Add the function name to the `__all__` list to expose it in the public API
+
+### 3. Implement the Function in Each Backend
+
+For each backend (NumPy, PyTorch, MLX), implement the function in the appropriate file:
+
+#### NumPy Backend (`ember_ml/backend/numpy/math_ops.py`):
+1. Add the function with proper type annotations and docstring
+2. Use `convert_to_tensor` to ensure inputs are NumPy arrays
+3. Implement using NumPy functions
+4. Add the method to the corresponding Ops class (e.g., `NumpyMathOps`)
+
+#### PyTorch Backend (`ember_ml/backend/torch/math_ops.py`):
+1. Add the function with proper type annotations and docstring
+2. Use `convert_to_tensor` to ensure inputs are PyTorch tensors
+3. Implement using PyTorch functions
+4. Add the method to the corresponding Ops class (e.g., `TorchMathOps`)
+
+#### MLX Backend (`ember_ml/backend/mlx/math_ops.py`):
+1. Add the function with proper type annotations and docstring
+2. Use `convert_to_tensor` to ensure inputs are MLX arrays
+3. Implement using MLX functions
+4. Add the method to the corresponding Ops class (e.g., `MLXMathOps`)
+
+### 4. Validate with EmberLint
+
+1. Run EmberLint on all modified files:
+   ```bash
+   python utils/emberlint.py ember_ml/ops/interfaces/math_ops.py --verbose
+   python utils/emberlint.py ember_ml/ops/__init__.py --verbose
+   python utils/emberlint.py ember_ml/backend/numpy/math_ops.py --verbose
+   python utils/emberlint.py ember_ml/backend/torch/math_ops.py --verbose
+   python utils/emberlint.py ember_ml/backend/mlx/math_ops.py --verbose
+   ```
+2. Fix any issues reported by EmberLint
+
+### 5. Test the Function
+
+1. Create a simple test that uses the ops abstraction layer (NOT direct backend calls):
+   ```python
+   from ember_ml import ops
+   result = ops.new_function(ops.convert_to_tensor([1, 2, 3]), ops.convert_to_tensor([4, 5, 6]))
+   print(result)
+   ```
+2. Verify the function works as expected
+
+### 6. Add Unit Tests
+
+1. Add unit tests in the appropriate test file
+2. Test with all backends
+3. Test edge cases and error conditions
+
+### 7. Update Documentation
+
+1. Add the function to the API documentation
+2. Provide examples of usage
+
+By following these steps consistently, you ensure that new functions maintain the backend purity and architectural integrity of the Ember ML framework.

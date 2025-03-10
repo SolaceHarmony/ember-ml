@@ -1,5 +1,5 @@
 """
-Container modules for emberharmony.
+Container modules for ember_ml.
 
 This module provides backend-agnostic implementations of container modules
 that work with any backend (NumPy, PyTorch, MLX).

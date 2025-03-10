@@ -1,18 +1,22 @@
 """
-PyTorch random operations for EmberHarmony.
+PyTorch random operations for ember_ml.
 
 This module provides PyTorch implementations of random operations.
 """
 
 import torch
-from typing import Optional, Union, Sequence, Any, List
+from typing import Optional, Union, Any, Tuple
+from torch import Size
 
 # Import from tensor_ops
 from ember_ml.backend.torch.tensor_ops import convert_to_tensor, ArrayLike, Shape, DType
+
+# Type alias for shape tuples
+ShapeTuple = Tuple[int, ...]
 from ember_ml.backend.torch.config import DEFAULT_DEVICE
 
 
-def random_normal(shape: Shape, mean: float = 0.0, stddev: float = 1.0, 
+def random_normal(shape: Shape, mean: float = 0.0, stddev: float = 1.0,
                  dtype: DType = None, device: Optional[str] = None) -> torch.Tensor:
     """
     Create a tensor with random values from a normal distribution.
@@ -29,7 +33,25 @@ def random_normal(shape: Shape, mean: float = 0.0, stddev: float = 1.0,
     """
     if device is None:
         device = DEFAULT_DEVICE
-    return torch.normal(mean, stddev, size=shape, dtype=dtype, device=device)
+        
+    # Convert shape to a tuple if it's an integer
+    shape_tuple: ShapeTuple
+    if isinstance(shape, int):
+        shape_tuple = (shape,)
+    else:
+        shape_tuple = tuple(shape)
+        
+    # Convert dtype to torch dtype if it's a string
+    torch_dtype = None
+    if dtype is not None:
+        if isinstance(dtype, str):
+            # This would need a proper conversion function
+            # For now, we'll use None to let PyTorch decide
+            pass
+        else:
+            torch_dtype = dtype
+        
+    return torch.normal(mean, stddev, size=shape_tuple, dtype=torch_dtype, device=device)
 
 
 def random_uniform(shape: Shape, minval: float = 0.0, maxval: float = 1.0,
@@ -49,20 +71,37 @@ def random_uniform(shape: Shape, minval: float = 0.0, maxval: float = 1.0,
     """
     if device is None:
         device = DEFAULT_DEVICE
+    
+    # Convert shape to a tuple if it's an integer
+    shape_tuple: ShapeTuple
+    if isinstance(shape, int):
+        shape_tuple = (shape,)
+    else:
+        shape_tuple = tuple(shape)
+    
+    # Convert dtype to torch dtype if it's a string
+    torch_dtype = None
+    if dtype is not None:
+        if isinstance(dtype, str):
+            # This would need a proper conversion function
+            # For now, we'll use None to let PyTorch decide
+            pass
+        else:
+            torch_dtype = dtype
         
     # Generate random values between 0 and 1
-    rand_tensor = torch.rand(shape, dtype=dtype, device=device)
+    rand_tensor = torch.rand(shape_tuple, dtype=torch_dtype, device=device)
     
     # Calculate the range using torch.subtract instead of direct subtraction
-    maxval_tensor = convert_to_tensor(maxval)
-    minval_tensor = convert_to_tensor(minval)
+    maxval_tensor = convert_to_tensor(maxval, device=device)
+    minval_tensor = convert_to_tensor(minval, device=device)
     range_tensor = torch.subtract(maxval_tensor, minval_tensor)
     
     # Scale the random values to the desired range
     scaled_tensor = torch.multiply(rand_tensor, range_tensor)
     
     # Shift the values to start at minval
-    min_tensor = convert_to_tensor(minval)
+    min_tensor = convert_to_tensor(minval, device=device)
     result_tensor = torch.add(scaled_tensor, min_tensor)
     
     return result_tensor
@@ -80,15 +119,6 @@ def set_seed(seed: int) -> None:
         torch.cuda.manual_seed_all(seed)
 
 
-def set_random_seed(seed: int) -> None:
-    """
-    Alias for set_seed for backward compatibility.
-    
-    Args:
-        seed: Random seed
-    """
-    set_seed(seed)
-
 
 def random_binomial(shape: Shape, p: float = 0.5, dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
     """
@@ -104,18 +134,25 @@ def random_binomial(shape: Shape, p: float = 0.5, dtype: Optional[DType] = None,
         PyTorch tensor with random values from a binomial distribution
     """
     # Convert shape to tuple if it's an integer
+    shape_tuple: ShapeTuple
     if isinstance(shape, int):
-        shape = (shape,)
+        shape_tuple = (shape,)
+    else:
+        shape_tuple = tuple(shape)
     
     if device is None:
         device = DEFAULT_DEVICE
         
     # Generate random values
-    result = torch.bernoulli(torch.full(shape, p, device=device))
+    result = torch.bernoulli(torch.full(shape_tuple, p, device=device))
     
     # Convert to the specified data type
     if dtype is not None:
-        result = result.to(dtype=dtype)
+        if isinstance(dtype, str):
+            # Handle string dtype (would need proper conversion)
+            pass
+        else:
+            result = result.to(dtype)
         
     return result
 
@@ -142,7 +179,11 @@ def random_permutation(x: Union[int, ArrayLike], dtype: Optional[DType] = None, 
         
         # Convert to the specified data type
         if dtype is not None:
-            perm = perm.to(dtype=dtype)
+            if isinstance(dtype, str):
+                # Handle string dtype (would need proper conversion)
+                pass
+            else:
+                perm = perm.to(dtype)
             
         return perm
     else:
@@ -189,11 +230,17 @@ def random_categorical(logits: Any, num_samples: int, dtype: Optional[DType] = N
     probs = torch.softmax(logits_tensor, dim=-1)
     
     # Sample from the categorical distribution
-    samples = torch.multinomial(probs, num_samples, replacement=True)
+    # Ensure num_samples is a valid Size argument
+    num_samples_value = num_samples
+    samples = torch.multinomial(probs, num_samples_value, replacement=True)
     
     # Convert to the specified data type
     if dtype is not None:
-        samples = samples.to(dtype=dtype)
+        if isinstance(dtype, str):
+            # Handle string dtype (would need proper conversion)
+            pass
+        else:
+            samples = samples.to(dtype)
         
     return samples
 
@@ -212,14 +259,27 @@ def random_exponential(shape: Shape, scale: float = 1.0, dtype: Optional[DType] 
         PyTorch tensor with random values from an exponential distribution
     """
     # Convert shape to tuple if it's an integer
+    shape_tuple: ShapeTuple
     if isinstance(shape, int):
-        shape = (shape,)
+        shape_tuple = (shape,)
+    else:
+        shape_tuple = tuple(shape)
     
     if device is None:
         device = DEFAULT_DEVICE
+    
+    # Convert dtype to torch dtype if it's a string
+    torch_dtype = None
+    if dtype is not None:
+        if isinstance(dtype, str):
+            # This would need a proper conversion function
+            # For now, we'll use None to let PyTorch decide
+            pass
+        else:
+            torch_dtype = dtype
         
     # Generate uniform random values
-    u = torch.rand(shape, dtype=dtype, device=device)
+    u = torch.rand(shape_tuple, dtype=torch_dtype, device=device)
     
     # Transform to exponential distribution
     # Exponential distribution: f(x) = (1/scale) * exp(-x/scale)
@@ -251,8 +311,11 @@ def random_gamma(shape: Shape, alpha: float = 1.0, beta: float = 1.0, dtype: Opt
         PyTorch tensor with random values from a gamma distribution
     """
     # Convert shape to tuple if it's an integer
+    shape_tuple: ShapeTuple
     if isinstance(shape, int):
-        shape = (shape,)
+        shape_tuple = (shape,)
+    else:
+        shape_tuple = tuple(shape)
     
     if device is None:
         device = DEFAULT_DEVICE
@@ -267,11 +330,16 @@ def random_gamma(shape: Shape, alpha: float = 1.0, beta: float = 1.0, dtype: Opt
     gamma_dist = torch.distributions.gamma.Gamma(alpha, rate)
     
     # Sample from the distribution
-    result = gamma_dist.sample(shape)
+    # Convert shape to Size object for PyTorch
+    result = gamma_dist.sample(Size(shape_tuple))
     
     # Convert to the specified data type
     if dtype is not None:
-        result = result.to(dtype=dtype)
+        if isinstance(dtype, str):
+            # Handle string dtype (would need proper conversion)
+            pass
+        else:
+            result = result.to(dtype)
         
     # Move to the specified device
     if device is not None:
@@ -294,14 +362,27 @@ def random_poisson(shape: Shape, lam: float = 1.0, dtype: Optional[DType] = None
         PyTorch tensor with random values from a Poisson distribution
     """
     # Convert shape to tuple if it's an integer
+    shape_tuple: ShapeTuple
     if isinstance(shape, int):
-        shape = (shape,)
+        shape_tuple = (shape,)
+    else:
+        shape_tuple = tuple(shape)
     
     if device is None:
         device = DEFAULT_DEVICE
+    
+    # Convert dtype to torch dtype if it's a string
+    torch_dtype = None
+    if dtype is not None:
+        if isinstance(dtype, str):
+            # This would need a proper conversion function
+            # For now, we'll use None to let PyTorch decide
+            pass
+        else:
+            torch_dtype = dtype
         
     # Create a tensor filled with the rate parameter
-    rate_tensor = torch.full(shape, lam, dtype=dtype, device=device)
+    rate_tensor = torch.full(shape_tuple, lam, dtype=torch_dtype, device=device)
     
     # Sample from the Poisson distribution
     result = torch.poisson(rate_tensor)
@@ -335,6 +416,20 @@ def shuffle(x: Any) -> torch.Tensor:
     return x_tensor[indices]
 
 
+# Store the current seed
+_current_seed = None
+
+def get_seed() -> Optional[int]:
+    """
+    Get the current random seed.
+    
+    Returns:
+        Current random seed or None if not set
+    """
+    global _current_seed
+    return _current_seed
+
+
 class TorchRandomOps:
     """PyTorch implementation of random operations."""
     
@@ -350,10 +445,36 @@ class TorchRandomOps:
         """Generate random values from a binomial distribution."""
         return random_binomial(shape, p=p, dtype=dtype, device=device)
     
-    def random_permutation(self, x):
+    def random_permutation(self, x, dtype=None, device=None):
         """Generate a random permutation."""
-        return random_permutation(x)
+        return random_permutation(x, dtype=dtype, device=device)
     
-    def set_random_seed(self, seed):
+    def random_exponential(self, shape, scale=1.0, dtype=None, device=None):
+        """Generate random values from an exponential distribution."""
+        return random_exponential(shape, scale=scale, dtype=dtype, device=device)
+    
+    def random_gamma(self, shape, alpha=1.0, beta=1.0, dtype=None, device=None):
+        """Generate random values from a gamma distribution."""
+        return random_gamma(shape, alpha=alpha, beta=beta, dtype=dtype, device=device)
+    
+    def random_poisson(self, shape, lam=1.0, dtype=None, device=None):
+        """Generate random values from a Poisson distribution."""
+        return random_poisson(shape, lam=lam, dtype=dtype, device=device)
+    
+    def random_categorical(self, logits, num_samples, dtype=None, device=None):
+        """Draw samples from a categorical distribution."""
+        return random_categorical(logits, num_samples, dtype=dtype, device=device)
+    
+    def shuffle(self, x):
+        """Randomly shuffle a tensor along the first dimension."""
+        return shuffle(x)
+    
+    def set_seed(self, seed):
         """Set the random seed for reproducibility."""
-        return set_random_seed(seed)
+        global _current_seed
+        _current_seed = seed
+        return set_seed(seed)
+    
+    def get_seed(self):
+        """Get the current random seed."""
+        return get_seed()

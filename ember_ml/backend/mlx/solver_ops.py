@@ -20,8 +20,8 @@ def inv(A: ArrayLike) -> mx.array:
     Returns:
         Inverse of matrix A
     """
-    # Convert input to MLX array
-    A = mx.array(A)
+    # Convert input to MLX array with float32 dtype
+    A = mx.array(A, dtype=mx.float32)
     
     # Get matrix dimensions
     n = A.shape[0]
@@ -75,9 +75,9 @@ def solve(a: ArrayLike, b: ArrayLike) -> mx.array:
         Uses custom Gauss-Jordan elimination to compute the inverse of A,
         then multiplies by b to get the solution: x = A^(-1) * b.
     """
-    # Convert inputs to MLX arrays
-    a_array = mx.array(a)
-    b_array = mx.array(b)
+    # Convert inputs to MLX arrays with float32 dtype
+    a_array = mx.array(a, dtype=mx.float32)
+    b_array = mx.array(b, dtype=mx.float32)
     
     # Compute the inverse of a using our custom implementation
     a_inv = inv(a_array)
@@ -103,8 +103,8 @@ def svd(a: ArrayLike, full_matrices: bool = True, compute_uv: bool = True) -> Un
         For large matrices or high precision requirements, consider using
         a more sophisticated algorithm.
     """
-    # Convert input to MLX array
-    a_array = mx.array(a)
+    # Convert input to MLX array with float32 dtype
+    a_array = mx.array(a, dtype=mx.float32)
     
     # Get matrix dimensions
     m, n = a_array.shape
@@ -131,26 +131,18 @@ def svd(a: ArrayLike, full_matrices: bool = True, compute_uv: bool = True) -> Un
                 if mx.greater(s[i], mx.array(1e-10)):  # Avoid division by very small values
                     u_col = mx.divide(mx.matmul(a_array, v[:, i]), s[i])
                     
-                    # Update u column by column using list manipulation
-                    u_list = u.tolist()
-                    u_col_list = u_col.tolist()
-                    for j in range(m):  # Use m instead of len(u_col_list)
-                        u_list[j][i] = u_col_list[j]
-                    u = mx.array(u_list)
+                    # Update u column by column using direct indexing
+                    for j in range(m):
+                        u[j, i] = u_col[j]
                 else:
                     # For very small singular values, use a different approach
                     u_col = mx.zeros((m,), dtype=a_array.dtype)
                     index = mx.remainder(mx.array(i), mx.array(m)).item()
-                    u_col_list = u_col.tolist()
-                    u_col_list[index] = 1.0
-                    u_col = mx.array(u_col_list)
+                    u_col[index] = 1.0
                     
-                    # Update u column by column
-                    u_list = u.tolist()
-                    u_col_list = u_col.tolist()
-                    for j in range(m):  # Use m instead of len(u_col_list)
-                        u_list[j][i] = u_col_list[j]
-                    u = mx.array(u_list)
+                    # Update u column by column using direct indexing
+                    for j in range(m):
+                        u[j, i] = u_col[j]
             
             # If full_matrices is True, pad U and V
             if full_matrices:
@@ -167,10 +159,8 @@ def svd(a: ArrayLike, full_matrices: bool = True, compute_uv: bool = True) -> Un
                         # Calculate index
                         index = mx.add(mx.array(k), mx.array(i)).item()
                         
-                        # Update u_pad_col using list manipulation
-                        u_pad_col_list = u_pad_col.tolist()
-                        u_pad_col_list[index] = 1.0
-                        u_pad_col = mx.array(u_pad_col_list)
+                        # Update u_pad_col using direct indexing
+                        u_pad_col[index] = 1.0
                         u = mx.concatenate([u, u_pad_col.reshape(m, 1)], axis=1)
             
             # Return U, S, V^H
@@ -197,26 +187,18 @@ def svd(a: ArrayLike, full_matrices: bool = True, compute_uv: bool = True) -> Un
                 if mx.greater(s[i], mx.array(1e-10)):  # Avoid division by very small values
                     v_col = mx.divide(mx.matmul(mx.transpose(a_array), u[:, i]), s[i])
                     
-                    # Update v column by column using list manipulation
-                    v_list = v.tolist()
-                    v_col_list = v_col.tolist()
-                    for j in range(n):  # Use n instead of len(v_col_list)
-                        v_list[j][i] = v_col_list[j]
-                    v = mx.array(v_list)
+                    # Update v column by column using direct indexing
+                    for j in range(n):
+                        v[j, i] = v_col[j]
                 else:
                     # For very small singular values, use a different approach
                     v_col = mx.zeros((n,), dtype=a_array.dtype)
                     index = mx.remainder(mx.array(i), mx.array(n)).item()
-                    v_col_list = v_col.tolist()
-                    v_col_list[index] = 1.0
-                    v_col = mx.array(v_col_list)
+                    v_col[index] = 1.0
                     
-                    # Update v column by column
-                    v_list = v.tolist()
-                    v_col_list = v_col.tolist()
-                    for j in range(n):  # Use n instead of len(v_col_list)
-                        v_list[j][i] = v_col_list[j]
-                    v = mx.array(v_list)
+                    # Update v column by column using direct indexing
+                    for j in range(n):
+                        v[j, i] = v_col[j]
             
             # If full_matrices is True, pad U and V
             if full_matrices:
@@ -233,10 +215,8 @@ def svd(a: ArrayLike, full_matrices: bool = True, compute_uv: bool = True) -> Un
                         # Calculate index
                         index = mx.add(mx.array(k), mx.array(i)).item()
                         
-                        # Update v_pad_col using list manipulation
-                        v_pad_col_list = v_pad_col.tolist()
-                        v_pad_col_list[index] = 1.0
-                        v_pad_col = mx.array(v_pad_col_list)
+                        # Update v_pad_col using direct indexing
+                        v_pad_col[index] = 1.0
                         v = mx.concatenate([v, v_pad_col.reshape(n, 1)], axis=1)
             
             # Return U, S, V^H
@@ -260,8 +240,8 @@ def eig(a: ArrayLike) -> Tuple[mx.array, mx.array]:
         For large matrices or high precision requirements, consider using
         a more sophisticated algorithm.
     """
-    # Convert input to MLX array
-    a_array = mx.array(a)
+    # Convert input to MLX array with float32 dtype
+    a_array = mx.array(a, dtype=mx.float32)
     
     # Get matrix dimensions
     n = a_array.shape[0]
@@ -294,17 +274,12 @@ def eig(a: ArrayLike) -> Tuple[mx.array, mx.array]:
         # Compute Rayleigh quotient to get eigenvalue
         eigenvalue = mx.sum(mx.multiply(v, mx.matmul(a_copy, v)))
         
-        # Store eigenvalue and eigenvector
-        eigenvalues_list = eigenvalues.tolist()
-        eigenvalues_list[i] = eigenvalue.item()
-        eigenvalues = mx.array(eigenvalues_list)
+        # Store eigenvalue and eigenvector using direct indexing
+        eigenvalues[i] = eigenvalue.item()
         
-        # Update eigenvectors
-        eigenvectors_list = eigenvectors.tolist()
-        v_list = v.tolist()
-        for j in range(n):  # Use n instead of len(v_list)
-            eigenvectors_list[j][i] = v_list[j]
-        eigenvectors = mx.array(eigenvectors_list)
+        # Update eigenvectors using direct indexing
+        for j in range(n):
+            eigenvectors[j, i] = v[j]
         
         # Deflate the matrix to find the next eigenvalue
         # This is a simplified deflation and may not be numerically stable
@@ -384,17 +359,9 @@ def det(a: ArrayLike) -> mx.array:
             # Calculate the new row
             new_row = mx.subtract(a_copy[j, i:], mx.multiply(factor, a_copy[i, i:]))
             
-            # Update a_copy using list manipulation
-            a_copy_list = a_copy.tolist()
-            new_row_list = new_row.tolist()
-            
-            # Update only the elements from i onwards in row j
-            # Convert to Python int without using int() directly
-            i_int = i
-            for k in range(i_int, n):
-                a_copy_list[j][k] = new_row_list[mx.subtract(mx.array(k), mx.array(i)).item()]
-            
-            a_copy = mx.array(a_copy_list)
+            # Update a_copy using direct indexing
+            for k in range(i, n):
+                a_copy[j, k] = new_row[k - i]
     
     return det_value
 
@@ -529,8 +496,8 @@ def qr(a: ArrayLike, mode: str = 'reduced') -> Tuple[mx.array, mx.array]:
         For large matrices or high precision requirements, consider using
         a more sophisticated algorithm.
     """
-    # Convert input to MLX array
-    a_array = mx.array(a)
+    # Convert input to MLX array with float32 dtype
+    a_array = mx.array(a, dtype=mx.float32)
     
     # Get matrix dimensions
     m, n = a_array.shape
@@ -554,10 +521,8 @@ def qr(a: ArrayLike, mode: str = 'reduced') -> Tuple[mx.array, mx.array]:
             # Calculate r[i, j]
             r_ij = mx.sum(mx.multiply(q[:, i], v))
             
-            # Update r using list manipulation
-            r_list = r.tolist()
-            r_list[i][j] = r_ij.item()
-            r = mx.array(r_list)
+            # Update r using direct indexing
+            r[i, j] = r_ij.item()
             
             # Update v
             v = mx.subtract(v, mx.multiply(r[i, j], q[:, i]))
@@ -567,19 +532,14 @@ def qr(a: ArrayLike, mode: str = 'reduced') -> Tuple[mx.array, mx.array]:
         
         # Handle the case where the vector is close to zero
         if mx.less(r_jj, mx.array(1e-10)):
-            # Update q using list manipulation
-            q_list = q.tolist()
-            zeros_list = mx.zeros((m,), dtype=a_array.dtype).tolist()
+            # Update q using direct indexing
             for i in range(m):
-                q_list[i][j] = zeros_list[i]
-            q = mx.array(q_list)
+                q[i, j] = 0.0
         else:
-            # Update q using list manipulation
-            q_list = q.tolist()
-            v_normalized = mx.divide(v, r_jj).tolist()
+            # Update q using direct indexing
+            v_normalized = mx.divide(v, r_jj)
             for i in range(m):
-                q_list[i][j] = v_normalized[i]
-            q = mx.array(q_list)
+                q[i, j] = v_normalized[i]
         
         # Update R
         r[j, j] = r_jj
@@ -591,10 +551,8 @@ def qr(a: ArrayLike, mode: str = 'reduced') -> Tuple[mx.array, mx.array]:
         for k in range(j_plus_1_int, n):
             r_jk = mx.sum(mx.multiply(q[:, j], a_array[:, k]))
             
-            # Update r using list manipulation
-            r_list = r.tolist()
-            r_list[j][k] = r_jk.item()
-            r = mx.array(r_list)
+            # Update r using direct indexing
+            r[j, k] = r_jk.item()
     
     # Handle different modes
     if mode == 'r':
@@ -621,8 +579,8 @@ def cholesky(a: ArrayLike) -> mx.array:
         For large matrices or high precision requirements, consider using
         a more sophisticated algorithm.
     """
-    # Convert input to MLX array
-    a_array = mx.array(a)
+    # Convert input to MLX array with float32 dtype
+    a_array = mx.array(a, dtype=mx.float32)
     
     # Get matrix dimensions
     n = a_array.shape[0]
@@ -643,18 +601,14 @@ def cholesky(a: ArrayLike) -> mx.array:
                 if mx.less(s, mx.array(0)):
                     raise ValueError("Matrix is not positive definite")
                 
-                # Update l using list manipulation
-                l_list = l.tolist()
-                l_list[i][i] = mx.sqrt(s).item()
-                l = mx.array(l_list)
+                # Update l using direct indexing
+                l[i, i] = mx.sqrt(s).item()
             else:
                 # Off-diagonal element
                 s = mx.subtract(a_array[i, j], mx.sum(mx.multiply(l[i, :j], l[j, :j])))
                 
-                # Update l using list manipulation
-                l_list = l.tolist()
-                l_list[i][j] = mx.divide(s, l[j, j]).item()
-                l = mx.array(l_list)
+                # Update l using direct indexing
+                l[i, j] = mx.divide(s, l[j, j]).item()
     
     return l
 
@@ -676,9 +630,9 @@ def lstsq(a: ArrayLike, b: ArrayLike, rcond: Optional[float] = None) -> Tuple[mx
         For large matrices or high precision requirements, consider using
         a more sophisticated algorithm.
     """
-    # Convert inputs to MLX arrays
-    a_array = mx.array(a)
-    b_array = mx.array(b)
+    # Convert inputs to MLX arrays with float32 dtype
+    a_array = mx.array(a, dtype=mx.float32)
+    b_array = mx.array(b, dtype=mx.float32)
     
     # Get matrix dimensions
     m, n = a_array.shape
@@ -707,10 +661,8 @@ def lstsq(a: ArrayLike, b: ArrayLike, rcond: Optional[float] = None) -> Tuple[mx
     s_size = s.shape[0]  # Get the size of s
     for i in range(s_size):
         if mx.greater(s[i], rcond_tensor).item():
-            # Update s_inv using list manipulation
-            s_inv_list = s_inv.tolist()
-            s_inv_list[i] = mx.divide(mx.array(1.0), s[i]).item()
-            s_inv = mx.array(s_inv_list)
+            # Update s_inv using direct indexing
+            s_inv[i] = mx.divide(mx.array(1.0), s[i]).item()
     
     # Compute solution
     solution = mx.zeros((n, b_array.shape[1]), dtype=a_array.dtype)

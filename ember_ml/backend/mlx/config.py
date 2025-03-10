@@ -1,5 +1,5 @@
 """
-MLX backend configuration for EmberHarmony.
+MLX backend configuration for ember_ml.
 
 This module provides configuration settings for the MLX backend.
 """

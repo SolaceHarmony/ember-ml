@@ -1,5 +1,5 @@
 """
-Loss module for emberharmony.
+Loss module for ember_ml.
 
 This module provides backend-agnostic implementations of loss functions
 that work with any backend (NumPy, PyTorch, MLX).

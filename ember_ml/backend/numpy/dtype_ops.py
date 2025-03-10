@@ -1,5 +1,5 @@
 """
-NumPy data type operations for EmberHarmony.
+NumPy data type operations for ember_ml.
 
 This module provides NumPy implementations of data type operations.
 """
@@ -60,6 +60,9 @@ def to_numpy_dtype(dtype: Any) -> Type:
         return dtype
     elif isinstance(dtype, str):
         return get_dtype(dtype)
+    elif isinstance(dtype, np.dtype):
+        # Handle numpy.dtype objects
+        return dtype.type
     else:
         raise ValueError(f"Cannot convert {dtype} to NumPy data type")
 

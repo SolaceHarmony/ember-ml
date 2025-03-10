@@ -1,6 +1,6 @@
 # Liquid Time Constant (LTC) and Closed-form Continuous-time (CfC) Examples
 
-This directory contains example implementations and applications of Liquid Time Constant (LTC) neurons and Closed-form Continuous-time (CfC) cells using the EmberHarmony framework.
+This directory contains example implementations and applications of Liquid Time Constant (LTC) neurons and Closed-form Continuous-time (CfC) cells using the ember_ml framework.
 
 ## Files
 
@@ -42,4 +42,4 @@ CfC cells are an extension of LTC neurons that use a closed-form solution to the
 - Efficient implementation
 - Support for variable stride lengths
 
-The examples in this directory demonstrate these capabilities using the EmberHarmony framework.
+The examples in this directory demonstrate these capabilities using the ember_ml framework.

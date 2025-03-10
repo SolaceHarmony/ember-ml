@@ -5,7 +5,7 @@ This module provides MLX implementations of device operations.
 """
 
 import mlx.core as mx
-from typing import Union, Sequence, Optional, Tuple, Any, List
+from typing import Union, Optional, List
 
 # Type aliases
 ArrayLike = Union[mx.array, float, int, list, tuple]
@@ -56,10 +56,107 @@ def memory_usage(device: Optional[str] = None) -> int:
         device: Target device (ignored for MLX backend)
         
     Returns:
-        Memory usage in bytes (always 0 for MLX backend as it's not directly accessible)
+        Memory usage in bytes for the MLX backend
     """
-    # MLX doesn't provide a direct way to get memory usage
-    return 0
+    # Use MLX's metal.get_active_memory function to get the active memory usage
+    try:
+        return mx.metal.get_active_memory()
+    except (AttributeError, ImportError):
+        # Fallback if the function is not available
+        return 0
+
+
+def memory_info(device: Optional[str] = None) -> dict:
+    """
+    Get memory information for the specified device.
+    
+    Args:
+        device: Device to get memory information for (default: current device)
+    
+    Returns:
+        Dictionary containing memory information
+    """
+    # Use MLX's metal.device_info function to get detailed device information
+    try:
+        device_info = mx.metal.device_info()
+        active_memory = mx.metal.get_active_memory()
+        
+        # Extract relevant information from device_info
+        total_memory = device_info.get('memory_size', 0)
+        
+        return {
+            'total': total_memory,
+            'used': active_memory,
+            'available': max(0, total_memory - active_memory),
+            'percent': (active_memory / total_memory * 100) if total_memory > 0 else 0
+        }
+    except (AttributeError, ImportError, ZeroDivisionError):
+        # Fallback if the functions are not available
+        return {
+            'total': 0,
+            'available': 0,
+            'used': 0,
+            'percent': 0
+        }
+
+
+def get_default_device() -> str:
+    """
+    Get the default device for MLX operations.
+    
+    Returns:
+        Default device
+    """
+    # Convert MLX Device to string
+    device = mx.default_device()
+    return str(device)
+
+
+def set_default_device(device: str) -> None:
+    """
+    Set the default device for MLX operations.
+    
+    Args:
+        device: Default device
+    """
+    # MLX expects a Device object, but we'll handle string inputs
+    if device == 'cpu':
+        mx.set_default_device(mx.Device(mx.cpu))
+    elif device == 'mps' or device == 'gpu':
+        # On Apple Silicon, use Metal
+        mx.set_default_device(mx.Device(mx.gpu))
+    else:
+        # Default to CPU for unknown devices
+        mx.set_default_device(mx.Device(mx.cpu))
+
+
+def is_available(device: str) -> bool:
+    """
+    Check if the specified device is available.
+    
+    Args:
+        device: Device to check
+    
+    Returns:
+        True if the device is available, False otherwise
+    """
+    if device == 'cpu':
+        return True
+    elif device == 'mps' or device == 'gpu':
+        # Check if Metal is available
+        return mx.metal.is_available()
+    return False
+
+
+def synchronize(device: Optional[str] = None) -> None:
+    """
+    Synchronize the specified device.
+    
+    Args:
+        device: Target device (ignored for MLX backend)
+    """
+    # MLX handles synchronization automatically
+    pass
 
 
 class MLXDeviceOps:
@@ -73,6 +170,14 @@ class MLXDeviceOps:
         """Get the device of a tensor."""
         return get_device(x)
     
+    def get_default_device(self):
+        """Get the default device for tensor operations."""
+        return get_default_device()
+    
+    def set_default_device(self, device):
+        """Set the default device for tensor operations."""
+        set_default_device(device)
+    
     def get_available_devices(self):
         """Get a list of available devices."""
         return get_available_devices()
@@ -81,11 +186,14 @@ class MLXDeviceOps:
         """Get the memory usage of the specified device."""
         return memory_usage(device)
     
+    def memory_info(self, device=None):
+        """Get memory information for the specified device."""
+        return memory_info(device)
+    
     def is_available(self, device_type):
         """Check if a device type is available."""
-        return device_type == 'mps'
+        return is_available(device_type)
     
     def synchronize(self, device=None):
         """Synchronize the specified device."""
-        # MLX handles synchronization automatically
-        pass
+        synchronize(device)

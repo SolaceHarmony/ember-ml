@@ -2,7 +2,7 @@
 PyTorch backend implementation for neural network components.
 
 This module provides PyTorch-specific implementations of the abstract neural
-network components defined in emberharmony.nn.abstract.
+network components defined in ember_ml.nn.abstract.
 """
 
 import torch

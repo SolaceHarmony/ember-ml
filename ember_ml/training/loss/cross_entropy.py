@@ -1,5 +1,5 @@
 """
-Cross Entropy loss for emberharmony.
+Cross Entropy loss for ember_ml.
 
 This module provides a backend-agnostic implementation of the Cross Entropy loss
 that works with any backend (NumPy, PyTorch, MLX).

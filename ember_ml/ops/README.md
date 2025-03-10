@@ -1,10 +1,10 @@
-# EmberHarmony Operations
+# ember_ml Operations
 
-This directory contains the operations module for EmberHarmony, providing a unified interface for tensor operations across different backends.
+This directory contains the operations module for ember_ml, providing a unified interface for tensor operations across different backends.
 
 ## Overview
 
-The `ops` module is a key component of EmberHarmony's backend-agnostic design. It provides a consistent API for tensor operations that works across different backends (NumPy, PyTorch, MLX), allowing users to write code that is independent of the underlying tensor library.
+The `ops` module is a key component of ember_ml's backend-agnostic design. It provides a consistent API for tensor operations that works across different backends (NumPy, PyTorch, MLX), allowing users to write code that is independent of the underlying tensor library.
 
 ## Module Structure
 
@@ -22,7 +22,7 @@ The operations module is organized into several files:
 The `ops` module delegates operations to the current backend, making it possible to write code that works with any backend:
 
 ```python
-from emberharmony import ops
+from ember_ml import ops
 
 # Create tensors
 x = ops.random_normal((3, 4))
@@ -40,7 +40,7 @@ This code will work with any backend (NumPy, PyTorch, MLX) without any changes.
 The `ops` module provides a consistent API across different backends, making it easier to write and maintain code:
 
 ```python
-from emberharmony import ops
+from ember_ml import ops
 
 # NumPy-like API
 x = ops.zeros((3, 4))
@@ -58,7 +58,7 @@ c = ops.tanh(z)
 The `ops` module provides functions for converting between different tensor types and NumPy arrays:
 
 ```python
-from emberharmony import ops
+from ember_ml import ops
 import numpy as np
 
 # Create a NumPy array
@@ -100,8 +100,8 @@ y_np = ops.to_numpy(y)
 ### Basic Usage
 
 ```python
-import emberharmony as eh
-from emberharmony import ops
+import ember_ml as eh
+from ember_ml import ops
 
 # Set the backend
 eh.set_backend('torch')
@@ -123,8 +123,8 @@ print(f"w shape: {ops.shape(w)}")
 ### Neural Network Operations
 
 ```python
-import emberharmony as eh
-from emberharmony import ops
+import ember_ml as eh
+from ember_ml import ops
 
 # Set the backend
 eh.set_backend('torch')
@@ -158,8 +158,8 @@ print(f"Output shape: {ops.shape(y)}")
 You can create custom operations that work with any backend by using the existing operations:
 
 ```python
-import emberharmony as eh
-from emberharmony import ops
+import ember_ml as eh
+from ember_ml import ops
 
 def custom_activation(x, alpha=0.1):
     """
@@ -194,7 +194,7 @@ print(f"y: {ops.to_numpy(y)}")
 The `ops` module delegates operations to the current backend using the `get_backend` function from the `backend` module:
 
 ```python
-from emberharmony.backend import get_backend
+from ember_ml.backend import get_backend
 
 def zeros(shape, dtype=None):
     """

@@ -2,7 +2,7 @@
 Direct test script for NumPy tensor operations.
 
 This script directly tests the NumPy tensor operations by copying the necessary
-code from the tensor_ops.py file, without importing from the EmberHarmony framework.
+code from the tensor_ops.py file, without importing from the ember_ml framework.
 """
 
 import numpy as np

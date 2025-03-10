@@ -1,5 +1,5 @@
 """
-Dense (fully connected) module for emberharmony.
+Dense (fully connected) module for ember_ml.
 
 This module provides a backend-agnostic implementation of a dense (fully connected)
 layer that works with any backend (NumPy, PyTorch, MLX).

@@ -1,7 +1,8 @@
 """
-PyTorch backend configuration for EmberHarmony.
+PyTorch backend configuration for ember_ml.
 
-This module provides configuration information for the PyTorch backend.
+This module provides configuration information for the PyTorch backend,
+with automatic device selection for optimal performance.
 """
 
 import torch

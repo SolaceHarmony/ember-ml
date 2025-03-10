@@ -1,7 +1,7 @@
 """
 Math helper functions for wave processing.
 
-This module re-exports math helper functions from emberharmony.utils.math_helpers
+This module re-exports math helper functions from ember_ml.utils.math_helpers
 for use in wave processing, and adds wave-specific math functions.
 """
 

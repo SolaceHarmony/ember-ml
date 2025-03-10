@@ -1,5 +1,5 @@
 """
-Pytest configuration file for EmberHarmony tests.
+Pytest configuration file for ember_ml tests.
 
 This file contains common fixtures and configurations for pytest.
 """
@@ -10,7 +10,7 @@ import sys
 import logging
 import numpy as np
 
-# Add parent directory to path to import emberharmony
+# Add parent directory to path to import ember_ml
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Configure logging
@@ -28,7 +28,7 @@ from ember_ml import ops
 @pytest.fixture(scope="session", autouse=True)
 def setup_logging():
     """Set up logging for tests."""
-    logger = logging.getLogger('emberharmony_tests')
+    logger = logging.getLogger('ember_ml_tests')
     logger.setLevel(logging.INFO)
     return logger
 

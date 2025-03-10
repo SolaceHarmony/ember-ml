@@ -1,5 +1,5 @@
 """
-NumPy random operations for EmberHarmony.
+NumPy random operations for ember_ml.
 
 This module provides NumPy implementations of random operations.
 """
@@ -198,15 +198,6 @@ def set_seed(seed: int) -> None:
     np.random.seed(seed)
 
 
-def set_random_seed(seed: int) -> None:
-    """
-    Set the random seed for reproducibility (alias for set_seed).
-    
-    Args:
-        seed: Random seed
-    """
-    set_seed(seed)
-
 
 def get_seed() -> Optional[int]:
     """
@@ -260,10 +251,6 @@ class NumpyRandomOps:
     def set_seed(self, seed):
         """Set the random seed for reproducibility."""
         set_seed(seed)
-    
-    def set_random_seed(self, seed):
-        """Set the random seed for reproducibility (alias for set_seed)."""
-        set_random_seed(seed)
     
     def get_seed(self):
         """Get the current random seed."""

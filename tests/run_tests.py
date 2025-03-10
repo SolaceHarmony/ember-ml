@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """
-Test runner script for EmberHarmony library.
+Test runner script for Ember ML library.
 
-This script runs the tests for the EmberHarmony library using pytest.
+This script runs the tests for the Ember ML library using pytest.
 It provides options for running specific test modules, test classes,
 or individual test methods.
 
@@ -25,7 +25,7 @@ import argparse
 def main():
     """Run the tests."""
     # Create argument parser
-    parser = argparse.ArgumentParser(description='Run EmberHarmony tests')
+    parser = argparse.ArgumentParser(description='Run Ember ML tests')
     parser.add_argument('pattern', nargs='?', default='test_*.py', 
                         help='Test pattern to run (default: all tests)')
     parser.add_argument('--report', action='store_true', 
@@ -74,7 +74,7 @@ def main():
     
     # Add coverage if requested
     if args.cov:
-        pytest_args.append('--cov=emberharmony')
+        pytest_args.append('--cov=ember_ml')
         pytest_args.append('--cov-report=term')
         pytest_args.append('--cov-report=html')
     

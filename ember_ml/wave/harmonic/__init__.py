@@ -13,9 +13,9 @@ from ember_ml.wave.harmonic.training import *
 # Import directly from the parent module
 import sys
 import importlib
-if 'emberharmony.wave.harmonic' in sys.modules:
+if 'ember_ml.wave.harmonic' in sys.modules:
     # Get the parent module
-    parent_module = importlib.import_module('emberharmony.wave')
+    parent_module = importlib.import_module('ember_ml.wave')
     
     # Import the classes from the parent module
     HarmonicProcessor = getattr(parent_module, 'HarmonicProcessor', None)

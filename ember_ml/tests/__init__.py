@@ -1,3 +1,3 @@
 """
-Test package for emberharmony.
+Test package for ember_ml.
 """

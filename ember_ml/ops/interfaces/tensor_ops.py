@@ -366,3 +366,49 @@ class TensorOps(ABC):
             Variance of the tensor
         """
         pass
+    
+    @abstractmethod
+    def sort(self, x: Any, axis: int = -1, descending: bool = False) -> Any:
+        """
+        Sort a tensor along a specified axis.
+        
+        Args:
+            x: Input tensor
+            axis: Axis along which to sort
+            descending: Whether to sort in descending order
+            
+        Returns:
+            Sorted tensor
+        """
+        pass
+    
+    @abstractmethod
+    def argsort(self, x: Any, axis: int = -1, descending: bool = False) -> Any:
+        """
+        Return the indices that would sort a tensor along a specified axis.
+        
+        Args:
+            x: Input tensor
+            axis: Axis along which to sort
+            descending: Whether to sort in descending order
+            
+        Returns:
+            Indices that would sort the tensor
+        """
+        pass
+    
+    @abstractmethod
+    def item(self, x: Any) -> Union[int, float, bool]:
+        """
+        Extract the scalar value from a tensor.
+        
+        This method extracts the scalar value from a tensor containing a single element.
+        It works across all backends (NumPy, PyTorch, MLX) and returns a standard Python scalar.
+        
+        Args:
+            x: Input tensor containing a single element
+            
+        Returns:
+            Standard Python scalar (int, float, or bool)
+        """
+        pass

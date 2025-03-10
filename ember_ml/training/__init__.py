@@ -1,5 +1,5 @@
 """
-Training module for emberharmony.
+Training module for ember_ml.
 
 This module provides backend-agnostic implementations of training components
 that work with any backend (NumPy, PyTorch, MLX).

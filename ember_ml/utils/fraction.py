@@ -1,5 +1,5 @@
 """
-Fraction utilities for the emberharmony library.
+Fraction utilities for the ember_ml library.
 
 This module provides utilities for working with fractions.
 """

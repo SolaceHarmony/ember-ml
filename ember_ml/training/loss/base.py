@@ -1,5 +1,5 @@
 """
-Base loss class for emberharmony.
+Base loss class for ember_ml.
 
 This module provides a backend-agnostic implementation of the base loss class
 that works with any backend (NumPy, PyTorch, MLX).

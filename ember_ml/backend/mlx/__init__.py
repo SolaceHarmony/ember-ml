@@ -1,5 +1,5 @@
 """
-MLX backend for EmberHarmony.
+MLX backend for ember_ml.
 
 This module provides MLX implementations of tensor operations.
 """
@@ -13,6 +13,7 @@ from ember_ml.backend.mlx.comparison_ops import *
 from ember_ml.backend.mlx.device_ops import *
 from ember_ml.backend.mlx.dtype_ops import *
 from ember_ml.backend.mlx.solver_ops import *
+from ember_ml.backend.mlx.io_ops import *
 
 # Import MLX Ops classes
 from ember_ml.backend.mlx.tensor_ops import MLXTensorOps
@@ -22,3 +23,4 @@ from ember_ml.backend.mlx.comparison_ops import MLXComparisonOps
 from ember_ml.backend.mlx.device_ops import MLXDeviceOps
 from ember_ml.backend.mlx.dtype_ops import MLXDTypeOps
 from ember_ml.backend.mlx.solver_ops import MLXSolverOps
+from ember_ml.backend.mlx.io_ops import MLXIOOps

@@ -1,5 +1,5 @@
 """
-PyTorch device operations for EmberHarmony.
+PyTorch device operations for ember_ml.
 
 This module provides PyTorch implementations of device operations.
 """

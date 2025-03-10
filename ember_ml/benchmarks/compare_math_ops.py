@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """
-Compare math operations across different backends using emberharmony.ops.
+Compare math operations across different backends using ember_ml.ops.
 
-This script benchmarks and compares the math operations in emberharmony.ops
+This script benchmarks and compares the math operations in ember_ml.ops
 across different backends (numpy, torch, mlx) to ensure consistent results.
 """
 

@@ -1,11 +1,11 @@
-# EmberHarmony Neural Network Library
+# ember_ml Neural Network Library
 
 A comprehensive library for neural networks with a focus on Liquid Time Constant (LTC) neurons, wave-based processing, attention mechanisms, and Neural Circuit Policies (NCPs).
 
 ## Architecture
 
 ```
-emberharmony/
+ember_ml/
 ├── core/                 # Core neural implementations
 │   ├── base.py          # Base neural classes
 │   ├── ltc.py           # LTC neuron implementation
@@ -78,7 +78,7 @@ pip install -r requirements.txt
 
 ### 1. LTC Neural Network
 ```python
-from emberharmony.core.ltc import LTCNeuron
+from ember_ml.core.ltc import LTCNeuron
 
 # Create an LTC neuron
 neuron = LTCNeuron(tau=1.0)
@@ -87,7 +87,7 @@ output = neuron.forward(input_signal)
 
 ### 2. Attention Mechanisms
 ```python
-from emberharmony.attention.temporal import TemporalAttention
+from ember_ml.attention.temporal import TemporalAttention
 
 # Create attention mechanism
 attention = TemporalAttention(decay_rate=0.1)
@@ -96,8 +96,8 @@ weighted_output = attention.process(sequence_data)
 
 ### 3. Wave Processing
 ```python
-from emberharmony.wave.binary.processor import BinaryWaveProcessor
-from emberharmony.wave.harmonic.processor import HarmonicProcessor
+from ember_ml.wave.binary.processor import BinaryWaveProcessor
+from ember_ml.wave.harmonic.processor import HarmonicProcessor
 
 # Process binary waves
 wave_processor = BinaryWaveProcessor()
@@ -110,8 +110,8 @@ frequencies = harmonic_processor.analyze(wave_pattern)
 
 ### 4. Neural Circuit Policies
 ```python
-from emberharmony.nn.wirings import NCPWiring
-from emberharmony.nn.modules import NCP
+from ember_ml.nn.wirings import NCPWiring
+from ember_ml.nn.modules import NCP
 
 # Create a wiring configuration
 wiring = NCPWiring(
@@ -132,7 +132,7 @@ model = NCP(
 
 ### 5. Restricted Boltzmann Machines
 ```python
-from emberharmony.models.rbm import RBM
+from ember_ml.models.rbm import RBM
 
 # Create an RBM model
 rbm = RBM(
@@ -147,7 +147,7 @@ rbm.train(training_data, epochs=10, batch_size=32)
 
 ### 6. Backend Agnosticism
 ```python
-import emberharmony as eh
+import ember_ml as eh
 
 # Set the backend
 eh.set_backend('torch')  # or 'numpy', 'mlx'

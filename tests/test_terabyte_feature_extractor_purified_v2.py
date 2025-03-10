@@ -2,7 +2,7 @@
 Tests for the purified version of TerabyteFeatureExtractor and TerabyteTemporalStrideProcessor.
 
 This module compares the original NumPy-based implementation with the purified
-emberharmony backend-agnostic implementation to ensure they produce equivalent results.
+ember_ml backend-agnostic implementation to ensure they produce equivalent results.
 """
 
 import pytest

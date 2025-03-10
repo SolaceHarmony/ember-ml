@@ -1,5 +1,5 @@
 """
-Pytest configuration and shared fixtures for emberharmony tests.
+Pytest configuration and shared fixtures for ember_ml tests.
 """
 
 import pytest
@@ -51,7 +51,7 @@ def tolerance():
     return 1e-6
 
 def pytest_configure(config):
-    """Configure pytest for emberharmony tests."""
+    """Configure pytest for ember_ml tests."""
     # Add custom markers
     config.addinivalue_line(
         "markers",

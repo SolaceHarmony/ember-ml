@@ -1,5 +1,5 @@
 """
-Initializers module for emberharmony.
+Initializers module for ember_ml.
 
 This module provides initializers for neural network weights and biases.
 """

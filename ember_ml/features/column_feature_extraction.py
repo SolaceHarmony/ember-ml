@@ -11,7 +11,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.decomposition import PCA
 from sklearn.pipeline import Pipeline
 
-# Import emberharmony ops for backend-agnostic operations
+# Import ember_ml ops for backend-agnostic operations
 from ember_ml import ops
 
 # Define pi constant (ops doesn't have pi)
@@ -53,8 +53,8 @@ class ColumnFeatureExtractor:
         self.max_categories = max_categories
         
         # Store column processors
-        self.column_processors = {}
-        self.column_types = {}
+        self.column_processors: Dict[str, Any] = {}
+        self.column_types: Dict[str, str] = {}
         self.fitted = False
     
     def fit(self, df: pd.DataFrame, target_column: Optional[str] = None) -> 'ColumnFeatureExtractor':
@@ -319,20 +319,27 @@ class ColumnFeatureExtractor:
             
             # Use ops with numpy arrays
             # Hour of day (0-23)
-            result[f"{column}_sin_hour"] = ops.sin(2 * ops.pi * ops.convert_to_tensor(hour_array) / 23.0)
-            result[f"{column}_cos_hour"] = ops.cos(2 * ops.pi * ops.convert_to_tensor(hour_array) / 23.0)
+            two_pi = ops.multiply(ops.convert_to_tensor(2.0), ops.pi)
+            hour_tensor = ops.convert_to_tensor(hour_array)
+            result[f"{column}_sin_hour"] = ops.sin(ops.divide(ops.multiply(two_pi, hour_tensor), ops.convert_to_tensor(23.0)))
+            result[f"{column}_cos_hour"] = ops.cos(ops.divide(ops.multiply(two_pi, hour_tensor), ops.convert_to_tensor(23.0)))
             
             # Day of week (0-6)
-            result[f"{column}_sin_dayofweek"] = ops.sin(2 * ops.pi * ops.convert_to_tensor(dayofweek_array) / 6.0)
-            result[f"{column}_cos_dayofweek"] = ops.cos(2 * ops.pi * ops.convert_to_tensor(dayofweek_array) / 6.0)
+            dayofweek_tensor = ops.convert_to_tensor(dayofweek_array)
+            result[f"{column}_sin_dayofweek"] = ops.sin(ops.divide(ops.multiply(two_pi, dayofweek_tensor), ops.convert_to_tensor(6.0)))
+            result[f"{column}_cos_dayofweek"] = ops.cos(ops.divide(ops.multiply(two_pi, dayofweek_tensor), ops.convert_to_tensor(6.0)))
             
             # Day of month (1-31)
-            result[f"{column}_sin_day"] = ops.sin(2 * ops.pi * ops.convert_to_tensor(day_array - 1) / 30.0)
-            result[f"{column}_cos_day"] = ops.cos(2 * ops.pi * ops.convert_to_tensor(day_array - 1) / 30.0)
+            day_tensor = ops.convert_to_tensor(day_array)
+            day_minus_one = ops.subtract(day_tensor, ops.convert_to_tensor(1.0))
+            result[f"{column}_sin_day"] = ops.sin(ops.divide(ops.multiply(two_pi, day_minus_one), ops.convert_to_tensor(30.0)))
+            result[f"{column}_cos_day"] = ops.cos(ops.divide(ops.multiply(two_pi, day_minus_one), ops.convert_to_tensor(30.0)))
             
             # Month (1-12)
-            result[f"{column}_sin_month"] = ops.sin(2 * ops.pi * ops.convert_to_tensor(month_array - 1) / 11.0)
-            result[f"{column}_cos_month"] = ops.cos(2 * ops.pi * ops.convert_to_tensor(month_array - 1) / 11.0)
+            month_tensor = ops.convert_to_tensor(month_array)
+            month_minus_one = ops.subtract(month_tensor, ops.convert_to_tensor(1.0))
+            result[f"{column}_sin_month"] = ops.sin(ops.divide(ops.multiply(two_pi, month_minus_one), ops.convert_to_tensor(11.0)))
+            result[f"{column}_cos_month"] = ops.cos(ops.divide(ops.multiply(two_pi, month_minus_one), ops.convert_to_tensor(11.0)))
         
         if strategy in ['components', 'both']:
             # Direct components
@@ -345,8 +352,10 @@ class ColumnFeatureExtractor:
             result[f"{column}_dayofweek"] = dt.dayofweek
             result[f"{column}_quarter"] = dt.quarter
             
-            # Time since epoch
-            result[f"{column}_timestamp"] = df[column].astype(np.int64) // 10**9
+            # Time since epoch - use ops.cast instead of direct int64 cast
+            timestamp_tensor = ops.convert_to_tensor(df[column].astype('int64').to_numpy())
+            divisor = ops.convert_to_tensor(10**9)
+            result[f"{column}_timestamp"] = ops.cast(ops.floor_divide(timestamp_tensor, divisor), dtype=ops.int32)
         
         return pd.DataFrame(result, index=df.index)
     
@@ -370,10 +379,34 @@ class ColumnFeatureExtractor:
             result = {
                 f"{column}_length": text_data.str.len(),
                 f"{column}_word_count": text_data.str.split().str.len(),
-                f"{column}_char_per_word": text_data.str.len() / (text_data.str.split().str.len() + 1),
-                f"{column}_uppercase_ratio": text_data.str.count(r'[A-Z]') / (text_data.str.len() + 1),
-                f"{column}_digit_ratio": text_data.str.count(r'[0-9]') / (text_data.str.len() + 1),
-                f"{column}_special_ratio": text_data.str.count(r'[^a-zA-Z0-9\s]') / (text_data.str.len() + 1)
+                f"{column}_char_per_word": ops.divide(
+                    ops.convert_to_tensor(text_data.str.len().to_numpy()),
+                    ops.add(
+                        ops.convert_to_tensor(text_data.str.split().str.len().to_numpy()),
+                        ops.convert_to_tensor(1.0)
+                    )
+                ),
+                f"{column}_uppercase_ratio": ops.divide(
+                    ops.convert_to_tensor(text_data.str.count(r'[A-Z]').to_numpy()),
+                    ops.add(
+                        ops.convert_to_tensor(text_data.str.len().to_numpy()),
+                        ops.convert_to_tensor(1.0)
+                    )
+                ),
+                f"{column}_digit_ratio": ops.divide(
+                    ops.convert_to_tensor(text_data.str.count(r'[0-9]').to_numpy()),
+                    ops.add(
+                        ops.convert_to_tensor(text_data.str.len().to_numpy()),
+                        ops.convert_to_tensor(1.0)
+                    )
+                ),
+                f"{column}_special_ratio": ops.divide(
+                    ops.convert_to_tensor(text_data.str.count(r'[^a-zA-Z0-9\s]').to_numpy()),
+                    ops.add(
+                        ops.convert_to_tensor(text_data.str.len().to_numpy()),
+                        ops.convert_to_tensor(1.0)
+                    )
+                )
             }
             return pd.DataFrame(result, index=df.index)
         else:
@@ -420,7 +453,7 @@ class ColumnPCAFeatureExtractor(ColumnFeatureExtractor):
         
         self.pca_components = pca_components
         self.pca_per_type = pca_per_type
-        self.pca_models = {}
+        self.pca_models: Dict[str, Any] = {}
     
     def fit(self, df: pd.DataFrame, target_column: Optional[str] = None) -> 'ColumnPCAFeatureExtractor':
         """
@@ -538,8 +571,16 @@ class ColumnPCAFeatureExtractor(ColumnFeatureExtractor):
         
         # Calculate appropriate number of components
         if self.pca_components is None:
-            n_components = min(X.shape[1] // 2, 10)
-            n_components = min(n_components, X.shape[0] - 1)
+            n_components = ops.cast(
+                ops.floor_divide(
+                    ops.convert_to_tensor(X.shape[1]),
+                    ops.convert_to_tensor(2)
+                ),
+                dtype=ops.int32
+            )
+            n_components = ops.minimum(n_components, ops.convert_to_tensor(10))
+            n_components = ops.minimum(n_components, ops.subtract(ops.convert_to_tensor(X.shape[0]), ops.convert_to_tensor(1)))
+            n_components = int(n_components.numpy())  # Convert tensor to Python int
         else:
             n_components = min(self.pca_components, X.shape[1], X.shape[0] - 1)
             
@@ -718,12 +759,8 @@ class TemporalColumnFeatureExtractor(ColumnFeatureExtractor):
         if not windows:
             return pd.DataFrame()
         
-        # First convert windows to a numpy array
-        import numpy as np
-        windows_np = np.array([w for w in windows])
-        
-        # Then convert to tensor using ops
-        windows_array = ops.convert_to_tensor(windows_np)
+        # Convert windows to tensor using ops
+        windows_array = ops.convert_to_tensor(windows)
         
         # Create features
         result = {}
@@ -745,13 +782,31 @@ class TemporalColumnFeatureExtractor(ColumnFeatureExtractor):
         result[f"{column}_window_min"] = ops.min(windows_array, axis=1)
         result[f"{column}_window_max"] = ops.max(windows_array, axis=1)
         
-        # Trend features - use numpy for polyfit as it's not in ops
+        # Trend features - use ops for polyfit-like functionality
+        # Create x values (0, 1, 2, ..., window_size-1)
+        x_values = ops.arange(0, window_size, dtype=ops.float32)
+        
+        # Calculate slope for each window
         slopes = []
-        for window in windows_np:
-            slope = np.polyfit(np.arange(window_size), window, 1)[0]
+        for i in range(windows_array.shape[0]):
+            window = windows_array[i]
+            # Calculate mean of x and y
+            x_mean = ops.mean(x_values)
+            y_mean = ops.mean(window)
+            
+            # Calculate numerator: sum((x - x_mean) * (y - y_mean))
+            x_diff = ops.subtract(x_values, x_mean)
+            y_diff = ops.subtract(window, y_mean)
+            numerator = ops.sum(ops.multiply(x_diff, y_diff))
+            
+            # Calculate denominator: sum((x - x_mean)^2)
+            denominator = ops.sum(ops.square(x_diff))
+            
+            # Calculate slope: numerator / denominator
+            slope = ops.divide(numerator, denominator)
             slopes.append(slope)
         
-        result[f"{column}_window_slope"] = ops.convert_to_tensor(np.array(slopes))
+        result[f"{column}_window_slope"] = ops.stack(slopes)
         
         # Create index for the result
         index = series.index[window_size-1::stride]

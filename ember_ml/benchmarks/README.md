@@ -12,7 +12,7 @@ This directory contains benchmark and comparison scripts for evaluating the perf
 
 ## Usage
 
-These scripts can be run directly to benchmark different aspects of the EmberHarmony framework:
+These scripts can be run directly to benchmark different aspects of the ember_ml framework:
 
 ```bash
 # Compare PyTorch backends

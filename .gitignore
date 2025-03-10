@@ -154,3 +154,10 @@ Thumbs.db
 *.sql
 *.sqlite
 logs/
+ember_ml/backend/torch/tensor_ops.py
+migration_plan.csv
+.gitignore
+backend_operations_matrix.csv
+missing_operations.csv
+output.txt
+backend_inconsistencies.csv

@@ -1,21 +1,21 @@
-# EmberHarmony Wirings
+# ember_ml Wirings
 
 This module provides general network connectivity utilities and wiring patterns that are not specific to neural networks.
 
-## Relationship with emberharmony.nn.wirings
+## Relationship with ember_ml.nn.wirings
 
-It's important to understand the distinction between this module (`emberharmony.wirings`) and the neural network specific wirings (`emberharmony.nn.wirings`):
+It's important to understand the distinction between this module (`ember_ml.wirings`) and the neural network specific wirings (`ember_ml.nn.wirings`):
 
-- **emberharmony.wirings**: Contains general connectivity utilities and patterns that can be used in various contexts, not just neural networks. This includes graph-based connectivity, general network topologies, and utility functions for working with connectivity patterns.
+- **ember_ml.wirings**: Contains general connectivity utilities and patterns that can be used in various contexts, not just neural networks. This includes graph-based connectivity, general network topologies, and utility functions for working with connectivity patterns.
 
-- **emberharmony.nn.wirings**: Contains neural network specific wiring implementations, such as Neural Circuit Policy (NCP) wirings, fully connected wirings, and random wirings. These are specifically designed for use with neural network components in the `emberharmony.nn` module.
+- **ember_ml.nn.wirings**: Contains neural network specific wiring implementations, such as Neural Circuit Policy (NCP) wirings, fully connected wirings, and random wirings. These are specifically designed for use with neural network components in the `ember_ml.nn` module.
 
 ## Usage
 
-For neural network specific wirings, such as those used with Neural Circuit Policies, you should use the implementations in `emberharmony.nn.wirings`:
+For neural network specific wirings, such as those used with Neural Circuit Policies, you should use the implementations in `ember_ml.nn.wirings`:
 
 ```python
-from emberharmony.nn.wirings import NCPWiring, FullyConnectedWiring, RandomWiring
+from ember_ml.nn.wirings import NCPWiring, FullyConnectedWiring, RandomWiring
 
 # Create a Neural Circuit Policy wiring
 wiring = NCPWiring(
@@ -30,7 +30,7 @@ wiring = NCPWiring(
 For general connectivity patterns and utilities, use this module:
 
 ```python
-from emberharmony.wirings import create_connectivity_graph, analyze_network_topology
+from ember_ml.wirings import create_connectivity_graph, analyze_network_topology
 
 # Create a connectivity graph
 graph = create_connectivity_graph(nodes, edges)

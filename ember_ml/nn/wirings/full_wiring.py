@@ -48,7 +48,7 @@ class FullyConnectedWiring(Wiring):
         """
         # Set random seed for reproducibility
         if self.seed is not None:
-            ops.set_random_seed(self.seed)
+            ops.set_seed(self.seed)
         
         # Create masks
         if self.sparsity_level > 0.0:

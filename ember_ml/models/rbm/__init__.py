@@ -1,7 +1,7 @@
 """
 Restricted Boltzmann Machine (RBM) module.
 
-This module provides Restricted Boltzmann Machine (RBM) models for the emberharmony library.
+This module provides Restricted Boltzmann Machine (RBM) models for the ember_ml library.
 """
 
 from ember_ml.models.rbm.rbm import RestrictedBoltzmannMachine

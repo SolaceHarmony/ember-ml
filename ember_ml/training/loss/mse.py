@@ -1,5 +1,5 @@
 """
-Mean Squared Error (MSE) loss for emberharmony.
+Mean Squared Error (MSE) loss for ember_ml.
 
 This module provides a backend-agnostic implementation of the MSE loss
 that works with any backend (NumPy, PyTorch, MLX).

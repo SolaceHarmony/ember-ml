@@ -1,10 +1,10 @@
-# EmberHarmony Backend
+# ember_ml Backend
 
-This directory contains the backend implementations for EmberHarmony, providing a unified interface for tensor operations across different backends (NumPy, PyTorch, MLX).
+This directory contains the backend implementations for ember_ml, providing a unified interface for tensor operations across different backends (NumPy, PyTorch, MLX).
 
 ## Overview
 
-EmberHarmony is designed to be backend-agnostic, meaning it can work with different tensor computation libraries without any code changes. This is achieved through the use of the `backend` module, which provides a unified interface for tensor operations across different backends.
+ember_ml is designed to be backend-agnostic, meaning it can work with different tensor computation libraries without any code changes. This is achieved through the use of the `backend` module, which provides a unified interface for tensor operations across different backends.
 
 ## Available Backends
 
@@ -17,7 +17,7 @@ The `base.py` file defines the `Backend` abstract base class, which specifies th
 The `numpy_backend.py` file implements the NumPy backend, which uses NumPy for tensor operations. This is the default backend and is always available.
 
 ```python
-import emberharmony as eh
+import ember_ml as eh
 
 # Set the backend to NumPy
 eh.set_backend('numpy')
@@ -31,7 +31,7 @@ x = eh.random_normal((3, 4))
 The `torch_backend.py` file implements the PyTorch backend, which uses PyTorch for tensor operations. This backend is available if PyTorch is installed.
 
 ```python
-import emberharmony as eh
+import ember_ml as eh
 
 # Set the backend to PyTorch
 eh.set_backend('torch')
@@ -45,7 +45,7 @@ x = eh.random_normal((3, 4))
 The `torch_backend_optimized.py` file implements an optimized version of the PyTorch backend, which uses PyTorch for tensor operations with additional optimizations. This backend is available if PyTorch is installed.
 
 ```python
-import emberharmony as eh
+import ember_ml as eh
 
 # Set the backend to optimized PyTorch
 eh.set_backend('torch_optimized')
@@ -59,7 +59,7 @@ x = eh.random_normal((3, 4))
 The `mlx_backend.py` file implements the MLX backend, which uses MLX for tensor operations. This backend is available if MLX is installed.
 
 ```python
-import emberharmony as eh
+import ember_ml as eh
 
 # Set the backend to MLX
 eh.set_backend('mlx')
@@ -79,14 +79,14 @@ These files are used to persist the backend configuration across sessions.
 
 ## Backend Selection
 
-EmberHarmony provides several ways to select the backend:
+ember_ml provides several ways to select the backend:
 
 ### Manual Selection
 
 You can manually select the backend using the `set_backend` function:
 
 ```python
-import emberharmony as eh
+import ember_ml as eh
 
 # Set the backend to PyTorch
 eh.set_backend('torch')
@@ -94,10 +94,10 @@ eh.set_backend('torch')
 
 ### Automatic Selection
 
-EmberHarmony can automatically select the best available backend based on the available libraries and hardware:
+ember_ml can automatically select the best available backend based on the available libraries and hardware:
 
 ```python
-import emberharmony as eh
+import ember_ml as eh
 
 # Automatically select the best available backend
 eh.auto_select_backend()
@@ -105,15 +105,15 @@ eh.auto_select_backend()
 
 ### Environment Variable
 
-You can set the `EMBERHARMONY_BACKEND` environment variable to specify the backend:
+You can set the `ember_ml_BACKEND` environment variable to specify the backend:
 
 ```bash
-export EMBERHARMONY_BACKEND=torch
+export ember_ml_BACKEND=torch
 ```
 
 ### Configuration File
 
-You can create a configuration file at `~/.emberharmony/config` with the following content:
+You can create a configuration file at `~/.ember_ml/config` with the following content:
 
 ```
 backend = torch
@@ -122,10 +122,10 @@ device = cuda
 
 ## Backend Agnosticism
 
-EmberHarmony achieves backend agnosticism through the use of the `ops` module, which provides a unified interface for tensor operations across different backends. The `ops` module delegates the actual operations to the current backend, making it possible to write code that works with any backend.
+ember_ml achieves backend agnosticism through the use of the `ops` module, which provides a unified interface for tensor operations across different backends. The `ops` module delegates the actual operations to the current backend, making it possible to write code that works with any backend.
 
 ```python
-from emberharmony import ops
+from ember_ml import ops
 
 # Create a tensor
 x = ops.random_normal((3, 4))
@@ -166,8 +166,8 @@ class Backend(ABC):
 Backends are registered using the `register_backend` function, which associates a backend name with a backend class:
 
 ```python
-from emberharmony.backend.base import register_backend
-from emberharmony.backend.numpy_backend import NumPyBackend
+from ember_ml.backend.base import register_backend
+from ember_ml.backend.numpy_backend import NumPyBackend
 
 register_backend('numpy', NumPyBackend)
 ```
@@ -177,7 +177,7 @@ register_backend('numpy', NumPyBackend)
 The `set_backend` function selects the backend by name and initializes it:
 
 ```python
-from emberharmony.backend.base import set_backend
+from ember_ml.backend.base import set_backend
 
 set_backend('numpy')
 ```
@@ -187,7 +187,7 @@ set_backend('numpy')
 The `auto_select_backend` function selects the best available backend based on the available libraries and hardware:
 
 ```python
-from emberharmony.backend.base import auto_select_backend
+from ember_ml.backend.base import auto_select_backend
 
 auto_select_backend()
 ```
@@ -197,8 +197,8 @@ auto_select_backend()
 ### Basic Usage
 
 ```python
-import emberharmony as eh
-from emberharmony import ops
+import ember_ml as eh
+from ember_ml import ops
 
 # Set the backend
 eh.set_backend('torch')
@@ -220,8 +220,8 @@ print(f"w shape: {ops.shape(w)}")
 ### Backend Auto-Selection
 
 ```python
-import emberharmony as eh
-from emberharmony import ops
+import ember_ml as eh
+from ember_ml import ops
 
 # Automatically select the best available backend
 eh.auto_select_backend()
@@ -248,8 +248,8 @@ print(f"w shape: {ops.shape(w)}")
 If you need to use backend-specific features, you can access the backend directly:
 
 ```python
-import emberharmony as eh
-from emberharmony import ops
+import ember_ml as eh
+from ember_ml import ops
 
 # Set the backend
 eh.set_backend('torch')
@@ -266,7 +266,7 @@ if backend.name == 'torch':
     x_torch = torch.tensor(ops.to_numpy(x))
     # Use PyTorch-specific features
     x_torch = x_torch.cuda()
-    # Convert back to EmberHarmony tensor
+    # Convert back to ember_ml tensor
     x = ops.convert_to_tensor(x_torch.cpu().numpy())
 ```
 

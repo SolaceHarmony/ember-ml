@@ -166,18 +166,18 @@ class TestRandomGeneration:
 class TestRandomSeed:
     """Tests for random seed management."""
 
-    def test_set_random_seed(self, backend):
-        """Test set_random_seed operation."""
+    def test_set_seed(self, backend):
+        """Test set_seed operation."""
         try:
             # Set random seed
-            ops.set_random_seed(42)
+            ops.set_seed(42)
             
             # Generate random tensor
             shape = (100, 100)
             x1 = ops.random_normal(shape)
             
             # Set the same random seed again
-            ops.set_random_seed(42)
+            ops.set_seed(42)
             
             # Generate another random tensor
             x2 = ops.random_normal(shape)
@@ -186,7 +186,7 @@ class TestRandomSeed:
             assert np.allclose(ops.to_numpy(x1), ops.to_numpy(x2))
             
             # Set a different random seed
-            ops.set_random_seed(43)
+            ops.set_seed(43)
             
             # Generate another random tensor
             x3 = ops.random_normal(shape)
@@ -194,13 +194,13 @@ class TestRandomSeed:
             # The third tensor should be different from the first two
             assert not np.allclose(ops.to_numpy(x1), ops.to_numpy(x3))
         except (NotImplementedError, AttributeError):
-            pytest.skip(f"{backend} backend doesn't implement set_random_seed")
+            pytest.skip(f"{backend} backend doesn't implement set_seed")
 
-    def test_get_random_seed(self, backend):
-        """Test get_random_seed operation."""
+    def test_get_seed(self, backend):
+        """Test get_seed operation."""
         try:
             # Set random seed
-            ops.set_random_seed(42)
+            ops.set_seed(42)
             
             # Get random seed
             seed = ops.random_ops().get_seed()
@@ -209,7 +209,7 @@ class TestRandomSeed:
             assert seed == 42
             
             # Set a different random seed
-            ops.set_random_seed(43)
+            ops.set_seed(43)
             
             # Get random seed
             seed = ops.random_ops().get_seed()
@@ -229,7 +229,7 @@ class TestRandomUtilities:
             x = ops.arange(100)
             
             # Set random seed for reproducibility
-            ops.set_random_seed(42)
+            ops.set_seed(42)
             
             # Shuffle the tensor
             y = ops.random_ops().shuffle(x)
@@ -244,7 +244,7 @@ class TestRandomUtilities:
             assert not np.array_equal(ops.to_numpy(y), ops.to_numpy(x))
             
             # Set the same random seed again
-            ops.set_random_seed(42)
+            ops.set_seed(42)
             
             # Shuffle the tensor again
             z = ops.random_ops().shuffle(x)

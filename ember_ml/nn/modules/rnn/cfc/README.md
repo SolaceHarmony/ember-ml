@@ -1,10 +1,10 @@
 # Closed-form Continuous-time (CfC) Neural Networks
 
-This module provides implementations of Closed-form Continuous-time (CfC) neural networks for the EmberHarmony framework. CfC networks are a type of recurrent neural network that operate in continuous time, making them well-suited for modeling dynamical systems and time series data.
+This module provides implementations of Closed-form Continuous-time (CfC) neural networks for the ember_ml framework. CfC networks are a type of recurrent neural network that operate in continuous time, making them well-suited for modeling dynamical systems and time series data.
 
 ## Overview
 
-The CfC implementation in EmberHarmony includes:
+The CfC implementation in ember_ml includes:
 
 1. **CfCCell**: A basic CfC cell implementation
 2. **WiredCfCCell**: A CfC cell with custom wiring (e.g., Neural Circuit Policies)
@@ -16,7 +16,7 @@ The CfC implementation in EmberHarmony includes:
 ### Basic CfC
 
 ```python
-from emberharmony.nn.cfc import CfC
+from ember_ml.nn.cfc import CfC
 
 # Create a CfC layer with 32 units
 cfc_layer = CfC(
@@ -32,8 +32,8 @@ cfc_layer = CfC(
 ### Wired CfC with Neural Circuit Policies
 
 ```python
-from emberharmony.nn.wirings import AutoNCP
-from emberharmony.nn.cfc import CfC
+from ember_ml.nn.wirings import AutoNCP
+from ember_ml.nn.cfc import CfC
 
 # Create an AutoNCP wiring
 wiring = AutoNCP(
@@ -53,8 +53,8 @@ cfc_layer = CfC(
 ### Stride-Aware CfC
 
 ```python
-from emberharmony.nn.wirings import AutoNCP
-from emberharmony.nn.cfc import StrideAwareCfC, StrideAwareWiredCfCCell
+from ember_ml.nn.wirings import AutoNCP
+from ember_ml.nn.cfc import StrideAwareCfC, StrideAwareWiredCfCCell
 
 # Create an AutoNCP wiring
 wiring = AutoNCP(

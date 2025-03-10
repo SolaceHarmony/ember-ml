@@ -2,7 +2,7 @@
 Terabyte-Scale Feature Extractor for BigQuery (Purified Version)
 
 This module provides tools for feature extraction from terabyte-sized BigQuery tables,
-with efficient chunking and memory management, using emberharmony's backend system
+with efficient chunking and memory management, using ember_ml's backend system
 for optimal performance across different hardware.
 """
 
@@ -20,7 +20,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger('terabyte_feature_extractor')
 
-# Import emberharmony backend utilities
+# Import ember_ml backend utilities
 from ember_ml.utils import backend_utils
 from ember_ml import ops
 
@@ -828,7 +828,7 @@ class TerabyteTemporalStrideProcessor:
     PCA for dimensionality reduction, enabling multi-scale temporal analysis
     while optimizing for memory usage with large datasets.
     
-    Uses emberharmony's backend system for optimal performance across different hardware.
+    Uses ember_ml's backend system for optimal performance across different hardware.
     """
     
     def __init__(

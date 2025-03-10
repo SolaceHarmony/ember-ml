@@ -1,7 +1,7 @@
 """
-Math helper functions for the emberharmony library.
+Math helper functions for the ember_ml library.
 
-This module provides math helper functions for the emberharmony library.
+This module provides math helper functions for the ember_ml library.
 """
 
 import numpy as np

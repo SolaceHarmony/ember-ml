@@ -62,11 +62,11 @@ backend = 'mlx'
 
 test_ops_tensor.py:107: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../emberharmony/ops/__init__.py:126: in <lambda>
+../ember_ml/ops/__init__.py:126: in <lambda>
     zeros_like = lambda *args, **kwargs: tensor_ops().zeros_like(*args, **kwargs)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <emberharmony.ops.mlx.tensor_ops.MLXTensorOps object at 0x3438fdcd0>
+self = <ember_ml.ops.mlx.tensor_ops.MLXTensorOps object at 0x3438fdcd0>
 x = array([[1, 1, 1, 1],
        [1, 1, 1, 1],
        [1, 1, 1, 1]], dtype=float32)
@@ -91,7 +91,7 @@ E           1. zeros_like(a: array, /, *, stream: Union[None, Stream, Device] = 
 E       
 E       Invoked with types: mlx.core.array, kwargs = { dtype: NoneType }
 
-../emberharmony/ops/mlx/tensor_ops.py:63: TypeError
+../ember_ml/ops/mlx/tensor_ops.py:63: TypeError
 ____________________ TestTensorCreation.test_ones_like[mlx] ____________________
 
 self = <test_ops_tensor.TestTensorCreation object at 0x3438984a0>
@@ -108,11 +108,11 @@ backend = 'mlx'
 
 test_ops_tensor.py:134: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../emberharmony/ops/__init__.py:127: in <lambda>
+../ember_ml/ops/__init__.py:127: in <lambda>
     ones_like = lambda *args, **kwargs: tensor_ops().ones_like(*args, **kwargs)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <emberharmony.ops.mlx.tensor_ops.MLXTensorOps object at 0x37c9e3ce0>
+self = <ember_ml.ops.mlx.tensor_ops.MLXTensorOps object at 0x37c9e3ce0>
 x = array([[0, 0, 0, 0],
        [0, 0, 0, 0],
        [0, 0, 0, 0]], dtype=float32)
@@ -137,7 +137,7 @@ E           1. ones_like(a: array, /, *, stream: Union[None, Stream, Device] = N
 E       
 E       Invoked with types: mlx.core.array, kwargs = { dtype: NoneType }
 
-../emberharmony/ops/mlx/tensor_ops.py:78: TypeError
+../ember_ml/ops/mlx/tensor_ops.py:78: TypeError
 ______________________ TestTensorCreation.test_eye[torch] ______________________
 
 self = <test_ops_tensor.TestTensorCreation object at 0x343898830>
@@ -151,11 +151,11 @@ backend = 'torch'
 
 test_ops_tensor.py:158: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../emberharmony/ops/__init__.py:128: in <lambda>
+../ember_ml/ops/__init__.py:128: in <lambda>
     eye = lambda *args, **kwargs: tensor_ops().eye(*args, **kwargs)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <emberharmony.ops.torch.tensor_ops.TorchTensorOps object at 0x37c9e2a20>
+self = <ember_ml.ops.torch.tensor_ops.TorchTensorOps object at 0x37c9e2a20>
 n = 3, m = None, dtype = None, device = None
 
     def eye(self, n: int, m: Optional[int] = None, dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
@@ -176,7 +176,7 @@ E       TypeError: eye() received an invalid combination of arguments - got (int
 E        * (int n, *, Tensor out = None, torch.dtype dtype = None, torch.layout layout = None, torch.device device = None, bool pin_memory = False, bool requires_grad = False)
 E        * (int n, int m, *, Tensor out = None, torch.dtype dtype = None, torch.layout layout = None, torch.device device = None, bool pin_memory = False, bool requires_grad = False)
 
-../emberharmony/ops/torch/tensor_ops.py:93: TypeError
+../ember_ml/ops/torch/tensor_ops.py:93: TypeError
 _________________ TestTensorManipulation.test_transpose[numpy] _________________
 
 self = <test_ops_tensor.TestTensorManipulation object at 0x340590b90>
@@ -219,11 +219,11 @@ backend = 'torch'
 
 test_ops_tensor.py:212: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../emberharmony/ops/__init__.py:134: in <lambda>
+../ember_ml/ops/__init__.py:134: in <lambda>
     transpose = lambda *args, **kwargs: tensor_ops().transpose(*args, **kwargs)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <emberharmony.ops.torch.tensor_ops.TorchTensorOps object at 0x37c9e2f60>
+self = <ember_ml.ops.torch.tensor_ops.TorchTensorOps object at 0x37c9e2f60>
 x = tensor([[[1., 1., 1., 1.],
          [1., 1., 1., 1.],
          [1., 1., 1., 1.]],
@@ -249,7 +249,7 @@ axes = None
 >           return x_tensor.t()
 E           RuntimeError: t() expects a tensor with <= 2 dimensions, but self is 3D
 
-../emberharmony/ops/torch/tensor_ops.py:185: RuntimeError
+../ember_ml/ops/torch/tensor_ops.py:185: RuntimeError
 __________________ TestTensorManipulation.test_transpose[mlx] __________________
 
 self = <test_ops_tensor.TestTensorManipulation object at 0x343898f50>
@@ -301,11 +301,11 @@ self = <test_ops_tensor.TestTensorInfo object at 0x34389a630>, backend = 'mlx'
 
 test_ops_tensor.py:329: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../emberharmony/ops/__init__.py:145: in <lambda>
+../ember_ml/ops/__init__.py:145: in <lambda>
     cast = lambda *args, **kwargs: tensor_ops().cast(*args, **kwargs)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <emberharmony.ops.mlx.tensor_ops.MLXTensorOps object at 0x37cd042f0>
+self = <ember_ml.ops.mlx.tensor_ops.MLXTensorOps object at 0x37cd042f0>
 x = array([[1, 1, 1, 1],
        [1, 1, 1, 1],
        [1, 1, 1, 1]], dtype=float32)
@@ -326,7 +326,7 @@ dtype = mlx.core.int32
 >       return mx.astype(x_tensor, dtype)
 E       AttributeError: module 'mlx.core' has no attribute 'astype'. Did you mean: 'Dtype'?
 
-../emberharmony/ops/mlx/tensor_ops.py:376: AttributeError
+../ember_ml/ops/mlx/tensor_ops.py:376: AttributeError
 ________________________ TestTensorInfo.test_copy[mlx] _________________________
 
 self = <test_ops_tensor.TestTensorInfo object at 0x34389aab0>, backend = 'mlx'

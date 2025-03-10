@@ -2,7 +2,7 @@
 Test script for the RBM model.
 
 This script tests the functionality of the RBM model
-to ensure it works correctly with the emberharmony package.
+to ensure it works correctly with the ember_ml package.
 """
 import numpy as np
 from ember_ml import ops

@@ -1,6 +1,6 @@
 # Neural Network Modules
 
-This directory contains neural network module implementations for EmberHarmony, with a focus on Neural Circuit Policies (NCPs) and other specialized neural network architectures.
+This directory contains neural network module implementations for ember_ml, with a focus on Neural Circuit Policies (NCPs) and other specialized neural network architectures.
 
 ## Overview
 
@@ -13,8 +13,8 @@ Neural network modules are the building blocks of neural network models. They en
 The `NCP` class implements a Neural Circuit Policy, which is a recurrent neural network with a specific connectivity pattern defined by a wiring configuration.
 
 ```python
-from emberharmony.nn.wirings import NCPWiring
-from emberharmony.nn.modules import NCP
+from ember_ml.nn.wirings import NCPWiring
+from ember_ml.nn.modules import NCP
 
 # Create a wiring configuration
 wiring = NCPWiring(
@@ -44,7 +44,7 @@ outputs = model(inputs)
 The `AutoNCP` class is a convenience wrapper around the `NCP` class that automatically configures the wiring based on the number of units and outputs.
 
 ```python
-from emberharmony.nn.modules import AutoNCP
+from ember_ml.nn.modules import AutoNCP
 
 # Create an AutoNCP model
 model = AutoNCP(
@@ -84,9 +84,9 @@ The AutoNCP module automatically creates an NCPWiring configuration based on the
 
 ```python
 import numpy as np
-from emberharmony import ops
-from emberharmony.nn.wirings import NCPWiring
-from emberharmony.nn.modules import NCP
+from ember_ml import ops
+from ember_ml.nn.wirings import NCPWiring
+from ember_ml.nn.modules import NCP
 
 # Create a simple dataset
 X = ops.reshape(ops.linspace(0, 2 * np.pi, 100), (-1, 1))
@@ -171,8 +171,8 @@ print(f"Test Loss: {test_loss:.6f}")
 You can create custom NCP modules by subclassing the `NCP` class and overriding the `forward` method:
 
 ```python
-from emberharmony.nn.modules import NCP
-from emberharmony import ops
+from ember_ml.nn.modules import NCP
+from ember_ml import ops
 
 class CustomNCP(NCP):
     """

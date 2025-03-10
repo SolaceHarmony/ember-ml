@@ -1,5 +1,5 @@
 """
-Test script for the emberharmony backend system.
+Test script for the ember_ml backend system.
 
 This script tests the basic functionality of the backend system,
 including backend switching and tensor operations.

@@ -1,7 +1,7 @@
 """
-Utility modules for emberharmony.
+Utility modules for ember_ml.
 
-This package contains utility modules for various emberharmony functionality.
+This package contains utility modules for various ember_ml functionality.
 """
 
 from . import backend_utils

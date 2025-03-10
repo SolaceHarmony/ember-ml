@@ -633,7 +633,7 @@ def integrate_liquid_neurons_with_visualization(
     val_perspectives = processor.process_batch(val_X)
     test_perspectives = processor.process_batch(test_X)
 
-    # Convert to emberharmony tensors
+    # Convert to ember_ml tensors
     train_inputs = {s: ops.convert_to_tensor(data, dtype='float32')
                    for s, data in train_perspectives.items()}
     val_inputs = {s: ops.convert_to_tensor(data, dtype='float32')
@@ -809,7 +809,7 @@ if __name__ == "__main__":
     print("This module provides classes and functions for multi-scale liquid neural networks.")
     print("To use it, import the module and call the integrate_liquid_neurons_with_visualization function.")
     print("Example:")
-    print("  from emberharmony.attention.multiscale_ltc import integrate_liquid_neurons_with_visualization")
+    print("  from ember_ml.attention.multiscale_ltc import integrate_liquid_neurons_with_visualization")
     print("  history = integrate_liquid_neurons_with_visualization(")
     print("      project_id='your-project-id',")
     print("      table_id='your-dataset.your-table',")
@@ -1042,7 +1042,7 @@ def integrate_liquid_neurons_with_visualization(
     val_perspectives = processor.process_batch(val_X)
     test_perspectives = processor.process_batch(test_X)
 
-    # Convert to emberharmony tensors
+    # Convert to ember_ml tensors
     train_inputs = {s: ops.convert_to_tensor(data, dtype='float32')
                    for s, data in train_perspectives.items()}
     val_inputs = {s: ops.convert_to_tensor(data, dtype='float32')
@@ -1218,7 +1218,7 @@ if __name__ == "__main__":
     print("This module provides classes and functions for multi-scale liquid neural networks.")
     print("To use it, import the module and call the integrate_liquid_neurons_with_visualization function.")
     print("Example:")
-    print("  from emberharmony.attention.multiscale_ltc import integrate_liquid_neurons_with_visualization")
+    print("  from ember_ml.attention.multiscale_ltc import integrate_liquid_neurons_with_visualization")
     print("  history = integrate_liquid_neurons_with_visualization(")
     print("      project_id='your-project-id',")
     print("      table_id='your-dataset.your-table',")

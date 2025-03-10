@@ -1,5 +1,5 @@
 """
-NumPy backend for EmberHarmony.
+NumPy backend for ember_ml.
 
 This module provides NumPy implementations of tensor operations.
 """
@@ -13,6 +13,7 @@ from ember_ml.backend.numpy.comparison_ops import *
 from ember_ml.backend.numpy.device_ops import *
 from ember_ml.backend.numpy.dtype_ops import *
 from ember_ml.backend.numpy.solver_ops import *
+from ember_ml.backend.numpy.io_ops import *
 
 # Import NumPy Ops classes
 from ember_ml.backend.numpy.tensor_ops import NumpyTensorOps
@@ -22,3 +23,4 @@ from ember_ml.backend.numpy.comparison_ops import NumpyComparisonOps
 from ember_ml.backend.numpy.device_ops import NumpyDeviceOps
 from ember_ml.backend.numpy.dtype_ops import NumpyDTypeOps
 from ember_ml.backend.numpy.solver_ops import NumpySolverOps
+from ember_ml.backend.numpy.io_ops import NumPyIOOps

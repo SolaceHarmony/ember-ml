@@ -1,5 +1,5 @@
 """
-NumPy tensor operations for EmberHarmony.
+NumPy tensor operations for ember_ml.
 
 This module provides NumPy implementations of tensor operations.
 """
@@ -588,6 +588,22 @@ def is_available(device_type: str) -> bool:
     return device_type == 'cpu'
 
 
+def item(x: ArrayLike) -> Union[int, float, bool]:
+    """
+    Extract the scalar value from a tensor.
+    
+    This method extracts the scalar value from a tensor containing a single element.
+    
+    Args:
+        x: Input tensor containing a single element
+        
+    Returns:
+        Standard Python scalar (int, float, or bool)
+    """
+    x_array = convert_to_tensor(x)
+    return x_array.item()
+
+
 class NumpyTensorOps:
     """NumPy implementation of tensor operations."""
 
@@ -794,3 +810,7 @@ class NumpyTensorOps:
     def bool_(self):
         """Get the boolean data type."""
         return np.bool_
+        
+    def item(self, x):
+        """Extract the scalar value from a tensor."""
+        return item(x)

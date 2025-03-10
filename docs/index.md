@@ -1,6 +1,6 @@
-# emberharmony Documentation
+# Ember ML Documentation
 
-Welcome to the emberharmony documentation. emberharmony is a library for efficient feature extraction and processing of terabyte-scale datasets, with a focus on performance, scalability, and ease of use.
+Welcome to the Ember ML documentation. Ember ML is a library for efficient feature extraction and processing of terabyte-scale datasets, with a focus on performance, scalability, and ease of use.
 
 ## Documentation Sections
 
@@ -19,14 +19,14 @@ Welcome to the emberharmony documentation. emberharmony is a library for efficie
 ### Installation
 
 ```bash
-pip install emberharmony
+pip install ember-ml
 ```
 
 ### Basic Usage
 
 ```python
-import emberharmony as eh
-from emberharmony import ops
+import ember_ml as eh
+from ember_ml import ops
 
 # Create a feature extractor
 extractor = eh.features.TerabyteFeatureExtractor(
@@ -43,7 +43,7 @@ result = extractor.prepare_data(
 # Unpack results
 train_df, val_df, test_df, train_features, val_features, test_features, scaler, imputer = result
 
-# Convert to emberharmony tensors for GPU acceleration
+# Convert to Ember ML tensors for GPU acceleration
 train_tensor = ops.convert_to_tensor(train_df[train_features].values)
 ```
 
@@ -59,7 +59,7 @@ For more detailed instructions, see the [Getting Started](tutorials/getting_star
 
 ## Architecture Overview
 
-emberharmony is designed with a modular architecture that separates concerns and promotes reusability:
+Ember ML is designed with a modular architecture that separates concerns and promotes reusability:
 
 - **Backend System**: Provides a unified API across different computational backends
 - **Data Processing**: Handles efficient loading and processing of large datasets
@@ -70,7 +70,7 @@ For more details, see the [Architecture Documentation](architecture/index.md).
 
 ## Use Cases
 
-emberharmony is particularly well-suited for:
+Ember ML is particularly well-suited for:
 
 - **Large-Scale Data Processing**: Efficiently process terabyte-scale datasets
 - **Feature Engineering**: Extract and transform features for machine learning
@@ -82,13 +82,13 @@ emberharmony is particularly well-suited for:
 If you encounter any issues or have questions:
 
 1. Check the [Troubleshooting](troubleshooting/index.md) guide
-2. Search for similar issues in the [GitHub repository](https://github.com/your-org/emberharmony/issues)
-3. Ask a question in the [Discussion forum](https://github.com/your-org/emberharmony/discussions)
+2. Search for similar issues in the [GitHub repository](https://github.com/your-org/ember-ml/issues)
+3. Ask a question in the [Discussion forum](https://github.com/your-org/ember-ml/discussions)
 
 ## Contributing
 
-We welcome contributions to emberharmony! See the [Development Guide](development/index.md) for information on how to contribute.
+We welcome contributions to Ember ML! See the [Development Guide](development/index.md) for information on how to contribute.
 
 ## License
 
-emberharmony is released under the [MIT License](https://opensource.org/licenses/MIT).
+Ember ML is released under the [MIT License](https://opensource.org/licenses/MIT).

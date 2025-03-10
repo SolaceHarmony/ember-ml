@@ -339,7 +339,7 @@ def benchmark_performance(size=10000, iterations=5):
                 speedup = original_avg_time / purified_avg_time
                 logger.info(f"Speedup vs. original: {speedup:.2f}x")
     except ImportError:
-        logger.warning("Could not import emberharmony.backend for backend comparison")
+        logger.warning("Could not import ember_ml.backend for backend comparison")
 
 
 def main():

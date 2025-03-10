@@ -4,7 +4,7 @@ Base Module class for neural network components.
 This module provides the foundation for building neural network components
 that work with any backend (NumPy, PyTorch, MLX).
 
-The BaseModule class is the base class for all neural network modules in EmberHarmony.
+The BaseModule class is the base class for all neural network modules in ember_ml.
 """
 
 import inspect
@@ -38,7 +38,7 @@ class Parameter:
 
 class BaseModule:
     """
-    Base class for all neural network modules in EmberHarmony.
+    Base class for all neural network modules in ember_ml.
     
     All custom modules should subclass this class and override the forward method.
     This class provides the foundation for building neural network components

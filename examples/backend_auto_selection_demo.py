@@ -1,7 +1,7 @@
 """
-Demo script for the auto-selection of backends in emberharmony.
+Demo script for the auto-selection of backends in Ember ML.
 
-This script demonstrates how emberharmony automatically selects the best backend
+This script demonstrates how Ember ML automatically selects the best backend
 based on the available hardware.
 """
 
@@ -9,7 +9,7 @@ import platform
 import sys
 import os
 
-# Add the parent directory to the path so we can import emberharmony
+# Add the parent directory to the path so we can import ember_ml
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import ember_ml as nl
@@ -147,7 +147,7 @@ def demonstrate_backend_switching():
 def main():
     """Main function."""
     print("=" * 80)
-    print("EmberHarmony Backend Auto-Selection Demo")
+    print("Ember ML Backend Auto-Selection Demo")
     print("=" * 80)
     print()
     

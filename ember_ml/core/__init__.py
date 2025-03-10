@@ -22,7 +22,7 @@ BlockyRoadNeuron
 
 Example Usage
 ------------
->>> from emberharmony.core import LTCNeuron, SphericalLTCNeuron
+>>> from ember_ml.core import LTCNeuron, SphericalLTCNeuron
 
 # Create basic LTC neuron
 >>> neuron = LTCNeuron(neuron_id=1, tau=1.0, dt=0.01)
@@ -33,12 +33,12 @@ Example Usage
 >>> output = spherical.update(input_vector)
 
 # Use hybrid neuron with attention
->>> from emberharmony.core import HybridNeuron
+>>> from ember_ml.core import HybridNeuron
 >>> hybrid = HybridNeuron(neuron_id=1, hidden_size=64)
 >>> output = hybrid.update(input_tensor)
 
 # Use blocky road neuron
->>> from emberharmony.core import BlockyRoadNeuron
+>>> from ember_ml.core import BlockyRoadNeuron
 >>> blocky = BlockyRoadNeuron(neuron_id=1)
 >>> output = blocky.update(input_signal)
 """

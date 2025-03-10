@@ -1,8 +1,8 @@
 """
-PyTorch backend for EmberHarmony.
+PyTorch backend for ember_ml.
 
 This module provides PyTorch implementations of the backend operations
-required by EmberHarmony.
+required by ember_ml.
 """
 
 # Import all components from their respective modules
@@ -22,6 +22,7 @@ from ember_ml.backend.torch.comparison_ops import TorchComparisonOps
 from ember_ml.backend.torch.device_ops import TorchDeviceOps
 from ember_ml.backend.torch.dtype_ops import TorchDTypeOps
 from ember_ml.backend.torch.solver_ops import TorchSolverOps
+from ember_ml.backend.torch.io_ops import TorchIOOps
 
 # Import all functions
 from ember_ml.backend.torch.tensor_ops import (
@@ -91,7 +92,6 @@ from ember_ml.backend.torch.random_ops import (
     random_binomial,
     random_permutation,
     set_seed,
-    set_random_seed,
     random_categorical,
     random_exponential,
     random_gamma,
@@ -128,10 +128,15 @@ from ember_ml.backend.torch.dtype_ops import (
     ember_dtype_to_torch,
     torch_to_ember_dtype
 )
-
 from ember_ml.backend.torch.solver_ops import (
     solve
 )
 
+from ember_ml.backend.torch.io_ops import (
+    save,
+    load
+)
+
 # Set power function
+power = pow
 power = pow

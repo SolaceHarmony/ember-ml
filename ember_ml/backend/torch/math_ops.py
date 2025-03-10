@@ -1,10 +1,11 @@
 """
-PyTorch math operations for EmberHarmony.
+PyTorch math operations for ember_ml.
 
 This module provides PyTorch implementations of math operations.
 """
 
 import torch
+import numpy as np
 from typing import Optional, Union, List, Tuple
 
 # Import from tensor_ops
@@ -547,6 +548,29 @@ def mod(x: ArrayLike, y: ArrayLike) -> torch.Tensor:
     return torch.remainder(x_tensor, y_tensor)
 
 
+def floor_divide(x: ArrayLike, y: ArrayLike) -> torch.Tensor:
+    """
+    Element-wise integer division.
+    
+    If either array is a floating point type then it is equivalent to calling floor() after divide().
+    
+    Args:
+        x: First tensor
+        y: Second tensor
+        
+    Returns:
+        Element-wise integer quotient (a // b)
+    """
+    x_tensor = convert_to_tensor(x)
+    y_tensor = convert_to_tensor(y)
+    
+    # Ensure both tensors are on the same device
+    if x_tensor.device != y_tensor.device:
+        y_tensor = y_tensor.to(x_tensor.device)
+    
+    return torch.floor_divide(x_tensor, y_tensor)
+
+
 def sort(x: ArrayLike, axis: int = -1) -> torch.Tensor:
     """
     Sort a PyTorch tensor along a specified axis.
@@ -560,6 +584,50 @@ def sort(x: ArrayLike, axis: int = -1) -> torch.Tensor:
     """
     x_tensor = convert_to_tensor(x)
     return torch.sort(x_tensor, dim=axis)[0]
+
+
+def gradient(f: ArrayLike, *varargs, axis: Optional[Union[int, List[int], Tuple[int, ...]]] = None,
+            edge_order: int = 1) -> Union[torch.Tensor, List[torch.Tensor]]:
+    """
+    Return the gradient of an N-dimensional tensor.
+    
+    The gradient is computed using second order accurate central differences in the interior
+    points and either first or second order accurate one-sides (forward or backwards)
+    differences at the boundaries. The returned gradient hence has the same shape as the input tensor.
+    
+    Args:
+        f: An N-dimensional tensor containing samples of a scalar function.
+        *varargs: Spacing between f values. Default unitary spacing for all dimensions.
+        axis: Gradient is calculated only along the given axis or axes.
+            The default (axis = None) is to calculate the gradient for all the axes of the input tensor.
+        edge_order: Gradient is calculated using N-th order accurate differences at the boundaries.
+            Must be 1 or 2.
+            
+    Returns:
+        A tensor or tuple of tensors corresponding to the derivatives of f with respect to each dimension.
+        Each derivative has the same shape as f.
+    """
+    f_tensor = convert_to_tensor(f)
+    
+    # Convert to NumPy array for calculation
+    f_numpy = f_tensor.detach().cpu().numpy()
+    
+    # Process spacing arguments
+    spacing_args = []
+    for arg in varargs:
+        if isinstance(arg, torch.Tensor):
+            spacing_args.append(arg.detach().cpu().numpy())
+        else:
+            spacing_args.append(arg)
+    
+    # Calculate gradient using NumPy's gradient function
+    result_numpy = np.gradient(f_numpy, *spacing_args, axis=axis, edge_order=edge_order)
+    
+    # Convert back to PyTorch tensor
+    if isinstance(result_numpy, np.ndarray):
+        return torch.from_numpy(result_numpy).to(f_tensor.device)
+    else:
+        return [torch.from_numpy(arr).to(f_tensor.device) for arr in result_numpy]
 
 
 # Define the pi constant using Chudnovsky algorithm
@@ -580,9 +648,12 @@ def _calculate_pi_value(precision_digits=15):
         Value of pi with the specified precision
     """
     # Constants in the Chudnovsky algorithm
-    C = torch.tensor(640320.0)
-    C3_OVER_24 = torch.div(torch.pow(C, 3), torch.tensor(24.0))
-    DIGITS_PER_TERM = torch.tensor(14.1816474627254776555)  # Approx. digits per iteration
+    from ember_ml.backend.torch.config import DEFAULT_DEVICE
+    
+    # Create all constants on the default device
+    C = torch.tensor(640320.0, device=DEFAULT_DEVICE)
+    C3_OVER_24 = torch.div(torch.pow(C, 3), torch.tensor(24.0, device=DEFAULT_DEVICE))
+    DIGITS_PER_TERM = torch.tensor(14.1816474627254776555, device=DEFAULT_DEVICE)  # Approx. digits per iteration
     
     def binary_split(a, b):
         """Recursive binary split for the Chudnovsky algorithm."""
@@ -590,26 +661,36 @@ def _calculate_pi_value(precision_digits=15):
         b_tensor = convert_to_tensor(b)
         diff = torch.subtract(b_tensor, a_tensor)
         
-        if torch.equal(diff, torch.tensor(1.0)):
+        # Create comparison tensor on the same device as diff
+        one_tensor = torch.tensor(1.0, device=diff.device)
+        if torch.equal(diff, one_tensor):
             # Base case
-            if torch.equal(a_tensor, torch.tensor(0.0)):
-                Pab = torch.tensor(1.0)
-                Qab = torch.tensor(1.0)
+            # Create tensors on the same device as a_tensor
+            zero_tensor = torch.tensor(0.0, device=a_tensor.device)
+            one_tensor = torch.tensor(1.0, device=a_tensor.device)
+            if torch.equal(a_tensor, zero_tensor):
+                Pab = torch.tensor(1.0, device=a_tensor.device)
+                Qab = torch.tensor(1.0, device=a_tensor.device)
             else:
-                term1 = torch.subtract(torch.multiply(torch.tensor(6.0), a_tensor), torch.tensor(5.0))
-                term2 = torch.subtract(torch.multiply(torch.tensor(2.0), a_tensor), torch.tensor(1.0))
-                term3 = torch.subtract(torch.multiply(torch.tensor(6.0), a_tensor), torch.tensor(1.0))
+                six_tensor = torch.tensor(6.0, device=a_tensor.device)
+                five_tensor = torch.tensor(5.0, device=a_tensor.device)
+                two_tensor = torch.tensor(2.0, device=a_tensor.device)
+                term1 = torch.subtract(torch.multiply(six_tensor, a_tensor), five_tensor)
+                term2 = torch.subtract(torch.multiply(two_tensor, a_tensor), one_tensor)
+                term3 = torch.subtract(torch.multiply(six_tensor, a_tensor), one_tensor)
                 Pab = torch.multiply(torch.multiply(term1, term2), term3)
                 Qab = torch.multiply(torch.pow(a_tensor, 3), C3_OVER_24)
             
-            base_term = torch.tensor(13591409.0)
-            multiplier = torch.tensor(545140134.0)
+            base_term = torch.tensor(13591409.0, device=a_tensor.device)
+            multiplier = torch.tensor(545140134.0, device=a_tensor.device)
             term = torch.add(base_term, torch.multiply(multiplier, a_tensor))
             Tab = torch.multiply(Pab, term)
             
             # Check if a is odd
-            remainder = torch.remainder(a_tensor, torch.tensor(2.0))
-            is_odd = torch.eq(remainder, torch.tensor(1.0))
+            two_tensor = torch.tensor(2.0, device=a_tensor.device)
+            one_tensor = torch.tensor(1.0, device=a_tensor.device)
+            remainder = torch.remainder(a_tensor, two_tensor)
+            is_odd = torch.eq(remainder, one_tensor)
             
             # If a is odd, negate Tab
             Tab = torch.where(is_odd, torch.negative(Tab), Tab)
@@ -617,7 +698,8 @@ def _calculate_pi_value(precision_digits=15):
             return Pab, Qab, Tab
         
         # Recursive case
-        m = torch.div(torch.add(a_tensor, b_tensor), torch.tensor(2.0))
+        two_tensor = torch.tensor(2.0, device=a_tensor.device)
+        m = torch.div(torch.add(a_tensor, b_tensor), two_tensor)
         m = torch.floor(m)  # Ensure m is an integer
         
         Pam, Qam, Tam = binary_split(a, m)
@@ -634,7 +716,8 @@ def _calculate_pi_value(precision_digits=15):
     # Number of terms needed for the desired precision
     precision_tensor = convert_to_tensor(precision_digits)
     terms_float = torch.div(precision_tensor, DIGITS_PER_TERM)
-    terms_float = torch.add(terms_float, torch.tensor(1.0))
+    one_tensor = torch.tensor(1.0, device=terms_float.device)
+    terms_float = torch.add(terms_float, one_tensor)
     terms = torch.floor(terms_float)  # Convert to integer
     terms_int = terms.to(torch.int32)
     
@@ -642,8 +725,8 @@ def _calculate_pi_value(precision_digits=15):
     P, Q, T = binary_split(0, terms_int)
     
     # Calculate pi
-    sqrt_10005 = torch.sqrt(torch.tensor(10005.0))
-    numerator = torch.multiply(Q, torch.tensor(426880.0))
+    sqrt_10005 = torch.sqrt(torch.tensor(10005.0, device=Q.device))
+    numerator = torch.multiply(Q, torch.tensor(426880.0, device=Q.device))
     numerator = torch.multiply(numerator, sqrt_10005)
     pi_approx = torch.div(numerator, T)
     
@@ -803,9 +886,17 @@ class TorchMathOps:
         """Compute the remainder of division of x by y element-wise."""
         return mod(x, y)
     
+    def floor_divide(self, x, y):
+        """Element-wise integer division."""
+        return floor_divide(x, y)
+    
     def sort(self, x, axis=-1):
         """Sort a tensor along a specified axis."""
         return sort(x, axis=axis)
+        
+    def gradient(self, f, *varargs, axis=None, edge_order=1):
+        """Return the gradient of an N-dimensional tensor."""
+        return gradient(f, *varargs, axis=axis, edge_order=edge_order)
     
     def pi_func(self):
         """Return the mathematical constant pi as a function."""

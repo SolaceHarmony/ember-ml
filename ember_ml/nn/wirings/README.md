@@ -1,6 +1,6 @@
 # Neural Network Wirings
 
-This module provides neural network specific wiring implementations for EmberHarmony, with a focus on Neural Circuit Policies (NCPs) and other biologically-inspired connectivity patterns.
+This module provides neural network specific wiring implementations for ember_ml, with a focus on Neural Circuit Policies (NCPs) and other biologically-inspired connectivity patterns.
 
 ## Overview
 
@@ -13,7 +13,7 @@ Wirings define the connectivity patterns between neurons in a neural network. Th
 The `Wiring` class is the base class for all wiring configurations. It defines the interface for all wiring configurations and provides common functionality.
 
 ```python
-from emberharmony.nn.wirings import Wiring
+from ember_ml.nn.wirings import Wiring
 
 # Create a custom wiring
 class CustomWiring(Wiring):
@@ -30,7 +30,7 @@ class CustomWiring(Wiring):
 The `NCPWiring` class implements the wiring configuration for Neural Circuit Policies. It divides neurons into sensory, inter, and motor neurons, and defines the connectivity patterns between them.
 
 ```python
-from emberharmony.nn.wirings import NCPWiring
+from ember_ml.nn.wirings import NCPWiring
 
 # Create an NCP wiring
 wiring = NCPWiring(
@@ -47,7 +47,7 @@ wiring = NCPWiring(
 The `FullyConnectedWiring` class implements a fully connected wiring configuration, where all neurons are connected to all other neurons.
 
 ```python
-from emberharmony.nn.wirings import FullyConnectedWiring
+from ember_ml.nn.wirings import FullyConnectedWiring
 
 # Create a fully connected wiring
 wiring = FullyConnectedWiring(
@@ -61,7 +61,7 @@ wiring = FullyConnectedWiring(
 The `RandomWiring` class implements a randomly generated wiring configuration, where connections between neurons are randomly generated based on a sparsity level.
 
 ```python
-from emberharmony.nn.wirings import RandomWiring
+from ember_ml.nn.wirings import RandomWiring
 
 # Create a random wiring
 wiring = RandomWiring(
@@ -77,7 +77,7 @@ wiring = RandomWiring(
 The `AutoNCPWiring` class is a convenience wrapper around the `NCPWiring` class that automatically configures the wiring based on the number of units and outputs.
 
 ```python
-from emberharmony.nn.wirings import AutoNCPWiring
+from ember_ml.nn.wirings import AutoNCPWiring
 
 # Create an auto NCP wiring
 wiring = AutoNCPWiring(
@@ -90,11 +90,11 @@ wiring = AutoNCPWiring(
 
 ## Usage with NCP Modules
 
-These wirings are designed to be used with the NCP modules in `emberharmony.nn.modules`. Here's an example of how to use them together:
+These wirings are designed to be used with the NCP modules in `ember_ml.nn.modules`. Here's an example of how to use them together:
 
 ```python
-from emberharmony.nn.wirings import NCPWiring
-from emberharmony.nn.modules import NCP
+from ember_ml.nn.wirings import NCPWiring
+from ember_ml.nn.modules import NCP
 
 # Create a wiring configuration
 wiring = NCPWiring(
@@ -126,10 +126,10 @@ The wiring configurations use binary masks to define the connectivity patterns b
 
 For more detailed information on Neural Circuit Policies and their wiring configurations, see the [Neural Circuit Policies documentation](../../docs/neural_circuit_policies.md).
 
-## Relationship with emberharmony.wirings
+## Relationship with ember_ml.wirings
 
-It's important to understand the distinction between this module (`emberharmony.nn.wirings`) and the general wirings module (`emberharmony.wirings`):
+It's important to understand the distinction between this module (`ember_ml.nn.wirings`) and the general wirings module (`ember_ml.wirings`):
 
-- **emberharmony.nn.wirings**: Contains neural network specific wiring implementations, such as Neural Circuit Policy (NCP) wirings, fully connected wirings, and random wirings. These are specifically designed for use with neural network components in the `emberharmony.nn` module.
+- **ember_ml.nn.wirings**: Contains neural network specific wiring implementations, such as Neural Circuit Policy (NCP) wirings, fully connected wirings, and random wirings. These are specifically designed for use with neural network components in the `ember_ml.nn` module.
 
-- **emberharmony.wirings**: Contains general connectivity utilities and patterns that can be used in various contexts, not just neural networks. This includes graph-based connectivity, general network topologies, and utility functions for working with connectivity patterns.
+- **ember_ml.wirings**: Contains general connectivity utilities and patterns that can be used in various contexts, not just neural networks. This includes graph-based connectivity, general network topologies, and utility functions for working with connectivity patterns.

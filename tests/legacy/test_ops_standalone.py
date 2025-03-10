@@ -2,14 +2,14 @@
 Standalone test script for the ops module.
 
 This script tests the basic functionality of the ops module without importing
-the entire emberharmony package.
+the entire ember_ml package.
 """
 
 import sys
 import os
 import numpy as np
 
-# Add the parent directory to the path so we can import emberharmony
+# Add the parent directory to the path so we can import ember_ml
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import the ops module

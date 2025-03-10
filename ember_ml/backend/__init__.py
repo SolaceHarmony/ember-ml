@@ -13,10 +13,9 @@ from typing import Optional, Tuple
 
 # Available backends
 _BACKENDS = {
-    'numpy': 'emberharmony.backend.numpy',
-    'torch': 'emberharmony.backend.torch',
-    'torch_optimized': 'emberharmony.backend.torch_backend_optimized',
-    'mlx': 'emberharmony.backend.mlx'
+    'numpy': 'ember_ml.backend.numpy',
+    'torch': 'ember_ml.backend.torch',
+    'mlx': 'ember_ml.backend.mlx'
 }
 
 # Current backend
@@ -29,7 +28,7 @@ def get_backend():
     
     if _CURRENT_BACKEND is None:
         # Try to get the backend from environment variable
-        backend = os.environ.get('EMBERHARMONY_BACKEND')
+        backend = os.environ.get('EMBER_ML_BACKEND')
         
         # If not set, use the default backend
         if backend is None:
@@ -56,7 +55,7 @@ def set_backend(backend: str):
     _CURRENT_BACKEND = backend
     
     # Store the backend in an environment variable for persistence across module reloads
-    os.environ['EMBERHARMONY_BACKEND'] = backend
+    os.environ['EMBER_ML_BACKEND'] = backend
     
     # Clear the current backend module
     _CURRENT_BACKEND_MODULE = None
@@ -74,9 +73,22 @@ def get_backend_module():
     
     return _CURRENT_BACKEND_MODULE
 
-def get_device():
-    """Get the current device."""
+def get_device(tensor=None):
+    """
+    Get the current device.
+    
+    Args:
+        tensor: Optional tensor to get the device from
+        
+    Returns:
+        Device name as a string
+    """
     backend = get_backend()
+    
+    if tensor is not None:
+        # If a tensor is provided, try to get its device
+        if hasattr(tensor, 'device'):
+            return str(tensor.device)
     
     if backend == 'numpy':
         return 'cpu'
@@ -89,13 +101,62 @@ def get_device():
     else:
         return 'cpu'
 
+def set_device(device):
+    """
+    Set the current device.
+    
+    Args:
+        device: Device name as a string or device object
+        
+    Raises:
+        ValueError: If the device is not valid for the current backend
+    """
+    backend = get_backend()
+    
+    # Handle MLX DeviceType objects directly
+    if str(device) == 'DeviceType.gpu':
+        if backend == 'mlx':
+            # MLX doesn't support explicit device setting yet
+            return
+        else:
+            device = 'gpu'
+    
+    # Convert device to string if it's an object
+    if hasattr(device, 'type'):
+        device = device.type
+    
+    # Convert to lowercase string for consistency
+    if isinstance(device, str):
+        device = device.lower()
+    
+    if backend == 'torch':
+        import torch
+        if device == 'cuda' and not torch.cuda.is_available():
+            raise ValueError("CUDA is not available")
+        if device == 'mps' and not (hasattr(torch, 'backends') and hasattr(torch.backends, 'mps') and torch.backends.mps.is_available()):
+            raise ValueError("MPS is not available")
+        if device not in ['cpu', 'cuda', 'mps']:
+            raise ValueError(f"Invalid device for PyTorch: {device}")
+        torch.device(device)
+    elif backend == 'mlx':
+        import mlx.core as mx
+        # MLX uses 'gpu' or 'cpu' internally
+        if device in ['metal', 'gpu']:
+            # MLX doesn't support explicit device setting yet
+            return
+        if device != 'cpu':
+            raise ValueError(f"Invalid device for MLX: {device}")
+        # MLX doesn't support explicit device setting yet
+    elif device != 'cpu':
+        raise ValueError(f"Backend {backend} only supports 'cpu' device")
+
 def auto_select_backend():
     """Automatically select the best backend based on the available hardware."""
     # Check for MLX (Apple Silicon)
     if platform.system() == 'Darwin' and platform.machine() == 'arm64':
         try:
             import mlx.core
-            return 'mlx', 'Metal'
+            return 'mlx', None
         except ImportError:
             pass
     
@@ -103,16 +164,16 @@ def auto_select_backend():
     try:
         import torch
         if torch.cuda.is_available():
-            return 'torch', 'CUDA'
+            return 'torch', 'cuda'
     except ImportError:
         pass
     
     # Check for PyTorch
     try:
         import torch
-        return 'torch', 'CPU'
+        return 'torch', 'cpu'
     except ImportError:
         pass
     
     # Fallback to NumPy
-    return 'numpy', 'CPU'
+    return 'numpy', None

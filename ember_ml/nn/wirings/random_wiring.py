@@ -48,7 +48,7 @@ class RandomWiring(Wiring):
         """
         # Set random seed for reproducibility
         if self.seed is not None:
-            ops.set_random_seed(self.seed)
+            ops.set_seed(self.seed)
         
         # Create random masks
         input_mask = ops.cast(

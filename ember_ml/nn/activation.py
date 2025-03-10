@@ -1,5 +1,5 @@
 """
-Activation functions for emberharmony.
+Activation functions for ember_ml.
 
 This module provides backend-agnostic implementations of common activation
 functions that work with any backend (NumPy, PyTorch, MLX).

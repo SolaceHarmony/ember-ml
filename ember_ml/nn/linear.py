@@ -1,5 +1,5 @@
 """
-Linear layer implementation for emberharmony.
+Linear layer implementation for ember_ml.
 
 This module provides a backend-agnostic implementation of a fully connected
 (linear) layer that works with any backend (NumPy, PyTorch, MLX).

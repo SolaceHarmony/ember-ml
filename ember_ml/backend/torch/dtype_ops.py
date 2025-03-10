@@ -1,5 +1,5 @@
 """
-PyTorch data type operations for EmberHarmony.
+PyTorch data type operations for ember_ml.
 
 This module provides PyTorch implementations of data type operations.
 """

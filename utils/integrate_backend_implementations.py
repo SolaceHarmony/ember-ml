@@ -2,7 +2,7 @@
 """
 Integrate backend implementations into the backend files.
 
-This script integrates the implementations from the emberharmony/backend/implementations
+This script integrates the implementations from the ember_ml/backend/implementations
 directory into the appropriate backend files.
 """
 
@@ -14,16 +14,16 @@ from typing import Dict, List, Set, Tuple
 
 # Paths to backend files
 BACKEND_FILES = {
-    "numpy": "emberharmony/backend/numpy_backend.py",
-    "torch": "emberharmony/backend/torch_backend.py",
-    "mlx": "emberharmony/backend/mlx_backend.py"
+    "numpy": "ember_ml/backend/numpy_backend.py",
+    "torch": "ember_ml/backend/torch_backend.py",
+    "mlx": "ember_ml/backend/mlx_backend.py"
 }
 
 # Path to ops module
-OPS_MODULE_PATH = "emberharmony/ops/__init__.py"
+OPS_MODULE_PATH = "ember_ml/ops/__init__.py"
 
 # Path to implementations directory
-IMPLEMENTATIONS_DIR = "emberharmony/backend/implementations"
+IMPLEMENTATIONS_DIR = "ember_ml/backend/implementations"
 
 def load_module_from_file(file_path: str, module_name: str = None):
     """Load a module from a file path."""
@@ -112,7 +112,7 @@ def update_ops_module(operations: Set[str]) -> bool:
         for operation in sorted(missing_operations):
             f.write(f'\n\ndef {operation}(*args, **kwargs):\n')
             f.write(f'    """Wrapper for backend-specific {operation} implementation."""\n')
-            f.write(f'    from emberharmony.backend import get_backend_module\n')
+            f.write(f'    from ember_ml.backend import get_backend_module\n')
             f.write(f'    return get_backend_module().{operation}(*args, **kwargs)\n')
     
     print(f"Added {len(missing_operations)} operations to the ops module")

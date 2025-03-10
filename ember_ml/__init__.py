@@ -1,5 +1,5 @@
 """
-EmberHarmony: A backend-agnostic neural network library.
+Ember ML: A backend-agnostic neural network library.
 
 This library provides a unified interface for neural network operations
 that can work with different backends (NumPy, PyTorch, MLX).
@@ -22,11 +22,11 @@ def set_backend(backend_name: Union[str, Literal['numpy', 'torch', 'mlx']]) -> N
     global _CURRENT_BACKEND, _BACKEND_MODULE
     
     if backend_name == 'torch':
-        _BACKEND_MODULE = importlib.import_module('emberharmony.backend.torch_backend')
+        _BACKEND_MODULE = importlib.import_module('ember_ml.backend.torch')
     elif backend_name == 'numpy':
-        _BACKEND_MODULE = importlib.import_module('emberharmony.backend.numpy_backend')
+        _BACKEND_MODULE = importlib.import_module('ember_ml.backend.numpy')
     elif backend_name == 'mlx':
-        _BACKEND_MODULE = importlib.import_module('emberharmony.backend.mlx_backend')
+        _BACKEND_MODULE = importlib.import_module('ember_ml.backend.mlx')
     else:
         raise ValueError(f"Unknown backend: {backend_name}")
     
@@ -72,12 +72,8 @@ from ember_ml import solvers
 from ember_ml import data
 from ember_ml import ops
 from ember_ml import wirings
-from ember_ml import random
 
-# Import random functions directly
-from ember_ml.random import seed, set_random_seed
-
-# Version of the emberharmony package
+# Version of the Ember ML package
 __version__ = '0.2.0'
 
 # List of public objects exported by this module
@@ -98,8 +94,5 @@ __all__ = [
     'ops',
     'wirings',
     'nn',
-    'random',
     'set_backend',
-    'seed',
-    'set_random_seed',
 ]

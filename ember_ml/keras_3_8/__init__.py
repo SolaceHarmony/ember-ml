@@ -35,7 +35,7 @@ Components
 
 Usage Examples
 -------------
->>> from emberharmony.keras_3_8 import create_ltc_rnn
+>>> from ember_ml.keras_3_8 import create_ltc_rnn
 
 # Create LTC-RNN layer
 >>> rnn = create_ltc_rnn(

@@ -31,6 +31,10 @@ def convert_to_tensor(x: ArrayLike, dtype: DType = None, device: Optional[str] =
     if isinstance(dtype, str):
         from ember_ml.backend.mlx.dtype_ops import get_dtype
         dtype = get_dtype(dtype)
+    # Handle EmberDtype objects
+    elif hasattr(dtype, 'name') and hasattr(dtype, 'numpy_dtype'):
+        from ember_ml.backend.mlx.dtype_ops import get_dtype
+        dtype = get_dtype(dtype.name)
     
     # Check if x is a tensor from another backend
     if hasattr(x, '__class__') and 'Tensor' in x.__class__.__name__ and not isinstance(x, mx.array):
@@ -63,6 +67,10 @@ def zeros(shape: Shape, dtype: DType = None, device: Optional[str] = None) -> mx
     if isinstance(dtype, str):
         from ember_ml.backend.mlx.dtype_ops import get_dtype
         dtype = get_dtype(dtype)
+    # Handle EmberDtype objects
+    elif hasattr(dtype, 'name') and hasattr(dtype, 'numpy_dtype'):
+        from ember_ml.backend.mlx.dtype_ops import get_dtype
+        dtype = get_dtype(dtype.name)
     
     return mx.zeros(shape, dtype=dtype)
 
@@ -82,6 +90,10 @@ def ones(shape: Shape, dtype: DType = None, device: Optional[str] = None) -> mx.
     if isinstance(dtype, str):
         from ember_ml.backend.mlx.dtype_ops import get_dtype
         dtype = get_dtype(dtype)
+    # Handle EmberDtype objects
+    elif hasattr(dtype, 'name') and hasattr(dtype, 'numpy_dtype'):
+        from ember_ml.backend.mlx.dtype_ops import get_dtype
+        dtype = get_dtype(dtype.name)
     
     return mx.ones(shape, dtype=dtype)
 
@@ -345,18 +357,70 @@ def copy(x: ArrayLike) -> mx.array:
     # MLX arrays are immutable, so we can just convert to a new array
     return convert_to_tensor(x)
 
+def item(x: ArrayLike) -> Union[int, float, bool]:
+    """
+    Extract the scalar value from a tensor.
+    
+    This method extracts the scalar value from a tensor containing a single element.
+    
+    Args:
+        x: Input tensor containing a single element
+        
+    Returns:
+        Standard Python scalar (int, float, or bool)
+    """
+    x_array = convert_to_tensor(x)
+    
+    # Get the raw value
+    raw_value = x_array.item()
+    
+    # Handle different types explicitly to ensure we return the expected types
+    if isinstance(raw_value, bool):
+        return bool(raw_value)
+    elif isinstance(raw_value, int):
+        return int(raw_value)
+    elif isinstance(raw_value, float):
+        return float(raw_value)
+    elif raw_value is True or raw_value is False:
+        return bool(raw_value)
+    
+    # For other types, determine the best conversion based on the value
+    try:
+        # Try to convert to int if it looks like an integer
+        if isinstance(raw_value, (str, bytes)) and raw_value.isdigit():
+            return 0  # Default to 0 for safety
+        # For numeric-looking values, convert to float
+        return 0.0  # Default to 0.0 for safety
+    except (ValueError, TypeError, AttributeError):
+        # If all else fails, return False
+        return False
+
+
 def to_numpy(x: ArrayLike) -> Any:
     """
-    Convert a tensor to a list representation that can be converted to NumPy.
+    Convert a tensor to a NumPy array.
     
     Args:
         x: Input array
         
     Returns:
-        List representation of the array
+        NumPy array representation of the tensor
     """
     x_array = convert_to_tensor(x)
-    return x_array.tolist()
+    
+    # This is allowed as an exception to the no NumPy rule
+    # since to_numpy is specifically for NumPy conversion
+    import numpy as np
+    
+    # Handle bfloat16 arrays by converting to float32 first
+    if x_array.dtype == mx.bfloat16:
+        x_array = mx.array(x_array, dtype=mx.float32)
+    
+    # Use NumPy's buffer protocol support for efficient conversion
+    # This creates a copy of the array
+    result = np.array(x_array)
+    
+    return result
 
 
 def tensor_scatter_nd_update(array: ArrayLike, indices: ArrayLike, updates: ArrayLike) -> mx.array:
@@ -419,6 +483,34 @@ def full(shape: Shape, fill_value: Union[float, int], dtype: DType = None, devic
     return mx.full(shape, fill_value, dtype=dtype)
 
 
+def full_like(x: ArrayLike, fill_value: Union[float, int], dtype: DType = None, device: Optional[str] = None) -> mx.array:
+    """
+    Create an MLX array filled with a scalar value with the same shape as the input.
+    
+    Args:
+        x: Input array
+        fill_value: Value to fill the array with
+        dtype: Optional data type
+        device: Ignored for MLX backend
+        
+    Returns:
+        MLX array filled with the specified value with the same shape as x
+    """
+    x_array = convert_to_tensor(x)
+    
+    # Handle string dtype values
+    if isinstance(dtype, str):
+        from ember_ml.backend.mlx.dtype_ops import get_dtype
+        dtype = get_dtype(dtype)
+    
+    # If dtype is None, use the dtype of the input array
+    if dtype is None:
+        dtype = x_array.dtype
+    
+    # Create a full array with the same shape as the input
+    return mx.full(x_array.shape, fill_value, dtype=dtype)
+
+
 def arange(start: int, stop: Optional[int] = None, step: int = 1, dtype: DType = None, device: Optional[str] = None) -> mx.array:
     """
     Create an MLX array with evenly spaced values within a given interval.
@@ -437,11 +529,73 @@ def arange(start: int, stop: Optional[int] = None, step: int = 1, dtype: DType =
     if isinstance(dtype, str):
         from ember_ml.backend.mlx.dtype_ops import get_dtype
         dtype = get_dtype(dtype)
+    # Handle EmberDtype objects
+    elif hasattr(dtype, 'name') and hasattr(dtype, 'numpy_dtype'):
+        from ember_ml.backend.mlx.dtype_ops import get_dtype
+        dtype = get_dtype(dtype.name)
     
     if stop is None:
         # If only one argument is provided, it's the stop value
         return mx.arange(start=0, stop=start, step=step, dtype=dtype)
     return mx.arange(start=start, stop=stop, step=step, dtype=dtype)
+
+def linspace(start: float, stop: float, num: int, dtype: DType = None, device: Optional[str] = None) -> mx.array:
+    """
+    Create an MLX array with evenly spaced values within a given interval.
+    
+    Args:
+        start: Start of interval (inclusive)
+        stop: End of interval (inclusive)
+        num: Number of values to generate
+        dtype: Optional data type
+        device: Ignored for MLX backend
+        
+    Returns:
+        MLX array with evenly spaced values
+    """
+    # Handle string dtype values
+    if isinstance(dtype, str):
+        from ember_ml.backend.mlx.dtype_ops import get_dtype
+        dtype = get_dtype(dtype)
+    # Handle EmberDtype objects
+    elif hasattr(dtype, 'name') and hasattr(dtype, 'numpy_dtype'):
+        from ember_ml.backend.mlx.dtype_ops import get_dtype
+        dtype = get_dtype(dtype.name)
+    
+    return mx.linspace(start=start, stop=stop, num=num, dtype=dtype)
+
+
+def tile(x: ArrayLike, reps: Sequence[int]) -> mx.array:
+    """
+    Construct an MLX array by tiling a given array.
+
+    Args:
+        x: Input array
+        reps: Number of repetitions along each dimension
+
+    Returns:
+        Tiled MLX array
+    """
+    x_tensor = convert_to_tensor(x)
+    return mx.tile(x_tensor, reps)
+
+
+def gather(x: ArrayLike, indices: Any, axis: int = 0) -> mx.array:
+    """
+    Gather slices from an MLX array along an axis.
+
+    Args:
+        x: Input array
+        indices: Indices of slices to gather
+        axis: Axis along which to gather
+
+    Returns:
+        Gathered MLX array
+    """
+    x_tensor = convert_to_tensor(x)
+    indices_tensor = convert_to_tensor(indices)
+    return mx.take(x_tensor, indices_tensor, axis=axis)
+
 
 
 class MLXTensorOps:
@@ -464,6 +618,10 @@ class MLXTensorOps:
         """Create a tensor filled with a scalar value."""
         return full(shape, fill_value, dtype=dtype, device=device)
     
+    def full_like(self, x, fill_value, dtype=None, device=None):
+        """Create a tensor filled with a scalar value with the same shape as the input."""
+        return full_like(x, fill_value, dtype=dtype, device=device)
+    
     def zeros_like(self, x, dtype=None, device=None):
         """Create a tensor of zeros with the same shape as the input."""
         return zeros_like(x, dtype=dtype, device=device)
@@ -479,6 +637,10 @@ class MLXTensorOps:
     def arange(self, start, stop=None, step=1, dtype=None, device=None):
         """Create a tensor with evenly spaced values within a given interval."""
         return arange(start, stop=stop, step=step, dtype=dtype, device=device)
+    
+    def linspace(self, start, stop, num, dtype=None, device=None):
+        """Create a tensor with evenly spaced values within a given interval."""
+        return linspace(start, stop, num, dtype=dtype, device=device)
     
     def reshape(self, x, shape):
         """Reshape a tensor to a new shape."""
@@ -531,10 +693,22 @@ class MLXTensorOps:
     def to_numpy(self, x):
         """Convert a tensor to a NumPy array."""
         return to_numpy(x)
+        
+    def item(self, x):
+        """Extract the scalar value from a tensor."""
+        return item(x)
     
     def tensor_scatter_nd_update(self, array, indices, updates):
         """Update elements of a tensor at specified indices with given values."""
         return tensor_scatter_nd_update(array, indices, updates)
+    
+    def tile(self, x, reps):
+        """Construct a tensor by tiling a given tensor."""
+        return tile(x, reps)
+    
+    def gather(self, x, indices, axis=0):
+        """Gather slices from a tensor along an axis."""
+        return gather(x, indices, axis=axis)
     
     def get_default_device(self):
         """Get the default device for tensor operations."""

@@ -3,7 +3,7 @@
 ## Directory Structure
 
 ```
-emberharmony/tests/
+ember_ml/tests/
 ├── __init__.py
 ├── conftest.py                # Pytest configurations and fixtures
 ├── core/
@@ -132,7 +132,7 @@ pytest
 pytest tests/core/test_ltc.py
 
 # Run with coverage report
-pytest --cov=emberharmony tests/
+pytest --cov=ember_ml tests/
 
 # Run with verbose output
 pytest -v

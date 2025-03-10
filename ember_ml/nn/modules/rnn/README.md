@@ -1,6 +1,6 @@
 # Recurrent Neural Network (RNN) Module
 
-This module provides implementations of various RNN layers for the EmberHarmony framework, including:
+This module provides implementations of various RNN layers for the ember_ml framework, including:
 
 - **CfC (Closed-form Continuous-time)**: A continuous-time RNN with closed-form solution for the hidden state dynamics
 - **WiredCfC**: A CfC cell with custom wiring (e.g., Neural Circuit Policies)
@@ -15,7 +15,7 @@ This module provides implementations of various RNN layers for the EmberHarmony 
 
 ## Overview
 
-The RNN module is designed to be backend-agnostic, using EmberHarmony's ops module for all tensor operations. This allows the same code to run on different backends (PyTorch, NumPy, MLX) without modification.
+The RNN module is designed to be backend-agnostic, using ember_ml's ops module for all tensor operations. This allows the same code to run on different backends (PyTorch, NumPy, MLX) without modification.
 
 ## Components
 
@@ -24,7 +24,7 @@ The RNN module is designed to be backend-agnostic, using EmberHarmony's ops modu
 The `CfCCell` is the basic building block for Closed-form Continuous-time RNNs. It implements a continuous-time recurrent neural network with closed-form solution for the hidden state dynamics.
 
 ```python
-from emberharmony.nn.modules.rnn import CfCCell
+from ember_ml.nn.modules.rnn import CfCCell
 
 # Create a CfC cell with 32 units
 cell = CfCCell(
@@ -41,8 +41,8 @@ cell = CfCCell(
 The `WiredCfCCell` extends the `CfCCell` with support for custom wiring, such as Neural Circuit Policies (NCPs).
 
 ```python
-from emberharmony.nn.modules.rnn import WiredCfCCell
-from emberharmony.nn.wirings import AutoNCP
+from ember_ml.nn.modules.rnn import WiredCfCCell
+from ember_ml.nn.wirings import AutoNCP
 
 # Create an AutoNCP wiring
 wiring = AutoNCP(
@@ -66,8 +66,8 @@ cell = WiredCfCCell(
 The `CfC` layer wraps a `CfCCell` or `WiredCfCCell` to create a recurrent layer that can process sequences.
 
 ```python
-from emberharmony.nn.modules.rnn import CfC
-from emberharmony.nn.wirings import AutoNCP
+from ember_ml.nn.modules.rnn import CfC
+from ember_ml.nn.wirings import AutoNCP
 
 # Create a CfC layer with 32 units
 cfc_layer = CfC(
@@ -95,8 +95,8 @@ wired_cfc_layer = CfC(
 The `LTCCell` implements a Liquid Time-Constant cell with biologically-inspired dynamics. It requires a wiring configuration to define the connectivity between neurons.
 
 ```python
-from emberharmony.nn.modules.rnn import LTCCell
-from emberharmony.nn.wirings import AutoNCP
+from ember_ml.nn.modules.rnn import LTCCell
+from ember_ml.nn.wirings import AutoNCP
 
 # Create an AutoNCP wiring
 wiring = AutoNCP(
@@ -120,8 +120,8 @@ cell = LTCCell(
 The `LTC` layer wraps an `LTCCell` to create a recurrent layer that can process sequences.
 
 ```python
-from emberharmony.nn.modules.rnn import LTC
-from emberharmony.nn.wirings import AutoNCP
+from ember_ml.nn.modules.rnn import LTC
+from ember_ml.nn.wirings import AutoNCP
 
 # Create an LTC layer with fully connected wiring
 ltc_layer = LTC(
@@ -151,7 +151,7 @@ wired_ltc_layer = LTC(
 The `LSTMCell` implements a standard Long Short-Term Memory cell with input, forget, and output gates.
 
 ```python
-from emberharmony.nn.modules.rnn import LSTMCell
+from ember_ml.nn.modules.rnn import LSTMCell
 
 # Create an LSTM cell
 cell = LSTMCell(
@@ -166,7 +166,7 @@ cell = LSTMCell(
 The `LSTM` layer wraps one or more `LSTMCell` instances to create a recurrent layer that can process sequences. It supports multiple layers, bidirectionality, and dropout.
 
 ```python
-from emberharmony.nn.modules.rnn import LSTM
+from ember_ml.nn.modules.rnn import LSTM
 
 # Create a single-layer LSTM
 lstm_layer = LSTM(
@@ -193,7 +193,7 @@ bidirectional_lstm = LSTM(
 The `GRUCell` implements a standard Gated Recurrent Unit cell with reset and update gates.
 
 ```python
-from emberharmony.nn.modules.rnn import GRUCell
+from ember_ml.nn.modules.rnn import GRUCell
 
 # Create a GRU cell
 cell = GRUCell(
@@ -208,7 +208,7 @@ cell = GRUCell(
 The `GRU` layer wraps one or more `GRUCell` instances to create a recurrent layer that can process sequences. It supports multiple layers, bidirectionality, and dropout.
 
 ```python
-from emberharmony.nn.modules.rnn import GRU
+from ember_ml.nn.modules.rnn import GRU
 
 # Create a single-layer GRU
 gru_layer = GRU(
@@ -235,7 +235,7 @@ bidirectional_gru = GRU(
 The `RNNCell` implements a basic recurrent neural network cell with a single activation function.
 
 ```python
-from emberharmony.nn.modules.rnn import RNNCell
+from ember_ml.nn.modules.rnn import RNNCell
 
 # Create an RNN cell with tanh activation
 cell = RNNCell(
@@ -259,7 +259,7 @@ cell = RNNCell(
 The `RNN` layer wraps one or more `RNNCell` instances to create a recurrent layer that can process sequences. It supports multiple layers, bidirectionality, and dropout.
 
 ```python
-from emberharmony.nn.modules.rnn import RNN
+from ember_ml.nn.modules.rnn import RNN
 
 # Create a single-layer RNN with tanh activation
 rnn_layer = RNN(
@@ -289,9 +289,9 @@ bidirectional_rnn = RNN(
 
 ```python
 import numpy as np
-from emberharmony import ops
-from emberharmony.nn.modules.rnn import CfC, LTC, LSTM, GRU, RNN
-from emberharmony.nn import Sequential
+from ember_ml import ops
+from ember_ml.nn.modules.rnn import CfC, LTC, LSTM, GRU, RNN
+from ember_ml.nn import Sequential
 
 # Create a CfC model
 cfc_model = Sequential([
@@ -363,7 +363,7 @@ y_rnn = rnn_model(x)
 ### Training
 
 ```python
-from emberharmony.training import Optimizer, Loss
+from ember_ml.training import Optimizer, Loss
 
 # Define optimizer and loss function
 optimizer = Optimizer.adam(model.parameters(), learning_rate=0.001)

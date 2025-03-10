@@ -1,7 +1,7 @@
 """
-Metrics utilities for the emberharmony library.
+Metrics utilities for the ember_ml library.
 
-This module provides metrics utilities for the emberharmony library.
+This module provides metrics utilities for the ember_ml library.
 """
 
 import numpy as np

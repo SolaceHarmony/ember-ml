@@ -1,5 +1,5 @@
 """
-Data types for emberharmony.
+Data types for ember_ml.
 
 This module provides a backend-agnostic data type system that can be used
 across different backends (NumPy, PyTorch, MLX).

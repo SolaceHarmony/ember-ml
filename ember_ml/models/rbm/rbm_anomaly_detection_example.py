@@ -12,7 +12,7 @@ import os
 import time
 from datetime import datetime
 
-# Import our modules from emberharmony
+# Import our modules from ember_ml
 from ember_ml import (
     GenericCSVLoader,
     GenericTypeDetector,

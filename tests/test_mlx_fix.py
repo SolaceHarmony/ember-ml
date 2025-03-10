@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.abspath('.'))
 
 try:
     # Set the backend to MLX
-    os.environ['EMBERHARMONY_OPS'] = 'mlx'
+    os.environ['ember_ml_OPS'] = 'mlx'
     
     # Import the ops module
     from ember_ml import ops

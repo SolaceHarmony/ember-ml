@@ -1,7 +1,7 @@
 """
 Restricted Boltzmann Machine (RBM) implementation.
 
-This module provides a Restricted Boltzmann Machine (RBM) implementation for the emberharmony library.
+This module provides a Restricted Boltzmann Machine (RBM) implementation for the ember_ml library.
 """
 
 import numpy as np

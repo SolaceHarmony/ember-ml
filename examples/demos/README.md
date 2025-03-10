@@ -1,6 +1,6 @@
 # Demos
 
-This directory contains demonstration scripts showcasing various features and capabilities of the EmberHarmony framework.
+This directory contains demonstration scripts showcasing various features and capabilities of the ember_ml framework.
 
 ## Files
 
@@ -8,7 +8,7 @@ This directory contains demonstration scripts showcasing various features and ca
 
 ## Usage
 
-These demo scripts can be run directly to see the EmberHarmony framework in action:
+These demo scripts can be run directly to see the ember_ml framework in action:
 
 ```bash
 # Run the PyTorch MPS demo
@@ -27,7 +27,7 @@ When adding new demonstration scripts to this directory, please follow these gui
 
 ## Demo Requirements
 
-Some demos may have additional requirements beyond the core EmberHarmony dependencies. These requirements should be documented in the demo script itself, as well as in this README.md file.
+Some demos may have additional requirements beyond the core ember_ml dependencies. These requirements should be documented in the demo script itself, as well as in this README.md file.
 
 ### PyTorch MPS Demo Requirements
 

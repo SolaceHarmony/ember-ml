@@ -1,7 +1,8 @@
 """
-PyTorch tensor operations for EmberHarmony.
+PyTorch tensor operations for ember_ml.
 
-This module provides PyTorch implementations of tensor operations.
+This module provides PyTorch implementations of tensor operations
+with automatic device selection for optimal performance.
 """
 
 import torch
@@ -18,12 +19,12 @@ from ember_ml.backend.torch.config import DEFAULT_DEVICE
 
 def convert_to_tensor(x: ArrayLike, dtype: DType = None, device: Optional[str] = None) -> torch.Tensor:
     """
-    Convert input to a PyTorch tensor.
+    Convert input to a PyTorch tensor with automatic device selection.
     
     Args:
         x: Input data (array, tensor, scalar)
         dtype: Optional data type
-        device: Optional device to place the tensor on
+        device: Optional device to place the tensor on (if None, uses DEFAULT_DEVICE)
         
     Returns:
         PyTorch tensor representation of the input
@@ -42,41 +43,70 @@ def convert_to_tensor(x: ArrayLike, dtype: DType = None, device: Optional[str] =
     else:
         tensor = torch.tensor(x, dtype=dtype)
     
-    # Move to device if specified
-    if device is not None:
-        tensor = tensor.to(device)
+    # Use the specified device or the default device
+    target_device = device or DEFAULT_DEVICE
+    
+    # Only move to device if it's different from current device
+    if tensor.device.type != target_device:
+        try:
+            tensor = tensor.to(target_device)
+        except RuntimeError:
+            # Fallback to CPU if device is not available
+            if target_device != 'cpu':
+                print(f"Warning: Failed to move tensor to {target_device}, falling back to CPU")
+                tensor = tensor.to('cpu')
     
     return tensor
 
 
 def zeros(shape: Shape, dtype: DType = None, device: Optional[str] = None) -> torch.Tensor:
     """
-    Create a tensor of zeros.
+    Create a tensor of zeros with automatic device selection.
     
     Args:
         shape: Shape of the tensor
         dtype: Optional data type
-        device: Optional device to place the tensor on
+        device: Optional device to place the tensor on (if None, uses DEFAULT_DEVICE)
         
     Returns:
         Tensor of zeros with the specified shape
     """
-    return torch.zeros(shape, dtype=dtype, device=device)
+    target_device = device or DEFAULT_DEVICE
+    
+    try:
+        return torch.zeros(shape, dtype=dtype, device=target_device)
+    except RuntimeError:
+        # Fallback to CPU if device is not available
+        if target_device != 'cpu':
+            print(f"Warning: Failed to create tensor on {target_device}, falling back to CPU")
+            return torch.zeros(shape, dtype=dtype, device='cpu')
+        else:
+            raise
 
 
 def ones(shape: Shape, dtype: DType = None, device: Optional[str] = None) -> torch.Tensor:
     """
-    Create a tensor of ones.
+    Create a tensor of ones with automatic device selection.
     
     Args:
         shape: Shape of the tensor
         dtype: Optional data type
-        device: Optional device to place the tensor on
+        device: Optional device to place the tensor on (if None, uses DEFAULT_DEVICE)
         
     Returns:
         Tensor of ones with the specified shape
     """
-    return torch.ones(shape, dtype=dtype, device=device)
+    target_device = device or DEFAULT_DEVICE
+    
+    try:
+        return torch.ones(shape, dtype=dtype, device=target_device)
+    except RuntimeError:
+        # Fallback to CPU if device is not available
+        if target_device != 'cpu':
+            print(f"Warning: Failed to create tensor on {target_device}, falling back to CPU")
+            return torch.ones(shape, dtype=dtype, device='cpu')
+        else:
+            raise
 
 
 def zeros_like(x: ArrayLike, dtype: DType = None, device: Optional[str] = None) -> torch.Tensor:
@@ -86,13 +116,23 @@ def zeros_like(x: ArrayLike, dtype: DType = None, device: Optional[str] = None) 
     Args:
         x: Input tensor
         dtype: Optional data type
-        device: Optional device to place the tensor on
+        device: Optional device to place the tensor on (if None, uses same as input or DEFAULT_DEVICE)
         
     Returns:
         Tensor of zeros with the same shape as x
     """
     x_tensor = convert_to_tensor(x)
-    return torch.zeros_like(x_tensor, dtype=dtype, device=device)
+    target_device = device or DEFAULT_DEVICE
+    
+    try:
+        return torch.zeros_like(x_tensor, dtype=dtype, device=target_device)
+    except RuntimeError:
+        # Fallback to CPU if device is not available
+        if target_device != 'cpu':
+            print(f"Warning: Failed to create tensor on {target_device}, falling back to CPU")
+            return torch.zeros_like(x_tensor, dtype=dtype, device='cpu')
+        else:
+            raise
 
 
 def ones_like(x: ArrayLike, dtype: DType = None, device: Optional[str] = None) -> torch.Tensor:
@@ -102,33 +142,56 @@ def ones_like(x: ArrayLike, dtype: DType = None, device: Optional[str] = None) -
     Args:
         x: Input tensor
         dtype: Optional data type
-        device: Optional device to place the tensor on
+        device: Optional device to place the tensor on (if None, uses same as input or DEFAULT_DEVICE)
         
     Returns:
         Tensor of ones with the same shape as x
     """
     x_tensor = convert_to_tensor(x)
-    return torch.ones_like(x_tensor, dtype=dtype, device=device)
+    target_device = device or DEFAULT_DEVICE
+    
+    try:
+        return torch.ones_like(x_tensor, dtype=dtype, device=target_device)
+    except RuntimeError:
+        # Fallback to CPU if device is not available
+        if target_device != 'cpu':
+            print(f"Warning: Failed to create tensor on {target_device}, falling back to CPU")
+            return torch.ones_like(x_tensor, dtype=dtype, device='cpu')
+        else:
+            raise
 
 
 def eye(n: int, m: Optional[int] = None, dtype: DType = None, device: Optional[str] = None) -> torch.Tensor:
     """
-    Create an identity matrix.
+    Create an identity matrix with automatic device selection.
     
     Args:
         n: Number of rows
         m: Number of columns (default: n)
         dtype: Optional data type
-        device: Optional device to place the tensor on
+        device: Optional device to place the tensor on (if None, uses DEFAULT_DEVICE)
         
     Returns:
         Identity matrix of shape (n, m)
     """
-    # Handle the case where m is None
-    if m is None:
-        return torch.eye(n, dtype=dtype, device=device)
-    else:
-        return torch.eye(n, m=m, dtype=dtype, device=device)
+    target_device = device or DEFAULT_DEVICE
+    
+    try:
+        # Handle the case where m is None
+        if m is None:
+            return torch.eye(n, dtype=dtype, device=target_device)
+        else:
+            return torch.eye(n, m=m, dtype=dtype, device=target_device)
+    except RuntimeError:
+        # Fallback to CPU if device is not available
+        if target_device != 'cpu':
+            print(f"Warning: Failed to create tensor on {target_device}, falling back to CPU")
+            if m is None:
+                return torch.eye(n, dtype=dtype, device='cpu')
+            else:
+                return torch.eye(n, m=m, dtype=dtype, device='cpu')
+        else:
+            raise
 
 
 def reshape(x: ArrayLike, shape: Shape) -> torch.Tensor:
@@ -396,6 +459,22 @@ def copy(x: ArrayLike) -> torch.Tensor:
     return convert_to_tensor(x).clone()
 
 
+def item(x: ArrayLike) -> Union[int, float, bool]:
+    """
+    Extract the scalar value from a tensor.
+    
+    This method extracts the scalar value from a tensor containing a single element.
+    
+    Args:
+        x: Input tensor containing a single element
+        
+    Returns:
+        Standard Python scalar (int, float, or bool)
+    """
+    x_tensor = convert_to_tensor(x)
+    return x_tensor.item()
+
+
 def to_numpy(x: ArrayLike) -> Any:
     """
     Convert a tensor to a NumPy array.
@@ -460,7 +539,7 @@ def var(x: ArrayLike, axis: Optional[Union[int, Sequence[int]]] = None, keepdims
 
 def full(shape: Shape, fill_value: Union[float, int], dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
     """
-    Create a tensor filled with a scalar value.
+    Create a tensor filled with a scalar value with automatic device selection.
     
     Args:
         shape: Shape of the tensor
@@ -471,9 +550,17 @@ def full(shape: Shape, fill_value: Union[float, int], dtype: Optional[DType] = N
     Returns:
         Tensor filled with the specified value
     """
-    if device is None:
-        device = DEFAULT_DEVICE
-    return torch.full(shape, fill_value, dtype=dtype, device=device)
+    target_device = device or DEFAULT_DEVICE
+    
+    try:
+        return torch.full(shape, fill_value, dtype=dtype, device=target_device)
+    except RuntimeError:
+        # Fallback to CPU if device is not available
+        if target_device != 'cpu':
+            print(f"Warning: Failed to create tensor on {target_device}, falling back to CPU")
+            return torch.full(shape, fill_value, dtype=dtype, device='cpu')
+        else:
+            raise
 
 
 def full_like(x: ArrayLike, fill_value: Union[float, int], dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
@@ -489,10 +576,18 @@ def full_like(x: ArrayLike, fill_value: Union[float, int], dtype: Optional[DType
     Returns:
         Tensor filled with the specified value with the same shape as x
     """
-    if device is None:
-        device = DEFAULT_DEVICE
     x_tensor = convert_to_tensor(x)
-    return torch.full_like(x_tensor, fill_value, dtype=dtype, device=device)
+    target_device = device or DEFAULT_DEVICE
+    
+    try:
+        return torch.full_like(x_tensor, fill_value, dtype=dtype, device=target_device)
+    except RuntimeError:
+        # Fallback to CPU if device is not available
+        if target_device != 'cpu':
+            print(f"Warning: Failed to create tensor on {target_device}, falling back to CPU")
+            return torch.full_like(x_tensor, fill_value, dtype=dtype, device='cpu')
+        else:
+            raise
 
 
 def linspace(start: float, stop: float, num: int, dtype: DType = None, device: Optional[str] = None) -> torch.Tensor:
@@ -504,14 +599,22 @@ def linspace(start: float, stop: float, num: int, dtype: DType = None, device: O
         stop: End of the interval
         num: Number of values to generate
         dtype: Optional data type
-        device: Optional device
+        device: Optional device (defaults to DEFAULT_DEVICE if None)
         
     Returns:
         Tensor with evenly spaced values
     """
-    if device is None:
-        device = DEFAULT_DEVICE
-    return torch.linspace(start, stop, num, dtype=dtype, device=device)
+    target_device = device or DEFAULT_DEVICE
+    
+    try:
+        return torch.linspace(start, stop, num, dtype=dtype, device=target_device)
+    except RuntimeError:
+        # Fallback to CPU if device is not available
+        if target_device != 'cpu':
+            print(f"Warning: Failed to create tensor on {target_device}, falling back to CPU")
+            return torch.linspace(start, stop, num, dtype=dtype, device='cpu')
+        else:
+            raise
 
 
 def arange(start: int, stop: Optional[int] = None, step: int = 1, dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
@@ -528,12 +631,22 @@ def arange(start: int, stop: Optional[int] = None, step: int = 1, dtype: Optiona
     Returns:
         Tensor with evenly spaced values
     """
-    if device is None:
-        device = DEFAULT_DEVICE
-    if stop is None:
-        # If only one argument is provided, it's the stop value
-        return torch.arange(start=0, end=start, step=step, dtype=dtype, device=device)
-    return torch.arange(start=start, end=stop, step=step, dtype=dtype, device=device)
+    target_device = device or DEFAULT_DEVICE
+    
+    try:
+        if stop is None:
+            # If only one argument is provided, it's the stop value
+            return torch.arange(start=0, end=start, step=step, dtype=dtype, device=target_device)
+        return torch.arange(start=start, end=stop, step=step, dtype=dtype, device=target_device)
+    except RuntimeError:
+        # Fallback to CPU if device is not available
+        if target_device != 'cpu':
+            print(f"Warning: Failed to create tensor on {target_device}, falling back to CPU")
+            if stop is None:
+                return torch.arange(start=0, end=start, step=step, dtype=dtype, device='cpu')
+            return torch.arange(start=start, end=stop, step=step, dtype=dtype, device='cpu')
+        else:
+            raise
 
 
 class TorchTensorOps:
@@ -642,3 +755,7 @@ class TorchTensorOps:
     def to_numpy(self, x):
         """Convert a tensor to a NumPy array."""
         return to_numpy(x)
+        
+    def item(self, x):
+        """Extract the scalar value from a tensor."""
+        return item(x)

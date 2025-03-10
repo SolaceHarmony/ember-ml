@@ -1,7 +1,7 @@
 """
-Visualization utilities for the emberharmony library.
+Visualization utilities for the ember_ml library.
 
-This module provides visualization utilities for the emberharmony library.
+This module provides visualization utilities for the ember_ml library.
 """
 
 import numpy as np

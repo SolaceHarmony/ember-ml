@@ -1,6 +1,6 @@
 # Examples
 
-This directory contains example implementations, demonstrations, and applications of the EmberHarmony framework.
+This directory contains example implementations, demonstrations, and applications of the ember_ml framework.
 
 ## Subdirectories
 

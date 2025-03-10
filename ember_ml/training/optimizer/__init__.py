@@ -1,5 +1,5 @@
 """
-Optimizer module for emberharmony.
+Optimizer module for ember_ml.
 
 This module provides backend-agnostic implementations of optimizers
 that work with any backend (NumPy, PyTorch, MLX).

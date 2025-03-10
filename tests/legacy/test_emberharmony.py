@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test script for the emberharmony library.
+Test script for the ember_ml library.
 """
 
 import sys
@@ -10,23 +10,23 @@ def test_imports():
     """Test importing the main modules."""
     try:
         import ember_ml
-        print(f"Successfully imported emberharmony version {ember_ml.__version__}")
+        print(f"Successfully imported ember_ml version {ember_ml.__version__}")
         
         # Test importing core modules
         from ember_ml import core
-        print("Successfully imported emberharmony.core")
+        print("Successfully imported ember_ml.core")
         
         from ember_ml import wave
-        print("Successfully imported emberharmony.wave")
+        print("Successfully imported ember_ml.wave")
         
         from ember_ml import attention
-        print("Successfully imported emberharmony.attention")
+        print("Successfully imported ember_ml.attention")
         
         from ember_ml import nn
-        print("Successfully imported emberharmony.nn")
+        print("Successfully imported ember_ml.nn")
         
         from ember_ml import models
-        print("Successfully imported emberharmony.models")
+        print("Successfully imported ember_ml.models")
         
         return True
     except ImportError as e:
@@ -59,7 +59,7 @@ def test_spherical_ltc():
 
 def main():
     """Run all tests."""
-    print("Testing emberharmony library...")
+    print("Testing ember_ml library...")
     
     import_success = test_imports()
     if not import_success:

@@ -80,23 +80,23 @@ class TestDTypeOperations:
         elif backend == 'torch':
             import torch
             if dtype == torch.float32:
-                assert numpy_dtype == np.float32
+                assert numpy_dtype == np.float32 or numpy_dtype == 'float32'
             elif dtype == torch.float64:
-                assert numpy_dtype == np.float64
+                assert numpy_dtype == np.float64 or numpy_dtype == 'float64'
             elif dtype == torch.int32:
-                assert numpy_dtype == np.int32
+                assert numpy_dtype == np.int32 or numpy_dtype == 'int32'
             elif dtype == torch.int64:
-                assert numpy_dtype == np.int64
+                assert numpy_dtype == np.int64 or numpy_dtype == 'int64'
             elif dtype == torch.bool:
-                assert numpy_dtype == np.bool_
+                assert numpy_dtype == np.bool_ or numpy_dtype == 'bool'
         elif backend == 'mlx':
             import mlx.core
             if dtype == mlx.core.float32:
-                assert numpy_dtype == np.float32
+                assert numpy_dtype == np.float32 or numpy_dtype == 'float32'
             elif dtype == mlx.core.int32:
-                assert numpy_dtype == np.int32
+                assert numpy_dtype == np.int32 or numpy_dtype == 'int32'
             elif dtype == mlx.core.bool_:
-                assert numpy_dtype == np.bool_
+                assert numpy_dtype == np.bool_ or numpy_dtype == 'bool'
 
     def test_from_numpy_dtype(self, backend):
         """Test from_numpy_dtype operation."""

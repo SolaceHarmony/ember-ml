@@ -1,6 +1,6 @@
-# EmberHarmony Test Plan
+# ember_ml Test Plan
 
-This document outlines a comprehensive testing strategy for the EmberHarmony library, with a focus on fine-grained unit tests for the `ops/*` classes and backend functionality. The goal is to ensure that all operations work correctly across different backends and that the backend switching mechanism functions properly.
+This document outlines a comprehensive testing strategy for the ember_ml library, with a focus on fine-grained unit tests for the `ops/*` classes and backend functionality. The goal is to ensure that all operations work correctly across different backends and that the backend switching mechanism functions properly.
 
 ## 1. Backend Testing
 
@@ -238,4 +238,4 @@ This document outlines a comprehensive testing strategy for the EmberHarmony lib
 
 ## Conclusion
 
-This test plan provides a comprehensive approach to testing the EmberHarmony library's ops module and backend functionality. By implementing these tests, we can ensure that the library works correctly across different backends and that the backend switching mechanism functions properly. The tests will also help identify any inconsistencies or bugs in the implementation.
+This test plan provides a comprehensive approach to testing the ember_ml library's ops module and backend functionality. By implementing these tests, we can ensure that the library works correctly across different backends and that the backend switching mechanism functions properly. The tests will also help identify any inconsistencies or bugs in the implementation.

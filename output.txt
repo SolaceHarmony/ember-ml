@@ -10,21 +10,21 @@ test_data_splitting (tests.test_terabyte_feature_extractor_purified_v2.TestTerab
 Test that data splitting produces equivalent results. ... /Volumes/stuff/Projects/LNNDemo/tests/test_terabyte_feature_extractor_purified_v2.py:53: FutureWarning: 'H' is deprecated and will be removed in a future version, please use 'h' instead.
   'datetime_col': pd.date_range(start='2023-01-01', periods=1000, freq='H')
 2025-03-05 22:29:41,664 - terabyte_feature_extractor - INFO - Using torch backend for computation
-2025-03-05 22:29:41,665 - emberharmony.utils.backend - INFO - Set random seed to 42 for torch backend
+2025-03-05 22:29:41,665 - ember_ml.utils.backend - INFO - Set random seed to 42 for torch backend
 2025-03-05 22:29:41,666 - terabyte_feature_extractor - INFO - Initialized TerabyteFeatureExtractor with chunk_size=100, max_memory_gb=1.0
 2025-03-05 22:29:41,666 - terabyte_feature_extractor - INFO - Using torch backend for computation
-2025-03-05 22:29:41,666 - emberharmony.utils.backend - INFO - Set random seed to 42 for torch backend
+2025-03-05 22:29:41,666 - ember_ml.utils.backend - INFO - Set random seed to 42 for torch backend
 2025-03-05 22:29:41,666 - terabyte_feature_extractor - INFO - Initialized TerabyteFeatureExtractor with chunk_size=100, max_memory_gb=1.0
 2025-03-05 22:29:41,666 - terabyte_feature_extractor - INFO - Using torch backend for computation
 2025-03-05 22:29:41,666 - terabyte_feature_extractor - INFO - Initialized TerabyteTemporalStrideProcessor with window_size=3, stride_perspectives=[1, 2], batch_size=100
 2025-03-05 22:29:41,666 - terabyte_feature_extractor - INFO - Using torch backend for computation
 2025-03-05 22:29:41,666 - terabyte_feature_extractor - INFO - Initialized TerabyteTemporalStrideProcessor with window_size=3, stride_perspectives=[1, 2], batch_size=100
-2025-03-05 22:29:41,666 - emberharmony.utils.backend - INFO - Set random seed to 42 for torch backend
+2025-03-05 22:29:41,666 - ember_ml.utils.backend - INFO - Set random seed to 42 for torch backend
 2025-03-05 22:29:41,666 - terabyte_feature_extractor - INFO - Splitting data with 1000 rows
 2025-03-05 22:29:41,667 - terabyte_feature_extractor - INFO - Random split ratios: 80/20 (train/temp)
 2025-03-05 22:29:41,668 - terabyte_feature_extractor - INFO - Validation/test split ratios: 50/50 from temp
 2025-03-05 22:29:41,668 - terabyte_feature_extractor - INFO - Split result: 817 train, 87 validation, 96 test rows
-2025-03-05 22:29:41,669 - emberharmony.utils.backend - INFO - Set random seed to 42 for torch backend
+2025-03-05 22:29:41,669 - ember_ml.utils.backend - INFO - Set random seed to 42 for torch backend
 2025-03-05 22:29:41,669 - terabyte_feature_extractor - INFO - Splitting data with 1000 rows
 2025-03-05 22:29:41,669 - terabyte_feature_extractor - INFO - Random split ratios: 80/20 (train/temp)
 2025-03-05 22:29:41,670 - terabyte_feature_extractor - INFO - Validation/test split ratios: 50/50 from temp
@@ -36,10 +36,10 @@ test_datetime_feature_creation (tests.test_terabyte_feature_extractor_purified_v
 Test that datetime feature creation produces equivalent results. ... /Volumes/stuff/Projects/LNNDemo/tests/test_terabyte_feature_extractor_purified_v2.py:53: FutureWarning: 'H' is deprecated and will be removed in a future version, please use 'h' instead.
   'datetime_col': pd.date_range(start='2023-01-01', periods=1000, freq='H')
 2025-03-05 22:29:41,685 - terabyte_feature_extractor - INFO - Using torch backend for computation
-2025-03-05 22:29:41,686 - emberharmony.utils.backend - INFO - Set random seed to 42 for torch backend
+2025-03-05 22:29:41,686 - ember_ml.utils.backend - INFO - Set random seed to 42 for torch backend
 2025-03-05 22:29:41,686 - terabyte_feature_extractor - INFO - Initialized TerabyteFeatureExtractor with chunk_size=100, max_memory_gb=1.0
 2025-03-05 22:29:41,686 - terabyte_feature_extractor - INFO - Using torch backend for computation
-2025-03-05 22:29:41,686 - emberharmony.utils.backend - INFO - Set random seed to 42 for torch backend
+2025-03-05 22:29:41,686 - ember_ml.utils.backend - INFO - Set random seed to 42 for torch backend
 2025-03-05 22:29:41,686 - terabyte_feature_extractor - INFO - Initialized TerabyteFeatureExtractor with chunk_size=100, max_memory_gb=1.0
 2025-03-05 22:29:41,686 - terabyte_feature_extractor - INFO - Using torch backend for computation
 2025-03-05 22:29:41,686 - terabyte_feature_extractor - INFO - Initialized TerabyteTemporalStrideProcessor with window_size=3, stride_perspectives=[1, 2], batch_size=100
@@ -58,10 +58,10 @@ test_end_to_end (tests.test_terabyte_feature_extractor_purified_v2.TestTerabyteF
 Test end-to-end processing with both implementations. ... /Volumes/stuff/Projects/LNNDemo/tests/test_terabyte_feature_extractor_purified_v2.py:53: FutureWarning: 'H' is deprecated and will be removed in a future version, please use 'h' instead.
   'datetime_col': pd.date_range(start='2023-01-01', periods=1000, freq='H')
 2025-03-05 22:29:41,743 - terabyte_feature_extractor - INFO - Using torch backend for computation
-2025-03-05 22:29:41,743 - emberharmony.utils.backend - INFO - Set random seed to 42 for torch backend
+2025-03-05 22:29:41,743 - ember_ml.utils.backend - INFO - Set random seed to 42 for torch backend
 2025-03-05 22:29:41,743 - terabyte_feature_extractor - INFO - Initialized TerabyteFeatureExtractor with chunk_size=100, max_memory_gb=1.0
 2025-03-05 22:29:41,743 - terabyte_feature_extractor - INFO - Using torch backend for computation
-2025-03-05 22:29:41,744 - emberharmony.utils.backend - INFO - Set random seed to 42 for torch backend
+2025-03-05 22:29:41,744 - ember_ml.utils.backend - INFO - Set random seed to 42 for torch backend
 2025-03-05 22:29:41,744 - terabyte_feature_extractor - INFO - Initialized TerabyteFeatureExtractor with chunk_size=100, max_memory_gb=1.0
 2025-03-05 22:29:41,744 - terabyte_feature_extractor - INFO - Using torch backend for computation
 2025-03-05 22:29:41,744 - terabyte_feature_extractor - INFO - Initialized TerabyteTemporalStrideProcessor with window_size=3, stride_perspectives=[1, 2], batch_size=100
@@ -130,10 +130,10 @@ test_pca_blend (tests.test_terabyte_feature_extractor_purified_v2.TestTerabyteFe
 Test that PCA blending produces equivalent results. ... /Volumes/stuff/Projects/LNNDemo/tests/test_terabyte_feature_extractor_purified_v2.py:53: FutureWarning: 'H' is deprecated and will be removed in a future version, please use 'h' instead.
   'datetime_col': pd.date_range(start='2023-01-01', periods=1000, freq='H')
 2025-03-05 22:29:42,895 - terabyte_feature_extractor - INFO - Using torch backend for computation
-2025-03-05 22:29:42,895 - emberharmony.utils.backend - INFO - Set random seed to 42 for torch backend
+2025-03-05 22:29:42,895 - ember_ml.utils.backend - INFO - Set random seed to 42 for torch backend
 2025-03-05 22:29:42,895 - terabyte_feature_extractor - INFO - Initialized TerabyteFeatureExtractor with chunk_size=100, max_memory_gb=1.0
 2025-03-05 22:29:42,895 - terabyte_feature_extractor - INFO - Using torch backend for computation
-2025-03-05 22:29:42,895 - emberharmony.utils.backend - INFO - Set random seed to 42 for torch backend
+2025-03-05 22:29:42,895 - ember_ml.utils.backend - INFO - Set random seed to 42 for torch backend
 2025-03-05 22:29:42,895 - terabyte_feature_extractor - INFO - Initialized TerabyteFeatureExtractor with chunk_size=100, max_memory_gb=1.0
 2025-03-05 22:29:42,895 - terabyte_feature_extractor - INFO - Using torch backend for computation
 2025-03-05 22:29:42,895 - terabyte_feature_extractor - INFO - Initialized TerabyteTemporalStrideProcessor with window_size=3, stride_perspectives=[1, 2], batch_size=100
@@ -148,10 +148,10 @@ test_process_batch (tests.test_terabyte_feature_extractor_purified_v2.TestTeraby
 Test that batch processing produces equivalent results. ... /Volumes/stuff/Projects/LNNDemo/tests/test_terabyte_feature_extractor_purified_v2.py:53: FutureWarning: 'H' is deprecated and will be removed in a future version, please use 'h' instead.
   'datetime_col': pd.date_range(start='2023-01-01', periods=1000, freq='H')
 2025-03-05 22:29:42,916 - terabyte_feature_extractor - INFO - Using torch backend for computation
-2025-03-05 22:29:42,917 - emberharmony.utils.backend - INFO - Set random seed to 42 for torch backend
+2025-03-05 22:29:42,917 - ember_ml.utils.backend - INFO - Set random seed to 42 for torch backend
 2025-03-05 22:29:42,917 - terabyte_feature_extractor - INFO - Initialized TerabyteFeatureExtractor with chunk_size=100, max_memory_gb=1.0
 2025-03-05 22:29:42,917 - terabyte_feature_extractor - INFO - Using torch backend for computation
-2025-03-05 22:29:42,917 - emberharmony.utils.backend - INFO - Set random seed to 42 for torch backend
+2025-03-05 22:29:42,917 - ember_ml.utils.backend - INFO - Set random seed to 42 for torch backend
 2025-03-05 22:29:42,917 - terabyte_feature_extractor - INFO - Initialized TerabyteFeatureExtractor with chunk_size=100, max_memory_gb=1.0
 2025-03-05 22:29:42,917 - terabyte_feature_extractor - INFO - Using torch backend for computation
 2025-03-05 22:29:42,917 - terabyte_feature_extractor - INFO - Initialized TerabyteTemporalStrideProcessor with window_size=3, stride_perspectives=[1, 2], batch_size=100
@@ -172,10 +172,10 @@ test_strided_sequences (tests.test_terabyte_feature_extractor_purified_v2.TestTe
 Test that strided sequence creation produces equivalent results. ... /Volumes/stuff/Projects/LNNDemo/tests/test_terabyte_feature_extractor_purified_v2.py:53: FutureWarning: 'H' is deprecated and will be removed in a future version, please use 'h' instead.
   'datetime_col': pd.date_range(start='2023-01-01', periods=1000, freq='H')
 2025-03-05 22:29:42,935 - terabyte_feature_extractor - INFO - Using torch backend for computation
-2025-03-05 22:29:42,935 - emberharmony.utils.backend - INFO - Set random seed to 42 for torch backend
+2025-03-05 22:29:42,935 - ember_ml.utils.backend - INFO - Set random seed to 42 for torch backend
 2025-03-05 22:29:42,935 - terabyte_feature_extractor - INFO - Initialized TerabyteFeatureExtractor with chunk_size=100, max_memory_gb=1.0
 2025-03-05 22:29:42,935 - terabyte_feature_extractor - INFO - Using torch backend for computation
-2025-03-05 22:29:42,935 - emberharmony.utils.backend - INFO - Set random seed to 42 for torch backend
+2025-03-05 22:29:42,935 - ember_ml.utils.backend - INFO - Set random seed to 42 for torch backend
 2025-03-05 22:29:42,935 - terabyte_feature_extractor - INFO - Initialized TerabyteFeatureExtractor with chunk_size=100, max_memory_gb=1.0
 2025-03-05 22:29:42,935 - terabyte_feature_extractor - INFO - Using torch backend for computation
 2025-03-05 22:29:42,935 - terabyte_feature_extractor - INFO - Initialized TerabyteTemporalStrideProcessor with window_size=3, stride_perspectives=[1, 2], batch_size=100
@@ -199,7 +199,7 @@ OK
   'datetime_col': pd.date_range(start='2023-01-01', periods=1000, freq='H')
 2025-03-05 22:29:42,949 - purification_tests - INFO - Using original implementation:
 2025-03-05 22:29:42,949 - terabyte_feature_extractor - INFO - Using torch backend for computation
-2025-03-05 22:29:42,949 - emberharmony.utils.backend - INFO - Set random seed to 42 for torch backend
+2025-03-05 22:29:42,949 - ember_ml.utils.backend - INFO - Set random seed to 42 for torch backend
 2025-03-05 22:29:42,949 - terabyte_feature_extractor - INFO - Initialized TerabyteFeatureExtractor with chunk_size=100, max_memory_gb=1.0
 2025-03-05 22:29:42,954 - terabyte_feature_extractor - INFO - Created cyclical features for datetime column 'datetime_col' using torch backend
 2025-03-05 22:29:42,954 - purification_tests - INFO - Original implementation took 0.0051 seconds
@@ -207,7 +207,7 @@ OK
 2025-03-05 22:29:42,954 - purification_tests - INFO - 
 Using purified implementation:
 2025-03-05 22:29:42,954 - terabyte_feature_extractor - INFO - Using torch backend for computation
-2025-03-05 22:29:42,954 - emberharmony.utils.backend - INFO - Set random seed to 42 for torch backend
+2025-03-05 22:29:42,954 - ember_ml.utils.backend - INFO - Set random seed to 42 for torch backend
 2025-03-05 22:29:42,955 - terabyte_feature_extractor - INFO - Initialized TerabyteFeatureExtractor with chunk_size=100, max_memory_gb=1.0
 2025-03-05 22:29:42,959 - terabyte_feature_extractor - INFO - Created cyclical features for datetime column 'datetime_col' using torch backend
 2025-03-05 22:29:42,959 - purification_tests - INFO - Purified implementation took 0.0044 seconds

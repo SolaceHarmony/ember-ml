@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-EmberLint: A comprehensive linting tool for EmberHarmony codebase.
+EmberLint: A comprehensive linting tool for Ember ML codebase.
 
 This script scans Python files to detect:
 1. Syntax errors and compilation issues
@@ -15,7 +15,7 @@ This script scans Python files to detect:
 5. Type annotation issues
 6. Backend consistency issues (operations missing in some backends)
 
-It helps ensure that EmberHarmony code remains pure, efficient, and maintainable.
+It helps ensure that Ember ML code remains pure, efficient, and maintainable.
 """
 
 # Set this to False to force EmberLint to always check all issues
@@ -44,14 +44,8 @@ try:
 except ImportError:
     HAVE_MYPY = False
 
-# Try to import our backend operations analyzer
-try:
-    from utils.analyze_backend_operations import (
-        analyze_backends, check_backend_consistency
-    )
-    HAVE_BACKEND_ANALYZER = True
-except ImportError:
-    HAVE_BACKEND_ANALYZER = False
+# We no longer need to import analyze_backend_operations
+# since we've implemented the functionality directly in this file
 
 def find_python_files(directory: str) -> List[str]:
     """Find all Python files in the given directory and its subdirectories."""
@@ -185,8 +179,8 @@ def check_numpy_usage(file_path: str, numpy_aliases: List[str]) -> Tuple[bool, L
 
 def check_backend_specific_imports(file_path: str) -> Tuple[bool, List[str]]:
     """Check if backend-specific libraries are imported in frontend code."""
-    # Skip backend directory
-    if "/backend/" in file_path:
+    # Skip backend directory and features/common directory
+    if "/backend/" in file_path or "/features/common/" in file_path:
         return False, []
     
     with open(file_path, 'r', encoding='utf-8') as f:
@@ -219,8 +213,8 @@ def check_backend_specific_imports(file_path: str) -> Tuple[bool, List[str]]:
 
 def check_backend_specific_code(file_path: str) -> Tuple[bool, List[Dict]]:
     """Check if backend-specific code is used in frontend code."""
-    # Skip backend directory
-    if "/backend/" in file_path:
+    # Skip backend directory and features/common directory
+    if "/backend/" in file_path or "/features/common/" in file_path:
         return False, []
     
     with open(file_path, 'r', encoding='utf-8') as f:
@@ -258,6 +252,13 @@ class PrecisionReducingVisitor(ast.NodeVisitor):
         self.backend_usage = []
         self.current_function = None
         self.current_line = 0
+        self.parent_map = {}
+        
+    def build_parent_map(self, node):
+        """Build a map from child nodes to their parent nodes."""
+        for child in ast.iter_child_nodes(node):
+            self.parent_map[child] = node
+            self.build_parent_map(child)
     
     def visit_Import(self, node):
         """Visit import statements."""
@@ -302,9 +303,21 @@ class PrecisionReducingVisitor(ast.NodeVisitor):
             ast.MatMult: '@',
         }
         
+        # Check if this binary operation is inside a subscript (array index)
+        # by walking up the AST to see if there's a Subscript parent
+        is_in_subscript = False
+        parent = self.parent_map.get(node)
+        while parent:
+            if isinstance(parent, ast.Subscript):
+                # If the binary operation is inside the index part of a subscript
+                if parent.slice == node:
+                    is_in_subscript = True
+                    break
+            parent = self.parent_map.get(parent)
+        
         # Check if this is a Python operator we want to detect
         op_type = type(node.op)
-        if op_type in op_map:
+        if op_type in op_map and not is_in_subscript:
             location = f"{self.current_function}:{node.lineno}" if self.current_function else f"line {node.lineno}"
             self.python_operators.append({
                 'type': op_map[op_type],
@@ -414,6 +427,7 @@ def check_ast_for_issues(file_path: str) -> Tuple[bool, List[str], List[str], Li
     
     # Check for precision-reducing casts, tensor conversions, and Python operators
     visitor = PrecisionReducingVisitor()
+    visitor.build_parent_map(tree)
     visitor.visit(tree)
     
     # Check for unused imports
@@ -452,25 +466,139 @@ def check_compilation(file_path: str) -> Tuple[bool, List[str]]:
     except Exception as e:
         return False, [str(e)]
 
+# Define backend paths for the new folder structure
+BACKEND_PATHS = {
+    "numpy": ["ember_ml/backend/numpy"],
+    "torch": ["ember_ml/backend/torch"],
+    "mlx": ["ember_ml/backend/mlx"]
+}
+
+def extract_functions_from_file(file_path: str) -> Set[str]:
+    """Extract function names from a Python file."""
+    functions = set()
+    
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Parse the file
+        tree = ast.parse(content)
+        
+        # Find all function definitions
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef):
+                # Skip private methods
+                if not node.name.startswith('_') or node.name.startswith('__') and node.name.endswith('__'):
+                    functions.add(node.name)
+    
+    except Exception as e:
+        print(f"Error processing {file_path}: {e}")
+    
+    return functions
+
+def extract_functions_from_directory(directory: str) -> Dict[str, Set[str]]:
+    """Extract function names from all Python files in a directory."""
+    functions_by_file = {}
+    
+    try:
+        for root, _, files in os.walk(directory):
+            for file in files:
+                if file.endswith('.py'):
+                    file_path = os.path.join(root, file)
+                    functions = extract_functions_from_file(file_path)
+                    if functions:
+                        functions_by_file[file_path] = functions
+    
+    except Exception as e:
+        print(f"Error processing directory {directory}: {e}")
+    
+    return functions_by_file
+
 def check_backend_consistency_for_file(file_path: str) -> Tuple[bool, List[Dict]]:
     """Check if a file has operations that are inconsistent across backends."""
-    if not HAVE_BACKEND_ANALYZER:
+    # Skip files in the features directory
+    if "/features/" in file_path:
+        return True, []
+    
+    # Skip files that are not in the ops or backend directories
+    if not ("/ops/" in file_path or "/backend/" in file_path):
+        return True, []
+    
+    # Skip backend/__init__.py, backend/base.py, and backend/.backend
+    if "/backend/__init__.py" in file_path or "/backend/base.py" in file_path or "/backend/.backend" in file_path or "/backend/.device" in file_path:
         return True, []
     
     try:
-        # Analyze backends
-        operations_by_backend, _, all_operations = analyze_backends()
+        # Get the base filename (e.g., random_ops.py)
+        base_filename = os.path.basename(file_path)
         
-        # Check the file for backend consistency
-        result = check_backend_consistency(file_path, operations_by_backend, all_operations)
+        # Determine if this is a backend file and which backend it belongs to
+        backend_in_path = None
+        for backend in BACKEND_PATHS.keys():
+            if f"/backend/{backend}/" in file_path:
+                backend_in_path = backend
+                break
         
-        return not result["has_inconsistent_operations"], result["inconsistent_operations"]
+        # If this is not a backend file, skip it
+        if not backend_in_path:
+            return True, []
+        
+        # Get the module type (e.g., random_ops, tensor_ops, etc.)
+        module_type = None
+        if base_filename.endswith('_ops.py'):
+            module_type = base_filename
+        else:
+            return True, []  # Skip files that don't follow the *_ops.py naming convention
+        
+        # Find corresponding files in other backends
+        corresponding_files = {}
+        for backend, paths in BACKEND_PATHS.items():
+            folder_path = paths[0]
+            corresponding_file = os.path.join(folder_path, module_type)
+            if os.path.exists(corresponding_file):
+                corresponding_files[backend] = corresponding_file
+        
+        # If we couldn't find corresponding files in all backends, skip this file
+        if len(corresponding_files) < 2:  # Need at least 2 backends to compare
+            return True, []
+        
+        # Extract functions from each corresponding file
+        functions_by_backend = {}
+        for backend, backend_file in corresponding_files.items():
+            functions_by_backend[backend] = extract_functions_from_file(backend_file)
+        
+        # Get the union of all functions across all backends
+        all_functions = set()
+        for functions in functions_by_backend.values():
+            all_functions.update(functions)
+        
+        # Check for inconsistencies
+        inconsistent_operations = []
+        
+        for function in all_functions:
+            available_in = []
+            missing_in = []
+            
+            for backend, functions in functions_by_backend.items():
+                if function in functions:
+                    available_in.append(backend)
+                else:
+                    missing_in.append(backend)
+            
+            if missing_in and available_in:  # Only report if function exists in at least one backend but not all
+                inconsistent_operations.append({
+                    "operation": function,
+                    "available_in": available_in,
+                    "missing_in": missing_in
+                })
+        
+        return len(inconsistent_operations) == 0, inconsistent_operations
     except Exception as e:
         return False, [{"error": str(e)}]
 
 def check_frontend_backend_violation(file_path: str) -> Tuple[bool, List[Dict]]:
     """Check if a file violates the frontend-backend separation rules."""
-    # Skip backend directory (both single file and folder structure)
+    # Skip backend directory
     if "/backend/" in file_path:
         return False, []
     
@@ -480,6 +608,15 @@ def check_frontend_backend_violation(file_path: str) -> Tuple[bool, List[Dict]]:
         if any(backend in file_path for backend in ["/ops/torch/", "/ops/mlx/", "/ops/numpy/"]):
             return True, [{
                 "violation": "Backend-specific implementation in ops directory",
+                "file": file_path
+            }]
+    
+    # Check if the file is in the features directory
+    if "/features/" in file_path:
+        # Check if the file is in a backend-specific directory
+        if any(backend in file_path for backend in ["/features/torch/", "/features/mlx/", "/features/numpy/"]):
+            return True, [{
+                "violation": "Backend-specific implementation in features directory",
                 "file": file_path
             }]
     
@@ -837,7 +974,7 @@ def print_results(results: List[Dict], verbose: bool = False, show_all: bool = T
 
 def main():
     """Main function."""
-    parser = argparse.ArgumentParser(description="EmberLint: A comprehensive linting tool for EmberHarmony codebase.")
+    parser = argparse.ArgumentParser(description="EmberLint: A comprehensive linting tool for Ember ML codebase.")
     parser.add_argument("path", help="Directory or file to scan")
     parser.add_argument("--exclude", nargs="+", help="Directories to exclude", default=[])
     parser.add_argument("--verbose", "-v", action="store_true", help="Print detailed results")

@@ -3,7 +3,7 @@ from typing import List, Tuple, Optional
 import sys
 import os
 
-# Import from emberharmony.wave.limb
+# Import from ember_ml.wave.limb
 from ember_ml.wave.limb.hpc_limb_core import (
     int_to_limbs,
     limbs_to_int,

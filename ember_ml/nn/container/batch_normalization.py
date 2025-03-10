@@ -1,5 +1,5 @@
 """
-Batch normalization module for emberharmony.
+Batch normalization module for ember_ml.
 
 This module provides a backend-agnostic implementation of batch normalization
 that works with any backend (NumPy, PyTorch, MLX).

@@ -1,5 +1,5 @@
 """
-Sequential container module for emberharmony.
+Sequential container module for ember_ml.
 
 This module provides a backend-agnostic implementation of the Sequential container
 that works with any backend (NumPy, PyTorch, MLX).

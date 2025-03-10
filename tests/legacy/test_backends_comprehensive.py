@@ -1,5 +1,5 @@
 """
-Comprehensive test script for the emberharmony backend system.
+Comprehensive test script for the ember_ml backend system.
 
 This script tests the backend system with more operations and demonstrates
 switching between backends.
@@ -168,7 +168,7 @@ def benchmark_backends():
 
 def main():
     """Main function to test the backend system."""
-    print("Comprehensive EmberHarmony Backend Test")
+    print("Comprehensive ember_ml Backend Test")
     print("======================================")
     
     # Check available backends

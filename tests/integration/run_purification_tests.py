@@ -24,7 +24,7 @@ def check_dependencies():
     dependencies = [
         ('numpy', 'NumPy'),
         ('pandas', 'pandas'),
-        ('emberharmony', 'emberharmony')
+        ('ember_ml', 'ember_ml')
     ]
     
     missing = []
@@ -83,7 +83,7 @@ def print_backend_info():
         from ember_ml.utils import backend_utils
         backend_utils.print_backend_info()
     except ImportError:
-        logger.error("Failed to import backend_utils. Make sure emberharmony is installed correctly.")
+        logger.error("Failed to import backend_utils. Make sure ember_ml is installed correctly.")
 
 def main():
     """Main function."""

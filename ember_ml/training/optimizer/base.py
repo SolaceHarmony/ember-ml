@@ -1,5 +1,5 @@
 """
-Base optimizer class for emberharmony.
+Base optimizer class for ember_ml.
 
 This module provides a backend-agnostic implementation of the base optimizer class
 that works with any backend (NumPy, PyTorch, MLX).

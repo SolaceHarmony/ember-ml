@@ -1,7 +1,7 @@
 """
-Performance utilities for the emberharmony library.
+Performance utilities for the ember_ml library.
 
-This module provides performance utilities for the emberharmony library.
+This module provides performance utilities for the ember_ml library.
 """
 
 import time

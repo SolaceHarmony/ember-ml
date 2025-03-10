@@ -50,7 +50,7 @@ backend_name = 'numpy'
     
             # Reload the backend module
             import importlib
-            importlib.reload(importlib.import_module('emberharmony.backend'))
+            importlib.reload(importlib.import_module('ember_ml.backend'))
     
             # Verify that the backend is still set correctly
 >           assert get_backend() == backend_name
@@ -82,7 +82,7 @@ backend_name = 'mlx'
     
             # Reload the backend module
             import importlib
-            importlib.reload(importlib.import_module('emberharmony.backend'))
+            importlib.reload(importlib.import_module('ember_ml.backend'))
     
             # Verify that the backend is still set correctly
 >           assert get_backend() == backend_name
@@ -125,13 +125,13 @@ backend1 = 'mlx', backend2 = 'torch'
 
 test_backend.py:140: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../emberharmony/ops/__init__.py:192: in <lambda>
+../ember_ml/ops/__init__.py:192: in <lambda>
     to_numpy = lambda x: tensor_ops().to_numpy(x)
-../emberharmony/ops/torch/tensor_ops.py:391: in to_numpy
+../ember_ml/ops/torch/tensor_ops.py:391: in to_numpy
     x_tensor = self.convert_to_tensor(x)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <emberharmony.ops.torch.tensor_ops.TorchTensorOps object at 0x34c2b6060>
+self = <ember_ml.ops.torch.tensor_ops.TorchTensorOps object at 0x34c2b6060>
 x = array([[1, 1, 1, 1],
        [1, 1, 1, 1],
        [1, 1, 1, 1]], dtype=float32)
@@ -165,7 +165,7 @@ dtype = None, device = None
 >       return torch.tensor(x, dtype=dtype, device=device)
 E       TypeError: len() 0-dimensional array.
 
-../emberharmony/ops/torch/tensor_ops.py:326: TypeError
+../ember_ml/ops/torch/tensor_ops.py:326: TypeError
 =============================== warnings summary ===============================
 <frozen importlib._bootstrap>:488
   <frozen importlib._bootstrap>:488: DeprecationWarning: Type google._upb._message.MessageMapContainer uses PyType_Spec with a metaclass that has custom tp_new. This is deprecated and will no longer be allowed in Python 3.14.

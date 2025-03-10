@@ -1,6 +1,6 @@
 # Utilities
 
-This directory contains utility scripts and helper functions for the EmberHarmony framework.
+This directory contains utility scripts and helper functions for the Ember ML framework.
 
 ## Files
 

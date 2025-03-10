@@ -34,7 +34,15 @@ class TestEmberTensor:
         
         # Create a tensor with a specific dtype
         tensor = EmberTensor.ones((2, 3), dtype=ops.float32)
-        assert tensor.dtype == ops.float32
+        # The dtype might be converted to a backend-specific dtype
+        if get_backend() == 'numpy':
+            assert tensor.dtype == np.float32
+        elif get_backend() == 'torch':
+            import torch
+            assert tensor.dtype == torch.float32
+        elif get_backend() == 'mlx':
+            import mlx.core
+            assert tensor.dtype == mlx.core.float32
     
     def test_numpy_conversion(self):
         """Test converting an EmberTensor to a NumPy array."""

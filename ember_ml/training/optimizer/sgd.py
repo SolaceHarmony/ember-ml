@@ -1,5 +1,5 @@
 """
-Stochastic Gradient Descent (SGD) optimizer for emberharmony.
+Stochastic Gradient Descent (SGD) optimizer for ember_ml.
 
 This module provides a backend-agnostic implementation of the SGD optimizer
 that works with any backend (NumPy, PyTorch, MLX).

@@ -1,5 +1,5 @@
 """
-Base interface for emberharmony backends.
+Base interface for ember_ml backends.
 
 This module defines the common interface that all backends must implement.
 Each backend (NumPy, PyTorch, MLX) will provide implementations of these
@@ -611,5 +611,32 @@ def index(indices: Any) -> Any:
         
     Returns:
         Index object
+    """
+    raise NotImplementedError()
+
+def save(filepath: str, obj: Any, allow_pickle: bool = True) -> None:
+    """
+    Save a tensor or dictionary of tensors to a file.
+    
+    Args:
+        filepath: Path to save the object to
+        obj: Tensor or dictionary of tensors to save
+        allow_pickle: Whether to allow saving objects that can't be saved directly
+        
+    Returns:
+        None
+    """
+    raise NotImplementedError()
+
+def load(filepath: str, allow_pickle: bool = True) -> Any:
+    """
+    Load a tensor or dictionary of tensors from a file.
+    
+    Args:
+        filepath: Path to load the object from
+        allow_pickle: Whether to allow loading objects that can't be loaded directly
+        
+    Returns:
+        Loaded tensor or dictionary of tensors
     """
     raise NotImplementedError()

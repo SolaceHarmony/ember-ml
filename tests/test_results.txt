@@ -50,7 +50,7 @@ backend_name = 'numpy'
     
             # Reload the backend module
             import importlib
-            importlib.reload(importlib.import_module('emberharmony.backend'))
+            importlib.reload(importlib.import_module('ember_ml.backend'))
     
             # Verify that the backend is still set correctly
 >           assert get_backend() == backend_name
@@ -82,7 +82,7 @@ backend_name = 'mlx'
     
             # Reload the backend module
             import importlib
-            importlib.reload(importlib.import_module('emberharmony.backend'))
+            importlib.reload(importlib.import_module('ember_ml.backend'))
     
             # Verify that the backend is still set correctly
 >           assert get_backend() == backend_name
@@ -118,13 +118,13 @@ backend1 = 'torch', backend2 = 'numpy'
 
 test_backend.py:133: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../emberharmony/ops/__init__.py:125: in <lambda>
+../ember_ml/ops/__init__.py:125: in <lambda>
     ones = lambda *args, **kwargs: tensor_ops().ones(*args, **kwargs)
-../emberharmony/ops/__init__.py:108: in tensor_ops
+../ember_ml/ops/__init__.py:108: in tensor_ops
     return _get_ops_instance(TensorOps)
-../emberharmony/ops/__init__.py:75: in _get_ops_instance
+../ember_ml/ops/__init__.py:75: in _get_ops_instance
     module = _load_ops_module()
-../emberharmony/ops/__init__.py:66: in _load_ops_module
+../ember_ml/ops/__init__.py:66: in _load_ops_module
     _CURRENT_MODULE = importlib.import_module(_OPS_IMPLEMENTATIONS[_CURRENT_OPS])
 /Users/sydneybach/miniconda3/lib/python3.12/importlib/__init__.py:90: in import_module
     return _bootstrap._gcd_import(name[level:], package, level)
@@ -149,11 +149,11 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     the interfaces module.
     """
     
-    from emberharmony.ops.torch.tensor_ops import TorchTensorOps
->   from emberharmony.ops.torch.math_ops import TorchMathOps
-E   ModuleNotFoundError: No module named 'emberharmony.ops.torch.math_ops'
+    from ember_ml.ops.torch.tensor_ops import TorchTensorOps
+>   from ember_ml.ops.torch.math_ops import TorchMathOps
+E   ModuleNotFoundError: No module named 'ember_ml.ops.torch.math_ops'
 
-../emberharmony/ops/torch/__init__.py:9: ModuleNotFoundError
+../ember_ml/ops/torch/__init__.py:9: ModuleNotFoundError
 _________ TestBackendCompatibility.test_tensor_conversion[torch-numpy] _________
 
 self = <test_backend.TestBackendCompatibility object at 0x3762f8710>
@@ -187,13 +187,13 @@ backend1 = 'numpy', backend2 = 'torch'
 
 test_backend.py:140: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../emberharmony/ops/__init__.py:192: in <lambda>
+../ember_ml/ops/__init__.py:192: in <lambda>
     to_numpy = lambda x: tensor_ops().to_numpy(x)
-../emberharmony/ops/__init__.py:108: in tensor_ops
+../ember_ml/ops/__init__.py:108: in tensor_ops
     return _get_ops_instance(TensorOps)
-../emberharmony/ops/__init__.py:75: in _get_ops_instance
+../ember_ml/ops/__init__.py:75: in _get_ops_instance
     module = _load_ops_module()
-../emberharmony/ops/__init__.py:66: in _load_ops_module
+../ember_ml/ops/__init__.py:66: in _load_ops_module
     _CURRENT_MODULE = importlib.import_module(_OPS_IMPLEMENTATIONS[_CURRENT_OPS])
 /Users/sydneybach/miniconda3/lib/python3.12/importlib/__init__.py:90: in import_module
     return _bootstrap._gcd_import(name[level:], package, level)
@@ -218,11 +218,11 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     the interfaces module.
     """
     
-    from emberharmony.ops.torch.tensor_ops import TorchTensorOps
->   from emberharmony.ops.torch.math_ops import TorchMathOps
-E   ModuleNotFoundError: No module named 'emberharmony.ops.torch.math_ops'
+    from ember_ml.ops.torch.tensor_ops import TorchTensorOps
+>   from ember_ml.ops.torch.math_ops import TorchMathOps
+E   ModuleNotFoundError: No module named 'ember_ml.ops.torch.math_ops'
 
-../emberharmony/ops/torch/__init__.py:9: ModuleNotFoundError
+../ember_ml/ops/torch/__init__.py:9: ModuleNotFoundError
 __________ TestBackendCompatibility.test_tensor_conversion[torch-mlx] __________
 
 self = <test_backend.TestBackendCompatibility object at 0x3762f8830>
@@ -256,13 +256,13 @@ backend1 = 'mlx', backend2 = 'torch'
 
 test_backend.py:140: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../emberharmony/ops/__init__.py:192: in <lambda>
+../ember_ml/ops/__init__.py:192: in <lambda>
     to_numpy = lambda x: tensor_ops().to_numpy(x)
-../emberharmony/ops/__init__.py:108: in tensor_ops
+../ember_ml/ops/__init__.py:108: in tensor_ops
     return _get_ops_instance(TensorOps)
-../emberharmony/ops/__init__.py:75: in _get_ops_instance
+../ember_ml/ops/__init__.py:75: in _get_ops_instance
     module = _load_ops_module()
-../emberharmony/ops/__init__.py:66: in _load_ops_module
+../ember_ml/ops/__init__.py:66: in _load_ops_module
     _CURRENT_MODULE = importlib.import_module(_OPS_IMPLEMENTATIONS[_CURRENT_OPS])
 /Users/sydneybach/miniconda3/lib/python3.12/importlib/__init__.py:90: in import_module
     return _bootstrap._gcd_import(name[level:], package, level)
@@ -287,11 +287,11 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     the interfaces module.
     """
     
-    from emberharmony.ops.torch.tensor_ops import TorchTensorOps
->   from emberharmony.ops.torch.math_ops import TorchMathOps
-E   ModuleNotFoundError: No module named 'emberharmony.ops.torch.math_ops'
+    from ember_ml.ops.torch.tensor_ops import TorchTensorOps
+>   from ember_ml.ops.torch.math_ops import TorchMathOps
+E   ModuleNotFoundError: No module named 'ember_ml.ops.torch.math_ops'
 
-../emberharmony/ops/torch/__init__.py:9: ModuleNotFoundError
+../ember_ml/ops/torch/__init__.py:9: ModuleNotFoundError
 __________ TestBackendCompatibility.test_tensor_conversion[mlx-torch] __________
 
 self = <test_backend.TestBackendCompatibility object at 0x3762f8950>
@@ -318,13 +318,13 @@ backend1 = 'torch', backend2 = 'mlx'
 
 test_backend.py:133: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../emberharmony/ops/__init__.py:125: in <lambda>
+../ember_ml/ops/__init__.py:125: in <lambda>
     ones = lambda *args, **kwargs: tensor_ops().ones(*args, **kwargs)
-../emberharmony/ops/__init__.py:108: in tensor_ops
+../ember_ml/ops/__init__.py:108: in tensor_ops
     return _get_ops_instance(TensorOps)
-../emberharmony/ops/__init__.py:75: in _get_ops_instance
+../ember_ml/ops/__init__.py:75: in _get_ops_instance
     module = _load_ops_module()
-../emberharmony/ops/__init__.py:66: in _load_ops_module
+../ember_ml/ops/__init__.py:66: in _load_ops_module
     _CURRENT_MODULE = importlib.import_module(_OPS_IMPLEMENTATIONS[_CURRENT_OPS])
 /Users/sydneybach/miniconda3/lib/python3.12/importlib/__init__.py:90: in import_module
     return _bootstrap._gcd_import(name[level:], package, level)
@@ -349,11 +349,11 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     the interfaces module.
     """
     
-    from emberharmony.ops.torch.tensor_ops import TorchTensorOps
->   from emberharmony.ops.torch.math_ops import TorchMathOps
-E   ModuleNotFoundError: No module named 'emberharmony.ops.torch.math_ops'
+    from ember_ml.ops.torch.tensor_ops import TorchTensorOps
+>   from ember_ml.ops.torch.math_ops import TorchMathOps
+E   ModuleNotFoundError: No module named 'ember_ml.ops.torch.math_ops'
 
-../emberharmony/ops/torch/__init__.py:9: ModuleNotFoundError
+../ember_ml/ops/torch/__init__.py:9: ModuleNotFoundError
 __________ TestBackendCompatibility.test_operation_consistency[torch] __________
 
 self = <test_backend.TestBackendCompatibility object at 0x3675cc6b0>
@@ -389,13 +389,13 @@ backend_name = 'torch'
 
 test_backend.py:175: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-../emberharmony/ops/__init__.py:125: in <lambda>
+../ember_ml/ops/__init__.py:125: in <lambda>
     ones = lambda *args, **kwargs: tensor_ops().ones(*args, **kwargs)
-../emberharmony/ops/__init__.py:108: in tensor_ops
+../ember_ml/ops/__init__.py:108: in tensor_ops
     return _get_ops_instance(TensorOps)
-../emberharmony/ops/__init__.py:75: in _get_ops_instance
+../ember_ml/ops/__init__.py:75: in _get_ops_instance
     module = _load_ops_module()
-../emberharmony/ops/__init__.py:66: in _load_ops_module
+../ember_ml/ops/__init__.py:66: in _load_ops_module
     _CURRENT_MODULE = importlib.import_module(_OPS_IMPLEMENTATIONS[_CURRENT_OPS])
 /Users/sydneybach/miniconda3/lib/python3.12/importlib/__init__.py:90: in import_module
     return _bootstrap._gcd_import(name[level:], package, level)
@@ -420,11 +420,11 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     the interfaces module.
     """
     
-    from emberharmony.ops.torch.tensor_ops import TorchTensorOps
->   from emberharmony.ops.torch.math_ops import TorchMathOps
-E   ModuleNotFoundError: No module named 'emberharmony.ops.torch.math_ops'
+    from ember_ml.ops.torch.tensor_ops import TorchTensorOps
+>   from ember_ml.ops.torch.math_ops import TorchMathOps
+E   ModuleNotFoundError: No module named 'ember_ml.ops.torch.math_ops'
 
-../emberharmony/ops/torch/__init__.py:9: ModuleNotFoundError
+../ember_ml/ops/torch/__init__.py:9: ModuleNotFoundError
 =============================== warnings summary ===============================
 <frozen importlib._bootstrap>:488
   <frozen importlib._bootstrap>:488: DeprecationWarning: Type google._upb._message.MessageMapContainer uses PyType_Spec with a metaclass that has custom tp_new. This is deprecated and will no longer be allowed in Python 3.14.

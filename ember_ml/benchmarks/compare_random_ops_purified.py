@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """
-Compare random operations across different backends using emberharmony.ops.
+Compare random operations across different backends using ember_ml.ops.
 
-This script benchmarks and compares the random operations in emberharmony.ops
+This script benchmarks and compares the random operations in ember_ml.ops
 across different backends (numpy, torch, mlx) without using NumPy directly.
 """
 
@@ -90,7 +90,7 @@ def run_benchmarks_for_backend(backend_name: str) -> Dict:
     """Run benchmarks for a specific backend."""
     print(f"\nSetting backend to {backend_name}...")
     set_backend(backend_name)
-    ops.set_random_seed(SEED)
+    ops.set_seed(SEED)
     
     results = {}
     

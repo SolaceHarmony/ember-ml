@@ -1,5 +1,5 @@
 """
-PyTorch comparison operations for EmberHarmony.
+PyTorch comparison operations for ember_ml.
 
 This module provides PyTorch implementations of comparison operations.
 """

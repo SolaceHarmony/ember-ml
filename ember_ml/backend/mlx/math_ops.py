@@ -5,7 +5,7 @@ This module provides MLX implementations of math operations.
 """
 
 import mlx.core as mx
-from typing import Union, Sequence, Optional, Any
+from typing import Union, Sequence, Optional, Any, List, Literal
 from ember_ml.backend.mlx.tensor_ops import convert_to_tensor, cast
 
 # Type aliases
@@ -452,6 +452,26 @@ def mod(x: ArrayLike, y: ArrayLike) -> mx.array:
     return remainder
 
 
+def floor_divide(x: ArrayLike, y: ArrayLike) -> mx.array:
+    """
+    Element-wise integer division.
+    
+    If either array is a floating point type then it is equivalent to calling floor() after divide().
+    
+    Args:
+        x: First array
+        y: Second array
+        
+    Returns:
+        Element-wise integer quotient (a // b)
+    """
+    x_tensor = convert_to_tensor(x)
+    y_tensor = convert_to_tensor(y)
+    
+    # Use floor_divide from MLX
+    return mx.floor_divide(x_tensor, y_tensor)
+
+
 def min(x: ArrayLike, axis: Optional[Union[int, Sequence[int]]] = None, keepdims: bool = False) -> mx.array:
     """
     Compute the minimum value of an MLX array along specified axes.
@@ -527,7 +547,6 @@ def softmax(x: ArrayLike, axis: int = -1) -> mx.array:
     exp_x = mx.exp(mx.subtract(x_array, x_max))
     return mx.divide(exp_x, mx.sum(exp_x, axis=axis, keepdims=True))
 
-
 def sort(x: ArrayLike, axis: int = -1) -> mx.array:
     """
     Sort an MLX array along a specified axis.
@@ -541,6 +560,54 @@ def sort(x: ArrayLike, axis: int = -1) -> mx.array:
     """
     x_array = convert_to_tensor(x)
     return mx.sort(x_array, axis=axis)
+
+
+def gradient(f: ArrayLike, *varargs, axis: Optional[Union[int, Sequence[int]]] = None,
+            edge_order: Literal[1, 2] = 1) -> Union[mx.array, List[mx.array]]:
+    """
+    Return the gradient of an N-dimensional array.
+    
+    The gradient is computed using second order accurate central differences in the interior
+    points and either first or second order accurate one-sides (forward or backwards)
+    differences at the boundaries. The returned gradient hence has the same shape as the input array.
+    
+    Args:
+        f: An N-dimensional array containing samples of a scalar function.
+        *varargs: Spacing between f values. Default unitary spacing for all dimensions.
+        axis: Gradient is calculated only along the given axis or axes.
+            The default (axis = None) is to calculate the gradient for all the axes of the input array.
+        edge_order: Gradient is calculated using N-th order accurate differences at the boundaries.
+            Must be 1 or 2.
+            
+    Returns:
+        A tensor or tuple of tensors corresponding to the derivatives of f with respect to each dimension.
+        Each derivative has the same shape as f.
+    """
+    import numpy as np
+    
+    f_array = convert_to_tensor(f)
+    
+    # Convert to NumPy array for calculation
+    f_numpy = f_array.tolist()
+    f_numpy = np.array(f_numpy)
+    
+    # Process spacing arguments
+    spacing_args = []
+    for arg in varargs:
+        if isinstance(arg, mx.array):
+            arg_numpy = arg.tolist()
+            spacing_args.append(np.array(arg_numpy))
+        else:
+            spacing_args.append(arg)
+    
+    # Calculate gradient using NumPy's gradient function
+    result_numpy = np.gradient(f_numpy, *spacing_args, axis=axis, edge_order=edge_order)
+    
+    # Convert back to MLX array
+    if isinstance(result_numpy, np.ndarray):
+        return mx.array(result_numpy)
+    else:
+        return [mx.array(arr) for arr in result_numpy]
 
 # Define the pi constant using Chudnovsky algorithm
 def _calculate_pi_value(precision_digits=15):
@@ -778,9 +845,17 @@ class MLXMathOps:
         """Compute the remainder of division of x by y element-wise."""
         return mod(x, y)
     
+    def floor_divide(self, x, y):
+        """Element-wise integer division."""
+        return floor_divide(x, y)
+    
     def sort(self, x, axis=-1):
         """Sort an array along a specified axis."""
         return sort(x, axis=axis)
+        
+    def gradient(self, f, *varargs, axis=None, edge_order=1):
+        """Return the gradient of an N-dimensional array."""
+        return gradient(f, *varargs, axis=axis, edge_order=edge_order)
     
     @property
     def pi(self):

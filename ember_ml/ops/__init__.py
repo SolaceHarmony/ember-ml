@@ -10,7 +10,7 @@ import importlib
 from typing import Optional, Dict, Any, Type
 
 # Import interfaces
-from ember_ml.ops.interfaces import TensorOps, MathOps, DeviceOps, RandomOps, ComparisonOps, DTypeOps, SolverOps
+from ember_ml.ops.interfaces import TensorOps, MathOps, DeviceOps, RandomOps, ComparisonOps, DTypeOps, SolverOps, IOOps
 
 # Import specific operations from interfaces
 from ember_ml.ops.interfaces.tensor_ops import *
@@ -86,6 +86,8 @@ def _get_ops_instance(ops_class: Type):
             class_name = f"{class_name_prefix}DTypeOps"
         elif ops_class == SolverOps:
             class_name = f"{class_name_prefix}SolverOps"
+        elif ops_class == IOOps:
+            class_name = f"{class_name_prefix}IOOps"
         else:
             raise ValueError(f"Unknown ops class: {ops_class}")
         
@@ -123,6 +125,12 @@ def dtype_ops() -> DTypeOps:
 def solver_ops() -> SolverOps:
     """Get solver operations."""
     return _get_ops_instance(SolverOps)
+
+def io_ops() -> IOOps:
+    """Get I/O operations."""
+    return _get_ops_instance(IOOps)
+
+# Feature operations are in ember_ml.features, not in ops
 
 # Direct access to operations
 # Tensor operations
@@ -168,6 +176,7 @@ add = lambda *args, **kwargs: math_ops().add(*args, **kwargs)
 subtract = lambda *args, **kwargs: math_ops().subtract(*args, **kwargs)
 multiply = lambda *args, **kwargs: math_ops().multiply(*args, **kwargs)
 divide = lambda *args, **kwargs: math_ops().divide(*args, **kwargs)
+floor_divide = lambda *args, **kwargs: math_ops().floor_divide(*args, **kwargs)
 dot = lambda *args, **kwargs: math_ops().dot(*args, **kwargs)
 matmul = lambda *args, **kwargs: math_ops().matmul(*args, **kwargs)
 mean = lambda *args, **kwargs: math_ops().mean(*args, **kwargs)
@@ -194,6 +203,7 @@ sigmoid = lambda *args, **kwargs: math_ops().sigmoid(*args, **kwargs)
 relu = lambda *args, **kwargs: math_ops().relu(*args, **kwargs)
 softmax = lambda *args, **kwargs: math_ops().softmax(*args, **kwargs)
 sort = lambda *args, **kwargs: math_ops().sort(*args, **kwargs)
+gradient = lambda *args, **kwargs: math_ops().gradient(*args, **kwargs)
 
 # Device operations
 to_device = lambda *args, **kwargs: device_ops().to_device(*args, **kwargs)
@@ -205,8 +215,14 @@ memory_usage = lambda *args, **kwargs: device_ops().memory_usage(*args, **kwargs
 random_normal = lambda *args, **kwargs: random_ops().random_normal(*args, **kwargs)
 random_uniform = lambda *args, **kwargs: random_ops().random_uniform(*args, **kwargs)
 random_binomial = lambda *args, **kwargs: random_ops().random_binomial(*args, **kwargs)
+random_gamma = lambda *args, **kwargs: random_ops().random_gamma(*args, **kwargs)
+random_poisson = lambda *args, **kwargs: random_ops().random_poisson(*args, **kwargs)
+random_exponential = lambda *args, **kwargs: random_ops().random_exponential(*args, **kwargs)
+random_categorical = lambda *args, **kwargs: random_ops().random_categorical(*args, **kwargs)
 random_permutation = lambda *args, **kwargs: random_ops().random_permutation(*args, **kwargs)
-set_random_seed = lambda *args, **kwargs: random_ops().set_random_seed(*args, **kwargs)
+shuffle = lambda *args, **kwargs: random_ops().shuffle(*args, **kwargs)
+set_seed = lambda *args, **kwargs: random_ops().set_seed(*args, **kwargs)
+get_seed = lambda *args, **kwargs: random_ops().get_seed(*args, **kwargs)
 
 # Comparison operations
 equal = lambda *args, **kwargs: comparison_ops().equal(*args, **kwargs)
@@ -240,13 +256,11 @@ def get_activation(activation: str):
     else:
         raise ValueError(f"Unknown activation function: {activation}")
 
-# Gradient operations
-def gradients(y, xs):
-    """Compute gradients of y with respect to xs."""
-    # This is a placeholder. The actual implementation will depend on the backend.
-    # For now, we'll just use the backend's gradients function.
-    from ember_ml import backend as K
-    return K.gradients(y, xs)
+# I/O operations
+save = lambda *args, **kwargs: io_ops().save(*args, **kwargs)
+load = lambda *args, **kwargs: io_ops().load(*args, **kwargs)
+
+# Feature operations are in ember_ml.features, not in ops
 
 # Export all functions and classes
 __all__ = [
@@ -270,6 +284,7 @@ __all__ = [
     'comparison_ops',
     'dtype_ops',
     'solver_ops',
+    'io_ops',
     'get_activation',
     'gradients',
     'to_numpy',
@@ -306,6 +321,7 @@ __all__ = [
     'subtract',
     'multiply',
     'divide',
+    'floor_divide',
     'dot',
     'matmul',
     'mean',
@@ -332,6 +348,7 @@ __all__ = [
     'relu',
     'softmax',
     'sort',
+    'gradient',
     
     # Device operations
     'to_device',
@@ -343,8 +360,14 @@ __all__ = [
     'random_normal',
     'random_uniform',
     'random_binomial',
+    'random_gamma',
+    'random_poisson',
+    'random_exponential',
+    'random_categorical',
     'random_permutation',
-    'set_random_seed',
+    'shuffle',
+    'set_seed',
+    'get_seed',
     
     # Comparison operations
     'equal',
@@ -360,6 +383,10 @@ __all__ = [
     'allclose',
     'isclose',
     'all',
+    
+    # I/O operations
+    'save',
+    'load',
     
     # Solver operations
     'solve',

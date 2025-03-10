@@ -1,10 +1,10 @@
-# EmberHarmony Models
+# ember_ml Models
 
-This directory contains pre-built machine learning models implemented in EmberHarmony. These models are ready-to-use implementations that can be applied to various tasks.
+This directory contains pre-built machine learning models implemented in ember_ml. These models are ready-to-use implementations that can be applied to various tasks.
 
 ## Overview
 
-The models module provides high-level, ready-to-use machine learning models that are not specific to a particular domain. These models are built using the lower-level components from the `emberharmony.nn` module and other core modules.
+The models module provides high-level, ready-to-use machine learning models that are not specific to a particular domain. These models are built using the lower-level components from the `ember_ml.nn` module and other core modules.
 
 ## Available Models
 
@@ -13,7 +13,7 @@ The models module provides high-level, ready-to-use machine learning models that
 The `RBM` class implements a Restricted Boltzmann Machine, which is a generative stochastic neural network that can learn a probability distribution over its set of inputs.
 
 ```python
-from emberharmony.models.rbm import RBM
+from ember_ml.models.rbm import RBM
 
 # Create an RBM model
 rbm = RBM(
@@ -34,7 +34,7 @@ samples = rbm.generate(num_samples=10)
 The `RBMAnomalyDetector` class implements an anomaly detection model based on a Restricted Boltzmann Machine. It learns the normal patterns in the data and can detect anomalies by measuring the reconstruction error.
 
 ```python
-from emberharmony.models.rbm_anomaly_detector import RBMAnomalyDetector
+from ember_ml.models.rbm_anomaly_detector import RBMAnomalyDetector
 
 # Create an RBM anomaly detector
 detector = RBMAnomalyDetector(
@@ -56,7 +56,7 @@ anomalies = detector.detect(test_data)
 The Liquid State Machine (LSM) models are located in the `liquid` subdirectory. These models implement liquid state machines, which are a type of reservoir computing model.
 
 ```python
-from emberharmony.models.liquid.lsm import LiquidStateMachine
+from ember_ml.models.liquid.lsm import LiquidStateMachine
 
 # Create a liquid state machine
 lsm = LiquidStateMachine(
@@ -96,8 +96,8 @@ The Liquid State Machine implementation uses a reservoir of recurrently connecte
 
 ```python
 import numpy as np
-from emberharmony.models.rbm import RBM
-from emberharmony import ops
+from ember_ml.models.rbm import RBM
+from ember_ml import ops
 
 # Create random data
 data = ops.random_uniform((1000, 784))
@@ -127,8 +127,8 @@ print(f"Reconstruction error: {error}")
 
 ```python
 import numpy as np
-from emberharmony.models.rbm_anomaly_detector import RBMAnomalyDetector
-from emberharmony import ops
+from ember_ml.models.rbm_anomaly_detector import RBMAnomalyDetector
+from ember_ml import ops
 
 # Create normal data
 normal_data = ops.random_uniform((1000, 784))
@@ -166,23 +166,23 @@ print(f"Anomalous data anomalies: {ops.sum(anomalous_anomalies)}/{len(anomalous_
 
 The models in this directory are built using the lower-level components from other modules:
 
-- **emberharmony.nn**: Provides the neural network components used to build the models
-- **emberharmony.ops**: Provides the tensor operations used by the models
-- **emberharmony.backend**: Provides the backend-specific implementations used by the models
+- **ember_ml.nn**: Provides the neural network components used to build the models
+- **ember_ml.ops**: Provides the tensor operations used by the models
+- **ember_ml.backend**: Provides the backend-specific implementations used by the models
 
 For domain-specific models, see the respective domain modules:
 
-- **emberharmony.wave.models**: Contains models specifically designed for wave-based neural processing
-- **emberharmony.audio.models**: Contains models specifically designed for audio processing
+- **ember_ml.wave.models**: Contains models specifically designed for wave-based neural processing
+- **ember_ml.audio.models**: Contains models specifically designed for audio processing
 
 ## Module Organization
 
 The models module is organized as follows:
 
-- **emberharmony.models**: Contains general-purpose machine learning models
+- **ember_ml.models**: Contains general-purpose machine learning models
   - `RBM`: Restricted Boltzmann Machine implementation
   - `RBMAnomalyDetector`: Anomaly detection model based on RBM
   - **liquid**: Contains Liquid State Machine implementations
   - **rbm**: Contains additional RBM-related implementations
 
-For more information on the distinction between the `emberharmony.nn` and `emberharmony.models` modules, see the [Module Architecture documentation](../../docs/module_architecture.md).
+For more information on the distinction between the `ember_ml.nn` and `ember_ml.models` modules, see the [Module Architecture documentation](../../docs/module_architecture.md).

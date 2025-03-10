@@ -1,5 +1,5 @@
 """
-NumPy comparison operations for EmberHarmony.
+NumPy comparison operations for ember_ml.
 
 This module provides NumPy implementations of comparison operations.
 """

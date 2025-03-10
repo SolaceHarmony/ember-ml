@@ -1,5 +1,5 @@
 """
-NumPy solver operations for EmberHarmony.
+NumPy solver operations for ember_ml.
 
 This module provides NumPy implementations of solver operations.
 """

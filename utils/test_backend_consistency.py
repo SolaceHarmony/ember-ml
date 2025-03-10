@@ -1,219 +1,179 @@
 #!/usr/bin/env python
 """
-Test for consistent behavior across different backends.
+Test backend consistency across different backends.
 
-This script runs a set of operations on all backends and compares the results
-to ensure they're consistent. It helps identify operations that behave differently
-across backends, which need to be normalized.
+This script checks if operations are consistently implemented across all backends
+in the new folder structure (ember_ml/backend/numpy, ember_ml/backend/torch, ember_ml/backend/mlx).
 """
 
 import os
-import sys
+import ast
 import argparse
-import numpy as np
-from typing import Dict, List, Any, Tuple, Callable
 import pandas as pd
+from typing import Dict, List, Set, Tuple, Optional, Any
 
-# Add the project root to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-from ember_ml.backend import set_backend, get_backend
-from ember_ml import ops
-# Set of operations to test
-OPERATIONS_TO_TEST = {
-    # Basic math operations
-    "add": lambda backend: ops.add(ops.ones((3, 3)), ops.ones((3, 3))),
-    "subtract": lambda backend: ops.subtract(ops.ones((3, 3)), ops.ones((3, 3))),
-    "multiply": lambda backend: ops.multiply(ops.ones((3, 3)), ops.ones((3, 3))),
-    "divide": lambda backend: ops.divide(ops.ones((3, 3)), ops.ones((3, 3))),
-    "pow": lambda backend: ops.pow(ops.ones((3, 3)), 2),
-    "sqrt": lambda backend: ops.sqrt(ops.ones((3, 3))),
-    "exp": lambda backend: ops.exp(ops.ones((3, 3))),
-    "log": lambda backend: ops.log(ops.ones((3, 3))),
-    
-    # Reduction operations
-    "sum": lambda backend: ops.sum(ops.ones((3, 3))),
-    "mean": lambda backend: ops.mean(ops.ones((3, 3))),
-    "max": lambda backend: ops.max(ops.ones((3, 3))),
-    "min": lambda backend: ops.min(ops.ones((3, 3))),
-    
-    # Shape operations
-    "reshape": lambda backend: ops.reshape(ops.ones((3, 3)), (9,)),
-    "transpose": lambda backend: ops.transpose(ops.ones((3, 3))),
-    "expand_dims": lambda backend: ops.expand_dims(ops.ones((3, 3)), axis=0),
-    "squeeze": lambda backend: ops.squeeze(ops.expand_dims(ops.ones((3, 3)), axis=0)),
-    
-    # Random operations (with seed for reproducibility)
-    "random_normal": lambda backend: (ops.random_ops().set_seed(42), ops.random_ops().random_normal((3, 3)))[1],
-    "random_uniform": lambda backend: (ops.random_ops().set_seed(42), ops.random_ops().random_uniform((3, 3)))[1],
-    
-    # Linear algebra operations
-    "matmul": lambda backend: ops.matmul(ops.ones((3, 3)), ops.ones((3, 3))),
-    "solve": lambda backend: ops.matmul(ops.eye(3), ops.ones((3, 1))),  # Use matmul instead of solve for now
-    
-    # Activation functions
-    "relu": lambda backend: ops.relu(ops.ones((3, 3))),
-    "sigmoid": lambda backend: ops.sigmoid(ops.ones((3, 3))),
-    "tanh": lambda backend: ops.tanh(ops.ones((3, 3))),
-    "softmax": lambda backend: ops.softmax(ops.ones((3, 3))),
+# Paths to backend implementation directories
+BACKEND_DIRS = {
+    "numpy": "../ember_ml/backend/numpy",
+    "torch": "../ember_ml/backend/torch",
+    "mlx": "../ember_ml/backend/mlx"
 }
 
-def run_operation_for_backend(backend: str, operation_func: Callable) -> Any:
-    """Run an operation for a specific backend."""
-    set_backend(backend)
-    return operation_func(backend)
+# Operation types and their corresponding files
+OPERATION_TYPES = {
+    "tensor": "tensor_ops.py",
+    "math": "math_ops.py",
+    "random": "random_ops.py",
+    "comparison": "comparison_ops.py",
+    "dtype": "dtype_ops.py",
+    "device": "device_ops.py",
+    "solver": "solver_ops.py",
+    "io": "io_ops.py"
+}
 
-def compare_results(results: Dict[str, Dict[str, Tuple[bool, Any]]]) -> pd.DataFrame:
-    """Compare results across backends and return a DataFrame."""
-    data = []
+def extract_operations_from_file(file_path: str) -> Set[str]:
+    """Extract operation names from a backend implementation file."""
+    operations = set()
     
-    for operation, backend_results in results.items():
-        row = {"Operation": operation}
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
         
-        # Check if all backends succeeded
-        all_succeeded = all(success for success, _ in backend_results.values())
-        row["All Succeeded"] = all_succeeded
+        # Parse the file
+        tree = ast.parse(content)
         
-        # If all backends succeeded, check if results are consistent
-        if all_succeeded:
-            # Convert results to numpy arrays for comparison
-            numpy_results = {}
-            shapes = {}
-            dtypes = {}
-            
-            for backend, (_, result) in backend_results.items():
-                # Store shape and dtype information
-                if hasattr(result, "shape"):
-                    # Normalize shape representation (torch.Size vs tuple)
-                    if str(type(result.shape)) == "<class 'torch.Size'>":
-                        shapes[backend] = tuple(result.shape)
-                    else:
-                        shapes[backend] = result.shape
+        # Find all function definitions at the module level
+        for node in ast.iter_child_nodes(tree):
+            if isinstance(node, ast.FunctionDef):
+                # Skip private methods
+                if not node.name.startswith('_') or node.name.startswith('__') and node.name.endswith('__'):
+                    operations.add(node.name)
+                    
+            # Also look for class methods
+            elif isinstance(node, ast.ClassDef):
+                # Get the class name
+                class_name = node.name
                 
-                if hasattr(result, "dtype"):
-                    dtypes[backend] = str(result.dtype)
-                
-                # Convert to numpy for value comparison
-                if hasattr(result, "numpy"):
-                    numpy_results[backend] = result.numpy()
-                elif hasattr(result, "cpu"):
-                    numpy_results[backend] = result.cpu().numpy()
-                else:
-                    numpy_results[backend] = np.array(result)
-            
-            # Check if all results are equal
-            first_backend = next(iter(numpy_results.keys()))
-            first_result = numpy_results[first_backend]
-            
-            # Check values
-            values_equal = True
-            for backend, result in numpy_results.items():
-                if backend != first_backend:
-                    try:
-                        # We can now compare random operations since we set a seed
-                        if not np.allclose(first_result, result, rtol=1e-5, atol=1e-5):
-                            # For random operations, use a larger tolerance
-                            if operation in ["random_normal", "random_uniform"]:
-                                if not np.allclose(first_result, result, rtol=1e-3, atol=1e-3):
-                                    values_equal = False
-                                    break
-                            else:
-                                values_equal = False
-                                break
-                    except:
-                        values_equal = False
-                        break
-            
-            # Check shapes (if they exist)
-            shapes_equal = True
-            if shapes:
-                # Normalize shape representations
-                normalized_shapes = {}
-                for backend, shape in shapes.items():
-                    if isinstance(shape, str) and "torch.Size" in shape:
-                        # Extract the shape from the string representation
-                        shape_str = shape.replace("torch.Size([", "").replace("])", "")
-                        shape_tuple = tuple(int(x.strip()) for x in shape_str.split(",") if x.strip())
-                        normalized_shapes[backend] = shape_tuple
-                    else:
-                        normalized_shapes[backend] = shape
-                
-                # Compare normalized shapes
-                first_shape = normalized_shapes[first_backend]
-                for backend, shape in normalized_shapes.items():
-                    if backend != first_backend and shape != first_shape:
-                        shapes_equal = False
-                        break
-            
-            # Results are consistent if both values and shapes are equal
-            all_equal = values_equal and shapes_equal
-            
-            row["Results Consistent"] = all_equal
-        else:
-            row["Results Consistent"] = False
+                # Find all methods in the class
+                for subnode in node.body:
+                    if isinstance(subnode, ast.FunctionDef):
+                        # Skip private methods and __init__
+                        if (not subnode.name.startswith('_') or
+                            (subnode.name.startswith('__') and subnode.name.endswith('__') and
+                             subnode.name != '__init__')):
+                            # Add the method name without the class prefix
+                            operations.add(subnode.name)
+    
+    except Exception as e:
+        print(f"Error processing {file_path}: {e}")
+    
+    return operations
+
+def extract_operations_by_type() -> Dict[str, Dict[str, Set[str]]]:
+    """Extract operations by type for each backend."""
+    operations_by_backend_and_type = {}
+    
+    for backend, backend_dir in BACKEND_DIRS.items():
+        operations_by_type = {}
         
-        # Add backend-specific results
-        for backend, (success, result) in backend_results.items():
-            row[f"{backend}_success"] = success
-            if success:
-                if hasattr(result, "shape"):
-                    row[f"{backend}_shape"] = str(result.shape)
-                if hasattr(result, "dtype"):
-                    row[f"{backend}_dtype"] = str(result.dtype)
+        for op_type, op_file in OPERATION_TYPES.items():
+            file_path = os.path.join(backend_dir, op_file)
+            print(f"Checking file: {file_path}, exists: {os.path.exists(file_path)}")
+            if os.path.exists(file_path):
+                operations = extract_operations_from_file(file_path)
+                operations_by_type[op_type] = operations
+                print(f"Found {len(operations)} operations in {file_path}")
             else:
-                row[f"{backend}_error"] = result
+                print(f"File not found: {file_path}")
         
-        data.append(row)
+        operations_by_backend_and_type[backend] = operations_by_type
     
-    return pd.DataFrame(data)
+    return operations_by_backend_and_type
 
-def test_backends(backends: List[str]) -> pd.DataFrame:
-    """Test operations across different backends."""
-    results = {}
+def check_consistency() -> Dict[str, Dict[str, List[str]]]:
+    """Check consistency of operations across backends."""
+    operations_by_backend_and_type = extract_operations_by_type()
     
-    for operation_name, operation_func in OPERATIONS_TO_TEST.items():
-        backend_results = {}
-        
-        for backend in backends:
-            print(f"Testing {operation_name} on {backend}...")
-            try:
-                # Use the run_operation_for_backend function to ensure each operation
-                # is run with the correct backend context
-                result = run_operation_for_backend(backend, operation_func)
-                backend_results[backend] = (True, result)
-            except Exception as e:
-                backend_results[backend] = (False, str(e))
-        
-        results[operation_name] = backend_results
+    # For each operation type, find operations that are missing in some backends
+    inconsistencies = {}
     
-    return compare_results(results)
+    for op_type in OPERATION_TYPES.keys():
+        # Get all operations of this type across all backends
+        all_operations = set()
+        for backend, ops_by_type in operations_by_backend_and_type.items():
+            if op_type in ops_by_type:
+                all_operations.update(ops_by_type[op_type])
+        
+        # Check which operations are missing in each backend
+        missing_by_backend = {}
+        for backend, ops_by_type in operations_by_backend_and_type.items():
+            if op_type in ops_by_type:
+                backend_ops = ops_by_type[op_type]
+                missing = all_operations - backend_ops
+                if missing:
+                    missing_by_backend[backend] = sorted(list(missing))
+        
+        if missing_by_backend:
+            inconsistencies[op_type] = missing_by_backend
+    
+    return inconsistencies
+
+def generate_report(inconsistencies: Dict[str, Dict[str, List[str]]], output_dir: str = ".") -> None:
+    """Generate a report of inconsistencies."""
+    # Create a DataFrame for the report
+    rows = []
+    
+    for op_type, missing_by_backend in inconsistencies.items():
+        for backend, missing_ops in missing_by_backend.items():
+            for op in missing_ops:
+                rows.append({
+                    "Operation Type": op_type,
+                    "Backend": backend,
+                    "Missing Operation": op
+                })
+    
+    if rows:
+        df = pd.DataFrame(rows)
+        
+        # Save to CSV
+        os.makedirs(output_dir, exist_ok=True)
+        csv_path = os.path.join(output_dir, "backend_inconsistencies.csv")
+        df.to_csv(csv_path, index=False)
+        print(f"Saved inconsistency report to {csv_path}")
+        
+        # Print summary
+        print(f"\nFound {len(rows)} inconsistencies across {len(inconsistencies)} operation types")
+        for op_type, missing_by_backend in inconsistencies.items():
+            print(f"\n{op_type} operations:")
+            for backend, missing_ops in missing_by_backend.items():
+                print(f"  {backend} is missing {len(missing_ops)} operations: {', '.join(missing_ops[:5])}" + 
+                      (f" and {len(missing_ops) - 5} more" if len(missing_ops) > 5 else ""))
+    else:
+        print("No inconsistencies found. All operations are implemented across all backends.")
 
 def main():
     """Main function."""
-    parser = argparse.ArgumentParser(description="Test for consistent behavior across different backends.")
-    parser.add_argument("--backends", nargs="+", default=["numpy", "torch", "mlx"], 
-                        help="Backends to test (default: numpy torch mlx)")
+    parser = argparse.ArgumentParser(description="Test backend consistency across different backends.")
+    parser.add_argument("--output-dir", "-o", default=".", help="Directory to save output files")
+    parser.add_argument("--debug", "-d", action="store_true", help="Print debug information")
     args = parser.parse_args()
     
-    # Test backends
-    results_df = test_backends(args.backends)
+    # Extract operations by type
+    operations_by_backend_and_type = extract_operations_by_type()
     
-    # Print summary
-    print("\nSummary:")
-    print(f"Total operations tested: {len(results_df)}")
-    print(f"Operations with consistent results: {results_df['Results Consistent'].sum()}")
-    print(f"Operations with inconsistent results: {len(results_df) - results_df['Results Consistent'].sum()}")
+    # Print debug information if requested
+    if args.debug:
+        print("\nOperations by backend and type:")
+        for backend, ops_by_type in operations_by_backend_and_type.items():
+            print(f"\n{backend} backend:")
+            for op_type, ops in ops_by_type.items():
+                print(f"  {op_type} operations: {sorted(list(ops))}")
     
-    # Print inconsistent operations
-    inconsistent = results_df[~results_df["Results Consistent"]]
-    if not inconsistent.empty:
-        print("\nOperations with inconsistent results:")
-        for _, row in inconsistent.iterrows():
-            print(f"  - {row['Operation']}")
+    # Check consistency
+    inconsistencies = check_consistency()
     
-    # Save results to CSV
-    results_df.to_csv("backend_consistency_results.csv", index=False)
-    print("\nDetailed results saved to backend_consistency_results.csv")
+    # Generate report
+    generate_report(inconsistencies, args.output_dir)
 
 if __name__ == "__main__":
     main()

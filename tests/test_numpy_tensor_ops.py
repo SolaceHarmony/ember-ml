@@ -2,7 +2,7 @@
 Test script for NumPy tensor operations.
 
 This script directly tests the NumPy tensor operations without going through
-the EmberHarmony framework.
+the ember_ml framework.
 """
 
 import sys

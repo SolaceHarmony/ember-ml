@@ -5,7 +5,7 @@ This module defines the abstract interface for mathematical operations.
 """
 
 from abc import ABC, abstractmethod
-from typing import Union, Sequence, Optional, Any
+from typing import Union, Sequence, Optional, Any, Tuple
 
 # Type aliases
 Shape = Union[int, Sequence[int]]
@@ -77,6 +77,22 @@ class MathOps(ABC):
             
         Returns:
             Element-wise quotient
+        """
+        pass
+    
+    @abstractmethod
+    def floor_divide(self, x: Any, y: Any) -> Any:
+        """
+        Element-wise integer division.
+        
+        If either array is a floating point type then it is equivalent to calling floor() after divide().
+        
+        Args:
+            x: First tensor
+            y: Second tensor
+            
+        Returns:
+            Element-wise integer quotient (a // b)
         """
         pass
     
@@ -416,5 +432,56 @@ class MathOps(ABC):
             
         Returns:
             Softmax of the tensor
+        """
+        pass
+    
+    @abstractmethod
+    def gradient(self, f: Any, *varargs, axis: Optional[Union[int, Sequence[int]]] = None,
+                edge_order: int = 1) -> Union[Any, Sequence[Any]]:
+        """
+        Return the gradient of an N-dimensional array.
+        
+        The gradient is computed using second order accurate central differences in the interior
+        points and either first or second order accurate one-sides (forward or backwards)
+        differences at the boundaries. The returned gradient hence has the same shape as the input array.
+        
+        Args:
+            f: An N-dimensional array containing samples of a scalar function.
+            *varargs: Spacing between f values. Default unitary spacing for all dimensions.
+            axis: Gradient is calculated only along the given axis or axes.
+                The default (axis = None) is to calculate the gradient for all the axes of the input array.
+            edge_order: Gradient is calculated using N-th order accurate differences at the boundaries.
+                Must be 1 or 2.
+                
+        Returns:
+            A tensor or tuple of tensors corresponding to the derivatives of f with respect to each dimension.
+            Each derivative has the same shape as f.
+        """
+        pass
+    
+    @abstractmethod
+    def cumsum(self, x: Any, axis: Optional[int] = None) -> Any:
+        """
+        Compute the cumulative sum of a tensor along a specified axis.
+        
+        Args:
+            x: Input tensor
+            axis: Axis along which to compute the cumulative sum
+            
+        Returns:
+            Tensor with cumulative sums
+        """
+        pass
+    
+    @abstractmethod
+    def eigh(self, a: Any) -> Tuple[Any, Any]:
+        """
+        Compute the eigenvalues and eigenvectors of a Hermitian or symmetric matrix.
+        
+        Args:
+            a: Input Hermitian or symmetric matrix
+            
+        Returns:
+            Tuple of (eigenvalues, eigenvectors)
         """
         pass
