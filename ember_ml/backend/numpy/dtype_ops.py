@@ -46,38 +46,66 @@ def get_dtype(name: str) -> Type:
         raise ValueError(f"Unknown data type: {name}")
 
 
-def to_numpy_dtype(dtype: Any) -> Type:
+def to_dtype_str(dtype: Any) -> str:
     """
-    Convert a data type to a NumPy data type.
-    
-    Args:
-        dtype: The data type to convert
-        
-    Returns:
-        The corresponding NumPy data type
-    """
-    if isinstance(dtype, type) and hasattr(np, dtype.__name__):
-        return dtype
-    elif isinstance(dtype, str):
-        return get_dtype(dtype)
-    elif isinstance(dtype, np.dtype):
-        # Handle numpy.dtype objects
-        return dtype.type
-    else:
-        raise ValueError(f"Cannot convert {dtype} to NumPy data type")
-
-
-def from_numpy_dtype(dtype: Type) -> Type:
-    """
-    Convert a NumPy data type to a NumPy data type.
+    Convert a NumPy data type to a string representation.
     
     Args:
         dtype: The NumPy data type to convert
         
     Returns:
+        String representation of the data type
+    """
+    if dtype == np.float32:
+        return 'float32'
+    elif dtype == np.float64:
+        return 'float64'
+    elif dtype == np.int32:
+        return 'int32'
+    elif dtype == np.int64:
+        return 'int64'
+    elif dtype == np.bool_:
+        return 'bool'
+    elif dtype == np.int8:
+        return 'int8'
+    elif dtype == np.int16:
+        return 'int16'
+    elif dtype == np.uint8:
+        return 'uint8'
+    elif dtype == np.uint16:
+        return 'uint16'
+    elif dtype == np.uint32:
+        return 'uint32'
+    elif dtype == np.uint64:
+        return 'uint64'
+    elif dtype == np.float16:
+        return 'float16'
+    elif isinstance(dtype, str):
+        return dtype
+    elif isinstance(dtype, np.dtype):
+        return to_dtype_str(dtype.type)
+    else:
+        raise ValueError(f"Cannot convert {dtype} to dtype string")
+
+
+def from_dtype_str(dtype_str: str) -> Type:
+    """
+    Convert a string representation to a NumPy data type.
+    
+    Args:
+        dtype_str: String representation of the data type
+        
+    Returns:
         The corresponding NumPy data type
     """
-    return dtype
+    if isinstance(dtype_str, type) and hasattr(np, dtype_str.__name__):
+        return dtype_str
+    elif isinstance(dtype_str, str):
+        return get_dtype(dtype_str)
+    elif isinstance(dtype_str, np.dtype):
+        return dtype_str.type
+    else:
+        raise ValueError(f"Cannot convert {dtype_str} to NumPy data type")
 
 
 def float32() -> Type:
@@ -147,58 +175,70 @@ class NumpyDTypeOps:
         """Get a data type by name."""
         return get_dtype(name)
     
-    def to_numpy_dtype(self, dtype):
-        """Convert a data type to a NumPy data type."""
-        return to_numpy_dtype(dtype)
+    def to_dtype_str(self, dtype):
+        """Convert a NumPy data type to a string representation."""
+        return to_dtype_str(dtype)
     
-    def from_numpy_dtype(self, dtype):
-        """Convert a NumPy data type to a NumPy data type."""
-        return from_numpy_dtype(dtype)
+    def from_dtype_str(self, dtype_str):
+        """Convert a string representation to a NumPy data type."""
+        return from_dtype_str(dtype_str)
     
+    @property
     def float32(self):
         """Get the float32 data type."""
         return float32()
     
+    @property
     def float64(self):
         """Get the float64 data type."""
         return float64()
     
+    @property
     def float16(self):
         """Get the float16 data type."""
         return float16()
     
+    @property
     def int32(self):
         """Get the int32 data type."""
         return int32()
     
+    @property
     def int64(self):
         """Get the int64 data type."""
         return int64()
     
+    @property
     def int16(self):
         """Get the int16 data type."""
         return int16()
     
+    @property
     def int8(self):
         """Get the int8 data type."""
         return int8()
     
+    @property
     def uint8(self):
         """Get the uint8 data type."""
         return uint8()
     
+    @property
     def uint16(self):
         """Get the uint16 data type."""
         return uint16()
     
+    @property
     def uint32(self):
         """Get the uint32 data type."""
         return uint32()
     
+    @property
     def uint64(self):
         """Get the uint64 data type."""
         return uint64()
     
+    @property
     def bool_(self):
         """Get the boolean data type."""
         return bool_()

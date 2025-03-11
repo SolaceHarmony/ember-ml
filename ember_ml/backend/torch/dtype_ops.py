@@ -8,12 +8,12 @@ import torch
 from typing import Union, Any, Optional
 
 
-def ember_dtype_to_torch(dtype: Union[Any, str, None]) -> Optional[torch.dtype]:
+def from_dtype_str(dtype: Union[Any, str, None]) -> Optional[torch.dtype]:
     """
-    Convert an EmberDtype to a PyTorch data type.
+    Convert a dtype string to a PyTorch data type.
     
     Args:
-        dtype: The EmberDtype to convert
+        dtype: The dtype string to convert
         
     Returns:
         The corresponding PyTorch data type
@@ -25,11 +25,12 @@ def ember_dtype_to_torch(dtype: Union[Any, str, None]) -> Optional[torch.dtype]:
     if isinstance(dtype, torch.dtype):
         return dtype
     
-    # If it's an EmberDtype, use its name
-    if hasattr(dtype, 'name'):
-        dtype_name = dtype.name
-    elif isinstance(dtype, str):
+    # If it's a string, use it directly
+    if isinstance(dtype, str):
         dtype_name = dtype
+    # If it has a name attribute, use that
+    elif hasattr(dtype, 'name'):
+        dtype_name = dtype.name
     else:
         raise ValueError(f"Cannot convert {dtype} to PyTorch data type")
     
@@ -56,15 +57,15 @@ def ember_dtype_to_torch(dtype: Union[Any, str, None]) -> Optional[torch.dtype]:
         raise ValueError(f"Unknown data type: {dtype_name}")
 
 
-def torch_to_ember_dtype(dtype: Union[torch.dtype, str, None]) -> Optional[str]:
+def to_dtype_str(dtype: Union[torch.dtype, str, None]) -> Optional[str]:
     """
-    Convert a PyTorch data type to an EmberDtype.
+    Convert a PyTorch data type to a dtype string.
     
     Args:
         dtype: The PyTorch data type to convert
         
     Returns:
-        The corresponding EmberDtype name
+        The corresponding dtype string
     """
     if dtype is None:
         return None
@@ -100,12 +101,76 @@ class TorchDTypeOps:
     
     def get_dtype(self, name):
         """Get a data type by name."""
-        return ember_dtype_to_torch(name)
+        return from_dtype_str(name)
     
-    def to_numpy_dtype(self, dtype):
-        """Convert a PyTorch data type to a NumPy data type."""
-        return torch_to_ember_dtype(dtype)
+    def to_dtype_str(self, dtype):
+        """Convert a PyTorch data type to a dtype string."""
+        return to_dtype_str(dtype)
     
-    def from_numpy_dtype(self, dtype):
-        """Convert a NumPy data type to a PyTorch data type."""
-        return ember_dtype_to_torch(dtype)
+    def from_dtype_str(self, dtype_str):
+        """Convert a dtype string to a PyTorch data type."""
+        return from_dtype_str(dtype_str)
+    
+    # Data type properties
+    @property
+    def float16(self):
+        """Get the float16 data type."""
+        return torch.float16
+    
+    @property
+    def float32(self):
+        """Get the float32 data type."""
+        return torch.float32
+    
+    @property
+    def float64(self):
+        """Get the float64 data type."""
+        return torch.float64
+    
+    @property
+    def int8(self):
+        """Get the int8 data type."""
+        return torch.int8
+    
+    @property
+    def int16(self):
+        """Get the int16 data type."""
+        return torch.int16
+    
+    @property
+    def int32(self):
+        """Get the int32 data type."""
+        return torch.int32
+    
+    @property
+    def int64(self):
+        """Get the int64 data type."""
+        return torch.int64
+    
+    @property
+    def uint8(self):
+        """Get the uint8 data type."""
+        return torch.uint8
+    
+    @property
+    def uint16(self):
+        """Get the uint16 data type."""
+        # PyTorch doesn't have uint16, so we'll use int16 as a fallback
+        return torch.int16
+    
+    @property
+    def uint32(self):
+        """Get the uint32 data type."""
+        # PyTorch doesn't have uint32, so we'll use int32 as a fallback
+        return torch.int32
+    
+    @property
+    def uint64(self):
+        """Get the uint64 data type."""
+        # PyTorch doesn't have uint64, so we'll use int64 as a fallback
+        return torch.int64
+    
+    @property
+    def bool_(self):
+        """Get the boolean data type."""
+        return torch.bool

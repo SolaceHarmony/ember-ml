@@ -98,25 +98,25 @@ class DTypeOps(ABC):
         pass
     
     @abstractmethod
-    def to_numpy_dtype(self, dtype: Any) -> Type:
+    def to_dtype_str(self, dtype: Any) -> str:
         """
-        Convert a data type to a NumPy data type.
+        Convert a data type to a string representation.
         
         Args:
             dtype: The data type to convert
             
         Returns:
-            The corresponding NumPy data type
+            The string representation of the data type
         """
         pass
     
     @abstractmethod
-    def from_numpy_dtype(self, dtype: Type) -> Any:
+    def from_dtype_str(self, dtype_str: str) -> Any:
         """
-        Convert a NumPy data type to a backend-specific data type.
+        Convert a string representation to a backend-specific data type.
         
         Args:
-            dtype: The NumPy data type to convert
+            dtype_str: The string representation of the data type
             
         Returns:
             The corresponding backend-specific data type

@@ -5,7 +5,7 @@ This module provides MLX implementations of device operations.
 """
 
 import mlx.core as mx
-from typing import Union, Optional, List
+from typing import Union, Optional, List, Dict, Any
 
 # Type aliases
 ArrayLike = Union[mx.array, float, int, list, tuple]
@@ -48,7 +48,7 @@ def get_available_devices() -> List[str]:
     """
     return ['mps']  # MLX uses Metal on Apple Silicon
 
-def memory_usage(device: Optional[str] = None) -> int:
+def memory_usage(device: Optional[str] = None) -> Dict[str, int]:
     """
     Get the memory usage of the specified device.
     
@@ -56,17 +56,26 @@ def memory_usage(device: Optional[str] = None) -> int:
         device: Target device (ignored for MLX backend)
         
     Returns:
-        Memory usage in bytes for the MLX backend
+        Dictionary containing memory usage statistics
     """
     # Use MLX's metal.get_active_memory function to get the active memory usage
     try:
-        return mx.metal.get_active_memory()
+        active_memory = mx.metal.get_active_memory()
+        return {
+            'used': active_memory,
+            'total': 0,  # MLX doesn't provide total memory info directly
+            'free': 0    # MLX doesn't provide free memory info directly
+        }
     except (AttributeError, ImportError):
         # Fallback if the function is not available
-        return 0
+        return {
+            'used': 0,
+            'total': 0,
+            'free': 0
+        }
 
 
-def memory_info(device: Optional[str] = None) -> dict:
+def memory_info(device: Optional[str] = None) -> Dict[str, Any]:
     """
     Get memory information for the specified device.
     
@@ -81,16 +90,36 @@ def memory_info(device: Optional[str] = None) -> dict:
         device_info = mx.metal.device_info()
         active_memory = mx.metal.get_active_memory()
         
-        # Extract relevant information from device_info
+        # Extract relevant information from device_info and ensure it's an integer
         total_memory = device_info.get('memory_size', 0)
+        if not isinstance(total_memory, int):
+            total_memory = 0
+        # Convert to MLX tensors
+        total_memory_tensor = mx.array(total_memory)
+        active_memory_tensor = mx.array(active_memory)
+        
+        # Calculate available memory using mx functions
+        available_memory_tensor = mx.maximum(mx.array(0), mx.subtract(total_memory_tensor, active_memory_tensor))
+        
+        # Return the tensor directly without conversion
+        available_memory = available_memory_tensor
+        
+        # Calculate percentage safely using mx functions
+        zero = mx.array(0)
+        hundred = mx.array(100)
+        
+        if mx.greater(total_memory_tensor, zero).item():
+            percent = mx.multiply(mx.divide(active_memory_tensor, total_memory_tensor), hundred)
+        else:
+            percent = mx.array(0.0)
         
         return {
             'total': total_memory,
             'used': active_memory,
-            'available': max(0, total_memory - active_memory),
-            'percent': (active_memory / total_memory * 100) if total_memory > 0 else 0
+            'available': available_memory,
+            'percent': percent
         }
-    except (AttributeError, ImportError, ZeroDivisionError):
+    except (AttributeError, ImportError, ZeroDivisionError, TypeError):
         # Fallback if the functions are not available
         return {
             'total': 0,

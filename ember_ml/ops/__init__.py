@@ -175,8 +175,8 @@ item = lambda *args, **kwargs: tensor_ops().item(*args, **kwargs)
 from ember_ml.ops.dtypes import *
 
 get_dtype = lambda *args, **kwargs: dtype_ops().get_dtype(*args, **kwargs)
-to_numpy_dtype = lambda *args, **kwargs: dtype_ops().to_numpy_dtype(*args, **kwargs)
-from_numpy_dtype = lambda *args, **kwargs: dtype_ops().from_numpy_dtype(*args, **kwargs)
+to_dtype_str = lambda *args, **kwargs: dtype_ops().to_dtype_str(*args, **kwargs)
+from_dtype_str = lambda *args, **kwargs: dtype_ops().from_dtype_str(*args, **kwargs)
 
 # Math operations
 def _get_pi():
@@ -224,6 +224,7 @@ to_device = lambda *args, **kwargs: device_ops().to_device(*args, **kwargs)
 get_device = lambda *args, **kwargs: device_ops().get_device(*args, **kwargs)
 get_available_devices = lambda *args, **kwargs: device_ops().get_available_devices(*args, **kwargs)
 memory_usage = lambda *args, **kwargs: device_ops().memory_usage(*args, **kwargs)
+memory_info = lambda *args, **kwargs: device_ops().memory_info(*args, **kwargs)
 
 # Random operations
 random_normal = lambda *args, **kwargs: random_ops().random_normal(*args, **kwargs)
@@ -385,6 +386,7 @@ __all__ = [
     'get_device',
     'get_available_devices',
     'memory_usage',
+    'memory_info',
     
     # Random operations
     'random_normal',
@@ -454,8 +456,8 @@ __all__ = [
     'float64',
     'bool_',
     'get_dtype',
-    'to_numpy_dtype',
-    'from_numpy_dtype',
+    'to_dtype_str',
+    'from_dtype_str',
 ]
 
 solve = lambda *args, **kwargs: solver_ops().solve(*args, **kwargs)
