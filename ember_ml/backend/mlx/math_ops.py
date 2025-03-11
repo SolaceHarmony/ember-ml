@@ -260,6 +260,23 @@ def sigmoid(x: ArrayLike) -> mx.array:
     x_safe = clip(x_array, -88.0, 88.0)  # Prevent overflow
     return mx.sigmoid(x_safe)
 
+def softplus(x: ArrayLike) -> mx.array:
+    """
+    Compute the softplus of an MLX array element-wise.
+    
+    The softplus function is defined as log(1 + exp(x)).
+    
+    Args:
+        x: Input array
+        
+    Returns:
+        Element-wise softplus
+    """
+    x_array = convert_to_tensor(x)
+    x_safe = clip(x_array, -88.0, 88.0)  # Prevent overflow
+    # softplus(x) = log(1 + exp(x))
+    return mx.log(mx.add(1.0, mx.exp(x_safe)))
+
 def tanh(x: ArrayLike) -> mx.array:
     """
     Compute the hyperbolic tangent of an MLX array element-wise.
@@ -781,6 +798,10 @@ class MLXMathOps:
         """Compute the sigmoid of a tensor element-wise."""
         return sigmoid(x)
     
+    def softplus(self, x):
+        """Compute the softplus of a tensor element-wise."""
+        return softplus(x)
+    
     def tanh(self, x):
         """Compute the hyperbolic tangent of a tensor element-wise."""
         return tanh(x)
@@ -853,8 +874,10 @@ class MLXMathOps:
         """Sort an array along a specified axis."""
         return sort(x, axis=axis)
         
-    def gradient(self, f, *varargs, axis=None, edge_order=1):
+    def gradient(self, f, *varargs, axis=None, edge_order: Literal[1, 2] = 1):
         """Return the gradient of an N-dimensional array."""
+        if edge_order not in (1, 2):
+            raise ValueError("edge_order must be 1 or 2")
         return gradient(f, *varargs, axis=axis, edge_order=edge_order)
     
     @property

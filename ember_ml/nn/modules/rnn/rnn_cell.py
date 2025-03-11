@@ -8,6 +8,7 @@ which is a simple recurrent neural network cell.
 from typing import Optional, List, Dict, Any, Union, Tuple
 
 from ember_ml import ops
+from ember_ml.initializers import glorot_uniform, orthogonal
 from ember_ml.nn.modules import Module, Parameter
 
 class RNNCell(Module):
@@ -61,8 +62,8 @@ class RNNCell(Module):
             self.bias = Parameter(ops.zeros((self.hidden_size,)))
         
         # Initialize weights
-        self.input_kernel.data = ops.glorot_uniform((self.input_size, self.hidden_size))
-        self.recurrent_kernel.data = ops.orthogonal((self.hidden_size, self.hidden_size))
+        self.input_kernel.data = glorot_uniform((self.input_size, self.hidden_size))
+        self.recurrent_kernel.data = orthogonal((self.hidden_size, self.hidden_size))
         
         if self.use_bias:
             self.bias.data = ops.zeros((self.hidden_size,))

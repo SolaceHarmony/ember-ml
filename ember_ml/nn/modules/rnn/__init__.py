@@ -2,7 +2,8 @@
 Recurrent Neural Network (RNN) module.
 
 This module provides implementations of various RNN layers,
-including LSTM, GRU, RNN, CfC (Closed-form Continuous-time), and LTC (Liquid Time-Constant).
+including LSTM, GRU, RNN, CfC (Closed-form Continuous-time), LTC (Liquid Time-Constant),
+and StrideAware cells for multi-timescale processing.
 """
 
 from ember_ml.nn.modules.rnn.cfc_cell import CfCCell
@@ -16,6 +17,8 @@ from ember_ml.nn.modules.rnn.gru_cell import GRUCell
 from ember_ml.nn.modules.rnn.gru import GRU
 from ember_ml.nn.modules.rnn.rnn_cell import RNNCell
 from ember_ml.nn.modules.rnn.rnn import RNN
+from ember_ml.nn.modules.rnn.stride_aware_cell import StrideAwareCell
+from ember_ml.nn.modules.rnn.stride_aware import StrideAware
 
 __all__ = [
     'CfCCell',
@@ -29,4 +32,6 @@ __all__ = [
     'GRU',
     'RNNCell',
     'RNN',
+    'StrideAwareCell',
+    'StrideAware',
 ]

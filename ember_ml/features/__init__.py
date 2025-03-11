@@ -11,6 +11,10 @@ from typing import Optional, Dict, Any, Type
 
 # Import interfaces
 from ember_ml.features.interfaces import PCAInterface, StandardizeInterface, NormalizeInterface
+from ember_ml.features.interfaces.tensor_features import TensorFeaturesInterface
+
+# Import implementations
+from ember_ml.features.common.pca_features import PCA
 
 # Use backend directly
 from ember_ml.backend import get_backend, set_backend, get_backend_module
@@ -88,6 +92,10 @@ def normalize_features() -> NormalizeInterface:
     """Get normalize features."""
     return _get_features_instance(NormalizeInterface)
 
+def tensor_features() -> TensorFeaturesInterface:
+    """Get tensor features."""
+    return _get_features_instance(TensorFeaturesInterface)
+
 # Direct access to operations
 # PCA operations
 fit = lambda *args, **kwargs: pca_features().fit(*args, **kwargs)
@@ -95,12 +103,18 @@ transform = lambda *args, **kwargs: pca_features().transform(*args, **kwargs)
 fit_transform = lambda *args, **kwargs: pca_features().fit_transform(*args, **kwargs)
 inverse_transform = lambda *args, **kwargs: pca_features().inverse_transform(*args, **kwargs)
 
+# Tensor features operations
+one_hot = lambda *args, **kwargs: tensor_features().one_hot(*args, **kwargs)
+scatter = lambda *args, **kwargs: tensor_features().scatter(*args, **kwargs)
+
 # Export all functions and classes
 __all__ = [
     # Classes
     'PCAInterface',
     'StandardizeInterface',
     'NormalizeInterface',
+    'TensorFeaturesInterface',
+    'PCA',
     
     # Functions
     'get_features',
@@ -108,10 +122,13 @@ __all__ = [
     'pca_features',
     'standardize_features',
     'normalize_features',
+    'tensor_features',
     
     # Operations
     'fit',
     'transform',
     'fit_transform',
     'inverse_transform',
+    'one_hot',
+    'scatter',
 ]

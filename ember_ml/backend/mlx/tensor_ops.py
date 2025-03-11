@@ -36,10 +36,21 @@ def convert_to_tensor(x: ArrayLike, dtype: DType = None, device: Optional[str] =
         from ember_ml.backend.mlx.dtype_ops import get_dtype
         dtype = get_dtype(dtype.name)
     
-    # Check if x is a tensor from another backend
-    if hasattr(x, '__class__') and 'Tensor' in x.__class__.__name__ and not isinstance(x, mx.array):
-        raise TypeError(f"Cannot convert tensor of type {type(x)} to MLX array. "
-                        f"Use the appropriate backend for this tensor type.")
+    # Handle EmberTensor specially by checking class name and data attribute
+    # This avoids importing EmberTensor which would cause circular imports
+    if isinstance(x, object):  # Type guard for attribute access
+        if (getattr(x.__class__, '__name__', '') == 'EmberTensor'
+            and hasattr(x, 'data')):
+            # Safe to access data after type checking
+            data = getattr(x, 'data')
+            return convert_to_tensor(data, dtype=dtype, device=device)
+    
+        # Check if x is a tensor from another backend
+        if ('Tensor' in getattr(x.__class__, '__name__', '')
+            and not isinstance(x, mx.array)
+            and getattr(x.__class__, '__name__', '') != 'EmberTensor'):
+            raise TypeError(f"Cannot convert tensor of type {type(x)} to MLX array. "
+                            f"Use the appropriate backend for this tensor type.")
     
     if isinstance(x, mx.array):
         array = x
@@ -597,6 +608,266 @@ def gather(x: ArrayLike, indices: Any, axis: int = 0) -> mx.array:
     return mx.take(x_tensor, indices_tensor, axis=axis)
 
 
+def tensor_slice(x: ArrayLike, starts: Sequence[int], sizes: Sequence[int]) -> mx.array:
+    """
+    Extract a slice from a tensor.
+    
+    Args:
+        x: Input tensor
+        starts: Starting indices for each dimension
+        sizes: Size of the slice in each dimension. A value of -1 means "all remaining elements in this dimension"
+        
+    Returns:
+        Sliced tensor
+    """
+    x_tensor = convert_to_tensor(x)
+    
+    # Create a list of slice objects for each dimension
+    slice_objects = []
+    for i, (start, size) in enumerate(zip(starts, sizes)):
+        if size == -1:
+            # -1 means "all remaining elements in this dimension"
+            slice_objects.append(slice(int(start), None))
+        else:
+            slice_objects.append(slice(int(start), int(start + size)))
+    
+    # Extract the slice
+    return x_tensor[tuple(slice_objects)]
+
+def slice_update(x: ArrayLike, slices: Union[List, Tuple], updates: ArrayLike) -> mx.array:
+    """
+    Update a tensor at specific indices.
+    
+    Args:
+        x: Input tensor to update
+        slices: List or tuple of slice objects or indices
+        updates: Values to insert at the specified indices
+        
+    Returns:
+        Updated tensor
+    """
+    x_tensor = convert_to_tensor(x)
+    updates_tensor = convert_to_tensor(updates)
+    
+    # Create a copy of the input tensor
+    # MLX arrays are immutable, so we need to create a new array
+    result = mx.array(x_tensor)
+    
+    # Convert slices to start_indices and axes
+    if isinstance(slices, (list, tuple)):
+        # Extract start indices and axes
+        start_indices = []
+        axes = []
+        
+        for i, s in enumerate(slices):
+            if hasattr(s, 'start') and hasattr(s, 'stop'):
+                # For slice objects, use the start index
+                start_idx = s.start if s.start is not None else 0
+                start_indices.append(start_idx)
+                axes.append(i)
+            else:
+                # For direct indices
+                start_indices.append(s)
+                axes.append(i)
+        
+        # Convert to MLX arrays
+        start_indices_array = mx.array(start_indices, dtype=mx.int32)
+        
+        # Update the tensor at the specified indices
+        result = mx.slice_update(result, updates_tensor, start_indices_array, tuple(axes))
+    else:
+        # Single index case
+        start_indices_array = mx.array([slices], dtype=mx.int32)
+        result = mx.slice_update(result, updates_tensor, start_indices_array, (0,))
+    
+    return result
+
+
+def pad(x: ArrayLike, paddings: Sequence[Sequence[int]], constant_values: Union[int, float] = 0) -> mx.array:
+    """
+    Pad a tensor with a constant value.
+    
+    Args:
+        x: Input tensor
+        paddings: Sequence of sequences of integers specifying the padding for each dimension
+                 Each inner sequence should contain two integers: [pad_before, pad_after]
+        constant_values: Value to pad with
+        
+    Returns:
+        Padded tensor
+    """
+    x_tensor = convert_to_tensor(x)
+    
+    # Convert paddings to the format expected by mx.pad
+    # MLX expects a tuple of (pad_before, pad_after) for each dimension
+    pad_width = tuple(tuple(p) for p in paddings)
+    
+    # Pad the tensor
+    return mx.pad(x_tensor, pad_width, constant_values)
+
+def scatter(values: ArrayLike, index: ArrayLike, out_size: Optional[int] = None,
+            aggr: str = "add", axis: int = 0) -> mx.array:
+    """
+    Scatter values into a tensor along a specified axis.
+    
+    Args:
+        values: Array with all the values to scatter in the output tensor
+        index: Array with index to which scatter the values
+        out_size: Number of elements in the output array (size of the first dimension).
+                 If not provided, uses the number of elements in `values`
+        aggr: Scattering method employed for reduction at index ("add", "max", "mean", "min")
+        axis: Axis on which applying the scattering
+        
+    Returns:
+        Array with `out_size` elements containing the scattered values at given index
+    """
+    values_tensor = convert_to_tensor(values)
+    index_tensor = convert_to_tensor(index)
+    
+    # Ensure index is int32
+    index_tensor = mx.array(index_tensor, dtype=mx.int32)
+    
+    # Determine output size if not provided
+    _out_size = out_size if out_size is not None else values_tensor.shape[0]
+    
+    # Handle different aggregation methods
+    if aggr == "mean":
+        return scatter_mean(values_tensor, index_tensor, _out_size, axis)
+    
+    # Create output tensor shape
+    out_shape = list(values_tensor.shape)
+    out_shape[axis] = _out_size
+    
+    # Create empty tensor for output
+    empty_tensor = mx.zeros(out_shape, dtype=values_tensor.dtype)
+    
+    # Apply appropriate scatter operation
+    if aggr == "add":
+        return scatter_add(empty_tensor, index_tensor, values_tensor)
+    elif aggr == "max":
+        return scatter_max(empty_tensor, index_tensor, values_tensor)
+    elif aggr == "min":
+        return scatter_min(empty_tensor, index_tensor, values_tensor)
+    else:
+        raise ValueError(f"Unsupported aggregation method: {aggr}")
+
+
+def scatter_add(src: ArrayLike, index: ArrayLike, values: ArrayLike) -> mx.array:
+    """
+    Scatters `values` at `index` within `src`. If duplicate indices are present,
+    the sum of the values will be assigned to these index.
+    
+    Args:
+        src: Source array where the values will be scattered (often an empty array)
+        index: Array containing indices that determine the scatter of the 'values'
+        values: Input array containing values to be scattered
+        
+    Returns:
+        The resulting array after applying scatter and sum operations
+    """
+    src_tensor = convert_to_tensor(src)
+    index_tensor = convert_to_tensor(index)
+    values_tensor = convert_to_tensor(values)
+    
+    # Ensure index is int32
+    index_tensor = mx.array(index_tensor, dtype=mx.int32)
+    
+    # Use MLX's at[].add method for scatter_add
+    return src_tensor.at[index_tensor].add(values_tensor)
+
+
+def scatter_max(src: ArrayLike, index: ArrayLike, values: ArrayLike) -> mx.array:
+    """
+    Scatters `values` at `index` within `src`. If duplicate indices are present,
+    the maximum value is kept at these indices.
+    
+    Args:
+        src: Source array where the values will be scattered (often an empty array)
+        index: Array containing indices that determine the scatter of the 'values'
+        values: Input array containing values to be scattered
+        
+    Returns:
+        The resulting array after applying scatter and max operations
+    """
+    src_tensor = convert_to_tensor(src)
+    index_tensor = convert_to_tensor(index)
+    values_tensor = convert_to_tensor(values)
+    
+    # Ensure index is int32
+    index_tensor = mx.array(index_tensor, dtype=mx.int32)
+    
+    # Use MLX's at[].maximum method for scatter_max
+    return src_tensor.at[index_tensor].maximum(values_tensor)
+
+
+def scatter_min(src: ArrayLike, index: ArrayLike, values: ArrayLike) -> mx.array:
+    """
+    Scatters `values` at `index` within `src`. If duplicate indices are present,
+    the minimum value is kept at these indices.
+    
+    Args:
+        src: Source array where the values will be scattered (often an empty array)
+        index: Array containing indices that determine the scatter of the 'values'
+        values: Input array containing values to be scattered
+        
+    Returns:
+        The resulting array after applying scatter and min operations
+    """
+    src_tensor = convert_to_tensor(src)
+    index_tensor = convert_to_tensor(index)
+    values_tensor = convert_to_tensor(values)
+    
+    # Ensure index is int32
+    index_tensor = mx.array(index_tensor, dtype=mx.int32)
+    
+    # Use MLX's at[].minimum method for scatter_min
+    return src_tensor.at[index_tensor].minimum(values_tensor)
+
+
+def scatter_mean(values: ArrayLike, index: ArrayLike, out_size: int, axis: int = 0) -> mx.array:
+    """
+    Computes the mean of values that are scattered along a specified axis, grouped by index.
+    
+    Args:
+        values: Input array containing values to be scattered
+        index: Array containing indices that determine the scatter of the `values`
+        out_size: Size of the output array
+        axis: Axis along which to scatter
+        
+    Returns:
+        An array containing mean of `values` grouped by `index`
+    """
+    values_tensor = convert_to_tensor(values)
+    index_tensor = convert_to_tensor(index)
+    
+    # Ensure index is int32
+    index_tensor = mx.array(index_tensor, dtype=mx.int32)
+    
+    # Use scatter_add to sum values by index
+    scatt_add = scatter(values_tensor, index_tensor, out_size, aggr="add", axis=axis)
+    
+    # Calculate degrees (count of each index)
+    degrees = mx.zeros((out_size,), dtype=mx.int32)
+    degrees = degrees.at[index_tensor].add(mx.ones_like(index_tensor))
+    
+    # Avoid division by zero
+    degrees = mx.where(degrees < 1, mx.array(1), degrees)
+    
+    # Broadcast degrees to match shape of scatt_add for division
+    if axis != 0 or scatt_add.ndim > 1:
+        # Create shape for broadcasting
+        broadcast_shape = [1] * scatt_add.ndim
+        broadcast_shape[axis] = out_size
+        degrees = mx.reshape(degrees, broadcast_shape)
+        
+        # Create expanded shape for broadcasting
+        expanded_shape = list(scatt_add.shape)
+        expanded_shape[axis] = 1
+        degrees = mx.tile(degrees, expanded_shape)
+    
+    # Compute mean by dividing sum by count
+    return mx.divide(scatt_add, degrees)
+
 
 class MLXTensorOps:
     """MLX implementation of tensor operations."""
@@ -709,6 +980,22 @@ class MLXTensorOps:
     def gather(self, x, indices, axis=0):
         """Gather slices from a tensor along an axis."""
         return gather(x, indices, axis=axis)
+    
+    def slice(self, x, starts, sizes):
+        """Extract a slice from a tensor."""
+        return tensor_slice(x, starts, sizes)
+        
+    def slice_update(self, x, slices, updates):
+        """Update a tensor at specific indices."""
+        return slice_update(x, slices, updates)
+        
+    def pad(self, x, paddings, constant_values=0):
+        """Pad a tensor with a constant value."""
+        return pad(x, paddings, constant_values)
+    
+    def scatter(self, x, indices, updates, axis=-1):
+        """Scatter updates into a tensor along a specified axis."""
+        return scatter(x, indices, updates, axis=axis)
     
     def get_default_device(self):
         """Get the default device for tensor operations."""

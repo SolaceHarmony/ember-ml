@@ -1,14 +1,16 @@
 """
-Example of using Ember ML with the PyTorch backend.
-
+Backend-agnostic example of using Ember ML.
 This example demonstrates how to create and use neural network components
-with the PyTorch backend.
+in a backend-agnostic way using the ops abstraction layer.
 """
+from typing import Tuple
 
 import ember_ml as eh
+from ember_ml import ops
+from ember_ml.ops.tensor import EmberTensor
 import ember_ml.nn as nn
 
-def create_model():
+def create_model() -> nn.Sequential:
     """
     Create a simple neural network model.
     
@@ -21,7 +23,7 @@ def create_model():
         nn.Linear(20, 1)
     )
 
-def train_step(model, x, y, learning_rate=0.01):
+def train_step(model: nn.Sequential, x: EmberTensor, y: EmberTensor, learning_rate: float = 0.01) -> EmberTensor:
     """
     Perform a single training step.
     
@@ -32,7 +34,7 @@ def train_step(model, x, y, learning_rate=0.01):
         learning_rate: Learning rate for gradient descent
         
     Returns:
-        Loss value
+        Loss value as a tensor
     """
     # Forward pass
     y_pred = model(x)
@@ -49,23 +51,19 @@ def train_step(model, x, y, learning_rate=0.01):
     
     # Update parameters (not implemented yet)
     # for param in model.parameters():
-    #     param.data = param.data - learning_rate * param.grad
+    #     param.data = ops.subtract(param.data, ops.multiply(ops.convert_to_tensor(learning_rate), param.grad))
     
     return loss
 
-def main():
+def main() -> None:
     """Main function to demonstrate neural network components."""
-    # Set the backend to PyTorch
-    try:
-        eh.set_backend('torch')
-        print("Using PyTorch backend")
-    except ImportError:
-        print("PyTorch is not available")
-        return
+    # Let Ember ML choose the best available backend
+    eh.auto_select_backend()
+    print(f"Using {eh.get_backend()} backend")
     
     # Create random data
-    x = eh.random_normal((32, 10))  # 32 samples, 10 features
-    y = eh.random_normal((32, 1))   # 32 samples, 1 target
+    x = EmberTensor(ops.random_normal((32, 10)))  # 32 samples, 10 features
+    y = EmberTensor(ops.random_normal((32, 1)))   # 32 samples, 1 target
     
     # Create model
     model = create_model()
@@ -73,7 +71,7 @@ def main():
     
     # Forward pass
     y_pred = model(x)
-    print(f"Output shape: {eh.shape(y_pred)}")
+    print(f"Output shape: {ops.shape(y_pred)}")
     
     # Compute loss
     loss_fn = nn.MSELoss()

@@ -10,7 +10,7 @@ import importlib
 from typing import Optional, Dict, Any, Type
 
 # Import interfaces
-from ember_ml.ops.interfaces import TensorOps, MathOps, DeviceOps, RandomOps, ComparisonOps, DTypeOps, SolverOps, IOOps
+from ember_ml.ops.interfaces import TensorOps, MathOps, DeviceOps, RandomOps, ComparisonOps, DTypeOps, SolverOps, IOOps, LossOps
 
 # Import specific operations from interfaces
 from ember_ml.ops.interfaces.tensor_ops import *
@@ -18,15 +18,16 @@ from ember_ml.ops.interfaces.math_ops import *
 from ember_ml.ops.interfaces.device_ops import *
 from ember_ml.ops.interfaces.random_ops import *
 from ember_ml.ops.interfaces.comparison_ops import *
+from ember_ml.ops.interfaces.dtype_ops import *
+from ember_ml.ops.interfaces.solver_ops import *
+from ember_ml.ops.interfaces.io_ops import *
+from ember_ml.ops.interfaces.loss_ops import *
 
 # Import data types
 from ember_ml.ops.dtypes import *
 
 # Import tensor wrapper
 from ember_ml.ops.tensor import EmberTensor
-
-# Import comparison operations
-from ember_ml.ops.interfaces.comparison_ops import ComparisonOps
 
 # Use backend directly
 from ember_ml.backend import get_backend, set_backend, get_backend_module
@@ -88,6 +89,8 @@ def _get_ops_instance(ops_class: Type):
             class_name = f"{class_name_prefix}SolverOps"
         elif ops_class == IOOps:
             class_name = f"{class_name_prefix}IOOps"
+        elif ops_class == LossOps:
+            class_name = f"{class_name_prefix}LossOps"
         else:
             raise ValueError(f"Unknown ops class: {ops_class}")
         
@@ -130,6 +133,10 @@ def io_ops() -> IOOps:
     """Get I/O operations."""
     return _get_ops_instance(IOOps)
 
+def loss_ops() -> LossOps:
+    """Get loss operations."""
+    return _get_ops_instance(LossOps)
+
 # Feature operations are in ember_ml.features, not in ops
 
 # Direct access to operations
@@ -153,12 +160,15 @@ squeeze = lambda *args, **kwargs: tensor_ops().squeeze(*args, **kwargs)
 tile = lambda *args, **kwargs: tensor_ops().tile(*args, **kwargs)
 gather = lambda *args, **kwargs: tensor_ops().gather(*args, **kwargs)
 tensor_scatter_nd_update = lambda *args, **kwargs: tensor_ops().tensor_scatter_nd_update(*args, **kwargs)
+slice = lambda *args, **kwargs: tensor_ops().slice(*args, **kwargs)
+slice_update = lambda *args, **kwargs: tensor_ops().slice_update(*args, **kwargs)
 convert_to_tensor = lambda *args, **kwargs: tensor_ops().convert_to_tensor(*args, **kwargs)
 shape = lambda *args, **kwargs: tensor_ops().shape(*args, **kwargs)
 dtype = lambda *args, **kwargs: tensor_ops().dtype(*args, **kwargs)
 cast = lambda *args, **kwargs: tensor_ops().cast(*args, **kwargs)
 copy = lambda *args, **kwargs: tensor_ops().copy(*args, **kwargs)
 var = lambda *args, **kwargs: tensor_ops().var(*args, **kwargs)
+pad = lambda *args, **kwargs: tensor_ops().pad(*args, **kwargs)
 
 # Import all data types from dtypes module
 from ember_ml.ops.dtypes import *
@@ -200,10 +210,13 @@ sinh = lambda *args, **kwargs: math_ops().sinh(*args, **kwargs)
 cosh = lambda *args, **kwargs: math_ops().cosh(*args, **kwargs)
 tanh = lambda *args, **kwargs: math_ops().tanh(*args, **kwargs)
 sigmoid = lambda *args, **kwargs: math_ops().sigmoid(*args, **kwargs)
+softplus = lambda *args, **kwargs: math_ops().softplus(*args, **kwargs)
 relu = lambda *args, **kwargs: math_ops().relu(*args, **kwargs)
 softmax = lambda *args, **kwargs: math_ops().softmax(*args, **kwargs)
-sort = lambda *args, **kwargs: math_ops().sort(*args, **kwargs)
 gradient = lambda *args, **kwargs: math_ops().gradient(*args, **kwargs)
+
+# Tensor sort operation
+sort = lambda *args, **kwargs: tensor_ops().sort(*args, **kwargs)
 
 # Device operations
 to_device = lambda *args, **kwargs: device_ops().to_device(*args, **kwargs)
@@ -260,6 +273,15 @@ def get_activation(activation: str):
 save = lambda *args, **kwargs: io_ops().save(*args, **kwargs)
 load = lambda *args, **kwargs: io_ops().load(*args, **kwargs)
 
+# Loss operations
+mean_squared_error = lambda *args, **kwargs: loss_ops().mean_squared_error(*args, **kwargs)
+mean_absolute_error = lambda *args, **kwargs: loss_ops().mean_absolute_error(*args, **kwargs)
+binary_crossentropy = lambda *args, **kwargs: loss_ops().binary_crossentropy(*args, **kwargs)
+categorical_crossentropy = lambda *args, **kwargs: loss_ops().categorical_crossentropy(*args, **kwargs)
+sparse_categorical_crossentropy = lambda *args, **kwargs: loss_ops().sparse_categorical_crossentropy(*args, **kwargs)
+huber_loss = lambda *args, **kwargs: loss_ops().huber_loss(*args, **kwargs)
+log_cosh_loss = lambda *args, **kwargs: loss_ops().log_cosh_loss(*args, **kwargs)
+
 # Feature operations are in ember_ml.features, not in ops
 
 # Export all functions and classes
@@ -285,8 +307,9 @@ __all__ = [
     'dtype_ops',
     'solver_ops',
     'io_ops',
+    'loss_ops',
     'get_activation',
-    'gradients',
+    'gradient',
     'to_numpy',
     
     # Tensor operations
@@ -309,12 +332,16 @@ __all__ = [
     'tile',
     'gather',
     'tensor_scatter_nd_update',
+    'slice',
+    'slice_update',
     'convert_to_tensor',
     'shape',
     'dtype',
     'cast',
     'copy',
     'var',
+    'pad',
+    'sort',
     
     # Math operations
     'add',
@@ -345,9 +372,9 @@ __all__ = [
     'cosh',
     'tanh',
     'sigmoid',
+    'softplus',
     'relu',
     'softmax',
-    'sort',
     'gradient',
     
     # Device operations
@@ -387,6 +414,15 @@ __all__ = [
     # I/O operations
     'save',
     'load',
+    
+    # Loss operations
+    'mean_squared_error',
+    'mean_absolute_error',
+    'binary_crossentropy',
+    'categorical_crossentropy',
+    'sparse_categorical_crossentropy',
+    'huber_loss',
+    'log_cosh_loss',
     
     # Solver operations
     'solve',

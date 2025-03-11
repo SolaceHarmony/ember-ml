@@ -6,10 +6,12 @@ which extend the standard CfC with awareness of different stride lengths
 for processing temporal data at multiple time scales.
 """
 
-import tensorflow as tf
-from tensorflow.keras import backend as K
-from tensorflow.keras.layers import Layer, RNN, Dense, Activation, Lambda, Multiply
-from tensorflow.keras.initializers import Orthogonal
+import ember_ml as em
+from ember_ml.nn.modules import Module, 
+from ember_ml.nn.modules.rnn import RNN
+from ember_ml.nn.container import dense, Activation, Lambda, Multiply
+from ember_ml.initializers import orthogonal, glorot_uniform, constant
+import ember_ml.ops as ops
 import numpy as np
 from typing import List, Tuple, Dict, Optional, Union, Any
 
@@ -22,7 +24,7 @@ except ImportError:
     print("Warning: ncps package not available. AutoNCP wiring will not be available.")
 
 
-class StrideAwareCfCCell(Layer):
+class StrideAwareCfCCell(Module):
     """
     Stride-Aware Closed-form Continuous-time (CfC) cell.
     
@@ -152,7 +154,7 @@ class StrideAwareCfCCell(Layer):
         self.stride_scale = self.add_weight(
             shape=(self.units,),
             name="stride_scale",
-            initializer=tf.keras.initializers.Constant(float(self.stride_length)),
+            initializer=.initializers.Constant(float(self.stride_length)),
             constraint=lambda x: tf.clip_by_value(x, 0.1, 100.0)
         )
         
@@ -208,7 +210,7 @@ class StrideAwareCfCCell(Layer):
         
         # Compute time decay factor
         # For longer strides, the decay is stronger
-        decay = tf.exp(-1.0 / effective_time_scale)
+        decay = ops.exp(-1.0 / effective_time_scale)
         
         # Update time state with stride awareness
         t = f * t_prev + i * c
@@ -262,7 +264,7 @@ class StrideAwareCfCCell(Layer):
     def _get_recurrent_dropout_mask_for_cell(self, h_prev, training, recurrent_dropout):
         """Create dropout mask for recurrent connection."""
         if 0 < recurrent_dropout < 1:
-            ones = tf.ones_like(K.reshape(h_prev, (-1, 1, self.units)))
+            ones = ops.ones_like(K.reshape(h_prev, (-1, 1, self.units)))
             ones = tf.tile(ones, [1, 1, self.units * 4])
             return K.in_train_phase(
                 K.dropout(ones, recurrent_dropout),

@@ -6,15 +6,46 @@ with automatic device selection for optimal performance.
 """
 
 import torch
-from typing import Optional, Union, Tuple, List, Any, Sequence, Dict
+import torch.nn.functional as F
+from typing import Optional, Union, Tuple, List, Any, Sequence
 
 # Type aliases
 ArrayLike = Union[torch.Tensor, list, tuple, float, int]
 Shape = Union[int, Sequence[int]]
 DType = Union[torch.dtype, str, None]
 
-# Import from config
+# Import from config and dtype_ops
 from ember_ml.backend.torch.config import DEFAULT_DEVICE
+from ember_ml.backend.torch.dtype_ops import ember_dtype_to_torch
+
+
+def _prepare_tensor_args(shape: Optional[Shape] = None, dtype: DType = None, device: Optional[str] = None):
+    """
+    Helper function to prepare arguments for tensor creation functions.
+    
+    Args:
+        shape: Shape of the tensor
+        dtype: Optional data type
+        device: Optional device
+        
+    Returns:
+        Tuple of (shape, dtype, device) with proper conversions applied
+    """
+    # Convert dtype to PyTorch dtype
+    torch_dtype = ember_dtype_to_torch(dtype)
+    
+    # Handle shape conversion for torch
+    shape_tuple = None
+    if shape is not None:
+        if isinstance(shape, int):
+            shape_tuple = (shape,)
+        else:
+            shape_tuple = tuple(shape) if not isinstance(shape, tuple) else shape  # type: ignore
+    
+    # Use the specified device or the default device
+    target_device = device or DEFAULT_DEVICE
+    
+    return shape_tuple, torch_dtype, target_device
 
 
 def convert_to_tensor(x: ArrayLike, dtype: DType = None, device: Optional[str] = None) -> torch.Tensor:
@@ -32,29 +63,39 @@ def convert_to_tensor(x: ArrayLike, dtype: DType = None, device: Optional[str] =
     Raises:
         TypeError: If x is a tensor from another backend
     """
-    # Check if x is a tensor from another backend
-    if hasattr(x, '__class__') and 'Tensor' in x.__class__.__name__ and not isinstance(x, torch.Tensor):
-        raise TypeError(f"Cannot convert tensor of type {type(x)} to PyTorch tensor. "
-                        f"Use the appropriate backend for this tensor type.")
+    # Handle EmberTensor specially by checking class name and data attribute
+    # This avoids importing EmberTensor which would cause circular imports
+    if isinstance(x, object):  # Type guard for attribute access
+        if (getattr(x.__class__, '__name__', '') == 'EmberTensor'
+            and hasattr(x, 'data')):
+            # Safe to access data after type checking
+            data = getattr(x, 'data')
+            return convert_to_tensor(data, dtype=dtype, device=device)
+    
+        # Check if x is a tensor from another backend
+        if ('Tensor' in getattr(x.__class__, '__name__', '')
+            and not isinstance(x, torch.Tensor)
+            and getattr(x.__class__, '__name__', '') != 'EmberTensor'):
+            raise TypeError(f"Cannot convert tensor of type {type(x)} to PyTorch tensor. "
+                            f"Use the appropriate backend for this tensor type.")
+    
+    # Convert dtype and get device
+    _, torch_dtype, target_device = _prepare_tensor_args(dtype=dtype, device=device)
     
     # Create tensor
     if isinstance(x, torch.Tensor):
         tensor = x
     else:
-        tensor = torch.tensor(x, dtype=dtype)
-    
-    # Use the specified device or the default device
-    target_device = device or DEFAULT_DEVICE
+        tensor = torch.tensor(x, dtype=torch_dtype)
     
     # Only move to device if it's different from current device
     if tensor.device.type != target_device:
         try:
             tensor = tensor.to(target_device)
         except RuntimeError:
-            # Fallback to CPU if device is not available
-            if target_device != 'cpu':
-                print(f"Warning: Failed to move tensor to {target_device}, falling back to CPU")
-                tensor = tensor.to('cpu')
+            # Fallback if device is not available
+            print(f"Warning: Failed to move tensor to {target_device}, falling back to default device")
+            tensor = tensor.to(DEFAULT_DEVICE)
     
     return tensor
 
@@ -71,17 +112,17 @@ def zeros(shape: Shape, dtype: DType = None, device: Optional[str] = None) -> to
     Returns:
         Tensor of zeros with the specified shape
     """
-    target_device = device or DEFAULT_DEVICE
+    shape_tuple, torch_dtype, target_device = _prepare_tensor_args(shape, dtype, device)
+    
+    if shape_tuple is None:
+        raise ValueError("Shape cannot be None for zeros operation")
     
     try:
-        return torch.zeros(shape, dtype=dtype, device=target_device)
+        return torch.zeros(shape_tuple, dtype=torch_dtype, device=target_device)
     except RuntimeError:
-        # Fallback to CPU if device is not available
-        if target_device != 'cpu':
-            print(f"Warning: Failed to create tensor on {target_device}, falling back to CPU")
-            return torch.zeros(shape, dtype=dtype, device='cpu')
-        else:
-            raise
+        # Fallback if device is not available
+        print(f"Warning: Failed to create tensor on {target_device}, falling back to default device")
+        return torch.zeros(shape_tuple, dtype=torch_dtype, device=DEFAULT_DEVICE)
 
 
 def ones(shape: Shape, dtype: DType = None, device: Optional[str] = None) -> torch.Tensor:
@@ -96,17 +137,17 @@ def ones(shape: Shape, dtype: DType = None, device: Optional[str] = None) -> tor
     Returns:
         Tensor of ones with the specified shape
     """
-    target_device = device or DEFAULT_DEVICE
+    shape_tuple, torch_dtype, target_device = _prepare_tensor_args(shape, dtype, device)
+    
+    if shape_tuple is None:
+        raise ValueError("Shape cannot be None for ones operation")
     
     try:
-        return torch.ones(shape, dtype=dtype, device=target_device)
+        return torch.ones(shape_tuple, dtype=torch_dtype, device=target_device)
     except RuntimeError:
-        # Fallback to CPU if device is not available
-        if target_device != 'cpu':
-            print(f"Warning: Failed to create tensor on {target_device}, falling back to CPU")
-            return torch.ones(shape, dtype=dtype, device='cpu')
-        else:
-            raise
+        # Fallback if device is not available
+        print(f"Warning: Failed to create tensor on {target_device}, falling back to default device")
+        return torch.ones(shape_tuple, dtype=torch_dtype, device=DEFAULT_DEVICE)
 
 
 def zeros_like(x: ArrayLike, dtype: DType = None, device: Optional[str] = None) -> torch.Tensor:
@@ -122,17 +163,14 @@ def zeros_like(x: ArrayLike, dtype: DType = None, device: Optional[str] = None) 
         Tensor of zeros with the same shape as x
     """
     x_tensor = convert_to_tensor(x)
-    target_device = device or DEFAULT_DEVICE
+    _, torch_dtype, target_device = _prepare_tensor_args(dtype=dtype, device=device)
     
     try:
-        return torch.zeros_like(x_tensor, dtype=dtype, device=target_device)
+        return torch.zeros_like(x_tensor, dtype=torch_dtype, device=target_device)
     except RuntimeError:
-        # Fallback to CPU if device is not available
-        if target_device != 'cpu':
-            print(f"Warning: Failed to create tensor on {target_device}, falling back to CPU")
-            return torch.zeros_like(x_tensor, dtype=dtype, device='cpu')
-        else:
-            raise
+        # Fallback if device is not available
+        print(f"Warning: Failed to create tensor on {target_device}, falling back to default device")
+        return torch.zeros_like(x_tensor, dtype=torch_dtype, device=DEFAULT_DEVICE)
 
 
 def ones_like(x: ArrayLike, dtype: DType = None, device: Optional[str] = None) -> torch.Tensor:
@@ -148,17 +186,14 @@ def ones_like(x: ArrayLike, dtype: DType = None, device: Optional[str] = None) -
         Tensor of ones with the same shape as x
     """
     x_tensor = convert_to_tensor(x)
-    target_device = device or DEFAULT_DEVICE
+    _, torch_dtype, target_device = _prepare_tensor_args(dtype=dtype, device=device)
     
     try:
-        return torch.ones_like(x_tensor, dtype=dtype, device=target_device)
+        return torch.ones_like(x_tensor, dtype=torch_dtype, device=target_device)
     except RuntimeError:
-        # Fallback to CPU if device is not available
-        if target_device != 'cpu':
-            print(f"Warning: Failed to create tensor on {target_device}, falling back to CPU")
-            return torch.ones_like(x_tensor, dtype=dtype, device='cpu')
-        else:
-            raise
+        # Fallback if device is not available
+        print(f"Warning: Failed to create tensor on {target_device}, falling back to default device")
+        return torch.ones_like(x_tensor, dtype=torch_dtype, device=DEFAULT_DEVICE)
 
 
 def eye(n: int, m: Optional[int] = None, dtype: DType = None, device: Optional[str] = None) -> torch.Tensor:
@@ -174,24 +209,21 @@ def eye(n: int, m: Optional[int] = None, dtype: DType = None, device: Optional[s
     Returns:
         Identity matrix of shape (n, m)
     """
-    target_device = device or DEFAULT_DEVICE
+    _, torch_dtype, target_device = _prepare_tensor_args(dtype=dtype, device=device)
     
     try:
         # Handle the case where m is None
         if m is None:
-            return torch.eye(n, dtype=dtype, device=target_device)
+            return torch.eye(n, dtype=torch_dtype, device=target_device)
         else:
-            return torch.eye(n, m=m, dtype=dtype, device=target_device)
+            return torch.eye(n, m=m, dtype=torch_dtype, device=target_device)
     except RuntimeError:
-        # Fallback to CPU if device is not available
-        if target_device != 'cpu':
-            print(f"Warning: Failed to create tensor on {target_device}, falling back to CPU")
-            if m is None:
-                return torch.eye(n, dtype=dtype, device='cpu')
-            else:
-                return torch.eye(n, m=m, dtype=dtype, device='cpu')
+        # Fallback if device is not available
+        print(f"Warning: Failed to create tensor on {target_device}, falling back to default device")
+        if m is None:
+            return torch.eye(n, dtype=torch_dtype, device=DEFAULT_DEVICE)
         else:
-            raise
+            return torch.eye(n, m=m, dtype=torch_dtype, device=DEFAULT_DEVICE)
 
 
 def reshape(x: ArrayLike, shape: Shape) -> torch.Tensor:
@@ -205,7 +237,10 @@ def reshape(x: ArrayLike, shape: Shape) -> torch.Tensor:
     Returns:
         Reshaped tensor
     """
-    return convert_to_tensor(x).reshape(shape)
+    shape_tuple, _, _ = _prepare_tensor_args(shape)
+    if shape_tuple is None:
+        raise ValueError("Shape cannot be None for reshape operation")
+    return convert_to_tensor(x).reshape(shape_tuple)
 
 
 def transpose(x: ArrayLike, axes: Optional[Sequence[int]] = None) -> torch.Tensor:
@@ -229,7 +264,7 @@ def transpose(x: ArrayLike, axes: Optional[Sequence[int]] = None) -> torch.Tenso
     return x_tensor.permute(*axes)
 
 
-def expand_dims(x: ArrayLike, axis: Union[int, Sequence[int]]) -> torch.Tensor:
+def expand_dims(x: ArrayLike, axis: Union[int, List[int], Tuple[int, ...]]) -> torch.Tensor:
     """
     Insert new axes into a tensor's shape.
     
@@ -247,11 +282,12 @@ def expand_dims(x: ArrayLike, axis: Union[int, Sequence[int]]) -> torch.Tensor:
         result = x_tensor
         # Sort axes in ascending order to avoid dimension shifting
         for ax in sorted(axis):
-            result = torch.unsqueeze(result, dim=ax)
+            # Convert to int explicitly since PyTorch expects an int
+            result = result.unsqueeze(int(ax))
         return result
     
-    # Handle single axis
-    return torch.unsqueeze(x_tensor, dim=axis)
+    # Handle single axis - convert to int explicitly
+    return x_tensor.unsqueeze(int(axis))
 
 
 def concatenate(arrays: Sequence[ArrayLike], axis: int = 0) -> torch.Tensor:
@@ -301,11 +337,16 @@ def split(x: ArrayLike, num_or_size_splits: Union[int, Sequence[int]], axis: int
         split_size = torch.div(torch.tensor(x_tensor.shape[axis]),
                               torch.tensor(num_or_size_splits),
                               rounding_mode='trunc').item()
-        return torch.split(x_tensor, split_size, dim=axis)
-    return torch.split(x_tensor, num_or_size_splits, dim=axis)
+        return list(torch.split(x_tensor, int(split_size), dim=axis))
+    
+    # Convert to list if it's a sequence but not a list
+    if not isinstance(num_or_size_splits, list):
+        num_or_size_splits = list(num_or_size_splits)
+        
+    return list(torch.split(x_tensor, num_or_size_splits, dim=axis))
 
 
-def squeeze(x: ArrayLike, axis: Optional[Union[int, Sequence[int]]] = None) -> torch.Tensor:
+def squeeze(x: ArrayLike, axis: Optional[Union[int, List[int], Tuple[int, ...]]] = None) -> torch.Tensor:
     """
     Remove single-dimensional entries from a tensor's shape.
     
@@ -317,14 +358,22 @@ def squeeze(x: ArrayLike, axis: Optional[Union[int, Sequence[int]]] = None) -> t
         Tensor with squeezed dimensions
     """
     x_tensor = convert_to_tensor(x)
+    
+    # PyTorch 2.0+ uses dim parameter for squeeze
     if axis is None:
         return torch.squeeze(x_tensor)
+    
     if isinstance(axis, (list, tuple)):
         result = x_tensor
-        for ax in sorted(axis, reverse=True):
-            result = torch.squeeze(result, ax)
+        for ax in sorted(axis, reverse=True):  # Squeeze from highest dim to lowest
+            # Convert to int and use as dim parameter
+            dim_val = int(ax)
+            result = result.squeeze(dim=dim_val)
         return result
-    return torch.squeeze(x_tensor, axis)
+    
+    # Convert to int and use as dim parameter
+    dim_val = int(axis)
+    return x_tensor.squeeze(dim=dim_val)
 
 
 def tile(x: ArrayLike, reps: Sequence[int]) -> torch.Tensor:
@@ -443,7 +492,8 @@ def cast(x: ArrayLike, dtype: DType) -> torch.Tensor:
     Returns:
         Tensor with the target data type
     """
-    return convert_to_tensor(x).to(dtype)
+    torch_dtype = ember_dtype_to_torch(dtype)
+    return convert_to_tensor(x).to(torch_dtype)
 
 
 def copy(x: ArrayLike) -> torch.Tensor:
@@ -473,6 +523,287 @@ def item(x: ArrayLike) -> Union[int, float, bool]:
     """
     x_tensor = convert_to_tensor(x)
     return x_tensor.item()
+
+
+def slice(x: ArrayLike, starts: Sequence[int], sizes: Sequence[int]) -> torch.Tensor:
+    """
+    Extract a slice from a tensor.
+    
+    Args:
+        x: Input tensor
+        starts: Starting indices for each dimension
+        sizes: Size of the slice in each dimension. A value of -1 means "all remaining elements in this dimension"
+        
+    Returns:
+        Sliced tensor
+    """
+    x_tensor = convert_to_tensor(x)
+    
+    if not starts:
+        raise ValueError("starts parameter cannot be empty")
+    
+    if not sizes:
+        raise ValueError("sizes parameter cannot be empty")
+    
+    if len(starts) != len(sizes):
+        raise ValueError(f"starts and sizes must have the same length, got {len(starts)} and {len(sizes)}")
+    
+    # Create a list of slice objects for each dimension
+    slices = []
+    for i, (start, size) in enumerate(zip(starts, sizes)):
+        if size == -1:
+            # -1 means "all remaining elements in this dimension"
+            # Use Python's slice syntax directly
+            slices.append(slice(start, None))  # type: ignore
+        else:
+            # Use Python's slice syntax directly
+            slices.append(slice(start, start + size))  # type: ignore
+    
+    # Extract the slice
+    return x_tensor[tuple(slices)]
+
+
+def slice_update(x: ArrayLike, slices: Union[List, Tuple], updates: ArrayLike) -> torch.Tensor:
+    """
+    Update a tensor at specific indices.
+    
+    Args:
+        x: Input tensor to update
+        slices: List or tuple of slice objects or indices
+        updates: Values to insert at the specified indices
+        
+    Returns:
+        Updated tensor
+    """
+    x_tensor = convert_to_tensor(x)
+    updates_tensor = convert_to_tensor(updates)
+    
+    # Create a copy of the input tensor
+    result = x_tensor.clone()
+    
+    # Update the tensor at the specified indices
+    result[tuple(slices)] = updates_tensor
+    
+    return result
+
+
+def pad(x: ArrayLike, paddings: Sequence[Sequence[int]], constant_values: Union[int, float] = 0) -> torch.Tensor:
+    """
+    Pad a tensor with a constant value.
+    
+    Args:
+        x: Input tensor
+        paddings: Sequence of sequences of integers specifying the padding for each dimension
+                 Each inner sequence should contain two integers: [pad_before, pad_after]
+        constant_values: Value to pad with
+        
+    Returns:
+        Padded tensor
+    """
+    x_tensor = convert_to_tensor(x)
+    
+    # Convert paddings to the format expected by torch.nn.functional.pad
+    # PyTorch expects (pad_left, pad_right, pad_top, pad_bottom, ...)
+    # We need to reverse the order of dimensions and flatten the pairs
+    torch_paddings: List[int] = []
+    for padding in reversed(paddings):
+        torch_paddings.extend(padding)
+    
+    # Pad the tensor
+    return F.pad(x_tensor, torch_paddings, mode='constant', value=constant_values)
+
+
+def scatter(values: ArrayLike, index: ArrayLike, out_size: Optional[int] = None, 
+            aggr: str = "add", axis: int = 0) -> torch.Tensor:
+    """
+    Scatter values into a tensor along a specified axis.
+    
+    Args:
+        values: Array with all the values to scatter in the output tensor
+        index: Array with index to which scatter the values
+        out_size: Number of elements in the output array (size of the first dimension).
+                 If not provided, uses the number of elements in `values`
+        aggr: Scattering method employed for reduction at index ("add", "max", "mean", "min")
+        axis: Axis on which applying the scattering
+        
+    Returns:
+        Array with `out_size` elements containing the scattered values at given index
+    """
+    values_tensor = convert_to_tensor(values)
+    index_tensor = convert_to_tensor(index).long()  # Ensure index is long type
+    
+    # Determine output size if not provided
+    _out_size = out_size if out_size is not None else values_tensor.shape[0]
+    
+    # Handle different aggregation methods
+    if aggr == "mean":
+        return scatter_mean(values_tensor, index_tensor, _out_size, axis)
+    
+    # Create output tensor shape
+    out_shape = list(values_tensor.shape)
+    out_shape[axis] = _out_size
+    
+    # Create empty tensor for output
+    empty_tensor = torch.zeros(out_shape, dtype=values_tensor.dtype, device=values_tensor.device)
+    
+    # Apply appropriate scatter operation
+    if aggr == "add":
+        return scatter_add(empty_tensor, index_tensor, values_tensor, axis)
+    elif aggr == "max":
+        return scatter_max(empty_tensor, index_tensor, values_tensor, axis)
+    elif aggr == "min":
+        return scatter_min(empty_tensor, index_tensor, values_tensor, axis)
+    else:
+        raise ValueError(f"Unsupported aggregation method: {aggr}")
+
+
+def scatter_add(src: ArrayLike, index: ArrayLike, values: ArrayLike, axis: int = 0) -> torch.Tensor:
+    """
+    Scatters `values` at `index` within `src`. If duplicate indices are present,
+    the sum of the values will be assigned to these index.
+    
+    Args:
+        src: Source array where the values will be scattered (often an empty array)
+        index: Array containing indices that determine the scatter of the 'values'
+        values: Input array containing values to be scattered
+        axis: Axis along which to scatter
+        
+    Returns:
+        The resulting array after applying scatter and sum operations
+    """
+    src_tensor = convert_to_tensor(src)
+    index_tensor = convert_to_tensor(index).long()  # Ensure index is long type
+    values_tensor = convert_to_tensor(values)
+    
+    # Use PyTorch's scatter_add_ method
+    result = src_tensor.clone()
+    return result.scatter_add(axis, index_tensor, values_tensor)
+
+
+def scatter_max(src: ArrayLike, index: ArrayLike, values: ArrayLike, axis: int = 0) -> torch.Tensor:
+    """
+    Scatters `values` at `index` within `src`. If duplicate indices are present,
+    the maximum value is kept at these indices.
+    
+    Args:
+        src: Source array where the values will be scattered (often an empty array)
+        index: Array containing indices that determine the scatter of the 'values'
+        values: Input array containing values to be scattered
+        axis: Axis along which to scatter
+        
+    Returns:
+        The resulting array after applying scatter and max operations
+    """
+    src_tensor = convert_to_tensor(src)
+    index_tensor = convert_to_tensor(index).long()  # Ensure index is long type
+    values_tensor = convert_to_tensor(values)
+    
+    # Use PyTorch's scatter_reduce_ method with 'amax' reduction
+    result = src_tensor.clone()
+    # PyTorch 1.12+ supports scatter_reduce_ with 'amax'
+    try:
+        return result.scatter_reduce_(axis, index_tensor, values_tensor, reduce='amax')
+    except (AttributeError, RuntimeError):
+        # Fallback for older PyTorch versions
+        # We need to handle this manually
+        for i in range(index_tensor.shape[0]):
+            idx = index_tensor[i]
+            val = values_tensor[i]
+            # Create a tensor for indexing
+            idx_tensor = torch.zeros_like(result, dtype=torch.bool)
+            idx_tensor.index_fill_(axis, idx.view(-1), True)
+            # Update with maximum values
+            result = torch.where(idx_tensor, torch.maximum(result, val), result)
+        return result
+
+
+def scatter_min(src: ArrayLike, index: ArrayLike, values: ArrayLike, axis: int = 0) -> torch.Tensor:
+    """
+    Scatters `values` at `index` within `src`. If duplicate indices are present,
+    the minimum value is kept at these indices.
+    
+    Args:
+        src: Source array where the values will be scattered (often an empty array)
+        index: Array containing indices that determine the scatter of the 'values'
+        values: Input array containing values to be scattered
+        axis: Axis along which to scatter
+        
+    Returns:
+        The resulting array after applying scatter and min operations
+    """
+    src_tensor = convert_to_tensor(src)
+    index_tensor = convert_to_tensor(index).long()  # Ensure index is long type
+    values_tensor = convert_to_tensor(values)
+    
+    # Use PyTorch's scatter_reduce_ method with 'amin' reduction
+    result = src_tensor.clone()
+    # PyTorch 1.12+ supports scatter_reduce_ with 'amin'
+    try:
+        return result.scatter_reduce_(axis, index_tensor, values_tensor, reduce='amin')
+    except (AttributeError, RuntimeError):
+        # Fallback for older PyTorch versions
+        # We need to handle this manually
+        for i in range(index_tensor.shape[0]):
+            idx = index_tensor[i]
+            val = values_tensor[i]
+            # Create a tensor for indexing
+            idx_tensor = torch.zeros_like(result, dtype=torch.bool)
+            idx_tensor.index_fill_(axis, idx.view(-1), True)
+            # Update with minimum values
+            result = torch.where(idx_tensor, torch.minimum(result, val), result)
+        return result
+
+
+def scatter_mean(values: ArrayLike, index: ArrayLike, out_size: int, axis: int = 0) -> torch.Tensor:
+    """
+    Computes the mean of values that are scattered along a specified axis, grouped by index.
+    
+    Args:
+        values: Input array containing values to be scattered
+        index: Array containing indices that determine the scatter of the `values`
+        out_size: Size of the output array
+        axis: Axis along which to scatter
+        
+    Returns:
+        An array containing mean of `values` grouped by `index`
+    """
+    values_tensor = convert_to_tensor(values)
+    index_tensor = convert_to_tensor(index).long()  # Ensure index is long type
+    
+    # Use scatter_add to sum values by index
+    out_shape = list(values_tensor.shape)
+    out_shape[axis] = out_size
+    
+    # Create empty tensors for sum and count
+    sum_tensor = torch.zeros(out_shape, dtype=values_tensor.dtype, device=values_tensor.device)
+    count_tensor = torch.zeros(out_size, dtype=torch.long, device=values_tensor.device)
+    
+    # Scatter add the values
+    sum_result = scatter_add(sum_tensor, index_tensor, values_tensor, axis)
+    
+    # Count occurrences of each index
+    ones = torch.ones_like(index_tensor)
+    count_result = scatter_add(count_tensor, index_tensor, ones, 0)
+    
+    # Avoid division by zero
+    count_result = torch.clamp(count_result, min=1)
+    
+    # Broadcast count_result to match the shape of sum_result for division
+    if axis != 0 or sum_result.ndim > 1:
+        # Create shape for broadcasting
+        broadcast_shape = [1] * sum_result.ndim
+        broadcast_shape[axis] = out_size
+        count_broadcast = count_result.view(broadcast_shape)
+        
+        # Create expanded shape for broadcasting
+        expanded_shape = list(sum_result.shape)
+        expanded_shape[axis] = 1
+        count_broadcast = count_broadcast.expand(sum_result.shape)
+    else:
+        count_broadcast = count_result
+    
+    # Compute mean by dividing sum by count
+    return sum_result / count_broadcast
 
 
 def to_numpy(x: ArrayLike) -> Any:
@@ -509,7 +840,7 @@ def to_numpy(x: ArrayLike) -> Any:
         return np.array(x_tensor.cpu().detach())
 
 
-def var(x: ArrayLike, axis: Optional[Union[int, Sequence[int]]] = None, keepdims: bool = False) -> torch.Tensor:
+def var(x: ArrayLike, axis: Optional[Union[int, List[int], Tuple[int, ...]]] = None, keepdims: bool = False) -> torch.Tensor:
     """
     Compute the variance of a tensor along specified axes.
     
@@ -531,10 +862,10 @@ def var(x: ArrayLike, axis: Optional[Union[int, Sequence[int]]] = None, keepdims
         result = x_tensor
         # Sort axes in descending order to avoid dimension shifting
         for ax in sorted(axis, reverse=True):
-            result = torch.var(result, dim=ax, keepdim=keepdims)
+            result = torch.var(result, dim=int(ax), keepdim=keepdims)
         return result
     
-    return torch.var(x_tensor, dim=axis, keepdim=keepdims)
+    return torch.var(x_tensor, dim=int(axis), keepdim=keepdims)
 
 
 def full(shape: Shape, fill_value: Union[float, int], dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
@@ -550,17 +881,17 @@ def full(shape: Shape, fill_value: Union[float, int], dtype: Optional[DType] = N
     Returns:
         Tensor filled with the specified value
     """
-    target_device = device or DEFAULT_DEVICE
+    shape_tuple, torch_dtype, target_device = _prepare_tensor_args(shape, dtype, device)
+    
+    if shape_tuple is None:
+        raise ValueError("Shape cannot be None for full operation")
     
     try:
-        return torch.full(shape, fill_value, dtype=dtype, device=target_device)
+        return torch.full(shape_tuple, fill_value, dtype=torch_dtype, device=target_device)
     except RuntimeError:
-        # Fallback to CPU if device is not available
-        if target_device != 'cpu':
-            print(f"Warning: Failed to create tensor on {target_device}, falling back to CPU")
-            return torch.full(shape, fill_value, dtype=dtype, device='cpu')
-        else:
-            raise
+        # Fallback if device is not available
+        print(f"Warning: Failed to create tensor on {target_device}, falling back to default device")
+        return torch.full(shape_tuple, fill_value, dtype=torch_dtype, device=DEFAULT_DEVICE)
 
 
 def full_like(x: ArrayLike, fill_value: Union[float, int], dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
@@ -577,17 +908,14 @@ def full_like(x: ArrayLike, fill_value: Union[float, int], dtype: Optional[DType
         Tensor filled with the specified value with the same shape as x
     """
     x_tensor = convert_to_tensor(x)
-    target_device = device or DEFAULT_DEVICE
+    _, torch_dtype, target_device = _prepare_tensor_args(dtype=dtype, device=device)
     
     try:
-        return torch.full_like(x_tensor, fill_value, dtype=dtype, device=target_device)
+        return torch.full_like(x_tensor, fill_value, dtype=torch_dtype, device=target_device)
     except RuntimeError:
-        # Fallback to CPU if device is not available
-        if target_device != 'cpu':
-            print(f"Warning: Failed to create tensor on {target_device}, falling back to CPU")
-            return torch.full_like(x_tensor, fill_value, dtype=dtype, device='cpu')
-        else:
-            raise
+        # Fallback if device is not available
+        print(f"Warning: Failed to create tensor on {target_device}, falling back to default device")
+        return torch.full_like(x_tensor, fill_value, dtype=torch_dtype, device=DEFAULT_DEVICE)
 
 
 def linspace(start: float, stop: float, num: int, dtype: DType = None, device: Optional[str] = None) -> torch.Tensor:
@@ -604,17 +932,14 @@ def linspace(start: float, stop: float, num: int, dtype: DType = None, device: O
     Returns:
         Tensor with evenly spaced values
     """
-    target_device = device or DEFAULT_DEVICE
+    _, torch_dtype, target_device = _prepare_tensor_args(dtype=dtype, device=device)
     
     try:
-        return torch.linspace(start, stop, num, dtype=dtype, device=target_device)
+        return torch.linspace(start, stop, num, dtype=torch_dtype, device=target_device)
     except RuntimeError:
-        # Fallback to CPU if device is not available
-        if target_device != 'cpu':
-            print(f"Warning: Failed to create tensor on {target_device}, falling back to CPU")
-            return torch.linspace(start, stop, num, dtype=dtype, device='cpu')
-        else:
-            raise
+        # Fallback if device is not available
+        print(f"Warning: Failed to create tensor on {target_device}, falling back to default device")
+        return torch.linspace(start, stop, num, dtype=torch_dtype, device=DEFAULT_DEVICE)
 
 
 def arange(start: int, stop: Optional[int] = None, step: int = 1, dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
@@ -631,22 +956,19 @@ def arange(start: int, stop: Optional[int] = None, step: int = 1, dtype: Optiona
     Returns:
         Tensor with evenly spaced values
     """
-    target_device = device or DEFAULT_DEVICE
+    _, torch_dtype, target_device = _prepare_tensor_args(dtype=dtype, device=device)
     
     try:
         if stop is None:
             # If only one argument is provided, it's the stop value
-            return torch.arange(start=0, end=start, step=step, dtype=dtype, device=target_device)
-        return torch.arange(start=start, end=stop, step=step, dtype=dtype, device=target_device)
+            return torch.arange(start=0, end=start, step=step, dtype=torch_dtype, device=target_device)
+        return torch.arange(start=start, end=stop, step=step, dtype=torch_dtype, device=target_device)
     except RuntimeError:
-        # Fallback to CPU if device is not available
-        if target_device != 'cpu':
-            print(f"Warning: Failed to create tensor on {target_device}, falling back to CPU")
-            if stop is None:
-                return torch.arange(start=0, end=start, step=step, dtype=dtype, device='cpu')
-            return torch.arange(start=start, end=stop, step=step, dtype=dtype, device='cpu')
-        else:
-            raise
+        # Fallback if device is not available
+        print(f"Warning: Failed to create tensor on {target_device}, falling back to default device")
+        if stop is None:
+            return torch.arange(start=0, end=start, step=step, dtype=torch_dtype, device=DEFAULT_DEVICE)
+        return torch.arange(start=start, end=stop, step=step, dtype=torch_dtype, device=DEFAULT_DEVICE)
 
 
 class TorchTensorOps:
@@ -759,3 +1081,39 @@ class TorchTensorOps:
     def item(self, x):
         """Extract the scalar value from a tensor."""
         return item(x)
+    
+    def slice(self, x, starts, sizes):
+        """Extract a slice from a tensor."""
+        if not starts or not sizes:
+            raise ValueError("starts and sizes parameters cannot be empty")
+        # Use the fully qualified name to avoid confusion with Python's built-in slice
+        from ember_ml.backend.torch.tensor_ops import slice as tensor_slice
+        return tensor_slice(x, starts, sizes)
+        
+    def slice_update(self, x, slices, updates):
+        """Update a tensor at specific indices."""
+        return slice_update(x, slices, updates)
+        
+    def pad(self, x, paddings, constant_values=0):
+        """Pad a tensor with a constant value."""
+        return pad(x, paddings, constant_values)
+    
+    def scatter(self, values, index, out_size=None, aggr="add", axis=0):
+        """Scatter values into a tensor along a specified axis."""
+        return scatter(values, index, out_size, aggr, axis)
+    
+    def scatter_add(self, src, index, values, axis=0):
+        """Scatter and add values at specified indices."""
+        return scatter_add(src, index, values, axis)
+    
+    def scatter_max(self, src, index, values, axis=0):
+        """Scatter and take maximum values at specified indices."""
+        return scatter_max(src, index, values, axis)
+    
+    def scatter_min(self, src, index, values, axis=0):
+        """Scatter and take minimum values at specified indices."""
+        return scatter_min(src, index, values, axis)
+    
+    def scatter_mean(self, values, index, out_size, axis=0):
+        """Scatter and compute mean values at specified indices."""
+        return scatter_mean(values, index, out_size, axis)

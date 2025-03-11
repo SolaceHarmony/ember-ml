@@ -2,7 +2,7 @@
 Base classes for neural network implementations.
 """
 
-from typing import Optional, List, Dict, Any
+from typing import List, Dict, Any
 from abc import ABC, abstractmethod
 from ember_ml import ops
 

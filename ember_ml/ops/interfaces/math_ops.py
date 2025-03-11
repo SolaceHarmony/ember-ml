@@ -409,6 +409,21 @@ class MathOps(ABC):
         pass
     
     @abstractmethod
+    def softplus(self, x: Any) -> Any:
+        """
+        Compute the softplus of a tensor element-wise.
+        
+        The softplus function is defined as log(1 + exp(x)).
+        
+        Args:
+            x: Input tensor
+            
+        Returns:
+            Element-wise softplus
+        """
+        pass
+    
+    @abstractmethod
     def relu(self, x: Any) -> Any:
         """
         Compute the rectified linear unit of a tensor element-wise.

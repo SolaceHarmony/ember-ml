@@ -273,6 +273,27 @@ def sigmoid(x: ArrayLike) -> torch.Tensor:
     return torch.sigmoid(convert_to_tensor(x))
 
 
+def softplus(x: ArrayLike, beta: float = 1.0, threshold: float = 20.0) -> torch.Tensor:
+    """
+    Compute the softplus of a tensor element-wise.
+    
+    The softplus function is defined as (1/beta) * log(1 + exp(beta * x)).
+    For numerical stability, the implementation reverts to a linear function
+    when input * beta > threshold.
+    
+    Args:
+        x: Input tensor
+        beta: The beta value for the softplus formulation. Default: 1.0
+        threshold: Values above this revert to a linear function. Default: 20.0
+        
+    Returns:
+        Element-wise softplus
+    """
+    x_tensor = convert_to_tensor(x)
+    # Use PyTorch's built-in softplus function with parameters
+    return torch.nn.functional.softplus(x_tensor, beta=beta, threshold=threshold)
+
+
 def tanh(x: ArrayLike) -> torch.Tensor:
     """
     Compute the hyperbolic tangent of a tensor element-wise.
@@ -586,8 +607,10 @@ def sort(x: ArrayLike, axis: int = -1) -> torch.Tensor:
     return torch.sort(x_tensor, dim=axis)[0]
 
 
+from typing import Literal
+
 def gradient(f: ArrayLike, *varargs, axis: Optional[Union[int, List[int], Tuple[int, ...]]] = None,
-            edge_order: int = 1) -> Union[torch.Tensor, List[torch.Tensor]]:
+            edge_order: Literal[1, 2] = 1) -> Union[torch.Tensor, List[torch.Tensor]]:
     """
     Return the gradient of an N-dimensional tensor.
     
@@ -866,6 +889,10 @@ class TorchMathOps:
         """Compute the sigmoid of a tensor."""
         return sigmoid(x)
     
+    def softplus(self, x, beta=1.0, threshold=20.0):
+        """Compute the softplus of a tensor."""
+        return softplus(x, beta=beta, threshold=threshold)
+    
     def relu(self, x):
         """Compute the rectified linear unit of a tensor."""
         return relu(x)
@@ -894,8 +921,10 @@ class TorchMathOps:
         """Sort a tensor along a specified axis."""
         return sort(x, axis=axis)
         
-    def gradient(self, f, *varargs, axis=None, edge_order=1):
+    def gradient(self, f, *varargs, axis=None, edge_order: Literal[1, 2] = 1):
         """Return the gradient of an N-dimensional tensor."""
+        if edge_order not in (1, 2):
+            raise ValueError("edge_order must be 1 or 2")
         return gradient(f, *varargs, axis=axis, edge_order=edge_order)
     
     def pi_func(self):

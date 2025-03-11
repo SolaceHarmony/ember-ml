@@ -412,3 +412,77 @@ class TensorOps(ABC):
             Standard Python scalar (int, float, or bool)
         """
         pass
+    
+    @abstractmethod
+    def slice(self, x: Any, starts: Sequence[int], sizes: Sequence[int]) -> Any:
+        """
+        Extract a slice from a tensor.
+        
+        Args:
+            x: Input tensor
+            starts: Starting indices for each dimension
+            sizes: Size of the slice in each dimension. A value of -1 means "all remaining elements in this dimension"
+            
+        Returns:
+            Sliced tensor
+        """
+        pass
+    
+    @abstractmethod
+    def slice_update(self, x: Any, slices: Union[List, Tuple], updates: Any) -> Any:
+        """
+        Update a tensor at specific indices.
+        
+        Args:
+            x: Input tensor to update
+            slices: List or tuple of slice objects or indices
+            updates: Values to insert at the specified indices
+            
+        Returns:
+            Updated tensor
+        """
+        pass
+    
+    @abstractmethod
+    def pad(self, x: Any, paddings: Sequence[Sequence[int]], constant_values: Union[int, float] = 0) -> Any:
+        """
+        Pad a tensor with a constant value.
+        
+        Args:
+            x: Input tensor
+            paddings: Sequence of sequences of integers specifying the padding for each dimension
+                     Each inner sequence should contain two integers: [pad_before, pad_after]
+            constant_values: Value to pad with
+            
+        Returns:
+            Padded tensor
+        """
+        pass
+
+    @abstractmethod
+    def tensor_scatter_nd_update(self, tensor: Any, indices: Any, updates: Any) -> Any:
+        """
+        Updates values of a tensor at specified indices.
+
+        Args:
+            tensor: Input tensor to update
+            indices: Indices at which to update values (N-dimensional indices)
+            updates: Values to insert at the specified indices
+
+        Returns:
+            Updated tensor
+        """
+        pass
+
+    @abstractmethod
+    def to_numpy(self, x: Any) -> Any:
+        """
+        Convert a tensor to a numpy array.
+
+        Args:
+            x: Input tensor
+
+        Returns:
+            NumPy array containing the tensor data
+        """
+        pass

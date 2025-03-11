@@ -39,7 +39,7 @@ def log_map_sphere(p, q):
         
     # Compute direction in tangent space
     perp = ops.subtract(q_n, ops.multiply(dot_prod, p_n))
-    perp_norm = ops.linalg.norm(perp)
+    perp_norm = ops.norm(perp)
     
     if ops.less(perp_norm, 1e-12):
         return ops.zeros_like(p)
@@ -57,10 +57,10 @@ def exp_map_sphere(p, v):
     Returns:
         Point on sphere reached by geodesic in direction v
     """
-    norm_v = ops.linalg.norm(v)
+    norm_v = ops.norm(v)
     if ops.less(norm_v, 1e-12):
         return p
-        
+    
     p_n = normalize_sphere(p)
     dir_v = ops.divide(v, norm_v)
     

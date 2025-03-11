@@ -90,18 +90,18 @@ class NCP(Module):
     @property
     def kernel(self):
         """Get the kernel parameter."""
-        return self._parameters['_kernel'].data
+        return self._kernel.data
     
     @property
     def recurrent_kernel(self):
         """Get the recurrent kernel parameter."""
-        return self._parameters['_recurrent_kernel'].data
+        return self._recurrent_kernel.data
     
     @property
     def bias(self):
         """Get the bias parameter."""
-        if self.use_bias:
-            return self._parameters['_bias'].data
+        if self.use_bias and self._bias is not None:
+            return self._bias.data
         return None
     
     def _initialize_tensor(self, shape, initializer):

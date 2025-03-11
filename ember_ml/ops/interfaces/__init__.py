@@ -13,6 +13,7 @@ from ember_ml.ops.interfaces.comparison_ops import ComparisonOps
 from ember_ml.ops.interfaces.dtype_ops import DTypeOps
 from ember_ml.ops.interfaces.solver_ops import SolverOps
 from ember_ml.ops.interfaces.io_ops import IOOps
+from ember_ml.ops.interfaces.loss_ops import LossOps
 
 __all__ = [
     'TensorOps',
@@ -23,4 +24,5 @@ __all__ = [
     'DTypeOps',
     'SolverOps',
     'IOOps',
+    'LossOps',
 ]

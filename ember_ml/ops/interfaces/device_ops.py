@@ -5,7 +5,7 @@ This module defines the abstract interface for device operations.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any, Optional, List
 
 class DeviceOps(ABC):
     """Abstract interface for device operations."""
@@ -90,5 +90,28 @@ class DeviceOps(ABC):
             
         Returns:
             Dictionary containing memory information
+        """
+        pass
+
+    @abstractmethod
+    def memory_usage(self, device: Optional[str] = None) -> dict:
+        """
+        Get memory usage statistics for the specified device.
+        
+        Args:
+            device: Device to get memory usage for (default: current device)
+            
+        Returns:
+            Dictionary containing memory usage statistics
+        """
+        pass
+
+    @abstractmethod
+    def get_available_devices(self) -> List[str]:
+        """
+        Get list of available devices.
+        
+        Returns:
+            List of available device names
         """
         pass

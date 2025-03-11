@@ -9,6 +9,7 @@ from typing import Optional, List, Dict, Any, Union, Tuple
 
 import numpy as np
 from ember_ml import ops
+from ember_ml.initializers.glorot import glorot_uniform, orthogonal
 from ember_ml.nn.modules import Module
 from ember_ml.nn.wirings import Wiring, FullyConnectedWiring as FullyConnected
 from ember_ml.nn.modules.rnn.ltc_cell import LTCCell
@@ -91,23 +92,23 @@ class LTC(Module):
                 self.state_size = state_size
                 
                 # Input gate
-                self.input_kernel = ops.glorot_uniform((input_size, state_size))
-                self.input_recurrent_kernel = ops.orthogonal((state_size, state_size))
+                self.input_kernel = glorot_uniform((input_size, state_size))
+                self.input_recurrent_kernel = orthogonal((state_size, state_size))
                 self.input_bias = ops.zeros((state_size,))
                 
                 # Forget gate
-                self.forget_kernel = ops.glorot_uniform((input_size, state_size))
-                self.forget_recurrent_kernel = ops.orthogonal((state_size, state_size))
+                self.forget_kernel = glorot_uniform((input_size, state_size))
+                self.forget_recurrent_kernel = orthogonal((state_size, state_size))
                 self.forget_bias = ops.ones((state_size,))  # Initialize with 1s for better gradient flow
                 
                 # Cell gate
-                self.cell_kernel = ops.glorot_uniform((input_size, state_size))
-                self.cell_recurrent_kernel = ops.orthogonal((state_size, state_size))
+                self.cell_kernel = glorot_uniform((input_size, state_size))
+                self.cell_recurrent_kernel = orthogonal((state_size, state_size))
                 self.cell_bias = ops.zeros((state_size,))
                 
                 # Output gate
-                self.output_kernel = ops.glorot_uniform((input_size, state_size))
-                self.output_recurrent_kernel = ops.orthogonal((state_size, state_size))
+                self.output_kernel = glorot_uniform((input_size, state_size))
+                self.output_recurrent_kernel = orthogonal((state_size, state_size))
                 self.output_bias = ops.zeros((state_size,))
             
             def forward(self, inputs, states):
@@ -173,7 +174,8 @@ class LTC(Module):
     
     @property
     def sensory_synapse_count(self):
-        return np.sum(np.abs(self._wiring.sensory_adjacency_matrix))
+        matrix = np.asarray(self._wiring.sensory_adjacency_matrix)
+        return float(np.sum(np.abs(matrix)))
     
     def forward(self, inputs, initial_state=None, timespans=None):
         """
@@ -256,7 +258,8 @@ class LTC(Module):
             stack_dim = 1 if self.batch_first else 0
             outputs = ops.stack(output_sequence, axis=stack_dim)
         else:
-            outputs = output
+            # If not returning sequences, use the last output
+            outputs = output_sequence[-1] if output_sequence else None
         
         # Prepare final state
         final_state = (h_state, c_state) if self.mixed_memory else h_state

@@ -5,7 +5,7 @@ This module provides NumPy implementations of math operations.
 """
 
 import numpy as np
-from typing import Optional, Union, Sequence, List
+from typing import Optional, Union, Sequence, List, Literal
 from ember_ml.backend.numpy.tensor_ops import convert_to_tensor
 
 # Type aliases
@@ -360,6 +360,22 @@ def sigmoid(x: ArrayLike) -> np.ndarray:
     return np.divide(1.0, denominator)
 
 
+def softplus(x: ArrayLike) -> np.ndarray:
+    """
+    Compute the softplus of a NumPy array element-wise.
+    
+    The softplus function is defined as log(1 + exp(x)).
+
+    Args:
+        x: Input array
+
+    Returns:
+        Element-wise softplus
+    """
+    x_safe = np.clip(x, -88.0, 88.0)  # Prevent overflow
+    return np.log(np.add(1.0, np.exp(x_safe)))
+
+
 def relu(x: ArrayLike) -> np.ndarray:
     """
     Compute the rectified linear unit of a NumPy array element-wise.
@@ -405,22 +421,8 @@ def floor_divide(x: ArrayLike, y: ArrayLike) -> np.ndarray:
     return np.floor_divide(x, y)
 
 
-def sort(x: ArrayLike, axis: int = -1) -> np.ndarray:
-    """
-    Sort a NumPy array along a specified axis.
-
-    Args:
-        x: Input array
-        axis: Axis along which to sort
-
-    Returns:
-        Sorted array
-    """
-    return np.sort(convert_to_tensor(x), axis=axis)
-
-
 def gradient(f: ArrayLike, *varargs, axis: Optional[Union[int, Sequence[int]]] = None,
-            edge_order: int = 1) -> Union[np.ndarray, List[np.ndarray]]:
+            edge_order: Literal[1, 2] = 1) -> Union[np.ndarray, List[np.ndarray]]:
     """
     Return the gradient of an N-dimensional array.
     
@@ -725,6 +727,10 @@ class NumpyMathOps:
     def sigmoid(self, x):
         """Compute the sigmoid of an array element-wise."""
         return sigmoid(x)
+        
+    def softplus(self, x):
+        """Compute the softplus of an array element-wise."""
+        return softplus(x)
 
     def relu(self, x):
         """Compute the rectified linear unit of an array element-wise."""
@@ -750,11 +756,7 @@ class NumpyMathOps:
         """Element-wise integer division."""
         return floor_divide(x, y)
     
-    def sort(self, x, axis=-1):
-        """Sort an array along a specified axis."""
-        return sort(x, axis=axis)
-        
-    def gradient(self, f, *varargs, axis=None, edge_order=1):
+    def gradient(self, f, *varargs, axis=None, edge_order: Literal[1, 2] = 1):
         """Return the gradient of an N-dimensional array."""
         return gradient(f, *varargs, axis=axis, edge_order=edge_order)
 

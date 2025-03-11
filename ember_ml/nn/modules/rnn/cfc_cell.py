@@ -8,6 +8,7 @@ which is a type of recurrent neural network cell that operates in continuous tim
 from typing import Optional, List, Dict, Any, Union, Tuple
 
 from ember_ml import ops
+from ember_ml.initializers import glorot_uniform, orthogonal
 from ember_ml.nn.modules import Module, Parameter
 
 class CfCCell(Module):
@@ -81,10 +82,10 @@ class CfCCell(Module):
         
         # Initialize weights
         if self.kernel_initializer == "glorot_uniform":
-            self.kernel.data = ops.glorot_uniform((self.units, self.units * 4))
+            self.kernel.data = glorot_uniform((self.units, self.units * 4))
         
         if self.recurrent_initializer == "orthogonal":
-            self.recurrent_kernel.data = ops.orthogonal((self.units, self.units * 4))
+            self.recurrent_kernel.data = orthogonal((self.units, self.units * 4))
         
         if self.use_bias and self.bias_initializer == "zeros":
             self.bias.data = ops.zeros((self.units * 4,))
@@ -138,7 +139,7 @@ class CfCCell(Module):
         
         # Apply time scaling
         # Compute time decay factor
-        decay = ops.exp(-ts / self.time_scale)
+        decay = ops.exp(ops.divide(-ts,self.time_scale))
         
         # Update time state
         t = ops.add(ops.multiply(f, t_prev), ops.multiply(i, c))

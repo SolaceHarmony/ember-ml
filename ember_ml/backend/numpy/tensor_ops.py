@@ -9,11 +9,11 @@ from typing import Optional, Union, Tuple, List, Any, Sequence, Type
 
 # Import psutil if available
 try:
-    import psutil
+    import psutil  # type: ignore
 except ImportError:
     # Fallback for when psutil is not available
     # We'll handle this case in the memory_info function
-    pass
+    psutil = None  # type: ignore
 
 # Type aliases
 ArrayLike = Union[np.ndarray, float, int, list, tuple]
@@ -37,13 +37,23 @@ def convert_to_tensor(x: ArrayLike, dtype: DType = None,
     Raises:
         TypeError: If x is a tensor from another backend
     """
-    # Check if x is a tensor from another backend
-    if (hasattr(x, '__class__') and 'Tensor' in x.__class__.__name__ and
-            not isinstance(x, np.ndarray)):
-        raise TypeError(
-            f"Cannot convert tensor of type {type(x)} to NumPy array. "
-            f"Use the appropriate backend for this tensor type."
-        )
+    # Handle EmberTensor specially by checking class name and data attribute
+    # This avoids importing EmberTensor which would cause circular imports
+    if isinstance(x, object):  # Type guard for attribute access
+        if (getattr(x.__class__, '__name__', '') == 'EmberTensor'
+            and hasattr(x, 'data')):
+            # Safe to access data after type checking
+            data = getattr(x, 'data')
+            return convert_to_tensor(data, dtype=dtype, device=device)
+    
+        # Check if x is a tensor from another backend
+        if ('Tensor' in getattr(x.__class__, '__name__', '')
+            and not isinstance(x, np.ndarray)
+            and getattr(x.__class__, '__name__', '') != 'EmberTensor'):
+            raise TypeError(
+                f"Cannot convert tensor of type {type(x)} to NumPy array. "
+                f"Use the appropriate backend for this tensor type."
+            )
 
     return np.asarray(x, dtype=dtype)
 
@@ -276,7 +286,7 @@ def gather(x: ArrayLike, indices: Any, axis: int = 0) -> np.ndarray:
             else:
                 slices.append(indices_tensor)
         else:
-            slices.append(slice(None))
+            slices.append(slice(None, None))  # type: ignore
 
     return x_tensor[tuple(slices)]
 
@@ -604,6 +614,96 @@ def item(x: ArrayLike) -> Union[int, float, bool]:
     return x_array.item()
 
 
+def slice(x: ArrayLike, starts: Sequence[int], sizes: Sequence[int]) -> np.ndarray:
+    """
+    Extract a slice from a tensor.
+    
+    Args:
+        x: Input tensor
+        starts: Starting indices for each dimension
+        sizes: Size of the slice in each dimension. A value of -1 means "all remaining elements in this dimension"
+        
+    Returns:
+        Sliced tensor
+    """
+    x_array = convert_to_tensor(x)
+    
+    # Create a list of slice objects for each dimension
+    slices = []
+    for i, (start, size) in enumerate(zip(starts, sizes)):
+        if size == -1:
+            # -1 means "all remaining elements in this dimension"
+            # Use Python's built-in slice constructor directly with type ignore
+            slices.append(slice(start, None))  # type: ignore
+        else:
+            # Use Python's built-in slice constructor directly with type ignore
+            slices.append(slice(start, start + size))  # type: ignore
+    
+    # Extract the slice
+    return x_array[tuple(slices)]
+
+def slice_update(x: ArrayLike, slices: Union[List, Tuple], updates: ArrayLike) -> np.ndarray:
+    """
+    Update a tensor at specific indices.
+    
+    Args:
+        x: Input tensor to update
+        slices: List or tuple of slice objects or indices
+        updates: Values to insert at the specified indices
+        
+    Returns:
+        Updated tensor
+    """
+    x_array = convert_to_tensor(x)
+    updates_array = convert_to_tensor(updates)
+    
+    # Create a copy of the input tensor
+    result = x_array.copy()
+    
+    # Update the tensor at the specified indices
+    result[tuple(slices)] = updates_array
+    
+    return result
+
+
+def sort(x: ArrayLike, axis: int = -1) -> np.ndarray:
+    """
+    Sort a tensor along a specified axis.
+    
+    Args:
+        x: Input tensor
+        axis: Axis along which to sort
+        
+    Returns:
+        Sorted tensor
+    """
+    x_tensor = convert_to_tensor(x)
+    return np.sort(x_tensor, axis=axis)
+
+
+def pad(x: ArrayLike, paddings: Sequence[Sequence[int]], constant_values: Union[int, float] = 0) -> np.ndarray:
+    """
+    Pad a tensor with a constant value.
+    
+    Args:
+        x: Input tensor
+        paddings: Sequence of sequences of integers specifying the padding for each dimension
+                 Each inner sequence should contain two integers: [pad_before, pad_after]
+        constant_values: Value to pad with
+        
+    Returns:
+        Padded tensor
+    """
+    x_array = convert_to_tensor(x)
+    
+    # Convert paddings to the format expected by np.pad
+    # NumPy expects a tuple of (pad_before, pad_after) for each dimension
+    pad_width = tuple(tuple(p) for p in paddings)
+    
+    # Pad the tensor
+    return np.pad(x_array, pad_width, mode='constant', constant_values=constant_values)
+
+
 class NumpyTensorOps:
     """NumPy implementation of tensor operations."""
 
@@ -814,3 +914,19 @@ class NumpyTensorOps:
     def item(self, x):
         """Extract the scalar value from a tensor."""
         return item(x)
+    
+    def slice(self, x, starts, sizes):
+        """Extract a slice from a tensor."""
+        return slice(x, starts, sizes)
+        
+    def slice_update(self, x, slices, updates):
+        """Update a tensor at specific indices."""
+        return slice_update(x, slices, updates)
+        
+    def pad(self, x, paddings, constant_values=0):
+        """Pad a tensor with a constant value."""
+        return pad(x, paddings, constant_values)
+
+    def sort(self, x, axis=-1):
+        """Sort a tensor along a specified axis."""
+        return sort(x, axis=axis)

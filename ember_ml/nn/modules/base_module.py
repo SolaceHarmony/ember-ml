@@ -282,6 +282,22 @@ class BaseModule:
         else:
             object.__setattr__(self, name, value)
     
+    def __getattr__(self, name: str) -> Any:
+        """Get an attribute from the module."""
+        if '_parameters' in self.__dict__:
+            _parameters = self.__dict__['_parameters']
+            if name in _parameters:
+                return _parameters[name]
+        if '_buffers' in self.__dict__:
+            _buffers = self.__dict__['_buffers']
+            if name in _buffers:
+                return _buffers[name]
+        if '_modules' in self.__dict__:
+            modules = self.__dict__['_modules']
+            if name in modules:
+                return modules[name]
+        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+    
     def zero_grad(self):
         """Set gradients of all parameters to zero."""
         for param in self.parameters():
