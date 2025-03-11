@@ -1,11 +1,16 @@
 from ember_ml import ops, set_backend
 from ember_ml.nn.modules import AutoNCP
+import importlib
 
 def test_auto_ncp(backend_name):
     print(f"\n=== Testing with {backend_name} backend ===")
     
     # Set the backend
     set_backend(backend_name)
+    
+    # Import the backend's config module
+    config = importlib.import_module(f'ember_ml.backend.{backend_name}.config')
+    print(f"Device: {config.DEFAULT_DEVICE}")
     
     # Create an AutoNCP module
     auto_ncp = AutoNCP(

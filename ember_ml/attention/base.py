@@ -2,13 +2,22 @@
 Base attention mechanisms and multi-head attention implementations.
 """
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from typing import Optional, Tuple, Dict, Any
+from typing import Optional
 from abc import ABC, abstractmethod
 
-class BaseAttention(nn.Module, ABC):
+from ember_ml import ops
+from ember_ml.ops.tensor import EmberTensor
+from ember_ml.nn.modules import Module
+from ember_ml.nn.linear import Linear
+from ember_ml.nn.container import Dropout
+
+# Type aliases
+Tensor = EmberTensor
+
+# Constants
+NINF = ops.convert_to_tensor(-1.0e38)  # Approximation of negative infinity
+
+class BaseAttention(Module, ABC):
     """Abstract base class for attention mechanisms."""
     
     def __init__(self):
@@ -17,10 +26,10 @@ class BaseAttention(nn.Module, ABC):
     
     @abstractmethod
     def forward(self,
-                query: torch.Tensor,
-                key: torch.Tensor,
-                value: torch.Tensor,
-                mask: Optional[torch.Tensor] = None) -> torch.Tensor:
+                query: Tensor,
+                key: Tensor,
+                value: Tensor,
+                mask: Optional[Tensor] = None) -> Tensor:
         """
         Compute attention mechanism.
 
@@ -36,7 +45,7 @@ class BaseAttention(nn.Module, ABC):
         pass
     
     @abstractmethod
-    def get_attention_weights(self) -> Optional[torch.Tensor]:
+    def get_attention_weights(self) -> Optional[Tensor]:
         """
         Get last computed attention weights.
 
@@ -49,7 +58,7 @@ class AttentionMask:
     """Utility class for creating attention masks."""
     
     @staticmethod
-    def create_padding_mask(lengths: torch.Tensor, max_len: int) -> torch.Tensor:
+    def create_padding_mask(lengths: Tensor, max_len: int) -> Tensor:
         """
         Create padding mask from sequence lengths.
 
@@ -60,12 +69,15 @@ class AttentionMask:
         Returns:
             Padding mask [batch_size, max_len]
         """
-        batch_size = lengths.size(0)
-        mask = torch.arange(max_len).expand(batch_size, max_len) < lengths.unsqueeze(1)
+        batch_size = ops.shape(lengths)[0]
+        mask = ops.less(
+            ops.expand_dims(ops.arange(max_len), 0),
+            ops.expand_dims(lengths, 1)
+        )
         return mask
     
     @staticmethod
-    def create_causal_mask(seq_len: int) -> torch.Tensor:
+    def create_causal_mask(seq_len: int) -> Tensor:
         """
         Create causal (triangular) mask.
 
@@ -75,10 +87,15 @@ class AttentionMask:
         Returns:
             Causal mask [seq_len, seq_len]
         """
-        return torch.tril(torch.ones(seq_len, seq_len))
+        # Create a matrix where each row i contains [0, 1, 2, ..., seq_len-1]
+        row_indices = ops.expand_dims(ops.arange(seq_len), 0)
+        # Create a matrix where each column j contains [0, 1, 2, ..., seq_len-1]
+        col_indices = ops.expand_dims(ops.arange(seq_len), 1)
+        # Create a lower triangular matrix where entry (i,j) is 1 if j <= i, else 0
+        return ops.cast(ops.less_equal(col_indices, row_indices), ops.float32)
     
     @staticmethod
-    def create_window_mask(seq_len: int, window_size: int) -> torch.Tensor:
+    def create_window_mask(seq_len: int, window_size: int) -> Tensor:
         """
         Create sliding window mask.
 
@@ -89,18 +106,19 @@ class AttentionMask:
         Returns:
             Window mask [seq_len, seq_len]
         """
-        mask = torch.zeros(seq_len, seq_len)
-        for i in range(seq_len):
-            start = max(0, i - window_size)
-            end = min(seq_len, i + window_size + 1)
-            mask[i, start:end] = 1
-        return mask
+        # Create a matrix where each row i contains [0, 1, 2, ..., seq_len-1]
+        row_indices = ops.expand_dims(ops.arange(seq_len), 0)
+        # Create a matrix where each column j contains [0, 1, 2, ..., seq_len-1]
+        col_indices = ops.expand_dims(ops.arange(seq_len), 1)
+        # Create a mask where entry (i,j) is 1 if |i-j| <= window_size, else 0
+        distance = ops.abs(ops.subtract(row_indices, col_indices))
+        return ops.cast(ops.less_equal(distance, window_size), ops.float32)
 
 class AttentionScore:
     """Utility class for computing attention scores."""
     
     @staticmethod
-    def dot_product(query: torch.Tensor, key: torch.Tensor) -> torch.Tensor:
+    def dot_product(query: Tensor, key: Tensor) -> Tensor:
         """
         Compute dot product attention scores.
 
@@ -111,12 +129,12 @@ class AttentionScore:
         Returns:
             Attention scores [..., query_len, key_len]
         """
-        return torch.matmul(query, key.transpose(-2, -1))
+        return ops.matmul(query, ops.transpose(key, axes=(-2, -1)))
     
     @staticmethod
-    def scaled_dot_product(query: torch.Tensor,
-                          key: torch.Tensor,
-                          scale: float) -> torch.Tensor:
+    def scaled_dot_product(query: Tensor,
+                          key: Tensor,
+                          scale: float) -> Tensor:
         """
         Compute scaled dot product attention scores.
 
@@ -128,13 +146,16 @@ class AttentionScore:
         Returns:
             Scaled attention scores [..., query_len, key_len]
         """
-        return torch.matmul(query, key.transpose(-2, -1)) / scale
+        return ops.divide(
+            ops.matmul(query, ops.transpose(key, axes=(-2, -1))),
+            ops.convert_to_tensor(scale)
+        )
     
     @staticmethod
-    def additive(query: torch.Tensor,
-                 key: torch.Tensor,
-                 weight: torch.Tensor,
-                 bias: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def additive(query: Tensor,
+                 key: Tensor,
+                 weight: Tensor,
+                 bias: Optional[Tensor] = None) -> Tensor:
         """
         Compute additive attention scores.
 
@@ -147,19 +168,27 @@ class AttentionScore:
         Returns:
             Attention scores [..., query_len, key_len]
         """
-        q_len, k_len = query.size(-2), key.size(-2)
-        query = query.unsqueeze(-2).expand(-1, -1, k_len, -1)
-        key = key.unsqueeze(-3).expand(-1, q_len, -1, -1)
+        q_len = ops.shape(query)[-2]
+        k_len = ops.shape(key)[-2]
+        
+        # Expand dimensions for broadcasting
+        query_expanded = ops.expand_dims(query, -2)
+        # Repeat query for each key
+        query_expanded = ops.tile(query_expanded, [1, 1, k_len, 1])
+        
+        key_expanded = ops.expand_dims(key, -3)
+        # Repeat key for each query
+        key_expanded = ops.tile(key_expanded, [1, q_len, 1, 1])
         
         # Concatenate query and key
-        combined = torch.cat([query, key], dim=-1)
+        combined = ops.concatenate([query_expanded, key_expanded], axis=-1)
         
         # Apply weight and optional bias
-        scores = torch.matmul(combined, weight)
+        scores = ops.matmul(combined, weight)
         if bias is not None:
-            scores = scores + bias
+            scores = ops.add(scores, bias)
             
-        return torch.tanh(scores)
+        return ops.tanh(scores)
 
 class AttentionLayer(BaseAttention):
     """Basic attention layer implementation."""
@@ -179,17 +208,17 @@ class AttentionLayer(BaseAttention):
             hidden_dim: Hidden dimension for attention computation
         """
         super().__init__()
-        self.query = nn.Linear(query_dim, hidden_dim)
-        self.key = nn.Linear(key_dim, hidden_dim)
-        self.value = nn.Linear(value_dim, hidden_dim)
-        self.scale = hidden_dim ** 0.5
+        self.query = Linear(query_dim, hidden_dim)
+        self.key = Linear(key_dim, hidden_dim)
+        self.value = Linear(value_dim, hidden_dim)
+        self.scale = ops.sqrt(ops.convert_to_tensor(hidden_dim))
         self._attention_weights = None
         
     def forward(self,
-                query: torch.Tensor,
-                key: torch.Tensor,
-                value: torch.Tensor,
-                mask: Optional[torch.Tensor] = None) -> torch.Tensor:
+                query: Tensor,
+                key: Tensor,
+                value: Tensor,
+                mask: Optional[Tensor] = None) -> Tensor:
         """
         Compute attention-weighted output.
 
@@ -212,15 +241,15 @@ class AttentionLayer(BaseAttention):
         
         # Apply mask if provided
         if mask is not None:
-            scores = scores.masked_fill(mask == 0, float('-inf'))
+            scores = ops.where(ops.equal(mask, 0), ops.full_like(scores, NINF), scores)
         
         # Apply attention weights
-        self._attention_weights = F.softmax(scores, dim=-1)
-        output = torch.matmul(self._attention_weights, V)
+        self._attention_weights = ops.softmax(scores, axis=-1)
+        output = ops.matmul(self._attention_weights, V)
         
         return output
     
-    def get_attention_weights(self) -> Optional[torch.Tensor]:
+    def get_attention_weights(self) -> Optional[Tensor]:
         """Get last computed attention weights."""
         return self._attention_weights
 
@@ -244,28 +273,28 @@ class MultiHeadAttention(BaseAttention):
         super().__init__()
         self.embed_dim = embed_dim
         self.num_heads = num_heads
-        self.dropout = dropout
-        self.head_dim = embed_dim // num_heads
-        assert self.head_dim * num_heads == embed_dim, \
+        self.dropout_rate = dropout
+        self.head_dim = ops.floor_divide(embed_dim, num_heads)
+        assert ops.multiply(self.head_dim, num_heads) == embed_dim, \
             "embed_dim must be divisible by num_heads"
             
         # Linear projections
-        self.q_proj = nn.Linear(embed_dim, embed_dim, bias=bias)
-        self.k_proj = nn.Linear(embed_dim, embed_dim, bias=bias)
-        self.v_proj = nn.Linear(embed_dim, embed_dim, bias=bias)
-        self.out_proj = nn.Linear(embed_dim, embed_dim, bias=bias)
+        self.q_proj = Linear(embed_dim, embed_dim, bias=bias)
+        self.k_proj = Linear(embed_dim, embed_dim, bias=bias)
+        self.v_proj = Linear(embed_dim, embed_dim, bias=bias)
+        self.out_proj = Linear(embed_dim, embed_dim, bias=bias)
         
         # Dropout
-        self.dropout_layer = nn.Dropout(dropout)
+        self.dropout_layer = Dropout(dropout)
         
         # Store attention weights
         self._attention_weights = None
         
     def forward(self,
-                query: torch.Tensor,
-                key: torch.Tensor,
-                value: torch.Tensor,
-                mask: Optional[torch.Tensor] = None) -> torch.Tensor:
+                query: Tensor,
+                key: Tensor,
+                value: Tensor,
+                mask: Optional[Tensor] = None) -> Tensor:
         """
         Compute multi-head attention.
 
@@ -278,44 +307,49 @@ class MultiHeadAttention(BaseAttention):
         Returns:
             Attention output [batch, query_len, embed_dim]
         """
-        batch_size, query_len, _ = query.size()
-        key_len = key.size(1)
+        batch_size = ops.shape(query)[0]
+        query_len = ops.shape(query)[1]
+        key_len = ops.shape(key)[1]
         
-        scaling = float(self.head_dim) ** -0.5
+        scaling = ops.sqrt(ops.convert_to_tensor(self.head_dim))
         
         # Linear projections and reshape
-        q = self.q_proj(query).view(batch_size, query_len, self.num_heads, self.head_dim)
-        k = self.k_proj(key).view(batch_size, key_len, self.num_heads, self.head_dim)
-        v = self.v_proj(value).view(batch_size, key_len, self.num_heads, self.head_dim)
+        q = self.q_proj(query)
+        q = ops.reshape(q, (batch_size, query_len, self.num_heads, self.head_dim))
+        q = ops.transpose(q, (0, 2, 1, 3))  # [batch, num_heads, query_len, head_dim]
         
-        # Transpose for attention computation
-        q = q.transpose(1, 2)  # [batch, num_heads, query_len, head_dim]
-        k = k.transpose(1, 2)  # [batch, num_heads, key_len, head_dim]
-        v = v.transpose(1, 2)  # [batch, num_heads, key_len, head_dim]
+        k = self.k_proj(key)
+        k = ops.reshape(k, (batch_size, key_len, self.num_heads, self.head_dim))
+        k = ops.transpose(k, (0, 2, 1, 3))  # [batch, num_heads, key_len, head_dim]
+        
+        v = self.v_proj(value)
+        v = ops.reshape(v, (batch_size, key_len, self.num_heads, self.head_dim))
+        v = ops.transpose(v, (0, 2, 1, 3))  # [batch, num_heads, key_len, head_dim]
         
         # Compute attention scores
         scores = AttentionScore.scaled_dot_product(q, k, scaling)
         
         # Apply mask if provided
         if mask is not None:
-            scores = scores.masked_fill(mask.unsqueeze(1) == 0, float('-inf'))
+            # Add a dimension for the heads
+            mask_expanded = ops.expand_dims(mask, axis=1)
+            scores = ops.where(ops.equal(mask_expanded, 0), ops.full_like(scores, NINF), scores)
         
         # Apply attention weights
-        self._attention_weights = F.softmax(scores, dim=-1)
+        self._attention_weights = ops.softmax(scores, axis=-1)
         self._attention_weights = self.dropout_layer(self._attention_weights)
         
         # Compute output
-        attn_output = torch.matmul(self._attention_weights, v)
+        attn_output = ops.matmul(self._attention_weights, v)
         
         # Reshape and project output
-        attn_output = attn_output.transpose(1, 2).contiguous().view(
-            batch_size, query_len, self.embed_dim
-        )
+        attn_output = ops.transpose(attn_output, (0, 2, 1, 3))
+        attn_output = ops.reshape(attn_output, (batch_size, query_len, self.embed_dim))
         attn_output = self.out_proj(attn_output)
         
         return attn_output
     
-    def get_attention_weights(self) -> Optional[torch.Tensor]:
+    def get_attention_weights(self) -> Optional[Tensor]:
         """Get last computed attention weights."""
         return self._attention_weights
 

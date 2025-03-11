@@ -1,11 +1,12 @@
 """
-Comparison operations interface.
+Comparison operations interfaces.
 
-This module defines the abstract interface for comparison operations.
+This module defines the abstract interfaces for comparison operations.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Optional, Union, Sequence, List, Tuple
+
 
 class ComparisonOps(ABC):
     """Abstract interface for comparison operations."""
@@ -13,146 +14,146 @@ class ComparisonOps(ABC):
     @abstractmethod
     def equal(self, x: Any, y: Any) -> Any:
         """
-        Check if two tensors are equal element-wise.
+        Element-wise equality comparison.
         
         Args:
             x: First tensor
             y: Second tensor
             
         Returns:
-            Boolean tensor with True where x == y
+            Boolean tensor with element-wise equality result
         """
         pass
     
     @abstractmethod
     def not_equal(self, x: Any, y: Any) -> Any:
         """
-        Check if two tensors are not equal element-wise.
+        Element-wise inequality comparison.
         
         Args:
             x: First tensor
             y: Second tensor
             
         Returns:
-            Boolean tensor with True where x != y
+            Boolean tensor with element-wise inequality result
         """
         pass
     
     @abstractmethod
     def less(self, x: Any, y: Any) -> Any:
         """
-        Check if one tensor is less than another element-wise.
+        Element-wise less than comparison.
         
         Args:
             x: First tensor
             y: Second tensor
             
         Returns:
-            Boolean tensor with True where x < y
+            Boolean tensor with element-wise less than result
         """
         pass
     
     @abstractmethod
     def less_equal(self, x: Any, y: Any) -> Any:
         """
-        Check if one tensor is less than or equal to another element-wise.
+        Element-wise less than or equal comparison.
         
         Args:
             x: First tensor
             y: Second tensor
             
         Returns:
-            Boolean tensor with True where x <= y
+            Boolean tensor with element-wise less than or equal result
         """
         pass
     
     @abstractmethod
     def greater(self, x: Any, y: Any) -> Any:
         """
-        Check if one tensor is greater than another element-wise.
+        Element-wise greater than comparison.
         
         Args:
             x: First tensor
             y: Second tensor
             
         Returns:
-            Boolean tensor with True where x > y
+            Boolean tensor with element-wise greater than result
         """
         pass
     
     @abstractmethod
     def greater_equal(self, x: Any, y: Any) -> Any:
         """
-        Check if one tensor is greater than or equal to another element-wise.
+        Element-wise greater than or equal comparison.
         
         Args:
             x: First tensor
             y: Second tensor
             
         Returns:
-            Boolean tensor with True where x >= y
+            Boolean tensor with element-wise greater than or equal result
         """
         pass
     
     @abstractmethod
     def logical_and(self, x: Any, y: Any) -> Any:
         """
-        Compute the logical AND of two tensors element-wise.
+        Element-wise logical AND.
         
         Args:
             x: First tensor
             y: Second tensor
             
         Returns:
-            Boolean tensor with True where x AND y
+            Boolean tensor with element-wise logical AND result
         """
         pass
     
     @abstractmethod
     def logical_or(self, x: Any, y: Any) -> Any:
         """
-        Compute the logical OR of two tensors element-wise.
+        Element-wise logical OR.
         
         Args:
             x: First tensor
             y: Second tensor
             
         Returns:
-            Boolean tensor with True where x OR y
+            Boolean tensor with element-wise logical OR result
         """
         pass
     
     @abstractmethod
     def logical_not(self, x: Any) -> Any:
         """
-        Compute the logical NOT of a tensor element-wise.
+        Element-wise logical NOT.
         
         Args:
             x: Input tensor
             
         Returns:
-            Boolean tensor with True where NOT x
+            Boolean tensor with element-wise logical NOT result
         """
         pass
     
     @abstractmethod
     def logical_xor(self, x: Any, y: Any) -> Any:
         """
-        Compute the logical XOR of two tensors element-wise.
+        Element-wise logical XOR.
         
         Args:
             x: First tensor
             y: Second tensor
             
         Returns:
-            Boolean tensor with True where x XOR y
+            Boolean tensor with element-wise logical XOR result
         """
         pass
     
     @abstractmethod
-    def allclose(self, x: Any, y: Any, rtol: float = 1e-5, atol: float = 1e-8) -> Any:
+    def allclose(self, x: Any, y: Any, rtol: float = 1e-5, atol: float = 1e-8) -> bool:
         """
-        Check if all elements of two tensors are close within a tolerance.
+        Returns True if all elements of x and y are close.
         
         Args:
             x: First tensor
@@ -161,14 +162,14 @@ class ComparisonOps(ABC):
             atol: Absolute tolerance
             
         Returns:
-            Boolean indicating if all elements are close
+            True if all elements are close, False otherwise
         """
         pass
     
     @abstractmethod
     def isclose(self, x: Any, y: Any, rtol: float = 1e-5, atol: float = 1e-8) -> Any:
         """
-        Check if elements of two tensors are close within a tolerance element-wise.
+        Element-wise check if x and y are close.
         
         Args:
             x: First tensor
@@ -177,23 +178,36 @@ class ComparisonOps(ABC):
             atol: Absolute tolerance
             
         Returns:
-            Boolean tensor with True where elements are close
+            Boolean tensor with element-wise closeness result
         """
         pass
     
     @abstractmethod
-    def all(self, x: Any, axis: Any = None) -> Any:
+    def all(self, x: Any, axis: Optional[int] = None, keepdims: bool = False) -> Any:
         """
-        Check if all elements in a tensor are True.
+        Test whether all elements evaluate to True along a given axis.
         
         Args:
             x: Input tensor
-            axis: Axis or axes along which to perform the reduction.
-                If None, reduce over all dimensions.
-                
+            axis: Axis along which to perform the operation
+            keepdims: Whether to keep the dimensions
+            
         Returns:
-            Boolean tensor with True if all elements are True, False otherwise.
-            If axis is specified, the result is a tensor with the specified
-            axes reduced.
+            Boolean tensor with all result
+        """
+        pass
+        
+    @abstractmethod
+    def where(self, condition: Any, x: Any, y: Any) -> Any:
+        """
+        Return elements chosen from x or y depending on condition.
+        
+        Args:
+            condition: Boolean tensor
+            x: Tensor with values to use where condition is True
+            y: Tensor with values to use where condition is False
+            
+        Returns:
+            Tensor with values from x where condition is True, and values from y elsewhere
         """
         pass

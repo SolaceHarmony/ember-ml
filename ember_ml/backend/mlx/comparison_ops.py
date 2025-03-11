@@ -203,6 +203,24 @@ def all(x: ArrayLike, axis: Any = None, keepdims: bool = False) -> mx.array:
     return mx.all(x_tensor, axis=axis, keepdims=keepdims)
 
 
+def where(condition: ArrayLike, x: ArrayLike, y: ArrayLike) -> mx.array:
+    """
+    Return elements chosen from x or y depending on condition.
+    
+    Args:
+        condition: Boolean array
+        x: Array with values to use where condition is True
+        y: Array with values to use where condition is False
+        
+    Returns:
+        Array with values from x where condition is True, and values from y elsewhere
+    """
+    condition_tensor = convert_to_tensor(condition)
+    x_tensor = convert_to_tensor(x)
+    y_tensor = convert_to_tensor(y)
+    return mx.where(condition_tensor, x_tensor, y_tensor)
+
+
 class MLXComparisonOps:
     """MLX implementation of comparison operations."""
     
@@ -257,3 +275,7 @@ class MLXComparisonOps:
     def all(self, x, axis=None, keepdims=False):
         """Check if all elements in a tensor are True."""
         return all(x, axis=axis, keepdims=keepdims)
+        
+    def where(self, condition, x, y):
+        """Return elements chosen from x or y depending on condition."""
+        return where(condition, x, y)

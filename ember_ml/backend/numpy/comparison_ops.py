@@ -200,6 +200,20 @@ def all(x: Any, axis: Any = None) -> Any:
     return np.all(x, axis=axis)
 
 
+def where(condition: Any, x: Any, y: Any) -> np.ndarray:
+    """
+    Return elements chosen from x or y depending on condition.
+    
+    Args:
+        condition: Boolean tensor
+        x: Tensor with values to use where condition is True
+        y: Tensor with values to use where condition is False
+        
+    Returns:
+        Tensor with values from x where condition is True, and values from y elsewhere
+    """
+    return np.where(condition, x, y)
+
 
 class NumpyComparisonOps:
     """NumPy implementation of comparison operations."""
@@ -255,3 +269,7 @@ class NumpyComparisonOps:
     def all(self, x, axis=None):
         """Check if all elements in a tensor are True."""
         return all(x, axis=axis)
+        
+    def where(self, condition, x, y):
+        """Return elements chosen from x or y depending on condition."""
+        return where(condition, x, y)

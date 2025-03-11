@@ -202,6 +202,24 @@ def all(x: Any, axis: Any = None) -> Any:
         return torch.all(x_tensor, dim=axis)
 
 
+def where(condition: Any, x: Any, y: Any) -> torch.Tensor:
+    """
+    Return elements chosen from x or y depending on condition.
+    
+    Args:
+        condition: Boolean tensor
+        x: Tensor with values to use where condition is True
+        y: Tensor with values to use where condition is False
+        
+    Returns:
+        Tensor with values from x where condition is True, and values from y elsewhere
+    """
+    return torch.where(
+        convert_to_tensor(condition),
+        convert_to_tensor(x),
+        convert_to_tensor(y)
+    )
+
 
 class TorchComparisonOps:
     """PyTorch implementation of comparison operations."""
@@ -257,3 +275,7 @@ class TorchComparisonOps:
     def all(self, x, axis=None):
         """Check if all elements in a tensor are True."""
         return all(x, axis=axis)
+        
+    def where(self, condition, x, y):
+        """Return elements chosen from x or y depending on condition."""
+        return where(condition, x, y)

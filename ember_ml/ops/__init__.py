@@ -169,6 +169,7 @@ cast = lambda *args, **kwargs: tensor_ops().cast(*args, **kwargs)
 copy = lambda *args, **kwargs: tensor_ops().copy(*args, **kwargs)
 var = lambda *args, **kwargs: tensor_ops().var(*args, **kwargs)
 pad = lambda *args, **kwargs: tensor_ops().pad(*args, **kwargs)
+item = lambda *args, **kwargs: tensor_ops().item(*args, **kwargs)
 
 # Import all data types from dtypes module
 from ember_ml.ops.dtypes import *
@@ -251,6 +252,7 @@ logical_xor = lambda *args, **kwargs: comparison_ops().logical_xor(*args, **kwar
 allclose = lambda *args, **kwargs: comparison_ops().allclose(*args, **kwargs)
 isclose = lambda *args, **kwargs: comparison_ops().isclose(*args, **kwargs)
 all = lambda *args, **kwargs: comparison_ops().all(*args, **kwargs)
+where = lambda *args, **kwargs: comparison_ops().where(*args, **kwargs)
 
 # Conversion functions
 to_numpy = lambda x: tensor_ops().to_numpy(x)
@@ -342,6 +344,7 @@ __all__ = [
     'var',
     'pad',
     'sort',
+    'item',
     
     # Math operations
     'add',
@@ -410,6 +413,7 @@ __all__ = [
     'allclose',
     'isclose',
     'all',
+    'where',
     
     # I/O operations
     'save',
