@@ -5,7 +5,7 @@ This module provides MLX implementations of random operations.
 """
 
 import mlx.core as mx
-from typing import Union, Sequence, Optional, Any
+from typing import Union, Sequence, Optional, Any, List, Literal
 
 # Type aliases
 ArrayLike = Union[mx.array, float, int, list, tuple]
@@ -358,6 +358,88 @@ def shuffle(x: Any) -> mx.array:
     return mx.take(x_tensor, indices, axis=0)
 
 
+def random_lognormal(shape: Shape, mean: float = 0.0, stddev: float = 1.0,
+                     dtype: DType = None, device: Optional[str] = None) -> mx.array:
+    """
+    Generate random values from a log-normal distribution.
+    
+    Args:
+        shape: Shape of the output array
+        mean: Mean of the underlying normal distribution
+        stddev: Standard deviation of the underlying normal distribution
+        dtype: Optional data type
+        device: Optional device
+    
+    Returns:
+        MLX array with random values from a log-normal distribution
+    """
+    # Generate normal random values
+    normal_samples = random_normal(shape, mean=mean, stddev=stddev, dtype=dtype, device=device)
+    
+    # Transform to log-normal distribution
+    lognormal_samples = mx.exp(normal_samples)
+    
+    return lognormal_samples
+
+
+def random_multinomial(n: int, pvals: ArrayLike, size: Optional[Shape] = None,
+                       dtype: DType = None, device: Optional[str] = None) -> mx.array:
+    """
+    Generate random values from a multinomial distribution.
+    
+    Args:
+        n: Number of trials
+        pvals: Probabilities of each outcome
+        size: Shape of the output array
+        dtype: Optional data type
+        device: Optional device
+    
+    Returns:
+        MLX array with random values from a multinomial distribution
+    """
+    # Convert pvals to MLX array if needed
+    from ember_ml.backend.mlx.tensor_ops import convert_to_tensor
+    pvals_tensor = convert_to_tensor(pvals)
+    
+    # Generate multinomial random values
+    multinomial_samples = mx.random.multinomial(n=n, pvals=pvals_tensor, size=size)
+    
+    if dtype is not None:
+        multinomial_samples = multinomial_samples.astype(dtype)
+    
+    return multinomial_samples
+
+
+def random_geometric(p: float, size: Optional[Shape] = None,
+                     dtype: DType = None, device: Optional[str] = None) -> mx.array:
+    """
+    Generate random values from a geometric distribution.
+    
+    Args:
+        p: Probability of success
+        size: Shape of the output array
+        dtype: Optional data type
+        device: Optional device
+    
+    Returns:
+        MLX array with random values from a geometric distribution
+    """
+    # Generate uniform random values
+    u = mx.random.uniform(shape=size)
+    
+    # Transform to geometric distribution
+    # Geometric distribution: f(x) = (1-p)^(x-1) * p
+    # Can be sampled by taking floor(log(U) / log(1-p)) + 1 where U is uniform(0,1)
+    log_result = mx.log(u)
+    log_one_minus_p = mx.log(mx.array(1.0 - p))
+    geometric_samples = mx.floor(mx.divide(log_result, log_one_minus_p)) + 1
+    
+    if dtype is not None:
+        geometric_samples = geometric_samples.astype(dtype)
+    
+    return geometric_samples
+
+
 class MLXRandomOps:
     """MLX implementation of random operations."""
     
@@ -365,47 +447,70 @@ class MLXRandomOps:
         """Initialize MLX random operations."""
         self._current_seed = None
     
-    def random_normal(self, shape, mean=0.0, stddev=1.0, dtype=None, device=None):
+    def random_normal(self, shape: Shape, mean: float = 0.0, stddev: float = 1.0,
+                      dtype: DType = None, device: Optional[str] = None) -> mx.array:
         """Create a tensor with random values from a normal distribution."""
         return random_normal(shape, mean=mean, stddev=stddev, dtype=dtype, device=device)
     
-    def random_uniform(self, shape, minval=0.0, maxval=1.0, dtype=None, device=None):
+    def random_uniform(self, shape: Shape, minval: float = 0.0, maxval: float = 1.0,
+                       dtype: DType = None, device: Optional[str] = None) -> mx.array:
         """Create a tensor with random values from a uniform distribution."""
         return random_uniform(shape, minval=minval, maxval=maxval, dtype=dtype, device=device)
     
-    def random_binomial(self, shape, p=0.5, dtype=None, device=None):
+    def random_binomial(self, shape: Shape, p: float = 0.5,
+                        dtype: DType = None, device: Optional[str] = None) -> mx.array:
         """Create a tensor with random values from a binomial distribution."""
         return random_binomial(shape, p=p, dtype=dtype, device=device)
     
-    def random_gamma(self, shape, alpha=1.0, beta=1.0, dtype=None, device=None):
+    def random_gamma(self, shape: Shape, alpha: float = 1.0, beta: float = 1.0,
+                     dtype: DType = None, device: Optional[str] = None) -> mx.array:
         """Generate random values from a gamma distribution."""
         return random_gamma(shape, alpha=alpha, beta=beta, dtype=dtype, device=device)
     
-    def random_poisson(self, shape, lam=1.0, dtype=None, device=None):
+    def random_poisson(self, shape: Shape, lam: float = 1.0,
+                       dtype: DType = None, device: Optional[str] = None) -> mx.array:
         """Generate random values from a Poisson distribution."""
         return random_poisson(shape, lam=lam, dtype=dtype, device=device)
     
-    def random_exponential(self, shape, scale=1.0, dtype=None, device=None):
+    def random_exponential(self, shape: Shape, scale: float = 1.0,
+                           dtype: DType = None, device: Optional[str] = None) -> mx.array:
         """Generate random values from an exponential distribution."""
         return random_exponential(shape, scale=scale, dtype=dtype, device=device)
     
-    def random_categorical(self, logits, num_samples, dtype=None, device=None):
+    def random_categorical(self, logits: Any, num_samples: int,
+                           dtype: DType = None, device: Optional[str] = None) -> mx.array:
         """Draw samples from a categorical distribution."""
         return random_categorical(logits, num_samples, dtype=dtype, device=device)
     
-    def random_permutation(self, x, dtype=None, device=None):
+    def random_permutation(self, x: Union[int, ArrayLike],
+                           dtype: DType = None, device: Optional[str] = None) -> mx.array:
         """Randomly permute a sequence or return a permuted range."""
         return random_permutation(x)
     
-    def shuffle(self, x):
+    def shuffle(self, x: Any) -> mx.array:
         """Randomly shuffle a tensor along the first dimension."""
         return shuffle(x)
     
-    def set_seed(self, seed):
+    def set_seed(self, seed: int) -> None:
         """Set the random seed for reproducibility."""
         self._current_seed = seed
         set_seed(seed)
     
-    def get_seed(self):
+    def get_seed(self) -> Optional[int]:
         """Get the current random seed."""
         return self._current_seed
+    
+    def random_lognormal(self, shape: Shape, mean: float = 0.0, stddev: float = 1.0,
+                         dtype: DType = None, device: Optional[str] = None) -> mx.array:
+        """Generate random values from a log-normal distribution."""
+        return random_lognormal(shape, mean=mean, stddev=stddev, dtype=dtype, device=device)
+    
+    def random_multinomial(self, n: int, pvals: ArrayLike, size: Optional[Shape] = None,
+                           dtype: DType = None, device: Optional[str] = None) -> mx.array:
+        """Generate random values from a multinomial distribution."""
+        return random_multinomial(n, pvals, size=size, dtype=dtype, device=device)
+    
+    def random_geometric(self, p: float, size: Optional[Shape] = None,
+                         dtype: DType = None, device: Optional[str] = None) -> mx.array:
+        """Generate random values from a geometric distribution."""
+        return random_geometric(p, size=size, dtype=dtype, device=device)
