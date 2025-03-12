@@ -225,6 +225,8 @@ softplus = lambda *args, **kwargs: math_ops().softplus(*args, **kwargs)
 relu = lambda *args, **kwargs: math_ops().relu(*args, **kwargs)
 softmax = lambda *args, **kwargs: math_ops().softmax(*args, **kwargs)
 gradient = lambda *args, **kwargs: math_ops().gradient(*args, **kwargs)
+cumsum = lambda *args, **kwargs: math_ops().cumsum(*args, **kwargs)
+eigh = lambda *args, **kwargs: math_ops().eigh(*args, **kwargs)
 
 # Tensor sort operation
 sort = lambda *args, **kwargs: tensor_ops().sort(*args, **kwargs)
@@ -404,6 +406,8 @@ __all__ = [
     'relu',
     'softmax',
     'gradient',
+    'cumsum',
+    'eigh',
     
     # Device operations
     'to_device',
