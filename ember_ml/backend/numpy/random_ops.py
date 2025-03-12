@@ -198,7 +198,6 @@ def set_seed(seed: int) -> None:
     np.random.seed(seed)
 
 
-
 def get_seed() -> Optional[int]:
     """
     Get the current random seed.
@@ -209,49 +208,136 @@ def get_seed() -> Optional[int]:
     return _current_seed
 
 
+def random_lognormal(shape: Shape, mean: float = 0.0, stddev: float = 1.0,
+                     dtype: DType = None, device: Optional[str] = None) -> np.ndarray:
+    """
+    Generate random values from a log-normal distribution.
+    
+    Args:
+        shape: Shape of the output array
+        mean: Mean of the underlying normal distribution
+        stddev: Standard deviation of the underlying normal distribution
+        dtype: Optional data type
+        device: Optional device
+    
+    Returns:
+        NumPy array with random values from a log-normal distribution
+    """
+    normal_samples = random_normal(shape, mean=mean, stddev=stddev, dtype=dtype, device=device)
+    lognormal_samples = np.exp(normal_samples)
+    return lognormal_samples
+
+
+def random_multinomial(n: int, pvals: ArrayLike, size: Optional[Shape] = None,
+                       dtype: DType = None, device: Optional[str] = None) -> np.ndarray:
+    """
+    Generate random values from a multinomial distribution.
+    
+    Args:
+        n: Number of trials
+        pvals: Probabilities of each outcome
+        size: Shape of the output array
+        dtype: Optional data type
+        device: Optional device
+    
+    Returns:
+        NumPy array with random values from a multinomial distribution
+    """
+    pvals_tensor = np.asarray(pvals)
+    multinomial_samples = np.random.multinomial(n, pvals_tensor, size=size)
+    if dtype is not None:
+        multinomial_samples = multinomial_samples.astype(dtype)
+    return multinomial_samples
+
+
+def random_geometric(p: float, size: Optional[Shape] = None,
+                     dtype: DType = None, device: Optional[str] = None) -> np.ndarray:
+    """
+    Generate random values from a geometric distribution.
+    
+    Args:
+        p: Probability of success
+        size: Shape of the output array
+        dtype: Optional data type
+        device: Optional device
+    
+    Returns:
+        NumPy array with random values from a geometric distribution
+    """
+    u = np.random.uniform(size=size)
+    log_result = np.log(u)
+    log_one_minus_p = np.log(1.0 - p)
+    geometric_samples = np.floor(log_result / log_one_minus_p) + 1
+    if dtype is not None:
+        geometric_samples = geometric_samples.astype(dtype)
+    return geometric_samples
+
+
 class NumpyRandomOps:
     """NumPy implementation of random operations."""
     
-    def random_normal(self, shape, mean=0.0, stddev=1.0, dtype=None, device=None):
+    def random_normal(self, shape: Shape, mean: float = 0.0, stddev: float = 1.0,
+                      dtype: DType = None, device: Optional[str] = None) -> np.ndarray:
         """Create a tensor with random values from a normal distribution."""
         return random_normal(shape, mean=mean, stddev=stddev, dtype=dtype, device=device)
     
-    def random_uniform(self, shape, minval=0.0, maxval=1.0, dtype=None, device=None):
+    def random_uniform(self, shape: Shape, minval: float = 0.0, maxval: float = 1.0,
+                       dtype: DType = None, device: Optional[str] = None) -> np.ndarray:
         """Create a tensor with random values from a uniform distribution."""
         return random_uniform(shape, minval=minval, maxval=maxval, dtype=dtype, device=device)
     
-    def random_binomial(self, shape, p=0.5, dtype=None, device=None):
+    def random_binomial(self, shape: Shape, p: float = 0.5,
+                        dtype: DType = None, device: Optional[str] = None) -> np.ndarray:
         """Create a tensor with random values from a binomial distribution."""
         return random_binomial(shape, p=p, dtype=dtype, device=device)
     
-    def random_exponential(self, shape, scale=1.0, dtype=None, device=None):
+    def random_exponential(self, shape: Shape, scale: float = 1.0,
+                           dtype: DType = None, device: Optional[str] = None) -> np.ndarray:
         """Create a tensor with random values from an exponential distribution."""
         return random_exponential(shape, scale=scale, dtype=dtype, device=device)
     
-    def random_gamma(self, shape, alpha=1.0, beta=1.0, dtype=None, device=None):
+    def random_gamma(self, shape: Shape, alpha: float = 1.0, beta: float = 1.0,
+                     dtype: DType = None, device: Optional[str] = None) -> np.ndarray:
         """Create a tensor with random values from a gamma distribution."""
         return random_gamma(shape, alpha=alpha, beta=beta, dtype=dtype, device=device)
     
-    def random_poisson(self, shape, lam=1.0, dtype=None, device=None):
+    def random_poisson(self, shape: Shape, lam: float = 1.0,
+                       dtype: DType = None, device: Optional[str] = None) -> np.ndarray:
         """Create a tensor with random values from a Poisson distribution."""
         return random_poisson(shape, lam=lam, dtype=dtype, device=device)
     
-    def random_categorical(self, logits, num_samples, dtype=None, device=None):
+    def random_categorical(self, logits: Any, num_samples: int,
+                           dtype: DType = None, device: Optional[str] = None) -> np.ndarray:
         """Draw samples from a categorical distribution."""
         return random_categorical(logits, num_samples, dtype=dtype, device=device)
     
-    def random_permutation(self, n, dtype=None, device=None):
+    def random_permutation(self, n: int, dtype: DType = None, device: Optional[str] = None) -> np.ndarray:
         """Randomly permute a sequence of integers from 0 to n-1."""
         return random_permutation(n, dtype=dtype, device=device)
     
-    def shuffle(self, x):
-        """Randomly shuffle a tensor along its first dimension."""
+    def shuffle(self, x: Any) -> np.ndarray:
+        """Randomly shuffle a tensor along the first dimension."""
         return shuffle(x)
     
-    def set_seed(self, seed):
+    def set_seed(self, seed: int) -> None:
         """Set the random seed for reproducibility."""
         set_seed(seed)
     
-    def get_seed(self):
+    def get_seed(self) -> Optional[int]:
         """Get the current random seed."""
         return get_seed()
+    
+    def random_lognormal(self, shape: Shape, mean: float = 0.0, stddev: float = 1.0,
+                         dtype: DType = None, device: Optional[str] = None) -> np.ndarray:
+        """Generate random values from a log-normal distribution."""
+        return random_lognormal(shape, mean=mean, stddev=stddev, dtype=dtype, device=device)
+    
+    def random_multinomial(self, n: int, pvals: ArrayLike, size: Optional[Shape] = None,
+                           dtype: DType = None, device: Optional[str] = None) -> np.ndarray:
+        """Generate random values from a multinomial distribution."""
+        return random_multinomial(n, pvals, size=size, dtype=dtype, device=device)
+    
+    def random_geometric(self, p: float, size: Optional[Shape] = None,
+                         dtype: DType = None, device: Optional[str] = None) -> np.ndarray:
+        """Generate random values from a geometric distribution."""
+        return random_geometric(p, size=size, dtype=dtype, device=device)

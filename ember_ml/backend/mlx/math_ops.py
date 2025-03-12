@@ -1025,3 +1025,81 @@ class MLXMathOps:
     pi : mx.array = mx.array([PI_CONSTANT], dtype=mx.float32)
     
     # pi_func is removed as pi is now a class variable
+
+    def log1p(self, x: ArrayLike) -> mx.array:
+        """
+        Compute the natural logarithm of 1 + x element-wise.
+        
+        Args:
+            x: Input array
+            
+        Returns:
+            Element-wise log1p
+        """
+        x_tensor = convert_to_tensor(x)
+        return mx.log1p(x_tensor)
+
+    def expm1(self, x: ArrayLike) -> mx.array:
+        """
+        Compute exp(x) - 1 element-wise.
+        
+        Args:
+            x: Input array
+            
+        Returns:
+            Element-wise expm1
+        """
+        x_tensor = convert_to_tensor(x)
+        return mx.expm1(x_tensor)
+
+    def erf(self, x: ArrayLike) -> mx.array:
+        """
+        Compute the error function of x element-wise.
+        
+        Args:
+            x: Input array
+            
+        Returns:
+            Element-wise error function
+        """
+        x_tensor = convert_to_tensor(x)
+        return mx.erf(x_tensor)
+
+    def erfc(self, x: ArrayLike) -> mx.array:
+        """
+        Compute the complementary error function of x element-wise.
+        
+        Args:
+            x: Input array
+            
+        Returns:
+            Element-wise complementary error function
+        """
+        x_tensor = convert_to_tensor(x)
+        return mx.erfc(x_tensor)
+
+    def digamma(self, x: ArrayLike) -> mx.array:
+        """
+        Compute the digamma function of x element-wise.
+        
+        Args:
+            x: Input array
+            
+        Returns:
+            Element-wise digamma function
+        """
+        x_tensor = convert_to_tensor(x)
+        return mx.digamma(x_tensor)
+
+    def lgamma(self, x: ArrayLike) -> mx.array:
+        """
+        Compute the natural logarithm of the absolute value of the gamma function of x element-wise.
+        
+        Args:
+            x: Input array
+            
+        Returns:
+            Element-wise lgamma function
+        """
+        x_tensor = convert_to_tensor(x)
+        return mx.lgamma(x_tensor)

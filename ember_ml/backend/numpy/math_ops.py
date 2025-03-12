@@ -865,5 +865,80 @@ class NumpyMathOps:
         """Sort an array along a specified axis."""
         return sort(x, axis=axis)
 
-    # Alias for pow
-    power = pow
+    def log1p(self, x: ArrayLike) -> np.ndarray:
+        """
+        Compute the natural logarithm of 1 + x element-wise.
+        
+        Args:
+            x: Input array
+            
+        Returns:
+            Element-wise log1p
+        """
+        x_tensor = convert_to_tensor(x)
+        return np.log1p(x_tensor)
+
+    def expm1(self, x: ArrayLike) -> np.ndarray:
+        """
+        Compute exp(x) - 1 element-wise.
+        
+        Args:
+            x: Input array
+            
+        Returns:
+            Element-wise expm1
+        """
+        x_tensor = convert_to_tensor(x)
+        return np.expm1(x_tensor)
+
+    def erf(self, x: ArrayLike) -> np.ndarray:
+        """
+        Compute the error function of x element-wise.
+        
+        Args:
+            x: Input array
+            
+        Returns:
+            Element-wise error function
+        """
+        x_tensor = convert_to_tensor(x)
+        return np.erf(x_tensor)
+
+    def erfc(self, x: ArrayLike) -> np.ndarray:
+        """
+        Compute the complementary error function of x element-wise.
+        
+        Args:
+            x: Input array
+            
+        Returns:
+            Element-wise complementary error function
+        """
+        x_tensor = convert_to_tensor(x)
+        return np.erfc(x_tensor)
+
+    def digamma(self, x: ArrayLike) -> np.ndarray:
+        """
+        Compute the digamma function of x element-wise.
+        
+        Args:
+            x: Input array
+            
+        Returns:
+            Element-wise digamma function
+        """
+        x_tensor = convert_to_tensor(x)
+        return np.digamma(x_tensor)
+
+    def lgamma(self, x: ArrayLike) -> np.ndarray:
+        """
+        Compute the natural logarithm of the absolute value of the gamma function of x element-wise.
+        
+        Args:
+            x: Input array
+            
+        Returns:
+            Element-wise lgamma function
+        """
+        x_tensor = convert_to_tensor(x)
+        return np.lgamma(x_tensor)

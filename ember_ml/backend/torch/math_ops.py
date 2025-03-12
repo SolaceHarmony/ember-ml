@@ -5,7 +5,7 @@ This module provides PyTorch implementations of math operations.
 """
 
 import torch
-from typing import Optional, Union, List, Tuple
+from typing import Optional, Union, List, Tuple, Any, Sequence, Literal
 
 # Import from tensor_ops
 from ember_ml.backend.torch.tensor_ops import convert_to_tensor, ArrayLike
@@ -619,8 +619,6 @@ def sort(x: ArrayLike, axis: int = -1) -> torch.Tensor:
     return torch.sort(x_tensor, dim=axis)[0]
 
 
-from typing import Literal
-
 def gradient(f: ArrayLike, *varargs, axis: Optional[Union[int, List[int], Tuple[int, ...]]] = None,
             edge_order: Literal[1, 2] = 1) -> Union[torch.Tensor, List[torch.Tensor]]:
     """
@@ -950,3 +948,81 @@ class TorchMathOps:
         """
         a_tensor = convert_to_tensor(a)
         return torch.linalg.eigh(a_tensor)
+
+    def log1p(self, x: ArrayLike) -> torch.Tensor:
+        """
+        Compute the natural logarithm of 1 + x element-wise.
+        
+        Args:
+            x: Input tensor
+            
+        Returns:
+            Element-wise log1p
+        """
+        x_tensor = convert_to_tensor(x)
+        return torch.log1p(x_tensor)
+
+    def expm1(self, x: ArrayLike) -> torch.Tensor:
+        """
+        Compute exp(x) - 1 element-wise.
+        
+        Args:
+            x: Input tensor
+            
+        Returns:
+            Element-wise expm1
+        """
+        x_tensor = convert_to_tensor(x)
+        return torch.expm1(x_tensor)
+
+    def erf(self, x: ArrayLike) -> torch.Tensor:
+        """
+        Compute the error function of x element-wise.
+        
+        Args:
+            x: Input tensor
+            
+        Returns:
+            Element-wise error function
+        """
+        x_tensor = convert_to_tensor(x)
+        return torch.erf(x_tensor)
+
+    def erfc(self, x: ArrayLike) -> torch.Tensor:
+        """
+        Compute the complementary error function of x element-wise.
+        
+        Args:
+            x: Input tensor
+            
+        Returns:
+            Element-wise complementary error function
+        """
+        x_tensor = convert_to_tensor(x)
+        return torch.erfc(x_tensor)
+
+    def digamma(self, x: ArrayLike) -> torch.Tensor:
+        """
+        Compute the digamma function of x element-wise.
+        
+        Args:
+            x: Input tensor
+            
+        Returns:
+            Element-wise digamma function
+        """
+        x_tensor = convert_to_tensor(x)
+        return torch.digamma(x_tensor)
+
+    def lgamma(self, x: ArrayLike) -> torch.Tensor:
+        """
+        Compute the natural logarithm of the absolute value of the gamma function of x element-wise.
+        
+        Args:
+            x: Input tensor
+            
+        Returns:
+            Element-wise lgamma function
+        """
+        x_tensor = convert_to_tensor(x)
+        return torch.lgamma(x_tensor)
