@@ -513,3 +513,31 @@ class MathOps(ABC):
             Tuple of (eigenvalues, eigenvectors)
         """
         pass
+
+    @abstractmethod
+    def mod(self, x: Any, y: Any) -> Any:
+        """
+        Compute the remainder of division of x by y element-wise.
+        
+        Args:
+            x: Input tensor (dividend)
+            y: Input tensor (divisor)
+            
+        Returns:
+            Element-wise remainder
+        """
+        pass
+
+    @abstractmethod
+    def sort(self, x: Any, axis: int = -1) -> Any:
+        """
+        Sort a tensor along a specified axis.
+        
+        Args:
+            x: Input tensor
+            axis: Axis along which to sort
+            
+        Returns:
+            Sorted tensor
+        """
+        pass

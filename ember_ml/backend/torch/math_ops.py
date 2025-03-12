@@ -5,7 +5,6 @@ This module provides PyTorch implementations of math operations.
 """
 
 import torch
-import numpy as np
 from typing import Optional, Union, List, Tuple
 
 # Import from tensor_ops
@@ -925,3 +924,29 @@ class TorchMathOps:
             raise ValueError("edge_order must be 1 or 2")
         return gradient(f, *varargs, axis=axis, edge_order=edge_order)
     
+    def cumsum(self, x: ArrayLike, axis: Optional[int] = None) -> torch.Tensor:
+        """
+        Compute the cumulative sum of a tensor along a specified axis.
+        
+        Args:
+            x: Input tensor
+            axis: Axis along which to compute the cumulative sum
+            
+        Returns:
+            Tensor with cumulative sums
+        """
+        x_tensor = convert_to_tensor(x)
+        return torch.cumsum(x_tensor, dim=axis)
+    
+    def eigh(self, a: ArrayLike) -> Tuple[torch.Tensor, torch.Tensor]:
+        """
+        Compute the eigenvalues and eigenvectors of a Hermitian or symmetric matrix.
+        
+        Args:
+            a: Input Hermitian or symmetric matrix
+            
+        Returns:
+            Tuple of (eigenvalues, eigenvectors)
+        """
+        a_tensor = convert_to_tensor(a)
+        return torch.linalg.eigh(a_tensor)
