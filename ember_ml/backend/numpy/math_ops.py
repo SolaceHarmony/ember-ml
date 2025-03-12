@@ -25,7 +25,9 @@ def add(x: ArrayLike, y: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise sum
     """
-    return np.add(x, y)
+    x_tensor = convert_to_tensor(x)
+    y_tensor = convert_to_tensor(y)
+    return np.add(x_tensor, y_tensor)
 
 
 def subtract(x: ArrayLike, y: ArrayLike) -> np.ndarray:
@@ -39,7 +41,9 @@ def subtract(x: ArrayLike, y: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise difference
     """
-    return np.subtract(x, y)
+    x_tensor = convert_to_tensor(x)
+    y_tensor = convert_to_tensor(y)
+    return np.subtract(x_tensor, y_tensor)
 
 
 def multiply(x: ArrayLike, y: ArrayLike) -> np.ndarray:
@@ -53,7 +57,9 @@ def multiply(x: ArrayLike, y: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise product
     """
-    return np.multiply(x, y)
+    x_tensor = convert_to_tensor(x)
+    y_tensor = convert_to_tensor(y)
+    return np.multiply(x_tensor, y_tensor)
 
 
 def divide(x: ArrayLike, y: ArrayLike) -> np.ndarray:
@@ -67,7 +73,9 @@ def divide(x: ArrayLike, y: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise quotient
     """
-    return np.divide(x, y)
+    x_tensor = convert_to_tensor(x)
+    y_tensor = convert_to_tensor(y)
+    return np.divide(x_tensor, y_tensor)
 
 
 def dot(x: ArrayLike, y: ArrayLike) -> np.ndarray:
@@ -81,7 +89,9 @@ def dot(x: ArrayLike, y: ArrayLike) -> np.ndarray:
     Returns:
         Dot product
     """
-    return np.dot(x, y)
+    x_tensor = convert_to_tensor(x)
+    y_tensor = convert_to_tensor(y)
+    return np.dot(x_tensor, y_tensor)
 
 
 def matmul(x: ArrayLike, y: ArrayLike) -> np.ndarray:
@@ -95,12 +105,14 @@ def matmul(x: ArrayLike, y: ArrayLike) -> np.ndarray:
     Returns:
         Matrix product
     """
-    return np.matmul(x, y)
+    x_tensor = convert_to_tensor(x)
+    y_tensor = convert_to_tensor(y)
+    return np.matmul(x_tensor, y_tensor)
 
 
 def mean(x: ArrayLike,
-         axis: Optional[Union[int, Sequence[int]]] = None,
-         keepdims: bool = False) -> np.ndarray:
+          axis: Optional[Union[int, Sequence[int]]] = None,
+          keepdims: bool = False) -> np.ndarray:
     """
     Compute the mean of a NumPy array along specified axes.
 
@@ -112,12 +124,13 @@ def mean(x: ArrayLike,
     Returns:
         Mean of the array
     """
-    return np.mean(x, axis=axis, keepdims=keepdims)
+    x_tensor = convert_to_tensor(x)
+    return np.mean(x_tensor, axis=axis, keepdims=keepdims)
 
 
 def sum(x: ArrayLike,
-        axis: Optional[Union[int, Sequence[int]]] = None,
-        keepdims: bool = False) -> np.ndarray:
+         axis: Optional[Union[int, Sequence[int]]] = None,
+         keepdims: bool = False) -> np.ndarray:
     """
     Compute the sum of a NumPy array along specified axes.
 
@@ -129,12 +142,13 @@ def sum(x: ArrayLike,
     Returns:
         Sum of the array
     """
-    return np.sum(x, axis=axis, keepdims=keepdims)
+    x_tensor = convert_to_tensor(x)
+    return np.sum(x_tensor, axis=axis, keepdims=keepdims)
 
 
 def var(x: ArrayLike,
-        axis: Optional[Union[int, Sequence[int]]] = None,
-        keepdims: bool = False) -> np.ndarray:
+         axis: Optional[Union[int, Sequence[int]]] = None,
+         keepdims: bool = False) -> np.ndarray:
     """
     Compute the variance of a NumPy array along specified axes.
 
@@ -146,7 +160,8 @@ def var(x: ArrayLike,
     Returns:
         Variance of the array
     """
-    return np.var(x, axis=axis, keepdims=keepdims)
+    x_tensor = convert_to_tensor(x)
+    return np.var(x_tensor, axis=axis, keepdims=keepdims)
 
 
 def exp(x: ArrayLike) -> np.ndarray:
@@ -159,7 +174,8 @@ def exp(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise exponential
     """
-    return np.exp(x)
+    x_tensor = convert_to_tensor(x)
+    return np.exp(x_tensor)
 
 
 def log(x: ArrayLike) -> np.ndarray:
@@ -172,7 +188,8 @@ def log(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise logarithm
     """
-    return np.log(x)
+    x_tensor = convert_to_tensor(x)
+    return np.log(x_tensor)
 
 
 def log10(x: ArrayLike) -> np.ndarray:
@@ -185,7 +202,8 @@ def log10(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise base-10 logarithm
     """
-    return np.log10(x)
+    x_tensor = convert_to_tensor(x)
+    return np.log10(x_tensor)
 
 
 def log2(x: ArrayLike) -> np.ndarray:
@@ -198,7 +216,8 @@ def log2(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise base-2 logarithm
     """
-    return np.log2(x)
+    x_tensor = convert_to_tensor(x)
+    return np.log2(x_tensor)
 
 
 def pow(x: ArrayLike, y: ArrayLike) -> np.ndarray:
@@ -212,7 +231,9 @@ def pow(x: ArrayLike, y: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise power
     """
-    return np.power(x, y)
+    x_tensor = convert_to_tensor(x)
+    y_tensor = convert_to_tensor(y)
+    return np.power(x_tensor, y_tensor)
 
 
 def sqrt(x: ArrayLike) -> np.ndarray:
@@ -225,7 +246,8 @@ def sqrt(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise square root
     """
-    return np.sqrt(x)
+    x_tensor = convert_to_tensor(x)
+    return np.sqrt(x_tensor)
 
 
 def square(x: ArrayLike) -> np.ndarray:
@@ -238,8 +260,8 @@ def square(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise square
     """
-    return np.square(x)
-
+    x_tensor = convert_to_tensor(x)
+    return np.square(x_tensor)
 
 def abs(x: ArrayLike) -> np.ndarray:
     """
@@ -251,7 +273,22 @@ def abs(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise absolute value
     """
-    return np.abs(x)
+    x_tensor = convert_to_tensor(x)
+    return np.abs(x_tensor)
+
+
+def negative(x: ArrayLike) -> np.ndarray:
+    """
+    Compute the negative of a NumPy array element-wise.
+
+    Args:
+        x: Input array
+
+    Returns:
+        Element-wise negative
+    """
+    x_tensor = convert_to_tensor(x)
+    return np.negative(x_tensor)
 
 
 def sign(x: ArrayLike) -> np.ndarray:
@@ -264,7 +301,8 @@ def sign(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise sign
     """
-    return np.sign(x)
+    x_tensor = convert_to_tensor(x)
+    return np.sign(x_tensor)
 
 
 def sin(x: ArrayLike) -> np.ndarray:
@@ -277,7 +315,8 @@ def sin(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise sine
     """
-    return np.sin(x)
+    x_tensor = convert_to_tensor(x)
+    return np.sin(x_tensor)
 
 
 def cos(x: ArrayLike) -> np.ndarray:
@@ -290,7 +329,8 @@ def cos(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise cosine
     """
-    return np.cos(x)
+    x_tensor = convert_to_tensor(x)
+    return np.cos(x_tensor)
 
 
 def tan(x: ArrayLike) -> np.ndarray:
@@ -303,7 +343,8 @@ def tan(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise tangent
     """
-    return np.tan(x)
+    x_tensor = convert_to_tensor(x)
+    return np.tan(x_tensor)
 
 
 def sinh(x: ArrayLike) -> np.ndarray:
@@ -316,7 +357,8 @@ def sinh(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise hyperbolic sine
     """
-    return np.sinh(x)
+    x_tensor = convert_to_tensor(x)
+    return np.sinh(x_tensor)
 
 
 def cosh(x: ArrayLike) -> np.ndarray:
@@ -329,7 +371,8 @@ def cosh(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise hyperbolic cosine
     """
-    return np.cosh(x)
+    x_tensor = convert_to_tensor(x)
+    return np.cosh(x_tensor)
 
 
 def tanh(x: ArrayLike) -> np.ndarray:
@@ -342,7 +385,8 @@ def tanh(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise tanh
     """
-    return np.tanh(x)
+    x_tensor = convert_to_tensor(x)
+    return np.tanh(x_tensor)
 
 
 def sigmoid(x: ArrayLike) -> np.ndarray:
@@ -355,7 +399,8 @@ def sigmoid(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise sigmoid
     """
-    x_safe = np.clip(x, -88.0, 88.0)  # Prevent overflow
+    x_tensor = convert_to_tensor(x)
+    x_safe = np.clip(x_tensor, -88.0, 88.0)  # Prevent overflow
     denominator = np.add(1.0, np.exp(np.negative(x_safe)))
     return np.divide(1.0, denominator)
 
@@ -372,7 +417,8 @@ def softplus(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise softplus
     """
-    x_safe = np.clip(x, -88.0, 88.0)  # Prevent overflow
+    x_tensor = convert_to_tensor(x)
+    x_safe = np.clip(x_tensor, -88.0, 88.0)  # Prevent overflow
     return np.log(np.add(1.0, np.exp(x_safe)))
 
 
@@ -386,7 +432,8 @@ def relu(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise ReLU
     """
-    return np.maximum(0, x)
+    x_tensor = convert_to_tensor(x)
+    return np.maximum(0, x_tensor)
 
 
 def mod(x: ArrayLike, y: ArrayLike) -> np.ndarray:
@@ -400,8 +447,10 @@ def mod(x: ArrayLike, y: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise remainder
     """
+    x_tensor = convert_to_tensor(x)
+    y_tensor = convert_to_tensor(y)
     # Use divmod to get the remainder
-    _, remainder = np.divmod(x, y)
+    _, remainder = np.divmod(x_tensor, y_tensor)
     return remainder
 
 
@@ -418,7 +467,9 @@ def floor_divide(x: ArrayLike, y: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise integer quotient (a // b)
     """
-    return np.floor_divide(x, y)
+    x_tensor = convert_to_tensor(x)
+    y_tensor = convert_to_tensor(y)
+    return np.floor_divide(x_tensor, y_tensor)
 
 
 def gradient(f: ArrayLike, *varargs, axis: Optional[Union[int, Sequence[int]]] = None,
@@ -457,8 +508,9 @@ def softmax(x: ArrayLike, axis: int = -1) -> np.ndarray:
     Returns:
         Softmax of the array
     """
-    x_max = np.max(x, axis=axis, keepdims=True)
-    exp_x = np.exp(np.subtract(x, x_max))
+    x_tensor = convert_to_tensor(x)
+    x_max = np.max(x_tensor, axis=axis, keepdims=True)
+    exp_x = np.exp(np.subtract(x_tensor, x_max))
     return np.divide(exp_x, np.sum(exp_x, axis=axis, keepdims=True))
 
 
@@ -474,7 +526,10 @@ def clip(x: ArrayLike, min_val: Union[float, ArrayLike], max_val: Union[float, A
     Returns:
         Clipped array
     """
-    return np.clip(x, min_val, max_val)
+    x_tensor = convert_to_tensor(x)
+    min_val_tensor = convert_to_tensor(min_val)
+    max_val_tensor = convert_to_tensor(max_val)
+    return np.clip(x_tensor, min_val_tensor, max_val_tensor)
 
 
 def max(x: ArrayLike,
@@ -491,7 +546,8 @@ def max(x: ArrayLike,
     Returns:
         Maximum of the array
     """
-    return np.max(x, axis=axis, keepdims=keepdims)
+    x_tensor = convert_to_tensor(x)
+    return np.max(x_tensor, axis=axis, keepdims=keepdims)
 
 
 def min(x: ArrayLike,
@@ -508,7 +564,8 @@ def min(x: ArrayLike,
     Returns:
         Minimum of the array
     """
-    return np.min(x, axis=axis, keepdims=keepdims)
+    x_tensor = convert_to_tensor(x)
+    return np.min(x_tensor, axis=axis, keepdims=keepdims)
 
 # Define the pi constant using Chudnovsky algorithm
 def _calculate_pi_value(precision_digits=15):
@@ -603,26 +660,13 @@ def _calculate_pi_value(precision_digits=15):
 PI_CONSTANT = _calculate_pi_value(15)  # Increased precision to match reference value
 
 
-def pi() -> np.ndarray:
-    """
-    Return the mathematical constant pi calculated using the Chudnovsky algorithm.
-
-    This implementation uses the Chudnovsky algorithm, which is one of the most
-    efficient algorithms for calculating π. The value is calculated with precision
-    appropriate for NumPy's float32 data type and returned as a scalar array with
-    shape (1,) as per NumPy conventions.
-
-    Returns:
-        NumPy array containing the value of pi with shape (1,)
-    """
-    # Return pi as a scalar with shape (1,) as per NumPy conventions
-    return PI_CONSTANT
-
 # Alias for pow
 power = pow
 
 class NumpyMathOps:
     """NumPy implementation of math operations."""
+    
+    pi : np.ndarray = np.array([PI_CONSTANT], dtype=np.float32)
 
     def add(self, x, y):
         """Add two arrays element-wise."""
@@ -695,6 +739,10 @@ class NumpyMathOps:
     def abs(self, x):
         """Compute the absolute value of an array element-wise."""
         return abs(x)
+        
+    def negative(self, x):
+        """Compute the negative of an array element-wise."""
+        return negative(x)
 
     def sign(self, x):
         """Compute the sign of an array element-wise."""
@@ -759,14 +807,6 @@ class NumpyMathOps:
     def gradient(self, f, *varargs, axis=None, edge_order: Literal[1, 2] = 1):
         """Return the gradient of an N-dimensional array."""
         return gradient(f, *varargs, axis=axis, edge_order=edge_order)
-
-    def pi(self):
-        """Return the mathematical constant pi."""
-        return pi()
-
-    def pi_func(self):
-        """Return the mathematical constant pi as a function."""
-        return pi()
 
     # Alias for pow
     power = pow

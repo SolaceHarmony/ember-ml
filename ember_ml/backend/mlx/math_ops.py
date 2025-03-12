@@ -301,7 +301,6 @@ def relu(x: ArrayLike) -> mx.array:
     """
     return mx.maximum(0, convert_to_tensor(x))
 
-
 def abs(x: ArrayLike) -> mx.array:
     """
     Compute the absolute value of an MLX array element-wise.
@@ -313,6 +312,19 @@ def abs(x: ArrayLike) -> mx.array:
         Element-wise absolute value
     """
     return mx.abs(convert_to_tensor(x))
+
+
+def negative(x: ArrayLike) -> mx.array:
+    """
+    Compute the negative of an MLX array element-wise.
+    
+    Args:
+        x: Input array
+        
+    Returns:
+        Element-wise negative
+    """
+    return mx.negative(convert_to_tensor(x))
 
 
 def sign(x: ArrayLike) -> mx.array:
@@ -600,31 +612,135 @@ def gradient(f: ArrayLike, *varargs, axis: Optional[Union[int, Sequence[int]]] =
         A tensor or tuple of tensors corresponding to the derivatives of f with respect to each dimension.
         Each derivative has the same shape as f.
     """
-    import numpy as np
+    from ember_ml.backend.mlx.tensor_ops import scatter
     
     f_array = convert_to_tensor(f)
     
-    # Convert to NumPy array for calculation
-    f_numpy = f_array.tolist()
-    f_numpy = np.array(f_numpy)
+    # Get the shape of the input array
+    f_shape = f_array.shape
+    ndim = len(f_shape)
     
     # Process spacing arguments
-    spacing_args = []
-    for arg in varargs:
-        if isinstance(arg, mx.array):
-            arg_numpy = arg.tolist()
-            spacing_args.append(np.array(arg_numpy))
-        else:
-            spacing_args.append(arg)
-    
-    # Calculate gradient using NumPy's gradient function
-    result_numpy = np.gradient(f_numpy, *spacing_args, axis=axis, edge_order=edge_order)
-    
-    # Convert back to MLX array
-    if isinstance(result_numpy, np.ndarray):
-        return mx.array(result_numpy)
+    if len(varargs) == 0:
+        # Default spacing is 1 for all dimensions
+        dx = [mx.array(1.0) for _ in range(ndim)]
     else:
-        return [mx.array(arr) for arr in result_numpy]
+        # Use provided spacing
+        dx = []
+        for arg in varargs:
+            dx.append(convert_to_tensor(arg))
+    
+    # Determine which axes to calculate gradient along
+    axes = list(range(ndim)) if axis is None else [axis] if isinstance(axis, int) else list(axis)
+    
+    # Calculate gradient for each axis
+    grad = []
+    for i in axes:
+        # Create slices for forward and backward differences
+        slice_prev = [slice(None)] * ndim
+        slice_next = [slice(None)] * ndim
+        
+        # Calculate gradient along axis i
+        if edge_order == 1:
+            # First-order accurate differences at the boundaries
+            # Forward difference at the beginning
+            slice_prev[i] = slice(0, 1)
+            slice_next[i] = slice(1, 2)
+            begin_indices = [0]  # Index for the beginning as a Python list
+            begin = mx.divide(mx.subtract(f_array[tuple(slice_next)], f_array[tuple(slice_prev)]), dx[i])
+            
+            # Central difference in the interior
+            slice_prev[i] = slice(0, -2)
+            slice_next[i] = slice(2, None)
+            middle_size = f_shape[i] - 2  # Size of the interior
+            middle_indices = list(range(1, middle_size + 1))  # Indices for the interior as a Python list
+            middle = mx.divide(mx.subtract(f_array[tuple(slice_next)], f_array[tuple(slice_prev)]),
+                              mx.multiply(mx.array(2.0), dx[i]))
+            
+            # Backward difference at the end
+            slice_prev[i] = slice(-2, -1)
+            slice_next[i] = slice(-1, None)
+            end_indices = [f_shape[i] - 1]  # Index for the end as a Python list
+            end = mx.divide(mx.subtract(f_array[tuple(slice_next)], f_array[tuple(slice_prev)]), dx[i])
+            
+            # Create gradient tensor using scatter operations
+            grad_i = mx.zeros_like(f_array)
+            
+            # Scatter the beginning values
+            begin_flat = mx.reshape(begin, (-1,))
+            grad_i_flat = mx.reshape(grad_i, (-1,))
+            begin_indices_flat = begin_indices
+            grad_i_flat = scatter(begin_flat, begin_indices_flat, grad_i_flat.shape[0], aggr="add")
+            grad_i = mx.reshape(grad_i_flat, f_array.shape)
+            
+            # Scatter the middle values
+            middle_flat = mx.reshape(middle, (-1,))
+            grad_i_flat = mx.reshape(grad_i, (-1,))
+            middle_indices_flat = middle_indices
+            grad_i_flat = scatter(middle_flat, middle_indices_flat, grad_i_flat.shape[0], aggr="add")
+            grad_i = mx.reshape(grad_i_flat, f_array.shape)
+            
+            # Scatter the end values
+            end_flat = mx.reshape(end, (-1,))
+            grad_i_flat = mx.reshape(grad_i, (-1,))
+            end_indices_flat = end_indices
+            grad_i_flat = scatter(end_flat, end_indices_flat, grad_i_flat.shape[0], aggr="add")
+            grad_i = mx.reshape(grad_i_flat, f_array.shape)
+            
+        elif edge_order == 2:
+            # Second-order accurate differences at the boundaries
+            # TODO: Implement second-order accurate differences
+            # For now, fall back to first-order accurate differences
+            slice_prev[i] = slice(0, 1)
+            slice_next[i] = slice(1, 2)
+            begin_indices = [0]  # Index for the beginning as a Python list
+            begin = mx.divide(mx.subtract(f_array[tuple(slice_next)], f_array[tuple(slice_prev)]), dx[i])
+            
+            # Central difference in the interior
+            slice_prev[i] = slice(0, -2)
+            slice_next[i] = slice(2, None)
+            middle_size = f_shape[i] - 2  # Size of the interior
+            middle_indices = list(range(1, middle_size + 1))  # Indices for the interior as a Python list
+            middle = mx.divide(mx.subtract(f_array[tuple(slice_next)], f_array[tuple(slice_prev)]),
+                              mx.multiply(mx.array(2.0), dx[i]))
+            
+            # Backward difference at the end
+            slice_prev[i] = slice(-2, -1)
+            slice_next[i] = slice(-1, None)
+            end_indices = [f_shape[i] - 1]  # Index for the end as a Python list
+            end = mx.divide(mx.subtract(f_array[tuple(slice_next)], f_array[tuple(slice_prev)]), dx[i])
+            
+            # Create gradient tensor using scatter operations
+            grad_i = mx.zeros_like(f_array)
+            
+            # Scatter the beginning values
+            begin_flat = mx.reshape(begin, (-1,))
+            grad_i_flat = mx.reshape(grad_i, (-1,))
+            begin_indices_flat = begin_indices
+            grad_i_flat = scatter(begin_flat, begin_indices_flat, grad_i_flat.shape[0], aggr="add")
+            grad_i = mx.reshape(grad_i_flat, f_array.shape)
+            
+            # Scatter the middle values
+            middle_flat = mx.reshape(middle, (-1,))
+            grad_i_flat = mx.reshape(grad_i, (-1,))
+            middle_indices_flat = middle_indices
+            grad_i_flat = scatter(middle_flat, middle_indices_flat, grad_i_flat.shape[0], aggr="add")
+            grad_i = mx.reshape(grad_i_flat, f_array.shape)
+            
+            # Scatter the end values
+            end_flat = mx.reshape(end, (-1,))
+            grad_i_flat = mx.reshape(grad_i, (-1,))
+            end_indices_flat = end_indices
+            grad_i_flat = scatter(end_flat, end_indices_flat, grad_i_flat.shape[0], aggr="add")
+            grad_i = mx.reshape(grad_i_flat, f_array.shape)
+        
+        grad.append(grad_i)
+    
+    # Return the gradient
+    if len(grad) == 1:
+        return grad[0]
+    else:
+        return grad
 
 # Define the pi constant using Chudnovsky algorithm
 def _calculate_pi_value(precision_digits=15):
@@ -719,20 +835,7 @@ def _calculate_pi_value(precision_digits=15):
 PI_CONSTANT = _calculate_pi_value(15)  # Increased precision to match reference value
 
 
-def pi() -> mx.array:
-    """
-    Return the mathematical constant pi calculated using the Chudnovsky algorithm.
-    
-    This implementation uses the Chudnovsky algorithm, which is one of the most
-    efficient algorithms for calculating π. The value is calculated with precision
-    appropriate for MLX's float32 data type and returned as a scalar array with
-    shape (1,) as per MLX conventions.
-    
-    Returns:
-        MLX array containing the value of pi with shape (1,)
-    """
-    # Return pi as a scalar with shape (1,) as per MLX conventions
-    return PI_CONSTANT
+# pi is now a class variable, not a function
 
 
 class MLXMathOps:
@@ -814,6 +917,10 @@ class MLXMathOps:
         """Compute the absolute value of a tensor element-wise."""
         return abs(x)
     
+    def negative(self, x):
+        """Compute the negative of a tensor element-wise."""
+        return negative(x)
+    
     def square(self, x):
         """Compute the square of a tensor element-wise."""
         return square(x)
@@ -880,11 +987,6 @@ class MLXMathOps:
             raise ValueError("edge_order must be 1 or 2")
         return gradient(f, *varargs, axis=axis, edge_order=edge_order)
     
-    @property
-    def pi(self):
-        """Return the mathematical constant pi."""
-        return pi
+    pi : mx.array = mx.array([PI_CONSTANT], dtype=mx.float32)
     
-    def pi_func(self):
-        """Return the mathematical constant pi as a function."""
-        return pi()
+    # pi_func is removed as pi is now a class variable

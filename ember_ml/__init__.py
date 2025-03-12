@@ -60,7 +60,7 @@ from ember_ml import nn
 from ember_ml import core
 from ember_ml import attention
 from ember_ml import wave
-from ember_ml import keras_3_8
+# Removed import of non-existent keras_3_8 module
 from ember_ml import utils
 from ember_ml import models
 from ember_ml import features
@@ -68,7 +68,7 @@ from ember_ml import audio
 from ember_ml import math
 from ember_ml import training
 from ember_ml import visualization
-from ember_ml import solvers
+# Removed import of non-existent solvers module
 from ember_ml import data
 from ember_ml import ops
 from ember_ml import wirings
@@ -81,7 +81,7 @@ __all__ = [
     'core',
     'attention',
     'wave',
-    'keras_3_8',
+    # Removed 'keras_3_8' from __all__
     'utils',
     'models',
     'features',
@@ -89,7 +89,7 @@ __all__ = [
     'math',
     'training',
     'visualization',
-    'solvers',
+    # Removed 'solvers' from __all__
     'data',
     'ops',
     'wirings',

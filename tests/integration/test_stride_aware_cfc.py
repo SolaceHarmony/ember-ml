@@ -2,20 +2,19 @@ import pytest
 from typing import Any
 import numpy as np  # Keep NumPy for random seed
 
-# Import only the minimum required modules
-import keras
-from keras import ops
-keras.utils.set_random_seed(812)
+# Import ember_ml ops instead of Keras
+from ember_ml import ops
+ops.set_seed(812)
 
 # Import the custom modules
-from ncps import wirings
+from ember_ml.nn import wirings
 import matplotlib.pyplot as plt
-from stride_aware_cfc import StrideAwareCfCCell, StrideAwareCfC, StrideAwareWiredCfCCell
+from ember_ml.nn.modules.rnn import StrideAwareWiredCfCCell, StrideAwareCfC
 
 # Test Fixtures
 @pytest.fixture
 def input_data():
-    return keras.ops.convert_to_tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype="float32")
+    return ops.convert_to_tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=ops.float32)
 
 @pytest.fixture
 def wiring():
@@ -23,22 +22,22 @@ def wiring():
 
 @pytest.fixture
 def stride_cell(wiring):
-    return StrideAwareCfCCell(units=wiring.units, stride_length=2, time_scale_factor=1.0)
+    return StrideAwareWiredCfCCell(wiring=wiring, stride_length=2, time_scale_factor=1.0)
 
 @pytest.fixture
 def stride_rnn_regular(wiring):
-     cell = StrideAwareCfCCell(units=wiring.units, stride_length=2, time_scale_factor=1.0)
-     return StrideAwareCfC(cell=cell, mixed_memory=False)
+    cell = StrideAwareWiredCfCCell(wiring=wiring, stride_length=2, time_scale_factor=1.0)
+    return StrideAwareCfC(units_or_cell=cell, mixed_memory=False)
     
 @pytest.fixture
 def stride_rnn_mixed(wiring):
     cell = StrideAwareWiredCfCCell(wiring=wiring, stride_length=2, time_scale_factor=1.0)
-    return StrideAwareCfC(cell=cell, mixed_memory=True)
+    return StrideAwareCfC(units_or_cell=cell, mixed_memory=True)
 
 @pytest.fixture
 def stride_rnn_wired(wiring):
     cell = StrideAwareWiredCfCCell(wiring=wiring, stride_length=2, time_scale_factor=1.0)
-    return StrideAwareCfC(cell=cell, mixed_memory=False)
+    return StrideAwareCfC(units_or_cell=cell, mixed_memory=False)
 
 @pytest.fixture
 def stride_wired_cell(wiring):
@@ -99,16 +98,16 @@ def generate_leaky_data(
                     leakage_np[b] * rec_term
                 )
         
-        # Convert to TensorFlow tensors
-        input_tensor = keras.ops.convert_to_tensor(input_np)
-        output_tensor = keras.ops.convert_to_tensor(output_np)
+        # Convert to tensors
+        input_tensor = ops.convert_to_tensor(input_np)
+        output_tensor = ops.convert_to_tensor(output_np)
         
         inputs_list.append(input_tensor)
         outputs_list.append(output_tensor)
 
     # Stack the tensors
-    inputs = keras.ops.stack(inputs_list, axis=0)
-    outputs = keras.ops.stack(outputs_list, axis=0)
+    inputs = ops.stack(inputs_list, axis=0)
+    outputs = ops.stack(outputs_list, axis=0)
     
     return inputs, outputs
 
@@ -155,14 +154,14 @@ def test_visualization_stride_aware_cfc(wiring):
     target_data = target_data[0]
 
     # Create cell for testing
-    cell = StrideAwareCfCCell(
-        units=wiring.units, 
-        stride_length=4, 
+    cell = StrideAwareWiredCfCCell(
+        wiring=wiring,
+        stride_length=4,
         time_scale_factor=2.0
     )
     
     # Create layer for testing
-    rnn_layer = StrideAwareCfC(cell, return_sequences=True)
+    rnn_layer = StrideAwareCfC(units_or_cell=cell, return_sequences=True)
     
     # Just verify the cell and layer were created correctly
     assert cell.units == wiring.units
@@ -194,8 +193,8 @@ def test_visualization_stride_aware_cfc_mixed(wiring):
     
     # Create layer with mixed memory for testing
     rnn_layer = StrideAwareCfC(
-        cell=cell, 
-        return_sequences=True, 
+        units_or_cell=cell,
+        return_sequences=True,
         mixed_memory=True
     )
     
@@ -214,8 +213,8 @@ def test_get_config_and_from_config_wired_cell(stride_wired_cell):
 
 def test_get_config_and_from_config_cell(stride_cell):
     config = stride_cell.get_config()
-    new_cell = StrideAwareCfCCell.from_config(config)
-    assert isinstance(new_cell, StrideAwareCfCCell)
+    new_cell = StrideAwareWiredCfCCell.from_config(config)
+    assert isinstance(new_cell, StrideAwareWiredCfCCell)
 
 def test_get_config_and_from_config_rnn(stride_rnn_wired):
     config = stride_rnn_wired.get_config()

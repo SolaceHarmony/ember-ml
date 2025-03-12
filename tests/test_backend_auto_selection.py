@@ -18,12 +18,19 @@ def original_backend_and_device():
     dummy = nl.zeros((1, 1))
     original_device = get_device(dummy)
     
+    # Clean up device name (remove ':0' suffix if present)
+    if original_device and ':' in original_device:
+        original_device = original_device.split(':')[0]
+    
     yield original_backend, original_device
     
     # Restore the original backend and device
     set_backend(original_backend)
     if original_device:
         set_device(original_device)
+
+# List of all available backends to test
+ALL_BACKENDS = ['numpy', 'torch', 'mlx']
 
 class TestBackendAutoSelection:
     """Test the auto-selection of backends."""
@@ -74,18 +81,59 @@ class TestBackendAutoSelection:
             except ImportError:
                 pass  # Skip if PyTorch is not installed
     
+    @pytest.mark.parametrize("backend_name", ALL_BACKENDS)
+    def test_backend_switching_after_auto_selection(self, backend_name, original_backend_and_device):
+        """Test switching backends after auto-selection."""
+        # First auto-select a backend
+        auto_backend, _ = auto_select_backend()
+        
+        # Skip if the backend is the same as the one we're testing
+        if backend_name == auto_backend:
+            pytest.skip(f"Skipping {backend_name} as it's the auto-selected backend")
+        
+        # Switch to the specified backend
+        set_backend(backend_name)
+        
+        # Also set the ops backend to ensure the ops module is updated
+        from ember_ml import ops
+        ops.set_ops(backend_name)
+        
+        # Verify the backend was switched
+        assert get_backend() == backend_name
+        assert ops.get_ops() == backend_name
+        
+        # Create a tensor with the new backend
+        import ember_ml as nl
+        tensor = nl.zeros((2, 2))
+        
+        # Verify the tensor has the correct type
+        if backend_name == 'numpy':
+            assert 'numpy.ndarray' in str(type(tensor))
+        elif backend_name == 'torch':
+            assert 'torch.Tensor' in str(type(tensor))
+        elif backend_name == 'mlx':
+            assert 'mlx.core.array' in str(type(tensor))
+    
     def test_set_and_get_device(self, original_backend_and_device):
         """Test setting and getting the device."""
         # Only test with PyTorch backend
         current_backend = get_backend()
         if current_backend != 'torch':
             set_backend('torch')
+            # Also set the ops backend
+            from ember_ml import ops
+            ops.set_ops('torch')
         
         # Test setting and getting the device
         set_device('cpu')
         # Create a dummy tensor to get the device
         import ember_ml as nl
         dummy = nl.zeros((1, 1))
+        
+        # Get the device and clean it up (remove ':0' suffix if present)
+        device = get_device(dummy)
+        if device and ':' in device:
+            device = device.split(':')[0]
         
         # Check if we're on macOS with Apple Silicon
         import platform
@@ -96,9 +144,9 @@ class TestBackendAutoSelection:
         
         # On Apple Silicon, PyTorch might default to MPS even if we set it to CPU
         if is_apple_silicon:
-            assert get_device(dummy) in ['cpu', 'mps']
+            assert device in ['cpu', 'mps']
         else:
-            assert get_device(dummy) == 'cpu'
+            assert device == 'cpu'
         
         # Test setting an invalid device
         with pytest.raises(ValueError):

@@ -10,7 +10,7 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.impute import SimpleImputer
 from sklearn.decomposition import PCA
 from sklearn.pipeline import Pipeline
-
+from ember_ml.features import PCA, one_hot
 # Import ember_ml ops for backend-agnostic operations
 from ember_ml import ops
 
@@ -319,7 +319,7 @@ class ColumnFeatureExtractor:
             
             # Use ops with numpy arrays
             # Hour of day (0-23)
-            two_pi = ops.multiply(ops.convert_to_tensor(2.0), ops.pi)
+            two_pi = ops.multiply(ops.convert_to_tensor(2.0), ops.convert_to_tensor(PI))
             hour_tensor = ops.convert_to_tensor(hour_array)
             result[f"{column}_sin_hour"] = ops.sin(ops.divide(ops.multiply(two_pi, hour_tensor), ops.convert_to_tensor(23.0)))
             result[f"{column}_cos_hour"] = ops.cos(ops.divide(ops.multiply(two_pi, hour_tensor), ops.convert_to_tensor(23.0)))

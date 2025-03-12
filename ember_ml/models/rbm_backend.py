@@ -10,7 +10,8 @@ from datetime import datetime
 import os
 from typing import Dict, List, Optional, Tuple, Union, Any
 
-from ember_ml import backend as K
+from ember_ml import ops
+from ember_ml.backend import get_backend, set_backend
 
 class RBM:
     """
@@ -32,8 +33,8 @@ class RBM:
         use_binary_states: bool = False,
         track_states: bool = True,
         max_tracked_states: int = 50,
-        backend: str = None,
-        device: str = None
+        backend: str = '',
+        device: str = ''
     ):
         """
         Initialize the RBM with optimized parameters.
@@ -53,9 +54,9 @@ class RBM:
         """
         # Set backend if specified
         if backend is not None:
-            K.set_backend(backend)
+            ops.set_backend(backend)
             
-        self.backend = K.get_backend()
+        self.backend = ops.get_backend()
         self.device = device
         
         self.n_visible = n_visible
@@ -71,24 +72,24 @@ class RBM:
         # Initialize weights and biases
         # Use small random values for weights to break symmetry
         # Scale by 1/sqrt(n_visible) for better initial convergence
-        self.weights = K.random_normal(
+        self.weights = ops.random_normal(
             (n_visible, n_hidden), 
             mean=0.0, 
-            stddev=0.01 / K.sqrt(K.convert_to_tensor(n_visible))
+            stddev=0.01 / ops.sqrt(ops.convert_to_tensor(n_visible))
         )
-        self.visible_bias = K.zeros(n_visible)
-        self.hidden_bias = K.zeros(n_hidden)
+        self.visible_bias = ops.zeros(n_visible)
+        self.hidden_bias = ops.zeros(n_hidden)
         
         # Move to device if specified
         if device:
-            self.weights = K.to_device(self.weights, device)
-            self.visible_bias = K.to_device(self.visible_bias, device)
-            self.hidden_bias = K.to_device(self.hidden_bias, device)
+            self.weights = ops.to_device(self.weights, device)
+            self.visible_bias = ops.to_device(self.visible_bias, device)
+            self.hidden_bias = ops.to_device(self.hidden_bias, device)
         
         # Initialize momentum terms
-        self.weights_momentum = K.zeros_like(self.weights)
-        self.visible_bias_momentum = K.zeros_like(self.visible_bias)
-        self.hidden_bias_momentum = K.zeros_like(self.hidden_bias)
+        self.weights_momentum = ops.zeros_like(self.weights)
+        self.visible_bias_momentum = ops.zeros_like(self.visible_bias)
+        self.hidden_bias_momentum = ops.zeros_like(self.hidden_bias)
         
         # For tracking training progress
         self.training_errors = []
@@ -105,16 +106,16 @@ class RBM:
         self.last_batch_error = float('inf')
     
     def sigmoid(self, x):
-        """
-        Compute sigmoid function with numerical stability improvements.
-        
-        Args:
-            x: Input tensor
+            """
+            Compute sigmoid function with numerical stability improvements.
             
-        Returns:
-            Sigmoid of input tensor
-        """
-        return K.sigmoid(K.clip(x, -15, 15))
+            Args:
+                x: Input tensor
+                
+            Returns:
+                Sigmoid of input tensor
+            """
+            return ops.sigmoid(ops.clip(x, -15, 15))
     
     def compute_hidden_probabilities(self, visible_states):
         """
@@ -126,7 +127,7 @@ class RBM:
         Returns:
             Probabilities of hidden units [batch_size, n_hidden]
         """
-        hidden_activations = K.add(K.dot(visible_states, self.weights), self.hidden_bias)
+        hidden_activations = ops.add(ops.dot(visible_states, self.weights), self.hidden_bias)
         return self.sigmoid(hidden_activations)
     
     def sample_hidden_states(self, hidden_probs):
@@ -142,8 +143,8 @@ class RBM:
         if not self.use_binary_states:
             return hidden_probs
         
-        random_values = K.random_uniform(K.shape(hidden_probs))
-        return K.cast(K.greater(hidden_probs, random_values), hidden_probs.dtype)
+        random_values = ops.random_uniform(ops.shape(hidden_probs))
+        return ops.cast(ops.greater(hidden_probs, random_values), hidden_probs.dtype)
     
     def compute_visible_probabilities(self, hidden_states):
         """
@@ -155,7 +156,7 @@ class RBM:
         Returns:
             Probabilities of visible units [batch_size, n_visible]
         """
-        visible_activations = K.add(K.dot(hidden_states, K.transpose(self.weights)), self.visible_bias)
+        visible_activations = ops.add(ops.dot(hidden_states, ops.transpose(self.weights)), self.visible_bias)
         return self.sigmoid(visible_activations)
     
     def sample_visible_states(self, visible_probs):
@@ -171,8 +172,8 @@ class RBM:
         if not self.use_binary_states:
             return visible_probs
         
-        random_values = K.random_uniform(K.shape(visible_probs))
-        return K.cast(K.greater(visible_probs, random_values), visible_probs.dtype)
+        random_values = ops.random_uniform(ops.shape(visible_probs))
+        return ops.cast(ops.greater(visible_probs, random_values), visible_probs.dtype)
     
     def contrastive_divergence(self, batch_data, k=1):
         """
@@ -196,11 +197,11 @@ class RBM:
         pos_hidden_states = self.sample_hidden_states(pos_hidden_probs)
         
         # Compute positive associations
-        pos_associations = K.dot(K.transpose(batch_data), pos_hidden_probs)
+        pos_associations = ops.dot(ops.transpose(batch_data), pos_hidden_probs)
         
         # Negative phase
         # Start with the hidden states from positive phase
-        neg_hidden_states = K.copy(pos_hidden_states)
+        neg_hidden_states = ops.copy(pos_hidden_states)
         
         # Perform k steps of Gibbs sampling
         for _ in range(k):
@@ -213,58 +214,58 @@ class RBM:
             neg_hidden_states = self.sample_hidden_states(neg_hidden_probs)
         
         # Compute negative associations
-        neg_associations = K.dot(K.transpose(neg_visible_states), neg_hidden_probs)
+        neg_associations = ops.dot(ops.transpose(neg_visible_states), neg_hidden_probs)
         
         # Compute gradients
-        weights_gradient = K.divide(K.subtract(pos_associations, neg_associations), batch_size)
-        visible_bias_gradient = K.mean(K.subtract(batch_data, neg_visible_states), axis=0)
-        hidden_bias_gradient = K.mean(K.subtract(pos_hidden_probs, neg_hidden_probs), axis=0)
+        weights_gradient = ops.divide(ops.subtract(pos_associations, neg_associations), batch_size)
+        visible_bias_gradient = ops.mean(ops.subtract(batch_data, neg_visible_states), axis=0)
+        hidden_bias_gradient = ops.mean(ops.subtract(pos_hidden_probs, neg_hidden_probs), axis=0)
         
         # Update with momentum and weight decay
-        self.weights_momentum = K.add(
-            K.multiply(self.momentum, self.weights_momentum),
+        self.weights_momentum = ops.add(
+            ops.multiply(self.momentum, self.weights_momentum),
             weights_gradient
         )
-        self.visible_bias_momentum = K.add(
-            K.multiply(self.momentum, self.visible_bias_momentum),
+        self.visible_bias_momentum = ops.add(
+            ops.multiply(self.momentum, self.visible_bias_momentum),
             visible_bias_gradient
         )
-        self.hidden_bias_momentum = K.add(
-            K.multiply(self.momentum, self.hidden_bias_momentum),
+        self.hidden_bias_momentum = ops.add(
+            ops.multiply(self.momentum, self.hidden_bias_momentum),
             hidden_bias_gradient
         )
         
         # Apply updates
-        self.weights = K.add(
+        self.weights = ops.add(
             self.weights,
-            K.subtract(
-                K.multiply(self.learning_rate, self.weights_momentum),
-                K.multiply(self.learning_rate * self.weight_decay, self.weights)
+            ops.subtract(
+                ops.multiply(self.learning_rate, self.weights_momentum),
+                ops.multiply(self.learning_rate * self.weight_decay, self.weights)
             )
         )
-        self.visible_bias = K.add(
+        self.visible_bias = ops.add(
             self.visible_bias,
-            K.multiply(self.learning_rate, self.visible_bias_momentum)
+            ops.multiply(self.learning_rate, self.visible_bias_momentum)
         )
-        self.hidden_bias = K.add(
+        self.hidden_bias = ops.add(
             self.hidden_bias,
-            K.multiply(self.learning_rate, self.hidden_bias_momentum)
+            ops.multiply(self.learning_rate, self.hidden_bias_momentum)
         )
         
         # Compute reconstruction error
-        reconstruction_error = K.mean(
-            K.sum(K.pow(K.subtract(batch_data, neg_visible_probs), 2), axis=1)
+        reconstruction_error = ops.mean(
+            ops.sum(ops.pow(ops.subtract(batch_data, neg_visible_probs), 2), axis=1)
         )
         
         # Track state if enabled
         if self.track_states and len(self.training_states) < self.max_tracked_states:
             self.training_states.append({
-                'weights': K.to_numpy(self.weights),
-                'visible_bias': K.to_numpy(self.visible_bias),
-                'hidden_bias': K.to_numpy(self.hidden_bias),
-                'error': float(K.to_numpy(reconstruction_error)),
-                'visible_sample': K.to_numpy(neg_visible_states[0]) if batch_size > 0 else None,
-                'hidden_sample': K.to_numpy(neg_hidden_states[0]) if batch_size > 0 else None
+                'weights': ops.to_numpy(self.weights),
+                'visible_bias': ops.to_numpy(self.visible_bias),
+                'hidden_bias': ops.to_numpy(self.hidden_bias),
+                'error': float(ops.to_numpy(reconstruction_error)),
+                'visible_sample': ops.to_numpy(neg_visible_states[0]) if batch_size > 0 else None,
+                'hidden_sample': ops.to_numpy(neg_hidden_states[0]) if batch_size > 0 else None
             })
         
         return reconstruction_error
@@ -293,9 +294,9 @@ class RBM:
             List of reconstruction errors per epoch
         """
         # Convert data to tensors
-        data = K.convert_to_tensor(data)
+        data = ops.convert_to_tensor(data)
         if validation_data is not None:
-            validation_data = K.convert_to_tensor(validation_data)
+            validation_data = ops.convert_to_tensor(validation_data)
         
         n_samples = len(data)
         n_batches = max(n_samples // self.batch_size, 1)
@@ -306,9 +307,9 @@ class RBM:
         
         for epoch in range(epochs):
             # Shuffle data for each epoch
-            indices = K.to_numpy(K.random_uniform((n_samples,)))
-            indices = K.convert_to_tensor(indices.argsort())
-            shuffled_data = K.convert_to_tensor([data[i] for i in K.to_numpy(indices)])
+            indices = ops.to_numpy(ops.random_uniform((n_samples,)))
+            indices = ops.convert_to_tensor(indices.argsort())
+            shuffled_data = ops.convert_to_tensor([data[i] for i in ops.to_numpy(indices)])
             
             epoch_error = 0
             for batch_idx in range(n_batches):
@@ -322,8 +323,8 @@ class RBM:
                 
                 # Train on batch
                 batch_error = self.contrastive_divergence(batch, k)
-                epoch_error += K.to_numpy(batch_error)
-                self.last_batch_error = float(K.to_numpy(batch_error))
+                epoch_error += ops.to_numpy(batch_error)
+                self.last_batch_error = float(ops.to_numpy(batch_error))
             
             # Compute average epoch error
             avg_epoch_error = epoch_error / n_batches
@@ -333,7 +334,7 @@ class RBM:
             # Check validation error if provided
             validation_error = None
             if validation_data is not None:
-                validation_error = float(K.to_numpy(self.reconstruction_error(validation_data)))
+                validation_error = float(ops.to_numpy(self.reconstruction_error(validation_data)))
                 
                 # Early stopping check
                 if validation_error < best_validation_error:
@@ -356,14 +357,14 @@ class RBM:
         # Compute threshold for anomaly detection based on training data
         if self.reconstruction_error_threshold is None:
             errors = self.reconstruction_error(data, per_sample=True)
-            self.reconstruction_error_threshold = float(K.to_numpy(
-                K.convert_to_tensor(sorted(K.to_numpy(errors)))[int(0.95 * len(errors))]
+            self.reconstruction_error_threshold = float(ops.to_numpy(
+                ops.convert_to_tensor(sorted(ops.to_numpy(errors)))[int(0.95 * len(errors))]
             ))
         
         if self.free_energy_threshold is None:
             energies = self.free_energy(data)
-            self.free_energy_threshold = float(K.to_numpy(
-                K.convert_to_tensor(sorted(K.to_numpy(energies)))[int(0.05 * len(energies))]
+            self.free_energy_threshold = float(ops.to_numpy(
+                ops.convert_to_tensor(sorted(ops.to_numpy(energies)))[int(0.05 * len(energies))]
             ))
         
         return self.training_errors
@@ -378,7 +379,7 @@ class RBM:
         Returns:
             Hidden representation [n_samples, n_hidden]
         """
-        data = K.convert_to_tensor(data)
+        data = ops.convert_to_tensor(data)
         return self.compute_hidden_probabilities(data)
     
     def reconstruct(self, data):
@@ -391,7 +392,7 @@ class RBM:
         Returns:
             Reconstructed data [n_samples, n_visible]
         """
-        data = K.convert_to_tensor(data)
+        data = ops.convert_to_tensor(data)
         hidden_probs = self.compute_hidden_probabilities(data)
         hidden_states = self.sample_hidden_states(hidden_probs)
         visible_probs = self.compute_visible_probabilities(hidden_states)
@@ -408,14 +409,14 @@ class RBM:
         Returns:
             Reconstruction error (mean or per sample)
         """
-        data = K.convert_to_tensor(data)
+        data = ops.convert_to_tensor(data)
         reconstructed = self.reconstruct(data)
-        squared_error = K.sum(K.pow(K.subtract(data, reconstructed), 2), axis=1)
+        squared_error = ops.sum(ops.pow(ops.subtract(data, reconstructed), 2), axis=1)
         
         if per_sample:
             return squared_error
         
-        return K.mean(squared_error)
+        return ops.mean(squared_error)
     
     def free_energy(self, data):
         """
@@ -430,14 +431,14 @@ class RBM:
         Returns:
             Free energy for each sample [n_samples]
         """
-        data = K.convert_to_tensor(data)
-        visible_bias_term = K.dot(data, self.visible_bias)
-        hidden_term = K.sum(
-            K.log(K.add(1, K.exp(K.add(K.dot(data, self.weights), self.hidden_bias)))),
+        data = ops.convert_to_tensor(data)
+        visible_bias_term = ops.dot(data, self.visible_bias)
+        hidden_term = ops.sum(
+            ops.log(ops.add(1, ops.exp(ops.add(ops.dot(data, self.weights), self.hidden_bias)))),
             axis=1
         )
         
-        return K.subtract(K.negative(hidden_term), visible_bias_term)
+        return ops.subtract(ops.negative(hidden_term), visible_bias_term)
     
     def anomaly_score(self, data, method='reconstruction'):
         """
@@ -450,13 +451,13 @@ class RBM:
         Returns:
             Anomaly scores [n_samples]
         """
-        data = K.convert_to_tensor(data)
+        data = ops.convert_to_tensor(data)
         
         if method == 'reconstruction':
             return self.reconstruction_error(data, per_sample=True)
         elif method == 'free_energy':
             # For free energy, lower is better, so we negate
-            return K.negative(self.free_energy(data))
+            return ops.negative(self.free_energy(data))
         else:
             raise ValueError(f"Unknown method: {method}")
     
@@ -471,13 +472,13 @@ class RBM:
         Returns:
             Boolean array indicating anomalies [n_samples]
         """
-        data = K.convert_to_tensor(data)
+        data = ops.convert_to_tensor(data)
         scores = self.anomaly_score(data, method)
         
         if method == 'reconstruction':
-            return K.greater(scores, self.reconstruction_error_threshold)
+            return ops.greater(scores, self.reconstruction_error_threshold)
         elif method == 'free_energy':
-            return K.less(scores, self.free_energy_threshold)
+            return ops.less(scores, self.free_energy_threshold)
         else:
             raise ValueError(f"Unknown method: {method}")
     
@@ -497,9 +498,9 @@ class RBM:
         """
         # Initialize visible state
         if start_data is not None:
-            visible_state = K.convert_to_tensor(start_data)
+            visible_state = ops.convert_to_tensor(start_data)
         else:
-            visible_state = K.random_uniform((1, self.n_visible))
+            visible_state = ops.random_uniform((1, self.n_visible))
         
         # Clear previous dream states
         self.dream_states = []
@@ -515,7 +516,7 @@ class RBM:
             visible_state = self.sample_visible_states(visible_probs)
             
             # Store state
-            self.dream_states.append(K.to_numpy(visible_state))
+            self.dream_states.append(ops.to_numpy(visible_state))
         
         return self.dream_states
     
@@ -531,9 +532,9 @@ class RBM:
         
         # Prepare model data
         model_data = {
-            'weights': K.to_numpy(self.weights),
-            'visible_bias': K.to_numpy(self.visible_bias),
-            'hidden_bias': K.to_numpy(self.hidden_bias),
+            'weights': ops.to_numpy(self.weights),
+            'visible_bias': ops.to_numpy(self.visible_bias),
+            'hidden_bias': ops.to_numpy(self.hidden_bias),
             'n_visible': self.n_visible,
             'n_hidden': self.n_hidden,
             'learning_rate': self.learning_rate,
@@ -586,9 +587,9 @@ class RBM:
         )
         
         # Set model parameters
-        rbm.weights = K.convert_to_tensor(model_data['weights'])
-        rbm.visible_bias = K.convert_to_tensor(model_data['visible_bias'])
-        rbm.hidden_bias = K.convert_to_tensor(model_data['hidden_bias'])
+        rbm.weights = ops.convert_to_tensor(model_data['weights'])
+        rbm.visible_bias = ops.convert_to_tensor(model_data['visible_bias'])
+        rbm.hidden_bias = ops.convert_to_tensor(model_data['hidden_bias'])
         rbm.training_errors = model_data['training_errors']
         rbm.reconstruction_error_threshold = model_data['reconstruction_error_threshold']
         rbm.free_energy_threshold = model_data['free_energy_threshold']
@@ -597,9 +598,9 @@ class RBM:
         
         # Move to device if specified
         if device:
-            rbm.weights = K.to_device(rbm.weights, device)
-            rbm.visible_bias = K.to_device(rbm.visible_bias, device)
-            rbm.hidden_bias = K.to_device(rbm.hidden_bias, device)
+            rbm.weights = ops.to_device(rbm.weights, device)
+            rbm.visible_bias = ops.to_device(rbm.visible_bias, device)
+            rbm.hidden_bias = ops.to_device(rbm.hidden_bias, device)
         
         return rbm
     

@@ -23,7 +23,7 @@ logger = logging.getLogger('test_pipeline')
 
 # Import our components
 from ember_ml.models.optimized_rbm import OptimizedRBM
-from ember_ml.core.stride_aware_cfc import (
+from ember_ml.nn.modules.rnn import (
     create_liquid_network_with_motor_neuron,
     create_lstm_gated_liquid_network
 )

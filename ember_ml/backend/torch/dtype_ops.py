@@ -8,6 +8,19 @@ import torch
 from typing import Union, Any, Optional
 
 
+def torch_to_ember_dtype(dtype: Union[torch.dtype, str, None]) -> Optional[str]:
+    """
+    Convert a PyTorch data type to an Ember ML dtype.
+    
+    Args:
+        dtype: The PyTorch data type to convert
+        
+    Returns:
+        The corresponding Ember ML dtype
+    """
+    return to_dtype_str(dtype)
+
+
 def from_dtype_str(dtype: Union[Any, str, None]) -> Optional[torch.dtype]:
     """
     Convert a dtype string to a PyTorch data type.

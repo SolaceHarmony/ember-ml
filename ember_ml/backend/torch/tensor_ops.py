@@ -16,7 +16,7 @@ DType = Union[torch.dtype, str, None]
 
 # Import from config and dtype_ops
 from ember_ml.backend.torch.config import DEFAULT_DEVICE
-from ember_ml.backend.torch.dtype_ops import ember_dtype_to_torch
+from ember_ml.backend.torch.dtype_ops import from_dtype_str as ember_dtype_to_torch
 
 
 def _prepare_tensor_args(shape: Optional[Shape] = None, dtype: DType = None, device: Optional[str] = None):
@@ -85,9 +85,15 @@ def convert_to_tensor(x: ArrayLike, dtype: DType = None, device: Optional[str] =
     # Create tensor
     if isinstance(x, torch.Tensor):
         tensor = x
+    elif isinstance(x, (list, tuple)) and len(x) == 1:
+        # Handle single-element lists/tuples like scalars
+        tensor = torch.tensor(x[0]).to(torch_dtype)
+    elif isinstance(x, (int, float)):
+        # Handle scalars separately to avoid TypeError with dtype
+        tensor = torch.tensor(x).to(torch_dtype)
     else:
         tensor = torch.tensor(x, dtype=torch_dtype)
-    
+
     # Only move to device if it's different from current device
     if tensor.device.type != target_device:
         try:

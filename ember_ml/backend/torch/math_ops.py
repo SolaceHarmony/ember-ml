@@ -390,7 +390,6 @@ def min(x: ArrayLike, axis: Optional[int] = None, keepdims: bool = False) -> tor
         return torch.min(x_tensor)
     return torch.min(x_tensor, dim=axis, keepdim=keepdims)[0]
 
-
 def abs(x: ArrayLike) -> torch.Tensor:
     """
     Compute the absolute value of a tensor.
@@ -403,6 +402,20 @@ def abs(x: ArrayLike) -> torch.Tensor:
     """
     x_tensor = convert_to_tensor(x)
     return torch.abs(x_tensor)
+
+
+def negative(x: ArrayLike) -> torch.Tensor:
+    """
+    Compute the negative of a tensor element-wise.
+    
+    Args:
+        x: Input tensor
+        
+    Returns:
+        Element-wise negative
+    """
+    x_tensor = convert_to_tensor(x)
+    return torch.negative(x_tensor)
 
 
 def sign(x: ArrayLike) -> torch.Tensor:
@@ -758,32 +771,13 @@ def _calculate_pi_value(precision_digits=15):
 
 # Calculate pi with appropriate precision for PyTorch (float32)
 # Ensure it's a scalar with shape (1,) as per PyTorch conventions
-PI_CONSTANT = _calculate_pi_value(15)  # Increased precision to match reference value
-
-
-def pi() -> torch.Tensor:
-    """
-    Return the mathematical constant pi calculated using the Chudnovsky algorithm.
-    
-    This implementation uses the Chudnovsky algorithm, which is one of the most
-    efficient algorithms for calculating π. The value is calculated with precision
-    appropriate for PyTorch's float32 data type and returned as a scalar tensor with
-    shape (1,) as per PyTorch conventions.
-    
-    Returns:
-        PyTorch tensor containing the value of pi with shape (1,)
-    """
-    # Return pi as a scalar with shape (1,) as per PyTorch conventions
-    return PI_CONSTANT
-
+pi = torch.tensor([_calculate_pi_value(15)], dtype=torch.float32)  # Increased precision to match reference value
 
 class TorchMathOps:
     """PyTorch implementation of math operations."""
     
-    @property
-    def pi(self):
-        """Return the mathematical constant pi."""
-        return pi()
+    # Reference the module-level pi
+    pi = pi
     
     def add(self, x, y):
         """Add two tensors element-wise."""
@@ -857,6 +851,10 @@ class TorchMathOps:
         """Compute the absolute value of a tensor."""
         return abs(x)
     
+    def negative(self, x):
+        """Compute the negative of a tensor element-wise."""
+        return negative(x)
+    
     def sign(self, x):
         """Compute the sign of a tensor."""
         return sign(x)
@@ -927,6 +925,3 @@ class TorchMathOps:
             raise ValueError("edge_order must be 1 or 2")
         return gradient(f, *varargs, axis=axis, edge_order=edge_order)
     
-    def pi_func(self):
-        """Return the mathematical constant pi as a function."""
-        return pi()

@@ -290,6 +290,19 @@ class MathOps(ABC):
         pass
     
     @abstractmethod
+    def negative(self, x: Any) -> Any:
+        """
+        Compute the negative of a tensor element-wise.
+        
+        Args:
+            x: Input tensor
+            
+        Returns:
+            Element-wise negative
+        """
+        pass
+    
+    @abstractmethod
     def sign(self, x: Any) -> Any:
         """
         Compute the sign of a tensor element-wise.

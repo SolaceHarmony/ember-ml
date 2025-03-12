@@ -21,8 +21,8 @@ Shape = Union[int, Sequence[int]]
 DType = Union[np.dtype, str, None]
 
 
-def convert_to_tensor(x: ArrayLike, dtype: DType = None,
-                      device: Optional[str] = None) -> np.ndarray:
+def convert_to_tensor(x: ArrayLike, dtype: Any = None,
+                       device: Optional[str] = None) -> np.ndarray:
     """
     Convert input to a NumPy array.
 
@@ -37,6 +37,13 @@ def convert_to_tensor(x: ArrayLike, dtype: DType = None,
     Raises:
         TypeError: If x is a tensor from another backend
     """
+    # Handle string dtype values
+    if isinstance(dtype, str):
+        dtype = get_dtype(dtype)
+    # Handle EmberDtype objects
+    elif hasattr(dtype, 'name') and hasattr(dtype, 'ember_dtype'):
+        dtype = dtype.ember_dtype
+    
     # Handle EmberTensor specially by checking class name and data attribute
     # This avoids importing EmberTensor which would cause circular imports
     if isinstance(x, object):  # Type guard for attribute access
@@ -58,8 +65,8 @@ def convert_to_tensor(x: ArrayLike, dtype: DType = None,
     return np.asarray(x, dtype=dtype)
 
 
-def zeros(shape: Shape, dtype: DType = None,
-          device: Optional[str] = None) -> np.ndarray:
+def zeros(shape: Shape, dtype: Any = None,
+           device: Optional[str] = None) -> np.ndarray:
     """
     Create a NumPy array of zeros.
 
@@ -71,11 +78,18 @@ def zeros(shape: Shape, dtype: DType = None,
     Returns:
         NumPy array of zeros with the specified shape
     """
+    # Handle string dtype values
+    if isinstance(dtype, str):
+        dtype = get_dtype(dtype)
+    # Handle EmberDtype objects
+    elif hasattr(dtype, 'name') and hasattr(dtype, 'ember_dtype'):
+        dtype = dtype.ember_dtype
+    
     return np.zeros(shape, dtype=dtype)
 
 
-def ones(shape: Shape, dtype: DType = None,
-         device: Optional[str] = None) -> np.ndarray:
+def ones(shape: Shape, dtype: Any = None,
+          device: Optional[str] = None) -> np.ndarray:
     """
     Create a NumPy array of ones.
 
@@ -87,11 +101,18 @@ def ones(shape: Shape, dtype: DType = None,
     Returns:
         NumPy array of ones with the specified shape
     """
+    # Handle string dtype values
+    if isinstance(dtype, str):
+        dtype = get_dtype(dtype)
+    # Handle EmberDtype objects
+    elif hasattr(dtype, 'name') and hasattr(dtype, 'ember_dtype'):
+        dtype = dtype.ember_dtype
+    
     return np.ones(shape, dtype=dtype)
 
 
-def zeros_like(x: ArrayLike, dtype: DType = None,
-               device: Optional[str] = None) -> np.ndarray:
+def zeros_like(x: ArrayLike, dtype: Any = None,
+                device: Optional[str] = None) -> np.ndarray:
     """
     Create a NumPy array of zeros with the same shape as the input.
 
@@ -103,11 +124,18 @@ def zeros_like(x: ArrayLike, dtype: DType = None,
     Returns:
         NumPy array of zeros with the same shape as x
     """
+    # Handle string dtype values
+    if isinstance(dtype, str):
+        dtype = get_dtype(dtype)
+    # Handle EmberDtype objects
+    elif hasattr(dtype, 'name') and hasattr(dtype, 'ember_dtype'):
+        dtype = dtype.ember_dtype
+    
     return np.zeros_like(x, dtype=dtype)
 
 
-def ones_like(x: ArrayLike, dtype: DType = None,
-              device: Optional[str] = None) -> np.ndarray:
+def ones_like(x: ArrayLike, dtype: Any = None,
+               device: Optional[str] = None) -> np.ndarray:
     """
     Create a NumPy array of ones with the same shape as the input.
 
@@ -119,10 +147,17 @@ def ones_like(x: ArrayLike, dtype: DType = None,
     Returns:
         NumPy array of ones with the same shape as x
     """
+    # Handle string dtype values
+    if isinstance(dtype, str):
+        dtype = get_dtype(dtype)
+    # Handle EmberDtype objects
+    elif hasattr(dtype, 'name') and hasattr(dtype, 'ember_dtype'):
+        dtype = dtype.ember_dtype
+    
     return np.ones_like(x, dtype=dtype)
 
 
-def eye(n: int, m: Optional[int] = None, dtype: DType = None,
+def eye(n: int, m: Optional[int] = None, dtype: Any = None,
         device: Optional[str] = None) -> np.ndarray:
     """
     Create a NumPy identity matrix.
@@ -136,6 +171,13 @@ def eye(n: int, m: Optional[int] = None, dtype: DType = None,
     Returns:
         NumPy identity matrix of shape (n, m)
     """
+    # Handle string dtype values
+    if isinstance(dtype, str):
+        dtype = get_dtype(dtype)
+    # Handle EmberDtype objects
+    elif hasattr(dtype, 'name') and hasattr(dtype, 'ember_dtype'):
+        dtype = dtype.ember_dtype
+    
     return np.eye(n, m, dtype=dtype)
 
 
@@ -342,7 +384,7 @@ def dtype(x: ArrayLike) -> np.dtype:
     return convert_to_tensor(x).dtype
 
 
-def cast(x: ArrayLike, dtype: DType) -> np.ndarray:
+def cast(x: ArrayLike, dtype: Any) -> np.ndarray:
     """
     Cast a NumPy array to a different data type.
 
@@ -353,6 +395,13 @@ def cast(x: ArrayLike, dtype: DType) -> np.ndarray:
     Returns:
         NumPy array with the target data type
     """
+    # Handle string dtype values
+    if isinstance(dtype, str):
+        dtype = get_dtype(dtype)
+    # Handle EmberDtype objects
+    elif hasattr(dtype, 'name') and hasattr(dtype, 'ember_dtype'):
+        dtype = dtype.ember_dtype
+    
     return convert_to_tensor(x).astype(dtype)
 
 
@@ -383,8 +432,8 @@ def to_numpy(x: ArrayLike) -> np.ndarray:
 
 
 def full(shape: Shape, fill_value: Union[float, int],
-         dtype: Optional[DType] = None,
-         device: Optional[str] = None) -> np.ndarray:
+          dtype: Any = None,
+          device: Optional[str] = None) -> np.ndarray:
     """
     Create a NumPy array filled with a scalar value.
 
@@ -397,12 +446,19 @@ def full(shape: Shape, fill_value: Union[float, int],
     Returns:
         NumPy array filled with the specified value
     """
+    # Handle string dtype values
+    if isinstance(dtype, str):
+        dtype = get_dtype(dtype)
+    # Handle EmberDtype objects
+    elif hasattr(dtype, 'name') and hasattr(dtype, 'ember_dtype'):
+        dtype = dtype.ember_dtype
+    
     return np.full(shape, fill_value, dtype=dtype)
 
 
 def full_like(x: ArrayLike, fill_value: Union[float, int],
-              dtype: Optional[DType] = None,
-              device: Optional[str] = None) -> np.ndarray:
+               dtype: Any = None,
+               device: Optional[str] = None) -> np.ndarray:
     """
     Create a NumPy array filled with a scalar value.
 
@@ -415,12 +471,19 @@ def full_like(x: ArrayLike, fill_value: Union[float, int],
     Returns:
         NumPy array filled with the specified value with the same shape as x
     """
+    # Handle string dtype values
+    if isinstance(dtype, str):
+        dtype = get_dtype(dtype)
+    # Handle EmberDtype objects
+    elif hasattr(dtype, 'name') and hasattr(dtype, 'ember_dtype'):
+        dtype = dtype.ember_dtype
+    
     return np.full_like(x, fill_value, dtype=dtype)
 
 
 def linspace(start: float, stop: float, num: int,
-             dtype: Optional[DType] = None,
-             device: Optional[str] = None) -> np.ndarray:
+              dtype: Any = None,
+              device: Optional[str] = None) -> np.ndarray:
     """
     Create a NumPy array with evenly spaced values within a given interval.
 
@@ -434,11 +497,18 @@ def linspace(start: float, stop: float, num: int,
     Returns:
         NumPy array with evenly spaced values
     """
+    # Handle string dtype values
+    if isinstance(dtype, str):
+        dtype = get_dtype(dtype)
+    # Handle EmberDtype objects
+    elif hasattr(dtype, 'name') and hasattr(dtype, 'ember_dtype'):
+        dtype = dtype.ember_dtype
+    
     return np.linspace(start, stop, num, dtype=dtype)
 
 
 def arange(start: int, stop: Optional[int] = None, step: int = 1,
-           dtype: Optional[DType] = None,
+           dtype: Any = None,
            device: Optional[str] = None) -> np.ndarray:
     """
     Create a NumPy array with evenly spaced values within a given interval.
@@ -453,6 +523,13 @@ def arange(start: int, stop: Optional[int] = None, step: int = 1,
     Returns:
         NumPy array with evenly spaced values
     """
+    # Handle string dtype values
+    if isinstance(dtype, str):
+        dtype = get_dtype(dtype)
+    # Handle EmberDtype objects
+    elif hasattr(dtype, 'name') and hasattr(dtype, 'ember_dtype'):
+        dtype = dtype.ember_dtype
+    
     if stop is None:
         # If only one argument is provided, it's the stop value
         return np.arange(0, start, step, dtype=dtype)

@@ -125,8 +125,8 @@ from ember_ml.backend.torch.device_ops import (
 )
 
 from ember_ml.backend.torch.dtype_ops import (
-    ember_dtype_to_torch,
-    torch_to_ember_dtype
+    from_dtype_str as ember_dtype_to_torch,
+    to_dtype_str as torch_to_ember_dtype
 )
 from ember_ml.backend.torch.solver_ops import (
     solve

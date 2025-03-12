@@ -19,6 +19,7 @@ from ember_ml.nn.modules.rnn.rnn_cell import RNNCell
 from ember_ml.nn.modules.rnn.rnn import RNN
 from ember_ml.nn.modules.rnn.stride_aware_cell import StrideAwareCell
 from ember_ml.nn.modules.rnn.stride_aware import StrideAware
+from ember_ml.nn.modules.rnn.stride_aware_cfc import StrideAwareWiredCfCCell, StrideAwareCfC
 
 __all__ = [
     'CfCCell',
@@ -34,4 +35,6 @@ __all__ = [
     'RNN',
     'StrideAwareCell',
     'StrideAware',
+    'StrideAwareWiredCfCCell',
+    'StrideAwareCfC',
 ]

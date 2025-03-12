@@ -16,12 +16,7 @@ import importlib.util
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Import the benchmark script
-spec = importlib.util.spec_from_file_location(
-    "compare_random_ops_purified", 
-    os.path.join(os.path.dirname(__file__), "..", "benchmarks", "compare_random_ops_purified.py")
-)
-benchmark_module = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(benchmark_module)
+import ember_ml.benchmarks.compare_random_ops_purified as benchmark_module
 
 class TestCompareRandomOpsPurified:
     """Test the purified random operations benchmark script."""
@@ -33,6 +28,13 @@ class TestCompareRandomOpsPurified:
             return x * 2
         
         # Call the time_function
+        import sys
+        import os
+        print(f"Current working directory: {os.getcwd()}")
+        with open(os.path.join(os.getcwd(), "benchmark_module_dir.txt"), "w") as f:
+            sys.stdout = f
+            print(dir(benchmark_module))
+        sys.stdout = sys.__stdout__
         elapsed_time, result = benchmark_module.time_function(dummy_function, 5)
         
         # Check that the result is correct

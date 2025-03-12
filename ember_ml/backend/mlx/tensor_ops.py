@@ -32,7 +32,7 @@ def convert_to_tensor(x: ArrayLike, dtype: DType = None, device: Optional[str] =
         from ember_ml.backend.mlx.dtype_ops import get_dtype
         dtype = get_dtype(dtype)
     # Handle EmberDtype objects
-    elif hasattr(dtype, 'name') and hasattr(dtype, 'numpy_dtype'):
+    elif hasattr(dtype, 'name') and hasattr(dtype, 'ember_dtype'):
         from ember_ml.backend.mlx.dtype_ops import get_dtype
         dtype = get_dtype(dtype.name)
     
@@ -54,9 +54,15 @@ def convert_to_tensor(x: ArrayLike, dtype: DType = None, device: Optional[str] =
     
     if isinstance(x, mx.array):
         array = x
+    elif isinstance(x, (list, tuple)) and len(x) == 1:
+        # Handle single-element lists/tuples like scalars
+        array = mx.array(x[0]) if dtype is None else mx.array(x[0]).astype(dtype)
+    elif isinstance(x, (int, float)):
+        # Handle scalars separately
+        array = mx.array(x) if dtype is None else mx.array(x).astype(dtype)
     else:
         array = mx.array(x, dtype=dtype)
-    
+
     # MLX doesn't support explicit device placement as it automatically
     # uses the most efficient device (Metal on Apple Silicon)
     
@@ -79,7 +85,7 @@ def zeros(shape: Shape, dtype: DType = None, device: Optional[str] = None) -> mx
         from ember_ml.backend.mlx.dtype_ops import get_dtype
         dtype = get_dtype(dtype)
     # Handle EmberDtype objects
-    elif hasattr(dtype, 'name') and hasattr(dtype, 'numpy_dtype'):
+    elif hasattr(dtype, 'name') and hasattr(dtype, 'ember_dtype'):
         from ember_ml.backend.mlx.dtype_ops import get_dtype
         dtype = get_dtype(dtype.name)
     
@@ -102,7 +108,7 @@ def ones(shape: Shape, dtype: DType = None, device: Optional[str] = None) -> mx.
         from ember_ml.backend.mlx.dtype_ops import get_dtype
         dtype = get_dtype(dtype)
     # Handle EmberDtype objects
-    elif hasattr(dtype, 'name') and hasattr(dtype, 'numpy_dtype'):
+    elif hasattr(dtype, 'name') and hasattr(dtype, 'ember_dtype'):
         from ember_ml.backend.mlx.dtype_ops import get_dtype
         dtype = get_dtype(dtype.name)
     
@@ -541,7 +547,7 @@ def arange(start: int, stop: Optional[int] = None, step: int = 1, dtype: DType =
         from ember_ml.backend.mlx.dtype_ops import get_dtype
         dtype = get_dtype(dtype)
     # Handle EmberDtype objects
-    elif hasattr(dtype, 'name') and hasattr(dtype, 'numpy_dtype'):
+    elif hasattr(dtype, 'name') and hasattr(dtype, 'ember_dtype'):
         from ember_ml.backend.mlx.dtype_ops import get_dtype
         dtype = get_dtype(dtype.name)
     
@@ -569,7 +575,7 @@ def linspace(start: float, stop: float, num: int, dtype: DType = None, device: O
         from ember_ml.backend.mlx.dtype_ops import get_dtype
         dtype = get_dtype(dtype)
     # Handle EmberDtype objects
-    elif hasattr(dtype, 'name') and hasattr(dtype, 'numpy_dtype'):
+    elif hasattr(dtype, 'name') and hasattr(dtype, 'ember_dtype'):
         from ember_ml.backend.mlx.dtype_ops import get_dtype
         dtype = get_dtype(dtype.name)
     

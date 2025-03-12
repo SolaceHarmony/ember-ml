@@ -2,11 +2,12 @@
 Temporal attention mechanisms for sequence processing and time-based patterns.
 """
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
 from typing import Optional, Tuple, Dict, Any
 import math
+from ember_ml import ops, nn
+from ember_ml.ops.tensor import EmberTensor
+from ember_ml.nn.container import Dropout, Linear
+from ember_ml.ops import sigmoid
 from .base import BaseAttention
 
 class PositionalEncoding(nn.Module):
@@ -25,26 +26,26 @@ class PositionalEncoding(nn.Module):
             max_len: Maximum sequence length
         """
         super().__init__()
-        self.dropout = nn.Dropout(p=dropout)
+        self.dropout = Dropout(rate=dropout)
         
         # Create positional encoding matrix
-        pe = torch.zeros(max_len, hidden_size)
-        position = torch.arange(0, max_len).unsqueeze(1).float()
-        div_term = torch.exp(
-            torch.arange(0, hidden_size, 2).float() *
+        pe = ops.zeros(max_len, hidden_size)
+        position = ops.arange(0, max_len).unsqueeze(1).float()
+        div_term = ops.exp(
+            ops.arange(0, hidden_size, 2).float() *
             -(math.log(10000.0) / hidden_size)
         )
         
         # Compute sinusoidal pattern
-        pe[:, 0::2] = torch.sin(position * div_term)
-        pe[:, 1::2] = torch.cos(position * div_term)
+        pe[:, 0::2] = ops.sin(position * div_term)
+        pe[:, 1::2] = ops.cos(position * div_term)
         
         # Register buffer
         self.register_buffer('pe', pe.unsqueeze(0))
         
     def forward(self,
-                x: torch.Tensor,
-                times: Optional[torch.Tensor] = None) -> torch.Tensor:
+                x: EmberTensor,
+                times: Optional[EmberTensor] = None) -> EmberTensor:
         """
         Add positional encoding to input.
 
@@ -55,7 +56,8 @@ class PositionalEncoding(nn.Module):
         Returns:
             Encoded tensor [batch, seq_len, hidden_size]
         """
-        seq_len = x.size(1)
+        seq_len = x.size(1) # obtain through shape
+        seq_len = x.shape[1] # obtain through shape
         if times is not None:
             # Scale positional encoding by time differences
             time_scale = times / times.max()  # Normalize to [0, 1]
@@ -101,10 +103,10 @@ class TemporalAttention(BaseAttention):
         self.use_time_embedding = use_time_embedding
         
         # Projections for Q, K, V
-        self.q_proj = nn.Linear(hidden_size, hidden_size)
-        self.k_proj = nn.Linear(hidden_size, hidden_size)
-        self.v_proj = nn.Linear(hidden_size, hidden_size)
-        self.out_proj = nn.Linear(hidden_size, hidden_size)
+        self.q_proj = Linear(hidden_size, hidden_size)
+        self.k_proj = Linear(hidden_size, hidden_size)
+        self.v_proj = Linear(hidden_size, hidden_size)
+        self.out_proj = Linear(hidden_size, hidden_size)
         
         # Temporal components
         if use_time_embedding:
@@ -116,21 +118,21 @@ class TemporalAttention(BaseAttention):
         
         # Time-aware attention components
         self.time_gate = nn.Sequential(
-            nn.Linear(hidden_size + 1, hidden_size),
-            nn.Sigmoid()
+            nn.container.Linear(hidden_size + 1, hidden_size),
+            nn.container.Sigmoid()
         )
         
         self.dropout = nn.Dropout(dropout)
         self._attention_weights = None
         
-    def forward(self,
-                query: torch.Tensor,
-                key: torch.Tensor,
-                value: torch.Tensor,
-                times: Optional[torch.Tensor] = None,
-                mask: Optional[torch.Tensor] = None) -> torch.Tensor:
-        """
-        Compute temporal attention.
+    def forward(
+            self,
+            query: EmberTensor,
+            key: EmberTensor,
+            value: EmberTensor,
+            mask: Optional[EmberTensor] = None,
+            times: Optional[EmberTensor] = None) -> EmberTensor:
+        """Compute temporal attention.
 
         Args:
             query: Query tensor [batch, query_len, hidden_size]
@@ -147,9 +149,9 @@ class TemporalAttention(BaseAttention):
         
         # Add temporal embeddings if enabled
         if self.use_time_embedding and times is not None:
-            query = self.time_embedding(query, times[:, :query_len])
-            key = self.time_embedding(key, times[:, :key_len])
-            value = self.time_embedding(value, times[:, :key_len])
+            query = self.time_embedding(query, ops.slice(times, [0, 0], [-1, query_len]))
+            key = self.time_embedding(key, ops.slice(times, [0, 0], [-1, key_len]))
+            value = self.time_embedding(value, ops.slice(times, [0, 0], [-1, key_len]))
         
         # Project and reshape
         q = self.q_proj(query).view(
@@ -163,7 +165,7 @@ class TemporalAttention(BaseAttention):
         ).transpose(1, 2)
         
         # Compute attention scores
-        scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(self.head_dim)
+        scores = ops.matmul(q, k.transpose(-2, -1)) / math.sqrt(self.head_dim)
         
         # Apply time-based attention if times provided
         if times is not None:

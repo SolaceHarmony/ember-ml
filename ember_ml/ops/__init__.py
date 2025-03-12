@@ -10,7 +10,7 @@ import importlib
 from typing import Optional, Dict, Any, Type
 
 # Import interfaces
-from ember_ml.ops.interfaces import TensorOps, MathOps, DeviceOps, RandomOps, ComparisonOps, DTypeOps, SolverOps, IOOps, LossOps
+from ember_ml.ops.interfaces import TensorOps, MathOps, DeviceOps, RandomOps, ComparisonOps, DTypeOps, SolverOps, IOOps, LossOps, VectorOps
 
 # Import specific operations from interfaces
 from ember_ml.ops.interfaces.tensor_ops import *
@@ -22,6 +22,7 @@ from ember_ml.ops.interfaces.dtype_ops import *
 from ember_ml.ops.interfaces.solver_ops import *
 from ember_ml.ops.interfaces.io_ops import *
 from ember_ml.ops.interfaces.loss_ops import *
+from ember_ml.ops.interfaces.vector_ops import *
 
 # Import data types
 from ember_ml.ops.dtypes import *
@@ -69,6 +70,8 @@ def _get_ops_instance(ops_class: Type):
             class_name_prefix = 'Torch'
         elif backend == 'mlx':
             class_name_prefix = 'MLX'
+        elif backend == 'ember':
+            class_name_prefix = 'EmberBackend'
         else:
             raise ValueError(f"Unknown ops implementation: {backend}")
         
@@ -91,6 +94,8 @@ def _get_ops_instance(ops_class: Type):
             class_name = f"{class_name_prefix}IOOps"
         elif ops_class == LossOps:
             class_name = f"{class_name_prefix}LossOps"
+        elif ops_class == VectorOps:
+            class_name = f"{class_name_prefix}VectorOps"
         else:
             raise ValueError(f"Unknown ops class: {ops_class}")
         
@@ -136,6 +141,10 @@ def io_ops() -> IOOps:
 def loss_ops() -> LossOps:
     """Get loss operations."""
     return _get_ops_instance(LossOps)
+
+def vector_ops() -> VectorOps:
+    """Get vector operations."""
+    return _get_ops_instance(VectorOps)
 
 # Feature operations are in ember_ml.features, not in ops
 
@@ -202,6 +211,7 @@ pow = lambda *args, **kwargs: math_ops().pow(*args, **kwargs)
 sqrt = lambda *args, **kwargs: math_ops().sqrt(*args, **kwargs)
 square = lambda *args, **kwargs: math_ops().square(*args, **kwargs)
 abs = lambda *args, **kwargs: math_ops().abs(*args, **kwargs)
+negative = lambda *args, **kwargs: math_ops().negative(*args, **kwargs)
 sign = lambda *args, **kwargs: math_ops().sign(*args, **kwargs)
 clip = lambda *args, **kwargs: math_ops().clip(*args, **kwargs)
 sin = lambda *args, **kwargs: math_ops().sin(*args, **kwargs)
@@ -285,6 +295,17 @@ sparse_categorical_crossentropy = lambda *args, **kwargs: loss_ops().sparse_cate
 huber_loss = lambda *args, **kwargs: loss_ops().huber_loss(*args, **kwargs)
 log_cosh_loss = lambda *args, **kwargs: loss_ops().log_cosh_loss(*args, **kwargs)
 
+# Vector operations
+normalize_vector = lambda *args, **kwargs: vector_ops().normalize_vector(*args, **kwargs)
+compute_energy_stability = lambda *args, **kwargs: vector_ops().compute_energy_stability(*args, **kwargs)
+compute_interference_strength = lambda *args, **kwargs: vector_ops().compute_interference_strength(*args, **kwargs)
+compute_phase_coherence = lambda *args, **kwargs: vector_ops().compute_phase_coherence(*args, **kwargs)
+partial_interference = lambda *args, **kwargs: vector_ops().partial_interference(*args, **kwargs)
+euclidean_distance = lambda *args, **kwargs: vector_ops().euclidean_distance(*args, **kwargs)
+cosine_similarity = lambda *args, **kwargs: vector_ops().cosine_similarity(*args, **kwargs)
+exponential_decay = lambda *args, **kwargs: vector_ops().exponential_decay(*args, **kwargs)
+gaussian = lambda *args, **kwargs: vector_ops().gaussian(*args, **kwargs)
+
 # Feature operations are in ember_ml.features, not in ops
 
 # Export all functions and classes
@@ -297,6 +318,7 @@ __all__ = [
     'ComparisonOps',
     'DTypeOps',
     'SolverOps',
+    'VectorOps',
     'EmberTensor',
     
     # Functions
@@ -311,6 +333,7 @@ __all__ = [
     'solver_ops',
     'io_ops',
     'loss_ops',
+    'vector_ops',
     'get_activation',
     'gradient',
     'to_numpy',
@@ -367,6 +390,7 @@ __all__ = [
     'sqrt',
     'square',
     'abs',
+    'negative',
     'sign',
     'clip',
     'sin',
@@ -429,6 +453,17 @@ __all__ = [
     'sparse_categorical_crossentropy',
     'huber_loss',
     'log_cosh_loss',
+    
+    # Vector operations
+    'normalize_vector',
+    'compute_energy_stability',
+    'compute_interference_strength',
+    'compute_phase_coherence',
+    'partial_interference',
+    'euclidean_distance',
+    'cosine_similarity',
+    'exponential_decay',
+    'gaussian',
     
     # Solver operations
     'solve',

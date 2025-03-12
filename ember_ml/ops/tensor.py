@@ -5,7 +5,7 @@ This module provides a backend-agnostic tensor wrapper that can be used
 across different backends (NumPy, PyTorch, MLX).
 """
 
-from typing import Any, List, Optional, Sequence, Tuple, Union
+from typing import Any, Iterator, List, Optional, Sequence, Tuple, Union
 from ember_ml import ops
 from ember_ml.backend import get_backend
 
@@ -72,6 +72,27 @@ class EmberTensor:
         """Get the size of the tensor at the specified dimension."""
         return self.shape[index]
     
+    def size(self) -> int:
+        """
+        Get the total number of elements in the tensor.
+        
+        This is equivalent to the product of all dimensions in the shape.
+        
+        Returns:
+            int: Total number of elements in the tensor
+        """
+        # Calculate the product of all dimensions in the shape
+        shape_dims = self.shape
+        if not shape_dims:  # Handle scalar tensors (empty shape)
+            return 1
+        
+        # Calculate product of all dimensions
+        total_size = 1
+        for dim in shape_dims:
+            total_size *= dim
+        
+        return total_size
+    
     @property
     def device(self) -> Optional[str]:
         """Get the device of the tensor."""
@@ -117,6 +138,8 @@ class EmberTensor:
     @property
     def backend(self) -> str:
         """Get the backend used for this tensor."""
+        if self._backend is None:
+            return "unknown"
         return self._backend
     
     def numpy(self) -> Any:
@@ -162,15 +185,22 @@ class EmberTensor:
         return EmberTensor(ops.abs(self._data))
     
     # Comparison operations
-    def __eq__(self, other: Any) -> 'EmberTensor':
+    def __eq__(self, other: Any) -> bool:
         """Check if two tensors are equal."""
-        other_data = other._data if isinstance(other, EmberTensor) else other
-        return EmberTensor(ops.equal(self._data, other_data))
+        if not isinstance(other, EmberTensor):
+            return NotImplemented
+        # Compare tensors by checking if they have the same shape, dtype, and data
+        if self.shape != other.shape or self.dtype != other.dtype:
+            return False
+        # Use ops.equal and ops.all to check if all elements are equal
+        equality_tensor = ops.equal(self._data, other._data)
+        result = ops.item(ops.all(equality_tensor))
+        # Explicitly convert to bool to satisfy the return type
+        return bool(result)
     
-    def __ne__(self, other: Any) -> 'EmberTensor':
+    def __ne__(self, other: Any) -> bool:
         """Check if two tensors are not equal."""
-        other_data = other._data if isinstance(other, EmberTensor) else other
-        return EmberTensor(ops.not_equal(self._data, other_data))
+        return not self.__eq__(other)
     
     def __lt__(self, other: Any) -> 'EmberTensor':
         """Check if the tensor is less than another tensor."""
@@ -191,6 +221,27 @@ class EmberTensor:
         """Check if the tensor is greater than or equal to another tensor."""
         other_data = other._data if isinstance(other, EmberTensor) else other
         return EmberTensor(ops.greater_equal(self._data, other_data))
+    
+    def __getitem__(self, index: Any) -> 'EmberTensor':
+        """
+        Get an item or slice from the tensor.
+        
+        Args:
+            index: Index, slice, or sequence of indices
+            
+        Returns:
+            Tensor element(s) at the specified index/indices
+        """
+        # Handle different types of indexing
+        if isinstance(index, tuple):
+            # Multi-dimensional indexing
+            result = self._data
+            for idx in index:
+                result = result[idx]
+            return EmberTensor(result)
+        else:
+            # Single-dimensional indexing
+            return EmberTensor(self._data[index])
     
     # Shape operations
     def reshape(self, shape: Sequence[int]) -> 'EmberTensor':
@@ -293,3 +344,80 @@ class EmberTensor:
         if isinstance(tensor, EmberTensor):
             tensor = tensor._data
         return EmberTensor(tensor, dtype=dtype, device=device)
+    
+    # Generator and iteration utilities
+    def __iter__(self) -> Iterator[Any]:
+        """
+        Iterate over the elements of the tensor.
+        
+        For multi-dimensional tensors, this flattens the tensor and iterates
+        over all elements.
+        
+        Returns:
+            Iterator over tensor elements
+        """
+        self.index = 0
+        self.flat_size = self.size()
+        return self
+    
+    def __next__(self) -> Any:
+        """
+        Get the next element in the iteration.
+        
+        Returns:
+            Next element in the tensor
+        
+        Raises:
+            StopIteration: When there are no more elements
+        """
+        if self.index < self.flat_size:
+            # Reshape to a flat tensor for iteration
+            flat_tensor = ops.reshape(self._data, (-1,))
+            value = EmberTensor(flat_tensor[self.index])
+            self.index += 1
+            return value
+        else:
+            raise StopIteration
+    
+    @staticmethod
+    def item(tensor: Any) -> Union[int, float]:
+        """
+        Get a scalar value from a tensor.
+        
+        This is a static method that can be used to extract a scalar value
+        from a tensor, similar to tensor.item() in PyTorch.
+        
+        Args:
+            tensor: Tensor to extract scalar from
+            
+        Returns:
+            Scalar value
+        """
+        return ops.item(tensor)
+    
+    @staticmethod
+    def range(start: Any, stop: Optional[Any] = None, step: Any = 1) -> range:
+        """
+        Create a range object based on tensor values.
+        
+        This is a convenience method that extracts scalar values from tensors
+        and creates a Python range object.
+        
+        Args:
+            start: Start value or tensor
+            stop: Stop value or tensor (optional)
+            step: Step value or tensor
+            
+        Returns:
+            Python range object
+        """
+        # Extract scalar values and convert to integers
+        start_val = int(ops.item(start)) if hasattr(start, 'shape') else int(start)
+        
+        if stop is None:
+            return range(start_val)
+        
+        stop_val = int(ops.item(stop)) if hasattr(stop, 'shape') else int(stop)
+        step_val = int(ops.item(step)) if hasattr(step, 'shape') else int(step)
+        
+        return range(start_val, stop_val, step_val)

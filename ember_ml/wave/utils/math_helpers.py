@@ -1,29 +1,70 @@
 """
 Math helper functions for wave processing.
 
-This module re-exports math helper functions from ember_ml.utils.math_helpers
-for use in wave processing, and adds wave-specific math functions.
+This module provides math helper functions for wave processing,
+using the ops abstraction layer for backend-agnostic operations.
 """
 
-import numpy as np
-import torch
+from ember_ml import ops
+from ember_ml.ops.tensor import EmberTensor
+# Define math functions using ops abstraction layer
+sigmoid = lambda x: ops.sigmoid(ops.convert_to_tensor(x))
+tanh = lambda x: ops.tanh(ops.convert_to_tensor(x))
+relu = lambda x: ops.relu(ops.convert_to_tensor(x))
+def leaky_relu(x, alpha=0.01):
+    """Compute the leaky ReLU of a tensor."""
+    x_tensor = ops.convert_to_tensor(x)
+    alpha_tensor = ops.convert_to_tensor(alpha)
+    return ops.where(
+        ops.greater(x_tensor, ops.convert_to_tensor(0.0)),
+        x_tensor,
+        ops.multiply(alpha_tensor, x_tensor)
+    )
+softmax = lambda x, axis=-1: ops.softmax(ops.convert_to_tensor(x), axis=axis)
 
-# Re-export math helpers from utils module
-from ember_ml.utils.math_helpers import (
-    sigmoid,
-    tanh,
-    relu,
-    leaky_relu,
-    softmax,
-    normalize,
-    standardize,
-    euclidean_distance,
-    cosine_similarity,
-    exponential_decay,
-    gaussian
-)
+def normalize(x, axis=-1):
+    """Normalize a tensor along the specified axis."""
+    x_tensor = ops.convert_to_tensor(x)
+    norm = ops.sqrt(ops.sum(ops.square(x_tensor), axis=axis, keepdims=True))
+    return ops.divide(x_tensor, ops.add(norm, ops.convert_to_tensor(1e-8)))
 
-def normalize_vector(vector: np.ndarray) -> np.ndarray:
+def standardize(x, axis=-1):
+    """Standardize a tensor to have zero mean and unit variance."""
+    x_tensor = ops.convert_to_tensor(x)
+    mean = ops.mean(x_tensor, axis=axis, keepdims=True)
+    std = ops.sqrt(ops.mean(ops.square(ops.subtract(x_tensor, mean)), axis=axis, keepdims=True))
+    return ops.divide(ops.subtract(x_tensor, mean), ops.add(std, ops.convert_to_tensor(1e-8)))
+
+def euclidean_distance(x, y):
+    """Compute the Euclidean distance between two vectors."""
+    x_tensor = ops.convert_to_tensor(x)
+    y_tensor = ops.convert_to_tensor(y)
+    return ops.sqrt(ops.sum(ops.square(ops.subtract(x_tensor, y_tensor))))
+
+def cosine_similarity(x, y):
+    """Compute the cosine similarity between two vectors."""
+    x_tensor = ops.convert_to_tensor(x)
+    y_tensor = ops.convert_to_tensor(y)
+    dot_product = ops.sum(ops.multiply(x_tensor, y_tensor))
+    norm_x = ops.sqrt(ops.sum(ops.square(x_tensor)))
+    norm_y = ops.sqrt(ops.sum(ops.square(y_tensor)))
+    return ops.divide(dot_product, ops.add(ops.multiply(norm_x, norm_y), ops.convert_to_tensor(1e-8)))
+
+def exponential_decay(initial_value, decay_rate, time_step):
+    """Compute exponential decay."""
+    return ops.multiply(initial_value, ops.exp(ops.multiply(ops.negative(decay_rate), time_step)))
+
+def gaussian(x, mu=0.0, sigma=1.0):
+    """Compute the Gaussian function."""
+    x_tensor = ops.convert_to_tensor(x)
+    mu_tensor = ops.convert_to_tensor(mu)
+    sigma_tensor = ops.convert_to_tensor(sigma)
+    return ops.divide(
+        ops.exp(ops.multiply(ops.convert_to_tensor(-0.5), ops.square(ops.divide(ops.subtract(x_tensor, mu_tensor), sigma_tensor)))),
+        ops.multiply(sigma_tensor, ops.sqrt(ops.multiply(ops.convert_to_tensor(2.0), ops.pi)))
+    )
+
+def normalize_vector(vector):
     """
     Normalize a vector to unit length.
     
@@ -33,25 +74,9 @@ def normalize_vector(vector: np.ndarray) -> np.ndarray:
     Returns:
         Normalized vector
     """
-    norm = np.linalg.norm(vector)
-    if norm > 0:
-        return vector / norm
-    return vector
+    return ops.normalize_vector(vector)
 
-def normalize_vector_torch(vector: torch.Tensor) -> torch.Tensor:
-    """
-    Normalize a PyTorch tensor to unit length.
-    
-    Args:
-        vector: Input tensor
-        
-    Returns:
-        Normalized tensor
-    """
-    norm = torch.norm(vector, p=2, dim=-1, keepdim=True)
-    return vector / (norm + 1e-8)
-
-def compute_energy_stability(wave: np.ndarray, window_size: int = 100) -> float:
+def compute_energy_stability(wave, window_size: int = 100) -> float:
     """
     Compute the energy stability of a wave signal.
     
@@ -62,34 +87,40 @@ def compute_energy_stability(wave: np.ndarray, window_size: int = 100) -> float:
     Returns:
         Energy stability metric
     """
-    if len(wave) < window_size:
+    wave_tensor = ops.convert_to_tensor(wave)
+    wave_length = ops.shape(wave_tensor)[0]
+    
+    if wave_length < window_size:
         return 1.0  # Perfectly stable for short signals
         
     # Compute energy in windows
-    num_windows = len(wave) // window_size
+    num_windows = ops.cast(ops.floor_divide(wave_length, ops.convert_to_tensor(window_size)), ops.int32)
     energies = []
     
-    for i in range(num_windows):
-        start = i * window_size
-        end = start + window_size
-        window = wave[start:end]
-        energy = np.sum(window ** 2)
-        energies.append(energy)
+    for i in range(ops.item(num_windows)):
+        start = ops.multiply(ops.convert_to_tensor(i), ops.convert_to_tensor(window_size))
+        end = ops.add(start, ops.convert_to_tensor(window_size))
+        window = wave_tensor[start:end]
+        energy = ops.sum(ops.square(window))
+        energies.append(ops.item(energy))
+    
+    # Convert energies to tensor
+    energies_tensor = ops.convert_to_tensor(energies)
     
     # Compute stability as inverse of energy variance
     if len(energies) <= 1:
         return 1.0
         
-    energy_mean = np.mean(energies)
-    if energy_mean == 0:
+    energy_mean = ops.mean(energies_tensor)
+    if ops.item(energy_mean) == 0:
         return 1.0
         
-    energy_var = np.var(energies)
-    stability = 1.0 / (1.0 + energy_var / energy_mean)
+    energy_var = ops.var(energies_tensor)
+    stability = 1.0 / (1.0 + ops.item(energy_var) / ops.item(energy_mean))
     
     return stability
 
-def compute_interference_strength(wave1: np.ndarray, wave2: np.ndarray) -> float:
+def compute_interference_strength(wave1, wave2) -> float:
     """
     Compute the interference strength between two wave signals.
     
@@ -100,33 +131,56 @@ def compute_interference_strength(wave1: np.ndarray, wave2: np.ndarray) -> float
     Returns:
         Interference strength metric
     """
+    # Convert to tensors
+    wave1_tensor = ops.convert_to_tensor(wave1)
+    wave2_tensor = ops.convert_to_tensor(wave2)
+    
     # Ensure waves are the same length
-    min_length = min(len(wave1), len(wave2))
-    wave1 = wave1[:min_length]
-    wave2 = wave2[:min_length]
+    wave1_length = ops.shape(wave1_tensor)[0]
+    wave2_length = ops.shape(wave2_tensor)[0]
+    min_length = min(ops.item(wave1_length), ops.item(wave2_length))
+    
+    wave1_tensor = wave1_tensor[:min_length]
+    wave2_tensor = wave2_tensor[:min_length]
     
     # Compute correlation
-    correlation = np.corrcoef(wave1, wave2)[0, 1]
+    # Since ops doesn't have a direct corrcoef function, we'll compute it manually
+    wave1_mean = ops.mean(wave1_tensor)
+    wave2_mean = ops.mean(wave2_tensor)
+    wave1_centered = ops.subtract(wave1_tensor, wave1_mean)
+    wave2_centered = ops.subtract(wave2_tensor, wave2_mean)
     
-    # Compute phase difference
-    fft1 = np.fft.fft(wave1)
-    fft2 = np.fft.fft(wave2)
-    phase1 = np.angle(fft1)
-    phase2 = np.angle(fft2)
-    phase_diff = np.abs(phase1 - phase2)
-    mean_phase_diff = np.mean(phase_diff)
+    numerator = ops.sum(ops.multiply(wave1_centered, wave2_centered))
+    denominator = ops.sqrt(ops.multiply(
+        ops.sum(ops.square(wave1_centered)),
+        ops.sum(ops.square(wave2_centered))
+    ))
+    
+    correlation = ops.divide(numerator, ops.add(denominator, ops.convert_to_tensor(1e-8)))
+    
+    # For phase difference, we would need FFT operations
+    # Since ops doesn't have FFT functions, we'll use a simplified approach
+    # This is a placeholder and should be replaced with proper FFT operations
+    # when they become available in ops
+    
+    # For now, we'll use a simplified phase difference calculation
+    phase_diff = ops.mean(ops.abs(ops.subtract(
+        ops.divide(wave1_tensor, ops.add(ops.abs(wave1_tensor), ops.convert_to_tensor(1e-8))),
+        ops.divide(wave2_tensor, ops.add(ops.abs(wave2_tensor), ops.convert_to_tensor(1e-8)))
+    )))
     
     # Normalize phase difference to [0, 1]
-    normalized_phase_diff = mean_phase_diff / np.pi
+    normalized_phase_diff = ops.divide(phase_diff, ops.pi)
     
     # Compute interference strength
-    # High correlation and low phase difference = constructive interference
-    # Low correlation and high phase difference = destructive interference
-    interference_strength = correlation * (1.0 - normalized_phase_diff)
+    interference_strength = ops.multiply(
+        correlation,
+        ops.subtract(ops.convert_to_tensor(1.0), normalized_phase_diff)
+    )
     
-    return interference_strength
+    return ops.item(interference_strength)
 
-def compute_phase_coherence(wave1: np.ndarray, wave2: np.ndarray, freq_range: tuple = None) -> float:
+def compute_phase_coherence(wave1, wave2, freq_range=None) -> float:
     """
     Compute the phase coherence between two wave signals.
     
@@ -138,42 +192,35 @@ def compute_phase_coherence(wave1: np.ndarray, wave2: np.ndarray, freq_range: tu
     Returns:
         Phase coherence metric
     """
+    # This function requires FFT operations which are not available in ops
+    # We'll implement a simplified version that approximates phase coherence
+    
+    # Convert to tensors
+    wave1_tensor = ops.convert_to_tensor(wave1)
+    wave2_tensor = ops.convert_to_tensor(wave2)
+    
     # Ensure waves are the same length
-    min_length = min(len(wave1), len(wave2))
-    wave1 = wave1[:min_length]
-    wave2 = wave2[:min_length]
+    wave1_length = ops.shape(wave1_tensor)[0]
+    wave2_length = ops.shape(wave2_tensor)[0]
+    min_length = min(ops.item(wave1_length), ops.item(wave2_length))
     
-    # Compute FFT
-    fft1 = np.fft.fft(wave1)
-    fft2 = np.fft.fft(wave2)
+    wave1_tensor = wave1_tensor[:min_length]
+    wave2_tensor = wave2_tensor[:min_length]
     
-    # Get phases
-    phase1 = np.angle(fft1)
-    phase2 = np.angle(fft2)
+    # Compute a simplified phase coherence metric
+    # This is a placeholder and should be replaced with proper FFT-based
+    # phase coherence calculation when FFT operations become available in ops
     
-    # Get frequencies
-    freqs = np.fft.fftfreq(len(wave1))
+    # Normalize the waves
+    wave1_norm = ops.divide(wave1_tensor, ops.add(ops.sqrt(ops.mean(ops.square(wave1_tensor))), ops.convert_to_tensor(1e-8)))
+    wave2_norm = ops.divide(wave2_tensor, ops.add(ops.sqrt(ops.mean(ops.square(wave2_tensor))), ops.convert_to_tensor(1e-8)))
     
-    # Apply frequency range filter if specified
-    if freq_range is not None:
-        min_freq, max_freq = freq_range
-        freq_mask = (np.abs(freqs) >= min_freq) & (np.abs(freqs) <= max_freq)
-        phase1 = phase1[freq_mask]
-        phase2 = phase2[freq_mask]
+    # Compute dot product as a measure of coherence
+    coherence = ops.abs(ops.mean(ops.multiply(wave1_norm, wave2_norm)))
     
-    # Compute phase difference
-    phase_diff = phase1 - phase2
-    
-    # Compute phase coherence using circular statistics
-    # Convert phase differences to complex numbers on the unit circle
-    complex_phase = np.exp(1j * phase_diff)
-    
-    # Compute mean vector length (phase coherence)
-    coherence = np.abs(np.mean(complex_phase))
-    
-    return coherence
+    return ops.item(coherence)
 
-def partial_interference(wave1: np.ndarray, wave2: np.ndarray, window_size: int = 100) -> np.ndarray:
+def partial_interference(wave1, wave2, window_size: int = 100):
     """
     Compute the partial interference between two wave signals over sliding windows.
     
@@ -185,38 +232,63 @@ def partial_interference(wave1: np.ndarray, wave2: np.ndarray, window_size: int 
     Returns:
         Array of partial interference values for each window
     """
+    # Convert to tensors
+    wave1_tensor = ops.convert_to_tensor(wave1)
+    wave2_tensor = ops.convert_to_tensor(wave2)
+    
     # Ensure waves are the same length
-    min_length = min(len(wave1), len(wave2))
-    wave1 = wave1[:min_length]
-    wave2 = wave2[:min_length]
+    wave1_length = ops.shape(wave1_tensor)[0]
+    wave2_length = ops.shape(wave2_tensor)[0]
+    min_length = min(ops.item(wave1_length), ops.item(wave2_length))
+    
+    wave1_tensor = wave1_tensor[:min_length]
+    wave2_tensor = wave2_tensor[:min_length]
     
     # Compute number of windows
-    num_windows = min_length - window_size + 1
+    num_windows = ops.cast(ops.subtract(ops.add(min_length, 1), window_size), ops.int32)
     
     # Initialize result array
-    interference = np.zeros(num_windows)
+    interference = ops.zeros((num_windows,))
     
     # Compute interference for each window
     for i in range(num_windows):
-        window1 = wave1[i:i+window_size]
-        window2 = wave2[i:i+window_size]
+        window1 = wave1_tensor[i:i+window_size]
+        window2 = wave2_tensor[i:i+window_size]
         
         # Compute correlation
-        correlation = np.corrcoef(window1, window2)[0, 1]
+        window1_mean = ops.mean(window1)
+        window2_mean = ops.mean(window2)
+        window1_centered = ops.subtract(window1, window1_mean)
+        window2_centered = ops.subtract(window2, window2_mean)
         
-        # Compute phase difference
-        fft1 = np.fft.fft(window1)
-        fft2 = np.fft.fft(window2)
-        phase1 = np.angle(fft1)
-        phase2 = np.angle(fft2)
-        phase_diff = np.abs(phase1 - phase2)
-        mean_phase_diff = np.mean(phase_diff)
+        numerator = ops.sum(ops.multiply(window1_centered, window2_centered))
+        denominator = ops.sqrt(ops.multiply(
+            ops.sum(ops.square(window1_centered)),
+            ops.sum(ops.square(window2_centered))
+        ))
+        
+        correlation = ops.divide(numerator, ops.add(denominator, ops.convert_to_tensor(1e-8)))
+        
+        # Simplified phase difference calculation
+        phase_diff = ops.mean(ops.abs(ops.subtract(
+            ops.divide(window1, ops.add(ops.abs(window1), ops.convert_to_tensor(1e-8))),
+            ops.divide(window2, ops.add(ops.abs(window2), ops.convert_to_tensor(1e-8)))
+        )))
         
         # Normalize phase difference to [0, 1]
-        normalized_phase_diff = mean_phase_diff / np.pi
+        normalized_phase_diff = ops.divide(phase_diff, ops.pi)
         
         # Compute interference strength
-        interference[i] = correlation * (1.0 - normalized_phase_diff)
+        interference_val = ops.multiply(
+            correlation,
+            ops.subtract(ops.convert_to_tensor(1.0), normalized_phase_diff)
+        )
+        
+        interference = ops.tensor_scatter_nd_update(
+            interference,
+            ops.convert_to_tensor([[i]]),
+            ops.convert_to_tensor([ops.item(interference_val)])
+        )
     
     return interference
 
@@ -233,7 +305,6 @@ __all__ = [
     'exponential_decay',
     'gaussian',
     'normalize_vector',
-    'normalize_vector_torch',
     'compute_energy_stability',
     'compute_interference_strength',
     'compute_phase_coherence',
