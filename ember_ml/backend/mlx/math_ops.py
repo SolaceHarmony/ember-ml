@@ -5,7 +5,7 @@ This module provides MLX implementations of math operations.
 """
 
 import mlx.core as mx
-from typing import Union, Sequence, Optional, Any, List, Literal
+from typing import Union, Sequence, Optional, Any, List, Literal, Tuple
 from ember_ml.backend.mlx.tensor_ops import convert_to_tensor, cast
 
 # Type aliases
@@ -742,6 +742,33 @@ def gradient(f: ArrayLike, *varargs, axis: Optional[Union[int, Sequence[int]]] =
     else:
         return grad
 
+def cumsum(x: ArrayLike, axis: Optional[int] = None) -> mx.array:
+    """
+    Compute the cumulative sum of an MLX array along a specified axis.
+    
+    Args:
+        x: Input array
+        axis: Axis along which to compute the cumulative sum
+        
+    Returns:
+        Array with cumulative sums
+    """
+    x_array = convert_to_tensor(x)
+    return mx.cumsum(x_array, axis=axis)
+
+def eigh(a: ArrayLike) -> Tuple[mx.array, mx.array]:
+    """
+    Compute the eigenvalues and eigenvectors of a Hermitian or symmetric matrix.
+    
+    Args:
+        a: Input Hermitian or symmetric matrix
+        
+    Returns:
+        Tuple of (eigenvalues, eigenvectors)
+    """
+    a_array = convert_to_tensor(a)
+    return mx.eigh(a_array)
+
 # Define the pi constant using Chudnovsky algorithm
 def _calculate_pi_value(precision_digits=15):
     """
@@ -986,6 +1013,14 @@ class MLXMathOps:
         if edge_order not in (1, 2):
             raise ValueError("edge_order must be 1 or 2")
         return gradient(f, *varargs, axis=axis, edge_order=edge_order)
+    
+    def cumsum(self, x, axis=None):
+        """Compute the cumulative sum of a tensor along a specified axis."""
+        return cumsum(x, axis=axis)
+    
+    def eigh(self, a):
+        """Compute the eigenvalues and eigenvectors of a Hermitian or symmetric matrix."""
+        return eigh(a)
     
     pi : mx.array = mx.array([PI_CONSTANT], dtype=mx.float32)
     

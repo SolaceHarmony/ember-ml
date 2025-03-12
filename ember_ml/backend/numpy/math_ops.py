@@ -5,7 +5,7 @@ This module provides NumPy implementations of math operations.
 """
 
 import numpy as np
-from typing import Optional, Union, Sequence, List, Literal
+from typing import Optional, Union, Sequence, List, Literal, Tuple
 from ember_ml.backend.numpy.tensor_ops import convert_to_tensor
 
 # Type aliases
@@ -567,6 +567,51 @@ def min(x: ArrayLike,
     x_tensor = convert_to_tensor(x)
     return np.min(x_tensor, axis=axis, keepdims=keepdims)
 
+
+def cumsum(x: ArrayLike, axis: Optional[int] = None) -> np.ndarray:
+    """
+    Compute the cumulative sum of a NumPy array along a specified axis.
+
+    Args:
+        x: Input array
+        axis: Axis along which to compute the cumulative sum
+
+    Returns:
+        Array with cumulative sums
+    """
+    x_tensor = convert_to_tensor(x)
+    return np.cumsum(x_tensor, axis=axis)
+
+
+def eigh(a: ArrayLike) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Compute the eigenvalues and eigenvectors of a Hermitian or symmetric matrix.
+
+    Args:
+        a: Input Hermitian or symmetric matrix
+
+    Returns:
+        Tuple of (eigenvalues, eigenvectors)
+    """
+    a_tensor = convert_to_tensor(a)
+    return np.linalg.eigh(a_tensor)
+
+
+def sort(x: ArrayLike, axis: int = -1) -> np.ndarray:
+    """
+    Sort a NumPy array along a specified axis.
+
+    Args:
+        x: Input array
+        axis: Axis along which to sort
+
+    Returns:
+        Sorted array
+    """
+    x_tensor = convert_to_tensor(x)
+    return np.sort(x_tensor, axis=axis)
+
+
 # Define the pi constant using Chudnovsky algorithm
 def _calculate_pi_value(precision_digits=15):
     """
@@ -807,6 +852,18 @@ class NumpyMathOps:
     def gradient(self, f, *varargs, axis=None, edge_order: Literal[1, 2] = 1):
         """Return the gradient of an N-dimensional array."""
         return gradient(f, *varargs, axis=axis, edge_order=edge_order)
+
+    def cumsum(self, x, axis=None):
+        """Compute the cumulative sum of an array along a specified axis."""
+        return cumsum(x, axis=axis)
+
+    def eigh(self, a):
+        """Compute the eigenvalues and eigenvectors of a Hermitian or symmetric matrix."""
+        return eigh(a)
+
+    def sort(self, x, axis=-1):
+        """Sort an array along a specified axis."""
+        return sort(x, axis=axis)
 
     # Alias for pow
     power = pow
