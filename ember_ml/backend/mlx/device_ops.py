@@ -2,8 +2,6 @@
 MLX device operations for ember_ml.
 """
 
-import mlx.core as mx
-from typing import Any, Optional, List, Dict
 from typing import Any, Optional, List, Dict
 import mlx.core as mx
 from ember_ml.backend.mlx.types import TensorLike # Use TensorLike from mlx types
@@ -47,7 +45,6 @@ def set_device(device: Any) -> None:
         ValueError: If the device is not valid for MLX.
     """
     global _default_device
-    target_device_obj = None
     if isinstance(device, mx.Device):
         target_device_obj = device
         target_device_str = str(device.type).lower()

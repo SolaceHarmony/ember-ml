@@ -155,68 +155,6 @@ __all__ = [
     'ceil',
     'gradient',
 
-    # Casting operations
-    'cast',
-    
-    # Creation operations
-    'zeros',
-    'ones',
-    'zeros_like',
-    'ones_like',
-    'eye',
-    'full',
-    'full_like',
-    'arange',
-    'linspace',
-    
-    # Indexing operations
-    'slice_tensor',
-    'slice_update',
-    'gather',
-    'tensor_scatter_nd_update',
-    'scatter',
-    'scatter_add', 
-    'scatter_max', 
-    'scatter_min', 
-    'scatter_mean', 
-    'scatter_softmax',
-    
-    # Manipulation operations
-    'reshape',
-    'transpose',
-    'concatenate',
-    'stack',
-    'split',
-    'expand_dims',
-    'squeeze',
-    'tile',
-    'pad',
-    'vstack',
-    'hstack',
-    
-     # Random operations
-    'random_normal',
-    'random_uniform',
-    'random_binomial',
-    'random_gamma',
-    'random_exponential',
-    'random_poisson',
-    'random_categorical',
-    'random_permutation',
-    'shuffle',
-    'random_shuffle',
-    'set_seed',
-    'get_seed',
-    
-    # Utility operations
-    'convert_to_tensor',
-    'to_numpy',
-    'item',
-    'shape',
-    'dtype',
-    'copy',
-    'maximum',
-    
     # Comparison operations
     'equal',
     'not_equal',
@@ -281,18 +219,5 @@ __all__ = [
     'huber_loss',
     'log_cosh_loss',
 
-    # Linear Algebra operations
-    'qr',
-    'svd',
-    'cholesky',
-    'eig',
-    'eigvals',
-    'eigh',
-    'inv',
-    'det',
-    'norm',
-    'diag',
-    'diagonal',
-    'solve',
-    'lstsq'
+
 ]

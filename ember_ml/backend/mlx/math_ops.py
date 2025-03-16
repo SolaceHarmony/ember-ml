@@ -631,6 +631,7 @@ def gradient(f: TensorLike,
         A tensor or tuple of tensors corresponding to the derivatives of f with respect to each dimension.
         Each derivative has the same shape as f.
     """
+    global grad_i
     from ember_ml.backend.mlx.tensor.ops import scatter
     from ember_ml.backend.mlx.tensor import MLXTensor
     tensor_ops = MLXTensor()

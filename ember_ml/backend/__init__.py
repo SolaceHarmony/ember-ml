@@ -159,52 +159,23 @@ def get_device(tensor=None):
     else:
         return 'cpu'
 
+# Add necessary import
+import mlx.core
+
 def set_device(device):
     """
-    Set the current device.
+    Set the device for MLX operations.
     
     Args:
-        device: Device name as a string or device object
-        
+        device: A valid device type from mlx.core.DeviceType
+    
     Raises:
-        ValueError: If the device is not valid for the current backend
+        ValueError: If an invalid device is provided
     """
-    backend = get_backend()
-    
-    # Convert device to string for consistency
-    device_str = str(device)
-    
-    # Handle MLX DeviceType objects directly
-    if device_str == 'DeviceType.gpu':
-        if backend == 'mlx':
-            # MLX doesn't support explicit device setting yet
-            return
-        else:
-            device_str = 'gpu'
-    
-    # Convert to lowercase string for consistency
-    device_str = device_str.lower()
-    
-    if backend == 'torch':
-        import torch
-        if device_str == 'cuda' and not torch.cuda.is_available():
-            raise ValueError("CUDA is not available")
-        if device_str == 'mps' and not (hasattr(torch, 'backends') and hasattr(torch.backends, 'mps') and torch.backends.mps.is_available()):
-            raise ValueError("MPS is not available")
-        if device_str not in ['cpu', 'cuda', 'mps']:
-            raise ValueError(f"Invalid device for PyTorch: {device_str}")
-        torch.device(device_str)
-    elif backend == 'mlx':
-        import mlx
-        # MLX uses 'gpu' or 'cpu' internally
-        if device_str in ['metal', 'gpu']:
-            mlx.core.metal.set_device(mlx.core.DeviceType.gpu)
-            return
-        if device_str != 'cpu':
-            raise ValueError(f"Invalid device for MLX: {device_str}")
-        # MLX doesn't support explicit device setting yet
-    elif device_str != 'cpu':
-        raise ValueError(f"Backend {backend} only supports 'cpu' device")
+    if device in [mlx.core.DeviceType.gpu, mlx.core.DeviceType.cpu]:
+        mlx.core.metal.set_device(device)
+    else:
+        raise ValueError(f"Invalid device: {device}. Use mlx.core.DeviceType.gpu or mlx.core.DeviceType.cpu")
 
 def auto_select_backend():
     """Automatically select the best backend based on the available hardware."""
@@ -246,4 +217,3 @@ def auto_select_backend():
             return 'mlx', None
         except ImportError:
             pass
-

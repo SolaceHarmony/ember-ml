@@ -44,10 +44,11 @@ Always use the ops abstraction layer for tensor operations:
 ```python
 # ✅ CORRECT
 from ember_ml import ops
+from ember_ml.nn import tensor
 
 def process_data(data):
-    tensor = tensor.convert_to_tensor(data)
-    return ops.sin(tensor)
+    Tensor = tensor.convert_to_tensor(data)
+    return ops.sin(Tensor)
 ```
 
 ### Avoiding Direct Backend Usage

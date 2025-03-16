@@ -1,6 +1,6 @@
 """MLX tensor creation operations."""
 
-from typing import Any, List, Optional, Union, Tuple
+from typing import Optional, Union
 
 import mlx.core as mx
 import numpy as np

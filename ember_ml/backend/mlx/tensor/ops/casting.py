@@ -1,12 +1,8 @@
 """MLX tensor casting operations."""
 
-from typing import Optional # Removed unused Optional
-# Removed top-level import of _validate_and_get_mlx_dtype
-# from ember_ml.backend.mlx.tensor.dtype import MLXDType # Restore this import if needed, but likely not used now
 from ember_ml.backend.mlx.types import DType, TensorLike
-import mlx.core # Restore necessary import for type hint
-
-# _validate_dtype helper function removed. Logic should exist in MLXDType.validate_dtype
+import mlx.core
+import mlx.core as mx
 
 def cast(tensor: TensorLike, dtype: DType) -> mlx.core.array:
     """

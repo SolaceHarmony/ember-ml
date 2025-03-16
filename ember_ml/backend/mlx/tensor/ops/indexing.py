@@ -2,7 +2,7 @@
 
 import mlx.core as mx
 
-from typing import Union, Optional, Literal, Any, List, Tuple, Sequence
+from typing import Union, Optional, Literal, Any, List
 from ember_ml.backend.mlx.types import (
     TensorLike, Shape, ShapeLike
 )
@@ -238,7 +238,7 @@ def scatter(indices: TensorLike, updates: TensorLike, shape: Union[ShapeLike, in
         # For single values, handle scalar array
         if shape.ndim == 0:
             # Convert scalar MLX array to Python int
-            shape_val = int(shape.item())
+            shape_val = int(shape[0])
             output_shape = (shape_val,)
         else:
             # For arrays, convert to list of ints
@@ -660,18 +660,18 @@ def index_update(tensor: TensorLike, *indices, value: TensorLike) -> mx.array:
         # Single index
         idx = indices[0]
         # Use MLX's at/set for updating
-        result = result.at[idx].set(value_array)
+        result = result.at[idx].add(value_array)
     elif len(indices) == 2:
         # Two indices (common case for 2D tensors)
         i, j = indices
-        result = result.at[i, j].set(value_array)
+        result = result.at[i, j].add(value_array)
     elif len(indices) == 3:
         # Three indices
         i, j, k = indices
-        result = result.at[i, j, k].set(value_array)
+        result = result.at[i, j, k].add(value_array)
     else:
         # General case
         idx_tuple = tuple(indices)
-        result = result.at[idx_tuple].set(value_array)
+        result = result.at[idx_tuple].add(value_array)
     
     return result

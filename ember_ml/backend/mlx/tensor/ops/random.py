@@ -1,6 +1,6 @@
 """MLX tensor random operations."""
 
-from typing import Union, Optional, Sequence, Any, List, Tuple
+from typing import Union, Optional, Any
 import mlx.core as mx
 
 from ember_ml.backend.mlx.types import Shape, TensorLike, DType,default_int, default_float

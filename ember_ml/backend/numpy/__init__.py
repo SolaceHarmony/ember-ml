@@ -27,9 +27,7 @@ __all__ = [
     # Linear Algebra operations
     'solve', 'inv', 'svd', 'eig', 'eigvals', 'det', 'norm', 'qr',
     'cholesky', 'lstsq', 'diag', 'diagonal',
-    
-    # I/O operations
-    'save', 'load'
+
     
     # Vector operations
     'fft', 'ifft', 'fft2', 'ifft2', 'fftn', 'ifftn',
@@ -42,12 +40,6 @@ __all__ = [
     'mse', 'mean_absolute_error', 'binary_crossentropy', 'categorical_crossentropy',
     'sparse_categorical_crossentropy', 'huber_loss', 'log_cosh_loss',
 
-    # Feature Ops Functions (added)
-    'pca', 'transform', 'inverse_transform', 'standardize', 'normalize',
-
-    # Stats Ops Functions (added)
-    'gaussian', # Moved gaussian here
-    # 'std', 'median', # etc. (Add specific functions exported by numpy/stats.py)
 
     # Functional Tensor Ops (from tensor.ops - added)
     'cast', 'zeros', 'ones', 'eye', 'zeros_like', 'ones_like', 'full', 'full_like', 'arange', 'linspace',
@@ -56,9 +48,7 @@ __all__ = [
     'slice_tensor', 'slice_update', 'gather', 'tensor_scatter_nd_update', 'scatter',
     'to_numpy', 'item', 'shape', 'dtype', 'copy', 'argsort', 'maximum',
     'random_normal', 'random_uniform', 'random_binomial', 'random_gamma', 'random_exponential',
-    'random_poisson', 'random_categorical', 'random_permutation', 'shuffle', 'random_shuffle', 'set_seed', 'get_seed',
-     # Activation Ops Functions (added)
-     'relu', 'sigmoid', 'tanh', 'softmax', 'softplus',
+    'random_poisson', 'random_categorical', 'random_permutation', 'shuffle', 'set_seed', 'get_seed',
 ]
 # Import configuration variables
 from ember_ml.backend.numpy.config import (
