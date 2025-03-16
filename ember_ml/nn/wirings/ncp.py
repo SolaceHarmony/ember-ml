@@ -5,10 +5,10 @@ This module provides the NCP class, which implements a neural circuit policy
 using a wiring configuration.
 """
 
-import numpy as np
-from typing import Optional, Tuple, Dict, Any, Union, List
+from typing import Optional, Dict, Any
 
 from ember_ml import ops
+from ember_ml.nn.tensor import EmberTensor, zeros, convert_to_tensor, cast, expand_dims, tensor_scatter_nd_update, maximum, int32
 from ember_ml.nn.wirings.wiring import Wiring
 
 class NCP(Wiring):
@@ -45,77 +45,113 @@ class NCP(Wiring):
         
         # Initialize random number generator
         if seed is not None:
-            np.random.seed(seed)
+            ops.set_seed(seed)
         
         # Generate masks
         self.input_mask = self._generate_input_mask()
         self.recurrent_mask = self._generate_recurrent_mask()
         self.output_mask = self._generate_output_mask()
     
-    def _generate_input_mask(self) -> np.ndarray:
+    def _generate_input_mask(self) -> EmberTensor:
         """
         Generate the input mask.
         
         Returns:
             Input mask of shape (input_dim, units)
         """
-        mask = np.zeros((self.input_dim, self.units))
+        # Create a tensor of zeros
+        mask = ops.zeros((self.input_dim, self.units))
         
         # Determine the number of connections per input
-        connections_per_input = max(int(self.units * (1.0 - self.sparsity_level)), 1)
+        connections_per_input = maximum(
+            cast(ops.multiply(self.units, 1.0 - self.sparsity_level), int32),
+            convert_to_tensor(1)
+        )
         
         # Connect each input to a random subset of units
         for i in range(self.input_dim):
-            target_indices = np.random.choice(
-                self.units, size=connections_per_input, replace=False
-            )
-            mask[i, target_indices] = 1.0
+            # Generate random indices
+            indices = ops.random_permutation(self.units)
+            # Take the first connections_per_input indices
+            target_indices = indices[:ops.cast(connections_per_input, int32)]
+            # Set the mask values to 1.0 at these indices
+            for idx in target_indices:
+                mask_idx = ops.convert_to_tensor([i, idx], dtype=int32)
+                mask = ops.tensor_scatter_nd_update(
+                    mask, 
+                    ops.expand_dims(mask_idx, 0), 
+                    ops.convert_to_tensor([1.0])
+                )
         
-        return mask
+        return EmberTensor(mask)
     
-    def _generate_recurrent_mask(self) -> np.ndarray:
+    def _generate_recurrent_mask(self) -> EmberTensor:
         """
         Generate the recurrent mask.
         
         Returns:
             Recurrent mask of shape (units, units)
         """
-        mask = np.zeros((self.units, self.units))
+        # Create a tensor of zeros
+        mask = ops.zeros((self.units, self.units))
         
         # Determine the number of connections per unit
-        connections_per_unit = max(int(self.units * (1.0 - self.sparsity_level)), 1)
+        connections_per_unit = maximum(
+            cast(ops.multiply(self.units, 1.0 - self.sparsity_level), int32),
+            convert_to_tensor(1)
+        )
         
         # Connect each unit to a random subset of units
         for i in range(self.units):
-            target_indices = np.random.choice(
-                self.units, size=connections_per_unit, replace=False
-            )
-            mask[i, target_indices] = 1.0
+            # Generate random indices
+            indices = ops.random_permutation(self.units)
+            # Take the first connections_per_unit indices
+            target_indices = indices[:ops.cast(connections_per_unit, int32)]
+            # Set the mask values to 1.0 at these indices
+            for idx in target_indices:
+                mask_idx = ops.convert_to_tensor([i, idx], dtype=int32)
+                mask = ops.tensor_scatter_nd_update(
+                    mask, 
+                    ops.expand_dims(mask_idx, 0), 
+                    ops.convert_to_tensor([1.0])
+                )
         
-        return mask
+        return EmberTensor(mask)
     
-    def _generate_output_mask(self) -> np.ndarray:
+    def _generate_output_mask(self) -> EmberTensor:
         """
         Generate the output mask.
         
         Returns:
             Output mask of shape (units, output_dim)
         """
-        mask = np.zeros((self.units, self.output_dim))
+        # Create a tensor of zeros
+        mask = ops.zeros((self.units, self.output_dim))
         
         # Determine the number of connections per output
-        connections_per_output = max(int(self.units * (1.0 - self.sparsity_level)), 1)
+        connections_per_output = maximum(
+            cast(ops.multiply(self.units, 1.0 - self.sparsity_level), int32),
+            convert_to_tensor(1)
+        )
         
         # Connect each output to a random subset of units
         for i in range(self.output_dim):
-            source_indices = np.random.choice(
-                self.units, size=connections_per_output, replace=False
-            )
-            mask[source_indices, i] = 1.0
+            # Generate random indices
+            indices = ops.random_permutation(self.units)
+            # Take the first connections_per_output indices
+            source_indices = indices[:ops.cast(connections_per_output, int32)]
+            # Set the mask values to 1.0 at these indices
+            for idx in source_indices:
+                mask_idx = ops.convert_to_tensor([idx, i], dtype=int32)
+                mask = ops.tensor_scatter_nd_update(
+                    mask, 
+                    ops.expand_dims(mask_idx, 0), 
+                    ops.convert_to_tensor([1.0])
+                )
         
-        return mask
+        return EmberTensor(mask)
     
-    def get_input_mask(self) -> np.ndarray:
+    def get_input_mask(self) -> EmberTensor:
         """
         Get the input mask.
         
@@ -124,7 +160,7 @@ class NCP(Wiring):
         """
         return self.input_mask
     
-    def get_recurrent_mask(self) -> np.ndarray:
+    def get_recurrent_mask(self) -> EmberTensor:
         """
         Get the recurrent mask.
         
@@ -133,7 +169,7 @@ class NCP(Wiring):
         """
         return self.recurrent_mask
     
-    def get_output_mask(self) -> np.ndarray:
+    def get_output_mask(self) -> EmberTensor:
         """
         Get the output mask.
         

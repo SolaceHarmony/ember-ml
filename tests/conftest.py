@@ -8,7 +8,7 @@ import pytest
 import os
 import sys
 import logging
-import numpy as np
+from ember_ml.nn.tensor import convert_to_tensor, set_seed
 
 # Add parent directory to path to import ember_ml
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -57,7 +57,7 @@ def available_backends():
 def random_seed():
     """Set random seed for reproducibility."""
     seed = 42
-    np.random.seed(seed)
+    set_seed(seed)
     backend_utils.initialize_random_seed(seed)
     return seed
 
@@ -68,7 +68,7 @@ def numpy_backend():
     original_backend = get_backend()
     set_backend('numpy')
     yield
-    set_backend(original_backend)
+    set_backend(original_backend or 'numpy')  # Default to numpy if None
 
 
 @pytest.fixture
@@ -79,7 +79,7 @@ def torch_backend():
         original_backend = get_backend()
         set_backend('torch')
         yield
-        set_backend(original_backend)
+        set_backend(original_backend or 'numpy')  # Default to numpy if None
     except ImportError:
         pytest.skip("PyTorch not available")
 
@@ -92,7 +92,7 @@ def mlx_backend():
         original_backend = get_backend()
         set_backend('mlx')
         yield
-        set_backend(original_backend)
+        set_backend(original_backend or 'numpy')  # Default to numpy if None
     except ImportError:
         pytest.skip("MLX not available")
 
@@ -121,7 +121,7 @@ def any_backend(request):
     yield backend_name
     
     # Restore original backend
-    set_backend(original_backend)
+    set_backend(original_backend or 'numpy')  # Default to numpy if None
 
 
 @pytest.fixture

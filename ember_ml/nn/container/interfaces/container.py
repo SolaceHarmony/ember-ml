@@ -7,7 +7,7 @@ This module defines the abstract interfaces for container operations.
 from abc import ABC, abstractmethod
 from typing import Any, Optional, List, Union, Tuple, Dict
 
-from ember_ml.ops.tensor import EmberTensor
+from ember_ml.nn.tensor import EmberTensor
 
 # Type aliases
 Tensor = EmberTensor

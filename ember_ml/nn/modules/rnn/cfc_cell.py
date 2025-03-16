@@ -10,18 +10,25 @@ from typing import Optional, List, Dict, Any, Union, Tuple
 from ember_ml import ops
 from ember_ml.initializers import glorot_uniform, orthogonal
 from ember_ml.nn.modules import Module, Parameter
+from ember_ml.nn.modules.module_cell import ModuleCell
 
-class CfCCell(Module):
+class CfCCell(ModuleCell):
     """
     Closed-form Continuous-time (CfC) cell.
     
     This cell implements a continuous-time recurrent neural network
     with closed-form solution for the hidden state dynamics.
     """
-    
     def __init__(
         self,
-        units: int,
+        input_size: int,
+        hidden_size: int,
+        mode: str = "default",
+        backbone_activation: str = "tanh",
+        backbone_units: int = 128,
+        backbone_layers: int = 1,
+        backbone_dropout: float = 0.0,
+        sparsity_mask = None,
         time_scale_factor: float = 1.0,
         activation: str = "tanh",
         recurrent_activation: str = "sigmoid",
@@ -36,7 +43,14 @@ class CfCCell(Module):
         Initialize the CfC cell.
         
         Args:
-            units: Number of units in the cell
+            input_size: Size of the input
+            hidden_size: Size of the hidden state
+            mode: Mode of operation ("default", "pure", or "no_gate")
+            backbone_activation: Activation function for the backbone
+            backbone_units: Number of units in the backbone
+            backbone_layers: Number of layers in the backbone
+            backbone_dropout: Dropout rate for the backbone
+            sparsity_mask: Mask for sparse connections
             time_scale_factor: Factor to scale the time constant
             activation: Activation function for the output
             recurrent_activation: Activation function for the recurrent step
@@ -47,12 +61,24 @@ class CfCCell(Module):
             mixed_memory: Whether to use mixed memory
             **kwargs: Additional keyword arguments
         """
-        super().__init__(**kwargs)
-        self.units = units
+        
+        super().__init__(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            activation=activation,
+            use_bias=use_bias,
+            **kwargs
+        )
+        
+        # Store parameters
+        self.mode = mode
+        self.backbone_activation = backbone_activation
+        self.backbone_units = backbone_units
+        self.backbone_layers = backbone_layers
+        self.backbone_dropout = backbone_dropout
+        self.sparsity_mask = sparsity_mask
         self.time_scale_factor = time_scale_factor
-        self.activation = activation
         self.recurrent_activation = recurrent_activation
-        self.use_bias = use_bias
         self.kernel_initializer = kernel_initializer
         self.recurrent_initializer = recurrent_initializer
         self.bias_initializer = bias_initializer
@@ -61,9 +87,21 @@ class CfCCell(Module):
         # Initialize weights
         self._initialize_weights()
         
-        # State size: [hidden_state, time_state]
-        self.state_size = [self.units, self.units]
-        self.output_size = self.units
+        # For backward compatibility
+        self.units = self.hidden_size
+        
+        # Store the actual state size for CfC
+        self._cfc_state_size = [self.hidden_size, self.hidden_size]
+    
+    @property
+    def state_size(self) -> List[int]:
+        """Return the size of the cell state."""
+        return self._cfc_state_size
+    
+    @property
+    def output_size(self) -> int:
+        """Return the output size."""
+        return self.units
     
     def _initialize_weights(self):
         """Initialize the weights for the cell."""
@@ -90,24 +128,28 @@ class CfCCell(Module):
         if self.use_bias and self.bias_initializer == "zeros":
             self.bias.data = ops.zeros((self.units * 4,))
     
-    def forward(self, inputs, states=None, timespans=None):
+    def forward(self, inputs, state=None, **kwargs):
         """
         Forward pass through the cell.
         
         Args:
             inputs: Input tensor
-            states: Previous states [hidden_state, time_state]
-            timespans: Time spans for continuous-time dynamics (default: 1.0)
+            state: Previous state [hidden_state, time_state]
+            **kwargs: Additional arguments, including:
+                timespans: Time spans for continuous-time dynamics (default: 1.0)
             
         Returns:
             Tuple of (output, [new_hidden_state, new_time_state])
         """
+        # Extract timespans from kwargs
+        timespans = kwargs.get('timespans', None)
+        
         # Initialize states if not provided
-        if states is None:
+        if state is None:
             h_prev = ops.zeros((ops.shape(inputs)[0], self.units))
             t_prev = ops.zeros((ops.shape(inputs)[0], self.units))
         else:
-            h_prev, t_prev = states
+            h_prev, t_prev = state
         
         # Default timespan is 1.0 if not provided
         ts = 1.0 if timespans is None else timespans
@@ -128,14 +170,16 @@ class CfCCell(Module):
             f = ops.sigmoid(z_f)  # Forget gate
             o = ops.sigmoid(z_o)  # Output gate
         else:
-            i = getattr(ops, self.recurrent_activation)(z_i)
-            f = getattr(ops, self.recurrent_activation)(z_f)
-            o = getattr(ops, self.recurrent_activation)(z_o)
+            activation_fn = getattr(ops, self.recurrent_activation)
+            i = activation_fn(z_i)
+            f = activation_fn(z_f)
+            o = activation_fn(z_o)
         
         if self.activation == "tanh":
             c = ops.tanh(z_c)     # Cell input
         else:
-            c = getattr(ops, self.activation)(z_c)
+            activation_fn = getattr(ops, self.activation_name)
+            c = activation_fn(z_c)
         
         # Apply time scaling
         # Compute time decay factor
@@ -148,10 +192,11 @@ class CfCCell(Module):
         decay_term = ops.multiply(decay, h_prev)
         time_term = ops.multiply(ops.subtract(ops.ones_like(decay), decay), t)
         
-        if self.activation == "tanh":
+        if self.activation_name == "tanh":
             h = ops.multiply(o, ops.tanh(ops.add(decay_term, time_term)))
         else:
-            h = ops.multiply(o, getattr(ops, self.activation)(ops.add(decay_term, time_term)))
+            activation_fn = getattr(ops, self.activation_name)
+            h = ops.multiply(o, activation_fn(ops.add(decay_term, time_term)))
         
         return h, [h, t]
     

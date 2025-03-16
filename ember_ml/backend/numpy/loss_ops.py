@@ -7,10 +7,12 @@ This module provides NumPy implementations of loss operations.
 import numpy as np
 from typing import Any, Optional, Union, Sequence, Tuple
 
-from ember_ml.ops.interfaces.loss_ops import LossOps
-from ember_ml.backend.numpy.tensor_ops import NumpyTensorOps
+from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
 
-class NumpyLossOps(LossOps):
+# Create a tensor instance for tensor operations
+_tensor_ops = NumpyTensor()
+
+class NumpyLossOps:
     """NumPy implementation of loss operations."""
     
     def mean_squared_error(self, y_true: Any, y_pred: Any, 
@@ -28,8 +30,8 @@ class NumpyLossOps(LossOps):
         Returns:
             Mean squared error
         """
-        y_true = NumpyTensorOps().convert_to_tensor(y_true)
-        y_pred = NumpyTensorOps().convert_to_tensor(y_pred)
+        y_true = _tensor_ops.convert_to_tensor(y_true)
+        y_pred = _tensor_ops.convert_to_tensor(y_pred)
         
         squared_error = np.square(y_true - y_pred)
         return np.mean(squared_error, axis=axis, keepdims=keepdims)
@@ -49,8 +51,8 @@ class NumpyLossOps(LossOps):
         Returns:
             Mean absolute error
         """
-        y_true = NumpyTensorOps().convert_to_tensor(y_true)
-        y_pred = NumpyTensorOps().convert_to_tensor(y_pred)
+        y_true = _tensor_ops.convert_to_tensor(y_true)
+        y_pred = _tensor_ops.convert_to_tensor(y_pred)
         
         absolute_error = np.abs(y_true - y_pred)
         return np.mean(absolute_error, axis=axis, keepdims=keepdims)
@@ -71,8 +73,8 @@ class NumpyLossOps(LossOps):
         Returns:
             Binary crossentropy loss
         """
-        y_true = NumpyTensorOps().convert_to_tensor(y_true)
-        y_pred = NumpyTensorOps().convert_to_tensor(y_pred)
+        y_true = _tensor_ops.convert_to_tensor(y_true)
+        y_pred = _tensor_ops.convert_to_tensor(y_pred)
         
         if from_logits:
             # Apply sigmoid to convert logits to probabilities
@@ -103,8 +105,8 @@ class NumpyLossOps(LossOps):
         Returns:
             Categorical crossentropy loss
         """
-        y_true = NumpyTensorOps().convert_to_tensor(y_true)
-        y_pred = NumpyTensorOps().convert_to_tensor(y_pred)
+        y_true = _tensor_ops.convert_to_tensor(y_true)
+        y_pred = _tensor_ops.convert_to_tensor(y_pred)
         
         if from_logits:
             # Apply softmax to convert logits to probabilities
@@ -140,8 +142,8 @@ class NumpyLossOps(LossOps):
         Returns:
             Sparse categorical crossentropy loss
         """
-        y_true = NumpyTensorOps().convert_to_tensor(y_true)
-        y_pred = NumpyTensorOps().convert_to_tensor(y_pred)
+        y_true = _tensor_ops.convert_to_tensor(y_true)
+        y_pred = _tensor_ops.convert_to_tensor(y_pred)
         
         # Convert sparse labels to one-hot encoding
         if len(y_true.shape) == len(y_pred.shape) - 1:
@@ -185,8 +187,8 @@ class NumpyLossOps(LossOps):
         Returns:
             Huber loss
         """
-        y_true = NumpyTensorOps().convert_to_tensor(y_true)
-        y_pred = NumpyTensorOps().convert_to_tensor(y_pred)
+        y_true = _tensor_ops.convert_to_tensor(y_true)
+        y_pred = _tensor_ops.convert_to_tensor(y_pred)
         
         error = y_true - y_pred
         abs_error = np.abs(error)
@@ -221,8 +223,8 @@ class NumpyLossOps(LossOps):
         Returns:
             Log-cosh loss
         """
-        y_true = NumpyTensorOps().convert_to_tensor(y_true)
-        y_pred = NumpyTensorOps().convert_to_tensor(y_pred)
+        y_true = _tensor_ops.convert_to_tensor(y_true)
+        y_pred = _tensor_ops.convert_to_tensor(y_pred)
         
         error = y_pred - y_true
         

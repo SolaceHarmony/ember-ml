@@ -1,16 +1,18 @@
 """
-MLX implementation of solver operations.
+MLX solver operations for ember_ml.
 
 This module provides MLX implementations of solver operations.
 """
 
 import mlx.core as mx
-from typing import Union, Tuple, Optional
+from typing import Union, Tuple, Optional, Literal
 
-# Type aliases
-ArrayLike = Union[mx.array, float, int, list, tuple]
+# Import from tensor_ops
+from ember_ml.backend.mlx.tensor import MLXTensor
 
-def inv(A: ArrayLike) -> mx.array:
+convert_to_tensor = MLXTensor().convert_to_tensor
+
+def inv(A: mx.array) -> mx.array:
     """
     Inverts a square matrix using Gauss-Jordan elimination.
     
@@ -60,7 +62,7 @@ def inv(A: ArrayLike) -> mx.array:
     
     return inv_A
 
-def solve(a: ArrayLike, b: ArrayLike) -> mx.array:
+def solve(a: mx.array, b: mx.array) -> mx.array:
     """
     Solve a linear system of equations Ax = b for x using MLX backend.
     
@@ -86,7 +88,7 @@ def solve(a: ArrayLike, b: ArrayLike) -> mx.array:
     return mx.matmul(a_inv, b_array)
 
 
-def svd(a: ArrayLike, full_matrices: bool = True, compute_uv: bool = True) -> Union[mx.array, Tuple[mx.array, mx.array, mx.array]]:
+def svd(a: mx.array, full_matrices: bool = True, compute_uv: bool = True) -> Union[mx.array, Tuple[mx.array, mx.array, mx.array]]:
     """
     Compute the singular value decomposition of a matrix using power iteration.
     
@@ -150,9 +152,8 @@ def svd(a: ArrayLike, full_matrices: bool = True, compute_uv: bool = True) -> Un
                     # Pad U with orthogonal vectors
                     u_pad = mx.zeros((m, mx.subtract(mx.array(m), mx.array(k))), dtype=a_array.dtype)
                     # Simple orthogonalization (not fully robust)
-                    m_minus_k = mx.subtract(mx.array(m), mx.array(k)).item()
-                    # Convert to Python int without using int() directly
-                    m_minus_k_int = m_minus_k
+                    # Use direct integer calculation
+                    m_minus_k_int = m - k
                     for i in range(m_minus_k_int):
                         u_pad_col = mx.zeros((m,), dtype=a_array.dtype)
                         
@@ -206,9 +207,8 @@ def svd(a: ArrayLike, full_matrices: bool = True, compute_uv: bool = True) -> Un
                     # Pad V with orthogonal vectors
                     v_pad = mx.zeros((n, mx.subtract(mx.array(n), mx.array(k))), dtype=a_array.dtype)
                     # Simple orthogonalization (not fully robust)
-                    n_minus_k = mx.subtract(mx.array(n), mx.array(k)).item()
-                    # Convert to Python int without using int() directly
-                    n_minus_k_int = n_minus_k
+                    # Use direct integer calculation
+                    n_minus_k_int = n - k
                     for i in range(n_minus_k_int):
                         v_pad_col = mx.zeros((n,), dtype=a_array.dtype)
                         
@@ -225,7 +225,7 @@ def svd(a: ArrayLike, full_matrices: bool = True, compute_uv: bool = True) -> Un
             return s
 
 
-def eig(a: ArrayLike) -> Tuple[mx.array, mx.array]:
+def eig(a: mx.array) -> Tuple[mx.array, mx.array]:
     """
     Compute the eigenvalues and eigenvectors of a square matrix using power iteration.
     
@@ -274,8 +274,9 @@ def eig(a: ArrayLike) -> Tuple[mx.array, mx.array]:
         # Compute Rayleigh quotient to get eigenvalue
         eigenvalue = mx.sum(mx.multiply(v, mx.matmul(a_copy, v)))
         
-        # Store eigenvalue and eigenvector using direct indexing
-        eigenvalues[i] = eigenvalue.item()
+        # Store eigenvalue and eigenvector using MLX array operations
+        # Create a new array with the updated value at index i
+        eigenvalues = mx.array([eigenvalue if idx == i else eigenvalues[idx] for idx in range(n)])
         
         # Update eigenvectors using direct indexing
         for j in range(n):
@@ -288,7 +289,7 @@ def eig(a: ArrayLike) -> Tuple[mx.array, mx.array]:
     return eigenvalues, eigenvectors
 
 
-def eigvals(a: ArrayLike) -> mx.array:
+def eigvals(a: mx.array) -> mx.array:
     """
     Compute the eigenvalues of a square matrix.
     
@@ -302,7 +303,7 @@ def eigvals(a: ArrayLike) -> mx.array:
     return eigenvalues
 
 
-def det(a: ArrayLike) -> mx.array:
+def det(a: mx.array) -> mx.array:
     """
     Compute the determinant of a square matrix.
     
@@ -350,9 +351,8 @@ def det(a: ArrayLike) -> mx.array:
             return mx.array(0.0, dtype=a_array.dtype)
         
         # Eliminate below
-        i_plus_1 = mx.add(mx.array(i), mx.array(1)).item()
-        # Convert to Python int without using int() directly
-        i_plus_1_int = i_plus_1
+        # Use direct integer calculation
+        i_plus_1_int = i + 1
         for j in range(i_plus_1_int, n):
             factor = mx.divide(a_copy[j, i], pivot)
             
@@ -366,7 +366,7 @@ def det(a: ArrayLike) -> mx.array:
     return det_value
 
 
-def norm(x: ArrayLike, ord: Optional[Union[int, str]] = None, axis: Optional[Union[int, Tuple[int, ...]]] = None, keepdim: bool = False) -> mx.array:
+def norm(x: mx.array, ord: Optional[Union[int, str]] = None, axis: Optional[Union[int, Tuple[int, ...]]] = None, keepdim: bool = False) -> mx.array:
     """
     Compute the matrix or vector norm.
     
@@ -480,7 +480,7 @@ def norm(x: ArrayLike, ord: Optional[Union[int, str]] = None, axis: Optional[Uni
     return result
 
 
-def qr(a: ArrayLike, mode: str = 'reduced') -> Tuple[mx.array, mx.array]:
+def qr(a: mx.array, mode: str = 'reduced') -> Tuple[mx.array, mx.array]:
     """
     Compute the QR decomposition of a matrix using Gram-Schmidt orthogonalization.
     
@@ -521,8 +521,11 @@ def qr(a: ArrayLike, mode: str = 'reduced') -> Tuple[mx.array, mx.array]:
             # Calculate r[i, j]
             r_ij = mx.sum(mx.multiply(q[:, i], v))
             
-            # Update r using direct indexing
-            r[i, j] = r_ij.item()
+            # Create a new array with the updated value
+            # We'll use a temporary array to hold the value at position (i, j)
+            temp = mx.zeros_like(r)
+            temp = temp.at[i, j].add(r_ij)
+            r = r + temp
             
             # Update v
             v = mx.subtract(v, mx.multiply(r[i, j], q[:, i]))
@@ -545,14 +548,15 @@ def qr(a: ArrayLike, mode: str = 'reduced') -> Tuple[mx.array, mx.array]:
         r[j, j] = r_jj
         
         # Compute the remaining elements of the j-th row of R
-        j_plus_1 = mx.add(mx.array(j), mx.array(1)).item()
-        # Convert to Python int without using int() directly
-        j_plus_1_int = j_plus_1
+        # Use direct integer calculation
+        j_plus_1_int = j + 1
         for k in range(j_plus_1_int, n):
             r_jk = mx.sum(mx.multiply(q[:, j], a_array[:, k]))
             
-            # Update r using direct indexing
-            r[j, k] = r_jk.item()
+            # Create a new array with the updated value
+            temp = mx.zeros_like(r)
+            temp = temp.at[j, k].add(r_jk)
+            r = r + temp
     
     # Handle different modes
     if mode == 'r':
@@ -564,7 +568,7 @@ def qr(a: ArrayLike, mode: str = 'reduced') -> Tuple[mx.array, mx.array]:
         return q, r
 
 
-def cholesky(a: ArrayLike) -> mx.array:
+def cholesky(a: mx.array) -> mx.array:
     """
     Compute the Cholesky decomposition of a positive definite matrix.
     
@@ -591,9 +595,8 @@ def cholesky(a: ArrayLike) -> mx.array:
     
     # Compute the Cholesky decomposition
     for i in range(n):
-        i_plus_1 = mx.add(mx.array(i), mx.array(1)).item()
-        # Convert to Python int without using int() directly
-        i_plus_1_int = i_plus_1
+        # Use direct integer calculation
+        i_plus_1_int = i + 1
         for j in range(i_plus_1_int):
             if mx.equal(i, j):
                 # Diagonal element
@@ -601,19 +604,23 @@ def cholesky(a: ArrayLike) -> mx.array:
                 if mx.less(s, mx.array(0)):
                     raise ValueError("Matrix is not positive definite")
                 
-                # Update l using direct indexing
-                l[i, i] = mx.sqrt(s).item()
+                # Create a new array with the updated value
+                temp = mx.zeros_like(l)
+                temp = temp.at[i, i].add(mx.sqrt(s))
+                l = l + temp
             else:
                 # Off-diagonal element
                 s = mx.subtract(a_array[i, j], mx.sum(mx.multiply(l[i, :j], l[j, :j])))
                 
-                # Update l using direct indexing
-                l[i, j] = mx.divide(s, l[j, j]).item()
+                # Create a new array with the updated value
+                temp = mx.zeros_like(l)
+                temp = temp.at[i, j].add(mx.divide(s, l[j, j]))
+                l = l + temp
     
     return l
 
 
-def lstsq(a: ArrayLike, b: ArrayLike, rcond: Optional[float] = None) -> Tuple[mx.array, mx.array, mx.array, mx.array]:
+def lstsq(a: mx.array, b: mx.array, rcond: Optional[float] = None) -> Tuple[mx.array, mx.array, mx.array, mx.array]:
     """
     Compute the least-squares solution to a linear matrix equation.
     
@@ -661,8 +668,10 @@ def lstsq(a: ArrayLike, b: ArrayLike, rcond: Optional[float] = None) -> Tuple[mx
     s_size = s.shape[0]  # Get the size of s
     for i in range(s_size):
         if mx.greater(s[i], rcond_tensor).item():
-            # Update s_inv using direct indexing
-            s_inv[i] = mx.divide(mx.array(1.0), s[i]).item()
+            # Create a new array with the updated value
+            temp = mx.zeros_like(s_inv)
+            temp = temp.at[i].add(mx.divide(mx.array(1.0), s[i]))
+            s_inv = s_inv + temp
     
     # Compute solution
     solution = mx.zeros((n, b_array.shape[1]), dtype=a_array.dtype)

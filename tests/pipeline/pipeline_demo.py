@@ -35,11 +35,11 @@ from ember_ml.core.stride_aware_cfc import (
 
 # Check if ncps is available
 try:
-    from ncps import wirings
+    from ember_ml.nn.modules import NCP, AutoNCP
     NCPS_AVAILABLE = True
 except ImportError:
     NCPS_AVAILABLE = False
-    logger.warning("ncps package not available. AutoNCP wiring will not be available.")
+    logger.warning("NCP package not available. AutoNCP wiring will not be available.")
 
 
 class IntegratedPipeline:

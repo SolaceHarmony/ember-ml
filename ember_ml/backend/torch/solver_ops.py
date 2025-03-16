@@ -7,8 +7,13 @@ This module provides PyTorch implementations of solver operations.
 import torch
 from typing import Any, Optional, Union, Tuple
 
-# Import from tensor_ops
-from ember_ml.backend.torch.tensor_ops import convert_to_tensor
+# Import from tensor module
+from typing import Any, Sequence, Union
+from ember_ml.backend.torch.tensor.tensor import TorchTensor
+
+# Create a tensor instance for convert_to_tensor
+_tensor_ops = TorchTensor()
+convert_to_tensor = _tensor_ops.convert_to_tensor
 
 
 def solve(a: Any, b: Any) -> torch.Tensor:

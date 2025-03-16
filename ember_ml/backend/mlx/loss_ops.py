@@ -7,10 +7,22 @@ This module provides MLX implementations of loss operations.
 import mlx.core as mx
 from typing import Any, Optional, Union, Sequence, cast
 
-from ember_ml.ops.interfaces.loss_ops import LossOps
-from ember_ml.backend.mlx.tensor_ops import MLXTensorOps, scatter
+import mlx.core as mx
+from typing import Any, Optional, Union, Sequence, cast
 
-class MLXLossOps(LossOps):
+from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+
+# Create a tensor instance for tensor operations
+_tensor_ops = MLXTensor()
+
+# Import scatter function from the appropriate module
+# This is a placeholder - you'll need to update this with the correct import
+def scatter(src, indices, dim_size, aggr="add", axis=-1):
+    """Placeholder for scatter function."""
+    # Implementation would go here
+    pass
+
+class MLXLossOps:
     """MLX implementation of loss operations."""
     
     def mean_squared_error(self, y_true: Any, y_pred: Any, 
@@ -28,8 +40,8 @@ class MLXLossOps(LossOps):
         Returns:
             Mean squared error
         """
-        y_true = MLXTensorOps().convert_to_tensor(y_true)
-        y_pred = MLXTensorOps().convert_to_tensor(y_pred)
+        y_true = _tensor_ops.convert_to_tensor(y_true)
+        y_pred = _tensor_ops.convert_to_tensor(y_pred)
         
         squared_error = mx.square(y_true - y_pred)
         return mx.mean(squared_error, axis=axis, keepdims=keepdims)
@@ -49,8 +61,8 @@ class MLXLossOps(LossOps):
         Returns:
             Mean absolute error
         """
-        y_true = MLXTensorOps().convert_to_tensor(y_true)
-        y_pred = MLXTensorOps().convert_to_tensor(y_pred)
+        y_true = _tensor_ops.convert_to_tensor(y_true)
+        y_pred = _tensor_ops.convert_to_tensor(y_pred)
         
         absolute_error = mx.abs(y_true - y_pred)
         return mx.mean(absolute_error, axis=axis, keepdims=keepdims)
@@ -71,8 +83,8 @@ class MLXLossOps(LossOps):
         Returns:
             Binary crossentropy loss
         """
-        y_true = MLXTensorOps().convert_to_tensor(y_true)
-        y_pred = MLXTensorOps().convert_to_tensor(y_pred)
+        y_true = _tensor_ops.convert_to_tensor(y_true)
+        y_pred = _tensor_ops.convert_to_tensor(y_pred)
         
         if from_logits:
             # Apply sigmoid to convert logits to probabilities
@@ -103,8 +115,8 @@ class MLXLossOps(LossOps):
         Returns:
             Categorical crossentropy loss
         """
-        y_true = MLXTensorOps().convert_to_tensor(y_true)
-        y_pred = MLXTensorOps().convert_to_tensor(y_pred)
+        y_true = _tensor_ops.convert_to_tensor(y_true)
+        y_pred = _tensor_ops.convert_to_tensor(y_pred)
         
         if from_logits:
             # Apply softmax to convert logits to probabilities
@@ -143,8 +155,8 @@ class MLXLossOps(LossOps):
         Returns:
             Sparse categorical crossentropy loss
         """
-        y_true = MLXTensorOps().convert_to_tensor(y_true)
-        y_pred = MLXTensorOps().convert_to_tensor(y_pred)
+        y_true = _tensor_ops.convert_to_tensor(y_true)
+        y_pred = _tensor_ops.convert_to_tensor(y_pred)
         
         # Convert sparse labels to one-hot encoding
         if len(y_true.shape) == len(y_pred.shape) - 1:
@@ -203,8 +215,8 @@ class MLXLossOps(LossOps):
         Returns:
             Huber loss
         """
-        y_true = MLXTensorOps().convert_to_tensor(y_true)
-        y_pred = MLXTensorOps().convert_to_tensor(y_pred)
+        y_true = _tensor_ops.convert_to_tensor(y_true)
+        y_pred = _tensor_ops.convert_to_tensor(y_pred)
         
         error = y_true - y_pred
         abs_error = mx.abs(error)
@@ -239,8 +251,8 @@ class MLXLossOps(LossOps):
         Returns:
             Log-cosh loss
         """
-        y_true = MLXTensorOps().convert_to_tensor(y_true)
-        y_pred = MLXTensorOps().convert_to_tensor(y_pred)
+        y_true = _tensor_ops.convert_to_tensor(y_true)
+        y_pred = _tensor_ops.convert_to_tensor(y_pred)
         
         error = y_pred - y_true
         

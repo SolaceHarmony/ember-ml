@@ -8,12 +8,14 @@ which extends the CfC cell with support for custom wiring.
 from typing import Optional, List, Dict, Any, Union, Tuple
 
 from ember_ml import ops
+from ember_ml.nn.tensor import float32
 from ember_ml.nn.modules import Module, Parameter
 from ember_ml.nn.wirings import Wiring, NCPWiring, AutoNCP
+from ember_ml.nn.modules.module_wired_cell import ModuleWiredCell
 from ember_ml.nn.modules.rnn.cfc_cell import CfCCell
 from ember_ml.initializers import glorot_uniform, orthogonal
 
-class WiredCfCCell(CfCCell):
+class WiredCfCCell(ModuleWiredCell):
     """
     CfC cell with custom wiring.
     
@@ -23,7 +25,9 @@ class WiredCfCCell(CfCCell):
     
     def __init__(
         self,
-        wiring,
+        input_size: int,
+        wiring: Wiring,
+        mode: str = "default",
         time_scale_factor: float = 1.0,
         activation: str = "tanh",
         recurrent_activation: str = "sigmoid",
@@ -38,7 +42,9 @@ class WiredCfCCell(CfCCell):
         Initialize the Wired CfC cell.
         
         Args:
+            input_size: Size of the input
             wiring: Wiring configuration (e.g., AutoNCP)
+            mode: Mode of operation
             time_scale_factor: Factor to scale the time constant
             activation: Activation function for the output
             recurrent_activation: Activation function for the recurrent step
@@ -49,21 +55,25 @@ class WiredCfCCell(CfCCell):
             mixed_memory: Whether to use mixed memory
             **kwargs: Additional keyword arguments
         """
-        self.wiring = wiring
-        units = wiring.units
-        
+        # Initialize with the ModuleWiredCell parent class
         super().__init__(
-            units=units,
-            time_scale_factor=time_scale_factor,
-            activation=activation,
-            recurrent_activation=recurrent_activation,
-            use_bias=use_bias,
-            kernel_initializer=kernel_initializer,
-            recurrent_initializer=recurrent_initializer,
-            bias_initializer=bias_initializer,
-            mixed_memory=mixed_memory,
+            input_size=input_size,
+            wiring=wiring,
+            mode=mode,
             **kwargs
         )
+        
+        # Store additional parameters
+        self.time_scale_factor = time_scale_factor
+        self.recurrent_activation = recurrent_activation
+        self.kernel_initializer = kernel_initializer
+        self.recurrent_initializer = recurrent_initializer
+        self.bias_initializer = bias_initializer
+        self.mixed_memory = mixed_memory
+        
+
+        # Initialize weights
+        self._initialize_weights()
     
     def _initialize_weights(self):
         """Initialize the weights for the cell with wiring constraints."""
@@ -71,9 +81,9 @@ class WiredCfCCell(CfCCell):
         self.input_mask, self.recurrent_mask, self.output_mask = self.wiring.build()
         
         # Convert masks to tensors
-        self.input_mask = ops.convert_to_tensor(self.input_mask, dtype=ops.float32)
-        self.recurrent_mask = ops.convert_to_tensor(self.recurrent_mask, dtype=ops.float32)
-        self.output_mask = ops.convert_to_tensor(self.output_mask, dtype=ops.float32)
+        self.input_mask = ops.convert_to_tensor(self.input_mask, dtype=float32)
+        self.recurrent_mask = ops.convert_to_tensor(self.recurrent_mask, dtype=float32)
+        self.output_mask = ops.convert_to_tensor(self.output_mask, dtype=float32)
         
         # Create kernel parameters first
         # Input weights
@@ -102,24 +112,24 @@ class WiredCfCCell(CfCCell):
         self.kernel_mask = ops.concatenate([self.input_mask] * 4, axis=-1)
         self.recurrent_kernel_mask = ops.concatenate([self.recurrent_mask] * 4, axis=-1)
     
-    def forward(self, inputs, states=None, timespans=None):
+    def forward(self, input, hx, timespans=None):
         """
         Forward pass through the cell with wiring constraints.
         
         Args:
-            inputs: Input tensor
-            states: Previous states [hidden_state, time_state]
-            timespans: Time spans for continuous-time dynamics (default: 1.0)
+            input: Input tensor
+            hx: Hidden state tensor
+            timespans: Time spans for continuous-time dynamics
             
         Returns:
             Tuple of (output, [new_hidden_state, new_time_state])
         """
         # Initialize states if not provided
-        if states is None:
-            h_prev = ops.zeros((ops.shape(inputs)[0], self.units))
-            t_prev = ops.zeros((ops.shape(inputs)[0], self.units))
+        if hx is None:
+            h_prev = ops.zeros((ops.shape(input)[0], self.units))
+            t_prev = ops.zeros((ops.shape(input)[0], self.units))
         else:
-            h_prev, t_prev = states
+            h_prev, t_prev = hx
         
         # Default timespan is 1.0 if not provided
         ts = 1.0 if timespans is None else timespans
@@ -129,7 +139,7 @@ class WiredCfCCell(CfCCell):
         masked_recurrent_kernel = ops.multiply(self.recurrent_kernel, self.recurrent_kernel_mask)
         
         # Compute gates with wiring constraints
-        z = ops.matmul(inputs, masked_kernel)
+        z = ops.matmul(input, masked_kernel)
         z = ops.add(z, ops.matmul(h_prev, masked_recurrent_kernel))
         if self.use_bias:
             z = ops.add(z, self.bias)
@@ -144,18 +154,20 @@ class WiredCfCCell(CfCCell):
             f = ops.sigmoid(z_f)  # Forget gate
             o = ops.sigmoid(z_o)  # Output gate
         else:
-            i = getattr(ops, self.recurrent_activation)(z_i)
-            f = getattr(ops, self.recurrent_activation)(z_f)
-            o = getattr(ops, self.recurrent_activation)(z_o)
+            activation_fn = getattr(ops, self.recurrent_activation)
+            i = activation_fn(z_i)
+            f = activation_fn(z_f)
+            o = activation_fn(z_o)
         
-        if self.activation == "tanh":
+        if self.activation_name == "tanh":
             c = ops.tanh(z_c)     # Cell input
         else:
-            c = getattr(ops, self.activation)(z_c)
+            activation_fn = getattr(ops, self.activation_name)
+            c = activation_fn(z_c)
         
         # Apply time scaling
         # Compute time decay factor
-        decay = ops.exp(-ts / self.time_scale)
+        decay = ops.exp(ops.divide(-ts, self.time_scale))
         
         # Update time state
         t = ops.add(ops.multiply(f, t_prev), ops.multiply(i, c))
@@ -164,10 +176,11 @@ class WiredCfCCell(CfCCell):
         decay_term = ops.multiply(decay, h_prev)
         time_term = ops.multiply(ops.subtract(ops.ones_like(decay), decay), t)
         
-        if self.activation == "tanh":
+        if self.activation_name == "tanh":
             h = ops.multiply(o, ops.tanh(ops.add(decay_term, time_term)))
         else:
-            h = ops.multiply(o, getattr(ops, self.activation)(ops.add(decay_term, time_term)))
+            activation_fn = getattr(ops, self.activation_name)
+            h = ops.multiply(o, activation_fn(ops.add(decay_term, time_term)))
         
         # Apply output mask
         output = ops.multiply(h, self.output_mask)
