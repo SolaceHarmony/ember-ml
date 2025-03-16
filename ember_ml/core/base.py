@@ -116,7 +116,7 @@ class BaseChain(ABC):
         self.neurons = []
         for i in range(num_neurons):
             # Progressive increase using ops functions instead of Python operators
-            tau = ops.multiply(base_tau, ops.power(1.5, i))
+            tau = ops.multiply(base_tau, ops.pow(1.5, i))
             neuron = neuron_class(
                 neuron_id=i,
                 tau=tau,

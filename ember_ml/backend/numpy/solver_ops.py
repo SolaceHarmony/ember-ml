@@ -8,16 +8,17 @@ import numpy as np
 from typing import Union, Tuple, Optional, Sequence, Literal
 
 # Type aliases
-ArrayLike = Union[np.ndarray, float, int, list, tuple]
 Shape = Union[int, Sequence[int]]
 DType = Union[np.dtype, str, None]
 QRMode = Literal['reduced', 'complete', 'r', 'raw']
 
 # Import from tensor_ops
-from ember_ml.backend.numpy.tensor_ops import convert_to_tensor
+from ember_ml.backend.numpy.tensor import NumpyTensor, NumpyDType
 
+convert_to_tensor = NumpyTensor().convert_to_tensor
+dtype = NumpyDType()
 
-def inv(A: ArrayLike) -> np.ndarray:
+def inv(A: np.ndarray) -> np.ndarray:
     """
     Inverts a square matrix using Gauss-Jordan elimination.
     
@@ -68,7 +69,7 @@ def inv(A: ArrayLike) -> np.ndarray:
     return inv_A
 
 
-def solve(a: ArrayLike, b: ArrayLike) -> np.ndarray:
+def solve(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     """
     Solve a linear system of equations Ax = b for x using NumPy backend.
     
@@ -94,7 +95,7 @@ def solve(a: ArrayLike, b: ArrayLike) -> np.ndarray:
     return np.matmul(a_inv, b_array)
 
 
-def svd(a: ArrayLike, full_matrices: bool = True, compute_uv: bool = True, hermitian: bool = False) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray, np.ndarray]]:
+def svd(a: np.ndarray, full_matrices: bool = True, compute_uv: bool = True, hermitian: bool = False) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray, np.ndarray]]:
     """
     Compute the singular value decomposition of a matrix using power iteration.
     
@@ -119,7 +120,7 @@ def svd(a: ArrayLike, full_matrices: bool = True, compute_uv: bool = True, hermi
         return s
 
 
-def eig(a: ArrayLike) -> Tuple[np.ndarray, np.ndarray]:
+def eig(a: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     """
     Compute the eigenvalues and eigenvectors of a square matrix.
     
@@ -136,7 +137,7 @@ def eig(a: ArrayLike) -> Tuple[np.ndarray, np.ndarray]:
     return np.linalg.eig(a_array)
 
 
-def eigvals(a: ArrayLike) -> np.ndarray:
+def eigvals(a: np.ndarray) -> np.ndarray:
     """
     Compute the eigenvalues of a square matrix.
     
@@ -153,7 +154,7 @@ def eigvals(a: ArrayLike) -> np.ndarray:
     return np.linalg.eigvals(a_array)
 
 
-def det(a: ArrayLike) -> np.ndarray:
+def det(a: np.ndarray) -> np.ndarray:
     """
     Compute the determinant of a square matrix.
     
@@ -169,8 +170,7 @@ def det(a: ArrayLike) -> np.ndarray:
     # Use NumPy's built-in determinant function
     return np.linalg.det(a_array)
 
-
-def norm(x: ArrayLike, ord: Optional[Union[Literal['fro', 'nuc'], float]] = None, axis: None = None, keepdims: bool = False) -> Union[float, np.ndarray]:
+def norm(x: np.ndarray, ord: Optional[Union[Literal['fro', 'nuc'], float]] = None, axis: None = None, keepdims: bool = False) -> Union[float, np.ndarray]:
     """
     Compute the matrix or vector norm.
     
@@ -209,7 +209,7 @@ def norm(x: ArrayLike, ord: Optional[Union[Literal['fro', 'nuc'], float]] = None
         return result.item()
 
 
-def qr(a: ArrayLike, mode: QRMode = 'reduced') -> Tuple[np.ndarray, np.ndarray]:
+def qr(a: np.ndarray, mode: QRMode = 'reduced') -> Tuple[np.ndarray, np.ndarray]:
     """
     Compute the QR decomposition of a matrix.
     
@@ -227,7 +227,7 @@ def qr(a: ArrayLike, mode: QRMode = 'reduced') -> Tuple[np.ndarray, np.ndarray]:
     return np.linalg.qr(a_array, mode=mode)
 
 
-def cholesky(a: ArrayLike) -> np.ndarray:
+def cholesky(a: np.ndarray) -> np.ndarray:
     """
     Compute the Cholesky decomposition of a positive definite matrix.
     
@@ -244,7 +244,7 @@ def cholesky(a: ArrayLike) -> np.ndarray:
     return np.linalg.cholesky(a_array)
 
 
-def lstsq(a: ArrayLike, b: ArrayLike, rcond: Optional[float] = None) -> Tuple[np.ndarray, np.ndarray, int, np.ndarray]:
+def lstsq(a: np.ndarray, b: np.ndarray, rcond: Optional[float] = None) -> Tuple[np.ndarray, np.ndarray, int, np.ndarray]:
     """
     Compute the least-squares solution to a linear matrix equation.
     

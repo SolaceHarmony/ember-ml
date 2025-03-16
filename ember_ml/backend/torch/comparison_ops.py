@@ -8,7 +8,9 @@ import torch
 from typing import Any
 
 # Import from tensor_ops
-from ember_ml.backend.torch.tensor_ops import convert_to_tensor
+from ember_ml.backend.torch.tensor import TorchTensor
+
+convert_to_tensor = TorchTensor().convert_to_tensor
 
 
 def equal(x: Any, y: Any) -> torch.Tensor:

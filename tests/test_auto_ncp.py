@@ -1,45 +1,44 @@
-from ember_ml import ops, set_backend
-from ember_ml.nn.modules import AutoNCP
-import importlib
+import pytest
+from ember_ml import ops
+from ember_ml.backend import set_backend, get_backend
+from ember_ml.nn.wirings import AutoNCP
+import ember_ml.nn.tensor as tensor
+
+@pytest.fixture(params=['numpy', 'torch', 'mlx'])
+def backend_name(request):
+    """Fixture to test with different backends."""
+    return request.param
 
 def test_auto_ncp(backend_name):
-    print(f"\n=== Testing with {backend_name} backend ===")
-    
+    """Test AutoNCP with different backends."""
     # Set the backend
     set_backend(backend_name)
     
-    # Import the backend's config module
-    config = importlib.import_module(f'ember_ml.backend.{backend_name}.config')
-    print(f"Device: {config.DEFAULT_DEVICE}")
-    
-    # Create an AutoNCP module
-    auto_ncp = AutoNCP(
+    # Create an AutoNCP wiring
+    auto_ncp_wiring = AutoNCP(
         units=15,
         output_size=5,
-        sparsity_level=0.5,
+        sparsity_level=0.5
+    )
+    
+    # Create a CfC cell with the AutoNCP wiring
+    from ember_ml.nn.modules.rnn import WiredCfCCell
+    cell = WiredCfCCell(
+        input_size=15,
+        wiring=auto_ncp_wiring,
         activation="tanh",
         use_bias=True
     )
     
-    # Print the AutoNCP's parameters
-    print("\nAutoNCP parameters:")
-    for name, param in auto_ncp._parameters.items():
-        print(f"- {name}: {param}")
-    
     # Create input
     batch_size = 2
-    inputs = ops.random_normal((batch_size, 15))
+    inputs = tensor.random_normal((batch_size, 15))
+    
+    # Initial state
+    state = tensor.zeros((batch_size, 15))
     
     # Forward pass
-    output = auto_ncp(inputs)
+    output, new_state = cell(inputs, state)
     
-    print(f"\nInput shape: {ops.shape(inputs)}")
-    print(f"Output shape: {ops.shape(output)}")
-
-# Test with each backend
-backends = ['numpy', 'torch', 'mlx']
-for backend in backends:
-    try:
-        test_auto_ncp(backend)
-    except Exception as e:
-        print(f"\nError testing {backend} backend: {str(e)}")
+    # Check output shape
+    assert tensor.shape(output) == (batch_size, 5)

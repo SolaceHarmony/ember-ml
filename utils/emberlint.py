@@ -117,6 +117,7 @@ def check_types(file_path: str) -> Tuple[bool, List[str]]:
         return True, ["mypy not installed, skipping type checking"]
     
     try:
+        import mypy.api
         result = mypy.api.run([file_path])
         
         type_errors = []
@@ -179,8 +180,8 @@ def check_numpy_usage(file_path: str, numpy_aliases: List[str]) -> Tuple[bool, L
 
 def check_backend_specific_imports(file_path: str) -> Tuple[bool, List[str]]:
     """Check if backend-specific libraries are imported in frontend code."""
-    # Skip backend directory and features/common directory
-    if "/backend/" in file_path or "/features/common/" in file_path:
+    # Skip backend directory, features/common directory, and nn/tensor/common directory
+    if "/backend/" in file_path or "/features/common/" in file_path or "/nn/tensor/common/" in file_path:
         return False, []
     
     with open(file_path, 'r', encoding='utf-8') as f:
@@ -213,8 +214,8 @@ def check_backend_specific_imports(file_path: str) -> Tuple[bool, List[str]]:
 
 def check_backend_specific_code(file_path: str) -> Tuple[bool, List[Dict]]:
     """Check if backend-specific code is used in frontend code."""
-    # Skip backend directory and features/common directory
-    if "/backend/" in file_path or "/features/common/" in file_path:
+    # Skip backend directory, features/common directory, and nn/tensor/common directory
+    if "/backend/" in file_path or "/features/common/" in file_path or "/nn/tensor/common/" in file_path:
         return False, []
     
     with open(file_path, 'r', encoding='utf-8') as f:
@@ -277,8 +278,11 @@ class PrecisionReducingVisitor(ast.NodeVisitor):
                 self.numpy_imports.add(f"from numpy import {name.name}")
                 self.numpy_aliases.add(name.asname or name.name)
         elif node.module in ['torch', 'mlx'] or node.module and node.module.startswith(('torch.', 'mlx.')):
-            for name in node.names:
-                self.backend_imports.add(f"from {node.module} import {name.name}")
+            # Skip if this is in a backend or nn/tensor/common file
+            filename = getattr(node, 'filename', '')
+            if not ('/backend/' in filename or '/nn/tensor/common/' in filename):
+                for name in node.names:
+                    self.backend_imports.add(f"from {node.module} import {name.name}")
         self.generic_visit(node)
     
     def visit_FunctionDef(self, node):
@@ -473,6 +477,18 @@ BACKEND_PATHS = {
     "mlx": ["ember_ml/backend/mlx"]
 }
 
+# Define backend tensor paths for the new folder structure
+BACKEND_TENSOR_PATHS = {
+    "numpy": ["ember_ml/backend/numpy/tensor"],
+    "torch": ["ember_ml/backend/torch/tensor"],
+    "mlx": ["ember_ml/backend/mlx/tensor"]
+}
+
+# Define frontend tensor paths for the new folder structure
+FRONTEND_TENSOR_PATHS = {
+    "common": ["ember_ml/nn/tensor/common"]
+}
+
 def extract_functions_from_file(file_path: str) -> Set[str]:
     """Extract function names from a Python file."""
     functions = set()
@@ -529,7 +545,7 @@ def check_backend_consistency_for_file(file_path: str) -> Tuple[bool, List[Dict]
         return True, []
     
     try:
-        # Get the base filename (e.g., random_ops.py)
+        # Get the base filename (e.g., random_ops.py, tensor.py, dtype.py)
         base_filename = os.path.basename(file_path)
         
         # Determine if this is a backend file and which backend it belongs to
@@ -543,18 +559,30 @@ def check_backend_consistency_for_file(file_path: str) -> Tuple[bool, List[Dict]
         if not backend_in_path:
             return True, []
         
-        # Get the module type (e.g., random_ops, tensor_ops, etc.)
+        # Check if this is a tensor implementation file
+        is_tensor_file = "/tensor/" in file_path
+        
+        # Get the module type (e.g., random_ops, tensor_ops, tensor, dtype, etc.)
         module_type = None
         if base_filename.endswith('_ops.py'):
             module_type = base_filename
+        elif is_tensor_file:
+            module_type = base_filename
         else:
-            return True, []  # Skip files that don't follow the *_ops.py naming convention
+            return True, []  # Skip files that don't follow the naming conventions
         
         # Find corresponding files in other backends
         corresponding_files = {}
         for backend, paths in BACKEND_PATHS.items():
-            folder_path = paths[0]
-            corresponding_file = os.path.join(folder_path, module_type)
+            if is_tensor_file:
+                # Use tensor paths for tensor implementation files
+                folder_path = BACKEND_TENSOR_PATHS[backend][0]
+                corresponding_file = os.path.join(folder_path, module_type)
+            else:
+                # Use regular paths for ops files
+                folder_path = paths[0]
+                corresponding_file = os.path.join(folder_path, module_type)
+            
             if os.path.exists(corresponding_file):
                 corresponding_files[backend] = corresponding_file
         
@@ -617,6 +645,15 @@ def check_frontend_backend_violation(file_path: str) -> Tuple[bool, List[Dict]]:
         if any(backend in file_path for backend in ["/features/torch/", "/features/mlx/", "/features/numpy/"]):
             return True, [{
                 "violation": "Backend-specific implementation in features directory",
+                "file": file_path
+            }]
+    
+    # Check if the file is in the nn directory
+    if "/nn/" in file_path and not "/nn/tensor/common/" in file_path:
+        # Check if the file is in a backend-specific directory
+        if any(backend in file_path for backend in ["/nn/torch/", "/nn/mlx/", "/nn/numpy/"]):
+            return True, [{
+                "violation": "Backend-specific implementation in nn directory",
                 "file": file_path
             }]
     

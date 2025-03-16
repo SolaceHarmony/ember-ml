@@ -40,7 +40,7 @@ def load(filepath: str, allow_pickle: bool = True) -> Any:
     # Load from file using NumPy
     return np.load(filepath, allow_pickle=allow_pickle)
 
-class NumPyIOOps:
+class NumpyIOOps:
     """NumPy implementation of I/O operations."""
     
     def save(self, filepath: str, obj: Any, allow_pickle: bool = True) -> None:

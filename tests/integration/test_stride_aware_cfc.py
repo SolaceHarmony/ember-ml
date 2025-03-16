@@ -1,20 +1,20 @@
 import pytest
 from typing import Any
-import numpy as np  # Keep NumPy for random seed
 
 # Import ember_ml ops instead of Keras
+from ember_ml.nn import tensor
 from ember_ml import ops
-ops.set_seed(812)
+tensor.set_seed(812)
 
 # Import the custom modules
-from ember_ml.nn import wirings
+from ember_ml.nn import wirings, tensor
 import matplotlib.pyplot as plt
 from ember_ml.nn.modules.rnn import StrideAwareWiredCfCCell, StrideAwareCfC
 
 # Test Fixtures
 @pytest.fixture
 def input_data():
-    return ops.convert_to_tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=ops.float32)
+    return tensor.convert_to_tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=tensor.float32)
 
 @pytest.fixture
 def wiring():
@@ -65,8 +65,8 @@ def generate_leaky_data(
       Tuple: input data of shape (num_seq, seq_len, input_size), target data of
         shape (num_seq, seq_len, output_size).
     """
-    # Use NumPy for setting random seed
-    np.random.seed(seed)
+    # Use tensor for setting random seed
+    tensor.set_seed(seed)
     
     # Make sure input_size and output_size are not None
     if input_size is None:
@@ -79,19 +79,19 @@ def generate_leaky_data(
     
     for _ in range(num_seq):
         # Use NumPy arrays for computation
-        input_np = np.random.normal(0, 1, (batch_size, seq_len, input_size)).astype(np.float32)
-        output_np = np.zeros((batch_size, seq_len, output_size), dtype=np.float32)
-        leakage_np = np.full((batch_size, 1, output_size), 0.05, dtype=np.float32)
-        w_in_np = np.random.normal(0, 1, (batch_size, input_size, output_size)).astype(np.float32)
-        b_in_np = np.random.normal(0, 1, (batch_size, 1, output_size)).astype(np.float32)
-        w_rec_np = np.zeros((batch_size, output_size, output_size), dtype=np.float32)
-        b_rec_np = np.random.normal(0, 1, (batch_size, 1, output_size)).astype(np.float32)
+        input_np = tensor.random_normal(0, 1, (batch_size, seq_len, input_size)).astype(tensor.float32)
+        output_np = tensor.zeros((batch_size, seq_len, output_size), dtype=tensor.float32)
+        leakage_np = tensor.full((batch_size, 1, output_size), 0.05, dtype=tensor.float32)
+        w_in_np = tensor.random_normal(0, 1, (batch_size, input_size, output_size)).astype(tensor.float32)
+        b_in_np = tensor.random_normal(0, 1, (batch_size, 1, output_size)).astype(tensor.float32)
+        w_rec_np = tensor.zeros((batch_size, output_size, output_size), dtype=tensor.float32)
+        b_rec_np = tensor.random_normal(0, 1, (batch_size, 1, output_size)).astype(tensor.float32)
         
         # Calculate the output sequence
         for i in range(1, seq_len):
             for b in range(batch_size):
-                input_term = np.tanh(np.matmul(input_np[b, i, :], w_in_np[b]) + b_in_np[b])
-                rec_term = np.tanh(np.matmul(output_np[b, i-1, :], w_rec_np[b]) + b_rec_np[b])
+                input_term = ops.tanh(ops.matmul(input_np[b, i, :], w_in_np[b]) + b_in_np[b])
+                rec_term = ops.tanh(ops.matmul(output_np[b, i-1, :], w_rec_np[b]) + b_rec_np[b])
                 output_np[b, i, :] = (
                     (1 - leakage_np[b]) * output_np[b, i-1, :] + 
                     leakage_np[b] * input_term + 
@@ -99,15 +99,15 @@ def generate_leaky_data(
                 )
         
         # Convert to tensors
-        input_tensor = ops.convert_to_tensor(input_np)
-        output_tensor = ops.convert_to_tensor(output_np)
+        input_tensor = tensor.convert_to_tensor(input_np)
+        output_tensor = tensor.convert_to_tensor(output_np)
         
         inputs_list.append(input_tensor)
         outputs_list.append(output_tensor)
 
     # Stack the tensors
-    inputs = ops.stack(inputs_list, axis=0)
-    outputs = ops.stack(outputs_list, axis=0)
+    inputs = tensor.stack(inputs_list, axis=0)
+    outputs = tensor.stack(outputs_list, axis=0)
     
     return inputs, outputs
 

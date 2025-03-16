@@ -6,7 +6,11 @@ This module provides NumPy implementations of math operations.
 
 import numpy as np
 from typing import Optional, Union, Sequence, List, Literal, Tuple
-from ember_ml.backend.numpy.tensor_ops import convert_to_tensor
+from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+
+# Create a tensor instance for convert_to_tensor
+_tensor_ops = NumpyTensor()
+convert_to_tensor = _tensor_ops.convert_to_tensor
 
 # Type aliases
 ArrayLike = Union[np.ndarray, float, int, list, tuple]

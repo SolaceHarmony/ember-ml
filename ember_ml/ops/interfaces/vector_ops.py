@@ -141,3 +141,195 @@ class VectorOps(ABC):
             Gaussian function evaluated at x
         """
         pass
+        
+    @abstractmethod
+    def fft(self, a: Any, n: Optional[int] = None, axis: int = -1) -> Any:
+        """
+        One dimensional discrete Fourier Transform.
+        
+        Args:
+            a: Input array
+            n: Length of transformed axis. If n < a.shape[axis], a is truncated
+               If n > a.shape[axis], a is zero-padded
+            axis: Axis over which to compute FFT
+            
+        Returns:
+            The transformed input array
+        """
+        pass
+        
+    @abstractmethod
+    def ifft(self, a: Any, n: Optional[int] = None, axis: int = -1) -> Any:
+        """
+        One dimensional inverse discrete Fourier Transform.
+        
+        Args:
+            a: Input array
+            n: Length of transformed axis. If n < a.shape[axis], a is truncated
+               If n > a.shape[axis], a is zero-padded
+            axis: Axis over which to compute inverse FFT
+            
+        Returns:
+            The inverse transformed input array
+        """
+        pass
+        
+    @abstractmethod
+    def fft2(self, a: Any, s: Optional[Tuple[int, int]] = None, axes: Tuple[int, int] = (-2, -1)) -> Any:
+        """
+        Two dimensional discrete Fourier Transform.
+        
+        Args:
+            a: Input array
+            s: Shape of the result (n, m). If given, each dimension of a is zero or 
+               truncated to match s
+            axes: Axes over which to compute 2D FFT
+            
+        Returns:
+            The transformed input array
+        """
+        pass
+        
+    @abstractmethod
+    def ifft2(self, a: Any, s: Optional[Tuple[int, int]] = None, axes: Tuple[int, int] = (-2, -1)) -> Any:
+        """
+        Two dimensional inverse discrete Fourier Transform.
+        
+        Args:
+            a: Input array
+            s: Shape of the result (n, m). If given, each dimension of a is zero or
+               truncated to match s
+            axes: Axes over which to compute inverse 2D FFT
+            
+        Returns:
+            The inverse transformed input array
+        """
+        pass
+        
+    @abstractmethod
+    def fftn(self, a: Any, s: Optional[Sequence[int]] = None, axes: Optional[Sequence[int]] = None) -> Any:
+        """
+        N-dimensional discrete Fourier Transform.
+        
+        Args:
+            a: Input array
+            s: Shape of the result. If given, each dimension of a is zero or
+               truncated to match s
+            axes: Axes over which to compute the N-D FFT
+            
+        Returns:
+            The transformed input array
+        """
+        pass
+        
+    @abstractmethod
+    def ifftn(self, a: Any, s: Optional[Sequence[int]] = None, axes: Optional[Sequence[int]] = None) -> Any:
+        """
+        N-dimensional inverse discrete Fourier Transform.
+        
+        Args:
+            a: Input array
+            s: Shape of the result. If given, each dimension of a is zero or
+               truncated to match s
+            axes: Axes over which to compute the inverse N-D FFT
+            
+        Returns:
+            The inverse transformed input array
+        """
+        pass
+        
+    @abstractmethod
+    def rfft(self, a: Any, n: Optional[int] = None, axis: int = -1) -> Any:
+        """
+        One dimensional discrete Fourier Transform for real input.
+        
+        Args:
+            a: Input array (real)
+            n: Length of transformed axis. If n < a.shape[axis], a is truncated
+               If n > a.shape[axis], a is zero-padded
+            axis: Axis over which to compute real FFT
+            
+        Returns:
+            The transformed input array
+        """
+        pass
+        
+    @abstractmethod
+    def irfft(self, a: Any, n: Optional[int] = None, axis: int = -1) -> Any:
+        """
+        One dimensional inverse discrete Fourier Transform for real input.
+        
+        Args:
+            a: Input array
+            n: Length of transformed axis. If n < a.shape[axis], a is truncated
+               If n > a.shape[axis], a is zero-padded
+            axis: Axis over which to compute inverse real FFT
+            
+        Returns:
+            The inverse transformed input array (real)
+        """
+        pass
+    
+    @abstractmethod
+    def rfft2(self, a: Any, s: Optional[Tuple[int, int]] = None, axes: Tuple[int, int] = (-2, -1)) -> Any:
+        """
+        Two dimensional real discrete Fourier Transform.
+        
+        Args:
+            a: Input array (real)
+            s: Shape of the result (n, m). If given, each dimension of a is zero or 
+               truncated to match s
+            axes: Axes over which to compute 2D real FFT
+            
+        Returns:
+            The transformed input array
+        """
+        pass
+        
+    @abstractmethod
+    def irfft2(self, a: Any, s: Optional[Tuple[int, int]] = None, axes: Tuple[int, int] = (-2, -1)) -> Any:
+        """
+        Two dimensional inverse real discrete Fourier Transform.
+        
+        Args:
+            a: Input array
+            s: Shape of the result (n, m). If given, each dimension of a is zero or
+               truncated to match s
+            axes: Axes over which to compute inverse 2D real FFT
+            
+        Returns:
+            The inverse transformed input array (real)
+        """
+        pass
+        
+    @abstractmethod
+    def rfftn(self, a: Any, s: Optional[Sequence[int]] = None, axes: Optional[Sequence[int]] = None) -> Any:
+        """
+        N-dimensional real discrete Fourier Transform.
+        
+        Args:
+            a: Input array (real)
+            s: Shape of the result. If given, each dimension of a is zero or
+               truncated to match s
+            axes: Axes over which to compute the N-D real FFT
+            
+        Returns:
+            The transformed input array
+        """
+        pass
+        
+    @abstractmethod
+    def irfftn(self, a: Any, s: Optional[Sequence[int]] = None, axes: Optional[Sequence[int]] = None) -> Any:
+        """
+        N-dimensional inverse real discrete Fourier Transform.
+        
+        Args:
+            a: Input array
+            s: Shape of the result. If given, each dimension of a is zero or
+               truncated to match s
+            axes: Axes over which to compute the inverse N-D real FFT
+            
+        Returns:
+            The inverse transformed input array (real)
+        """
+        pass

@@ -5,10 +5,10 @@ This module provides a random wiring configuration for neural
 circuit policies, where connections are randomly generated.
 """
 
-import numpy as np
 from typing import Optional, Tuple
 
 from ember_ml import ops
+from ember_ml.nn.tensor import EmberTensor, int32, random_uniform, cast
 from ember_ml.nn.wirings.wiring import Wiring
 
 class RandomWiring(Wiring):
@@ -39,34 +39,36 @@ class RandomWiring(Wiring):
         """
         super().__init__(units, output_dim, input_dim, sparsity_level, seed)
     
-    def build(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def build(self, input_dim=None) -> Tuple[EmberTensor, EmberTensor, EmberTensor]:
         """
         Build the random wiring configuration.
         
+        Args:
+            input_dim: Input dimension (optional)
+            
         Returns:
             Tuple of (input_mask, recurrent_mask, output_mask)
         """
+        # Set input_dim if provided
+        if input_dim is not None:
+            self.set_input_dim(input_dim)
+            
         # Set random seed for reproducibility
         if self.seed is not None:
             ops.set_seed(self.seed)
         
         # Create random masks
-        input_mask = ops.cast(
-            ops.random_uniform((self.input_dim,)) >= self.sparsity_level,
-            ops.int32
+        input_mask = cast(
+            random_uniform((self.input_dim,)) >= self.sparsity_level,
+            dtype=int32
         )
-        recurrent_mask = ops.cast(
-            ops.random_uniform((self.units, self.units)) >= self.sparsity_level,
-            ops.int32
+        recurrent_mask = cast(
+            random_uniform((self.units, self.units)) >= self.sparsity_level,
+            dtype=int32
         )
-        output_mask = ops.cast(
-            ops.random_uniform((self.units,)) >= self.sparsity_level,
-            ops.int32
+        output_mask = cast(
+            random_uniform((self.units,)) >= self.sparsity_level,
+            dtype=int32
         )
-        
-        # Convert to numpy arrays for consistency with the wiring interface
-        input_mask = ops.to_numpy(input_mask)
-        recurrent_mask = ops.to_numpy(recurrent_mask)
-        output_mask = ops.to_numpy(output_mask)
         
         return input_mask, recurrent_mask, output_mask

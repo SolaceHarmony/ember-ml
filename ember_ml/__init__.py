@@ -71,7 +71,7 @@ from ember_ml import visualization
 # Removed import of non-existent solvers module
 from ember_ml import data
 from ember_ml import ops
-from ember_ml import wirings
+
 
 # Version of the Ember ML package
 __version__ = '0.2.0'
@@ -92,7 +92,6 @@ __all__ = [
     # Removed 'solvers' from __all__
     'data',
     'ops',
-    'wirings',
     'nn',
     'set_backend',
 ]

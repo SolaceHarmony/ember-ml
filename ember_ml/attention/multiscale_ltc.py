@@ -4,11 +4,14 @@ import pandas as pd
 import numpy as np
 
 from ember_ml import ops
+from ember_ml.nn import tensor
+from ember_ml.nn.tensor import EmberTensor, zeros, ones, reshape, concatenate, to_numpy, convert_to_tensor
+from ember_ml.nn.tensor import float32, shape, cast, arange, stack, pad, full
 from ember_ml.nn.wirings import AutoNCP
 from ember_ml.nn.modules.rnn.stride_aware_cell import StrideAwareCell
 from ember_ml.nn.modules.rnn.rnn import RNN
 from ember_ml.initializers import glorot_uniform
-from ember_ml.ops.tensor import EmberTensor
+from ember_ml.nn.tensor import EmberTensor
 from ember_ml.features import one_hot, fit_transform, fit, transform, PCA
 
 # The prepare_bigquery_data_bf function would be imported here in a real implementation
@@ -26,14 +29,14 @@ def prepare_bigquery_data_bf(*args, **kwargs):
     
     # Create mock dataframes with minimal data for testing
     # Use ops for random generation instead of numpy
-    mock_data = ops.random_uniform((100, 2))
-    mock_target = ops.random_uniform((100, 1))
+    mock_data = tensor.random_uniform((100, 2))
+    mock_target = tensor.random_uniform((100, 1))
     
     # Create mock dataframes
     mock_df = pd.DataFrame({
-        'feature1': ops.to_numpy(mock_data[:, 0]),
-        'feature2': ops.to_numpy(mock_data[:, 1]),
-        'target': ops.to_numpy(mock_target[:, 0])
+        'feature1': to_numpy(mock_data[:, 0]),
+        'feature2': to_numpy(mock_data[:, 1]),
+        'target': to_numpy(mock_target[:, 0])
     })
     
     # Mock features
@@ -72,10 +75,10 @@ def build_multiscale_ltc_model(input_dims: Dict[int, int], output_dim: int = 1,
         # Create input for this stride
         input_name = f"stride_{stride}_input"
         # Create a tensor to serve as a placeholder (similar to Keras Input layer)
-        model['inputs'][stride] = ops.convert_to_tensor(ops.zeros((1, dim)), dtype='float32')
+        model['inputs'][stride] = convert_to_tensor(zeros((1, dim)), dtype=float32)
         
         # Reshape for RNN processing if needed
-        reshaped = ops.reshape(model['inputs'][stride], (-1, 1, dim))
+        reshaped = reshape(model['inputs'][stride], (-1, 1, dim))
         
         # Create a wiring for this stride
         wiring = AutoNCP(
@@ -114,26 +117,26 @@ def build_multiscale_ltc_model(input_dims: Dict[int, int], output_dim: int = 1,
     
     # Concatenate outputs from all strides if there are multiple
     if len(ltc_outputs) > 1:
-        concatenated = ops.concatenate(ltc_outputs, axis=-1)
+        concatenated = concatenate(ltc_outputs, axis=-1)
     else:
         concatenated = ltc_outputs[0]
     
     # Add a fully connected layer to combine the multi-scale features
     # Use matrix multiplication for the dense layer
-    W_dense = glorot_uniform((ops.shape(concatenated)[-1], hidden_units))
-    b_dense = ops.zeros((hidden_units,))
+    W_dense = glorot_uniform((shape(concatenated)[-1], hidden_units))
+    b_dense = zeros((hidden_units,))
     dense = ops.relu(ops.add(ops.matmul(concatenated, W_dense), b_dense))
     
     # Apply dropout manually
     dropout_mask = ops.divide(
-        ops.cast(ops.greater(ops.random_uniform(ops.shape(dense)), dropout_rate), dense.dtype),
+        cast(ops.greater(tensor.random_uniform(shape(dense)), dropout_rate), dense.dtype),
         ops.subtract(1.0, dropout_rate)
     )
     dense_dropout = ops.multiply(dense, dropout_mask)
     
     # Output layer
     W_output = glorot_uniform((hidden_units, output_dim))
-    b_output = ops.zeros((output_dim,))
+    b_output = zeros((output_dim,))
     output = ops.add(ops.matmul(dense_dropout, W_output), b_output)
     model['outputs']['main'] = output
     
@@ -173,12 +176,12 @@ def visualize_feature_extraction(metadata: Dict) -> Any:
     ax3 = fig.add_subplot(2, 2, 3)
     input_dims = [data["input_dim"] for stride, data in metadata['temporal_compression'].items()]
     output_dims = [data["output_dim"] for stride, data in metadata['temporal_compression'].items()]
-    x = ops.arange(len(strides))
+    x = arange(len(strides))
     width = 0.35
     # Use numpy for matplotlib compatibility
-    x_np = ops.to_numpy(x)
-    ax3.bar(ops.to_numpy(ops.subtract(x_np, width/2)), input_dims, width, label='Input Dim')
-    ax3.bar(ops.to_numpy(ops.add(x_np, width/2)), output_dims, width, label='Output Dim')
+    x_np = to_numpy(x)
+    ax3.bar(to_numpy(ops.subtract(x_np, width/2)), input_dims, width, label='Input Dim')
+    ax3.bar(to_numpy(ops.add(x_np, width/2)), output_dims, width, label='Output Dim')
     ax3.set_title("Input/Output Dimensions by Stride")
     ax3.set_xlabel("Stride")
     ax3.set_ylabel("Dimension")
@@ -236,17 +239,17 @@ def visualize_multiscale_dynamics(model, test_inputs, test_y, stride_perspective
             # Forward pass through the cell
             if stride in test_inputs_tensor:
                 # Reshape for RNN processing
-                reshaped = ops.reshape(test_inputs_tensor[stride], (-1, 1, ops.shape(test_inputs_tensor[stride])[1]))
+                reshaped = reshape(test_inputs_tensor[stride], (-1, 1, shape(test_inputs_tensor[stride])[1]))
                 
                 # Process through the cell
                 outputs = []
                 states = None
-                for i in range(ops.shape(reshaped)[0]):
+                for i in range(shape(reshaped)[0]):
                     output, states = cell.forward(reshaped[i], states)
                     outputs.append(output)
                 
                 # Convert to tensor
-                cell_output = ops.stack(outputs)
+                cell_output = stack(outputs)
                 intermediate_outputs.append((stride, cell_output))
     
     # Create a figure
@@ -263,7 +266,7 @@ def visualize_multiscale_dynamics(model, test_inputs, test_y, stride_perspective
     if len(intermediate_outputs) > 0:
         # Use the last layer's output as predictions
         predictions = intermediate_outputs[-1][1]
-        ax1.scatter(ops.to_numpy(test_y_tensor), ops.to_numpy(predictions), alpha=0.5)
+        ax1.scatter(to_numpy(test_y_tensor), to_numpy(predictions), alpha=0.5)
         
         # Get min and max values for the diagonal line
         min_val = min(ops.min(test_y_tensor).item(), ops.min(predictions).item())
@@ -280,7 +283,7 @@ def visualize_multiscale_dynamics(model, test_inputs, test_y, stride_perspective
     for stride, output in intermediate_outputs:
         # Take the mean activation across samples
         mean_activation = ops.mean(output, axis=0)
-        ax2.plot(ops.to_numpy(mean_activation), label=f"Stride {stride}")
+        ax2.plot(to_numpy(mean_activation), label=f"Stride {stride}")
     ax2.set_title("Mean Activation Patterns Across Strides")
     ax2.set_xlabel("Neuron Index")
     ax2.set_ylabel("Mean Activation")
@@ -291,15 +294,15 @@ def visualize_multiscale_dynamics(model, test_inputs, test_y, stride_perspective
     ax3 = fig.add_subplot(2, 2, 3)
     for stride, output in intermediate_outputs:
         # Apply PCA to reduce to 2D
-        if ops.shape(output)[0] > 2:  # Need at least 3 samples for 2 components
+        if shape(output)[0] > 2:  # Need at least 3 samples for 2 components
             # Convert to numpy for PCA
-            output_np = ops.to_numpy(output)
+            output_np = to_numpy(output)
             pca = PCA()
             output_pca = pca.fit_transform(output_np, n_components=min(2, output_np.shape[0]-1))
             
             # Plot the PCA results
             ax3.scatter(output_pca[:, 0],
-                       output_pca[:, 1] if output_pca.shape[1] > 1 else ops.zeros(output_pca.shape[0]),
+                       output_pca[:, 1] if output_pca.shape[1] > 1 else zeros(output_pca.shape[0]),
                        label=f"Stride {stride}", alpha=0.5)
     ax3.set_title("PCA of Activations (2D)")
     ax3.set_xlabel("PC1")
@@ -310,8 +313,8 @@ def visualize_multiscale_dynamics(model, test_inputs, test_y, stride_perspective
     ax4 = fig.add_subplot(2, 2, 4)
     for stride, output in intermediate_outputs:
         # Flatten the output
-        output_flat = ops.reshape(output, (-1,))
-        ax4.hist(ops.to_numpy(output_flat), bins=50, alpha=0.5, label=f"Stride {stride}")
+        output_flat = reshape(output, (-1,))
+        ax4.hist(to_numpy(output_flat), bins=50, alpha=0.5, label=f"Stride {stride}")
     ax4.set_title("Activation Distribution")
     ax4.set_xlabel("Activation")
     ax4.set_ylabel("Frequency")
@@ -423,7 +426,7 @@ def integrate_liquid_neurons_with_visualization(
         
         # Apply dimensionality reduction using ember_ml PCA
         # Combine one-hot tensors for fitting
-        all_one_hot = ops.concatenate([
+        all_one_hot = concatenate([
             train_one_hot.data,
             val_one_hot.data,
             test_one_hot.data
@@ -434,18 +437,18 @@ def integrate_liquid_neurons_with_visualization(
         all_transformed = pca_instance.fit_transform(all_one_hot, n_components=1)
         
         # Split the transformed data back into train, val, test
-        train_size = ops.shape(train_one_hot.data)[0]
-        val_size = ops.shape(val_one_hot.data)[0]
+        train_size = shape(train_one_hot.data)[0]
+        val_size = shape(val_one_hot.data)[0]
         
-        # Use ops.slice instead of direct indexing
-        train_y_pca = ops.slice(all_transformed, [0, 0], [train_size, -1])
-        val_y_pca = ops.slice(all_transformed, [train_size, 0], [val_size, -1])
-        test_y_pca = ops.slice(all_transformed, [train_size + val_size, 0], [-1, -1])
+        # Use slice instead of direct indexing
+        train_y_pca = slice(all_transformed, [0, 0], [train_size, -1])
+        val_y_pca = slice(all_transformed, [train_size, 0], [val_size, -1])
+        test_y_pca = slice(all_transformed, [train_size + val_size, 0], [-1, -1])
         
         # Convert to float32
-        train_y = ops.cast(train_y_pca, 'float32')
-        val_y = ops.cast(val_y_pca, 'float32')
-        test_y = ops.cast(test_y_pca, 'float32')
+        train_y = cast(train_y_pca, 'float32')
+        val_y = cast(val_y_pca, 'float32')
+        test_y = cast(test_y_pca, 'float32')
         
         print(f"✅ EmberTensor-based encoding shape: {train_y.shape}")
     else:
@@ -453,16 +456,16 @@ def integrate_liquid_neurons_with_visualization(
         
         # Reshape to 2D if needed
         if len(train_y.shape) == 1:
-            train_y = train_y.reshape((-1, 1))
-            val_y = val_y.reshape((-1, 1))
-            test_y = test_y.reshape((-1, 1))
+            train_y = reshape(train_y,(-1, 1))
+            val_y = reshape(val_y,(-1, 1))
+            test_y = reshape(test_y,(-1, 1))
         
         # Cast to float32
-        train_y = train_y.to(dtype='float32')
-        val_y = val_y.to(dtype='float32')
-        test_y = test_y.to(dtype='float32')
+        train_y = cast(train_y,float32)
+        val_y = cast(val_y,float32)
+        test_y = cast(test_y,float32)
 
-    print(f"✅ Final target shape: {ops.shape(train_y)}, dtype: {ops.dtype(train_y)}")
+    print(f"✅ Final target shape: {shape(train_y)}, dtype: {train_y.dtype}")
 
     # Process stride-based representations
     processor = TemporalStrideProcessor(window_size=window_size, stride_perspectives=stride_perspectives, pca_components=pca_components)
@@ -471,23 +474,23 @@ def integrate_liquid_neurons_with_visualization(
     test_perspectives = processor.process_batch(test_X)
 
     # Convert to ember_ml tensors
-    train_inputs = {s: ops.convert_to_tensor(data, dtype='float32')
+    train_inputs = {s: convert_to_tensor(data, dtype='float32')
                    for s, data in train_perspectives.items()}
-    val_inputs = {s: ops.convert_to_tensor(data, dtype='float32')
+    val_inputs = {s: convert_to_tensor(data, dtype='float32')
                  for s, data in val_perspectives.items()}
-    test_inputs = {s: ops.convert_to_tensor(data, dtype='float32')
+    test_inputs = {s: convert_to_tensor(data, dtype='float32')
                   for s, data in test_perspectives.items()}
 
     print("Train Input Shapes (Before Model Building):",
-          {s: ops.shape(data) for s, data in train_inputs.items()})
+          {s: shape(data) for s, data in train_inputs.items()})
     print("Validation Input Shapes (Before Model Building):",
-          {s: ops.shape(data) for s, data in val_inputs.items()})
+          {s: shape(data) for s, data in val_inputs.items()})
     print("Test Input Shapes (Before Model Building):",
-          {s: ops.shape(data) for s, data in test_inputs.items()})
+          {s: shape(data) for s, data in test_inputs.items()})
 
     # Build model
     print("🔹 Building Multi-Scale Liquid Neural Network...")
-    input_dims = {s: ops.shape(train_perspectives[s])[1] for s in train_perspectives.keys()}
+    input_dims = {s: shape(train_perspectives[s])[1] for s in train_perspectives.keys()}
     model = build_multiscale_ltc_model(input_dims=input_dims, output_dim=1)
 
     # Train model
@@ -507,14 +510,14 @@ def integrate_liquid_neurons_with_visualization(
         train_mae = 0
         
         # Process in batches
-        num_batches = ops.shape(train_X)[0] // batch_size
+        num_batches = shape(train_X)[0] // batch_size
         for batch in range(num_batches):
             start_idx = batch * batch_size
-            end_idx = min((batch + 1) * batch_size, ops.shape(train_X)[0])
+            end_idx = min((batch + 1) * batch_size, shape(train_X)[0])
             
             # Get batch inputs
-            batch_inputs = {s: ops.slice(train_inputs[s], [start_idx, 0], [end_idx - start_idx, -1]) for s in train_inputs}
-            batch_y = ops.slice(train_y, [start_idx, 0], [end_idx - start_idx, -1])
+            batch_inputs = {s: slice(train_inputs[s], [start_idx, 0], [end_idx - start_idx, -1]) for s in train_inputs}
+            batch_y = slice(train_y, [start_idx, 0], [end_idx - start_idx, -1])
             
             # Forward pass
             outputs = model['outputs']['main']
@@ -540,14 +543,14 @@ def integrate_liquid_neurons_with_visualization(
         val_mae = 0
         
         # Process validation data
-        num_val_batches = ops.shape(val_X)[0] // batch_size
+        num_val_batches = shape(val_X)[0] // batch_size
         for batch in range(num_val_batches):
             start_idx = batch * batch_size
-            end_idx = min((batch + 1) * batch_size, ops.shape(val_X)[0])
+            end_idx = min((batch + 1) * batch_size, shape(val_X)[0])
             
             # Get batch inputs
-            batch_inputs = {s: ops.slice(val_inputs[s], [start_idx, 0], [end_idx - start_idx, -1]) for s in val_inputs}
-            batch_y = ops.slice(val_y, [start_idx, 0], [end_idx - start_idx, -1])
+            batch_inputs = {s: slice(val_inputs[s], [start_idx, 0], [end_idx - start_idx, -1]) for s in val_inputs}
+            batch_y = slice(val_y, [start_idx, 0], [end_idx - start_idx, -1])
             
             # Forward pass
             outputs = model['outputs']['main']
@@ -582,14 +585,14 @@ def integrate_liquid_neurons_with_visualization(
     test_mae = 0
     
     # Process test data
-    num_test_batches = ops.shape(test_X)[0] // batch_size
+    num_test_batches = shape(test_X)[0] // batch_size
     for batch in range(num_test_batches):
         start_idx = batch * batch_size
-        end_idx = min((batch + 1) * batch_size, ops.shape(test_X)[0])
+        end_idx = min((batch + 1) * batch_size, shape(test_X)[0])
         
         # Get batch inputs
-        batch_inputs = {s: ops.slice(test_inputs[s], [start_idx, 0], [end_idx - start_idx, -1]) for s in test_inputs}
-        batch_y = ops.slice(test_y, [start_idx, 0], [end_idx - start_idx, -1])
+        batch_inputs = {s: slice(test_inputs[s], [start_idx, 0], [end_idx - start_idx, -1]) for s in test_inputs}
+        batch_y = slice(test_y, [start_idx, 0], [end_idx - start_idx, -1])
         
         # Forward pass
         outputs = model['outputs']['main']
@@ -618,14 +621,14 @@ def integrate_liquid_neurons_with_visualization(
         },
         'temporal_compression': {
             stride: {
-                "input_dim": ops.shape(train_perspectives[stride])[0] * window_size,
-                "output_dim": ops.shape(train_perspectives[stride])[1],
-                "compression_ratio": (ops.shape(train_perspectives[stride])[0] * window_size)/ops.shape(train_perspectives[stride])[1],
+                "input_dim": shape(train_perspectives[stride])[0] * window_size,
+                "output_dim": shape(train_perspectives[stride])[1],
+                "compression_ratio": (shape(train_perspectives[stride])[0] * window_size)/shape(train_perspectives[stride])[1],
             }
             for stride in stride_perspectives if stride in train_perspectives
         },
         'dimensional_evolution': [
-            {"stage": f"stride_{s}", "dimension": ops.shape(train_perspectives[s])[1]} for s in stride_perspectives if s in train_perspectives
+            {"stage": f"stride_{s}", "dimension": shape(train_perspectives[s])[1]} for s in stride_perspectives if s in train_perspectives
         ]
     }
 
@@ -682,7 +685,7 @@ class TemporalStrideProcessor:
             Dictionary mapping stride lengths to processed data
         """
         # Convert to tensor for processing if it's not already
-        data = ops.convert_to_tensor(data)
+        data = convert_to_tensor(data)
             
         perspectives = {}
         for stride in self.stride_perspectives:
@@ -690,13 +693,13 @@ class TemporalStrideProcessor:
                 # Stride 1: No PCA, just create sliding windows
                 strided_data = self._create_strided_sequences(data, stride)
                 # Reshape to (num_windows, num_features * window_size)
-                reduced_data = ops.reshape(strided_data, (ops.shape(strided_data)[0], -1))
+                reduced_data = reshape(strided_data, (shape(strided_data)[0], -1))
             else:
                 # Stride > 1: Apply PCA per column
                 strided_data = self._create_strided_sequences(data, stride)
                 reduced_data = self._apply_pca_per_column(strided_data)
             perspectives[stride] = reduced_data
-            print(f"TemporalStrideProcessor: Stride {stride}, Output Shape: {ops.shape(reduced_data)}")
+            print(f"TemporalStrideProcessor: Stride {stride}, Output Shape: {shape(reduced_data)}")
         return perspectives
 
     def _create_strided_sequences(self, data: Any, stride: int) -> Any:
@@ -709,8 +712,8 @@ class TemporalStrideProcessor:
         Returns:
             Strided sequences of shape (num_sequences, window_size, num_features)
         """
-        num_samples = ops.shape(data)[0]
-        num_features = ops.shape(data)[1]
+        num_samples = shape(data)[0]
+        num_features = shape(data)[1]
         subsequences = []
 
         for i in range(0, num_samples - self.window_size + 1, stride):
@@ -721,7 +724,7 @@ class TemporalStrideProcessor:
             last_index = max(0, num_samples - self.window_size)
             subsequences.append(data[last_index:last_index+self.window_size])
 
-        return ops.stack(subsequences)
+        return stack(subsequences)
 
     def _apply_pca_per_column(self, strided_data: Any) -> Any:
         """Apply PCA to each column of the strided data.
@@ -733,7 +736,7 @@ class TemporalStrideProcessor:
             PCA-reduced data of shape (num_sequences, num_features * pca_components)
         """
         # Convert to numpy for PCA processing (PCA requires numpy arrays)
-        strided_data_np = ops.to_numpy(strided_data)
+        strided_data_np = to_numpy(strided_data)
         num_sequences = strided_data_np.shape[0]
         num_features = strided_data_np.shape[2]  # Original number of features
         reduced_features = []
@@ -747,16 +750,16 @@ class TemporalStrideProcessor:
                 if (column_data == column_data[0]).all():  # Check for constant columns
                     if column_data.shape[0] < self.pca_components:
                         # Create padded array with constant values
-                        padded_column = ops.pad(
-                            ops.convert_to_tensor(column_data.flatten()),
+                        padded_column = pad(
+                            convert_to_tensor(column_data.flatten()),
                             [[0, self.pca_components - column_data.shape[0]]],
                             constant_values=column_data[0,0]
                         )
-                        pca_results.append(ops.to_numpy(padded_column))
+                        pca_results.append(to_numpy(padded_column))
                     else:
                         # Create array filled with constant value
-                        pca_results.append(ops.to_numpy(
-                            ops.full((self.pca_components,), column_data[0,0])
+                        pca_results.append(to_numpy(
+                            full((self.pca_components,), column_data[0,0])
                         ))
                 else:
                     pca = PCA()
@@ -769,9 +772,9 @@ class TemporalStrideProcessor:
                         raise
 
             # Concatenate PCA results
-            reduced_features.append(ops.to_numpy(
-                ops.concatenate([ops.convert_to_tensor(arr) for arr in pca_results])
+            reduced_features.append(to_numpy(
+                concatenate([convert_to_tensor(arr) for arr in pca_results])
             ))
 
         # Convert back to tensor
-        return ops.convert_to_tensor(reduced_features)
+        return convert_to_tensor(reduced_features)

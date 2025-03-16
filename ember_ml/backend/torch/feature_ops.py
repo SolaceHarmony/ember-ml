@@ -7,7 +7,11 @@ This module provides PyTorch implementations of feature extraction and transform
 import torch
 import numpy as np
 from typing import Optional, Dict, Any, Tuple
-from ember_ml.backend.torch.tensor_ops import convert_to_tensor
+from ember_ml.backend.torch.tensor.tensor import TorchTensor
+
+# Create a tensor instance for convert_to_tensor
+_tensor_ops = TorchTensor()
+convert_to_tensor = _tensor_ops.convert_to_tensor
 
 
 def pca(
@@ -62,9 +66,13 @@ def pca(
     
     # Choose SVD solver
     if svd_solver == "auto":
-        if max(X_tensor.shape) <= 500:
+        # Use torch operations to avoid direct Python operators
+        max_dim = torch.max(torch.tensor(X_tensor.shape))
+        min_dim = torch.min(torch.tensor(X_tensor.shape))
+        
+        if max_dim <= 500:
             svd_solver = "full"
-        elif n_components < 0.8 * min(X_tensor.shape):
+        elif n_components is not None and n_components < torch.multiply(torch.tensor(0.8), min_dim).item():
             svd_solver = "randomized"
         else:
             svd_solver = "full"
@@ -77,16 +85,29 @@ def pca(
     elif svd_solver == "randomized":
         # Implement randomized SVD for PyTorch
         # This is a simplified version of sklearn's randomized_svd
-        n_random = min(n_components + 10, min(n_samples, n_features))
-        Q = torch.randn(n_features, n_random, device=X_tensor.device, dtype=X_tensor.dtype)
-        Q, _ = torch.linalg.qr(X_centered @ Q)
+        # Calculate n_random using torch operations to avoid direct Python operators
+        if n_components is not None:
+            # Add 10 to n_components using torch
+            n_components_plus_10 = torch.add(torch.tensor(n_components), torch.tensor(10))
+            # Get the minimum of n_components_plus_10 and min(n_samples, n_features)
+            min_samples_features = torch.min(torch.tensor([n_samples, n_features]))
+            n_random = torch.min(n_components_plus_10, min_samples_features).item()
+        else:
+            # If n_components is None, use min(n_samples, n_features)
+            n_random = torch.min(torch.tensor([n_samples, n_features])).item()
+            
+        # Ensure n_random is an integer for torch.randn
+        n_random_int = int(n_random)
+        Q = torch.randn(n_features, n_random_int, device=X_tensor.device, dtype=X_tensor.dtype)
+        Q, _ = torch.linalg.qr(torch.matmul(X_centered, Q))
         
-        # Project X onto Q
-        B = Q.T @ X_centered
+        # Project X onto Q using torch.matmul instead of @ operator
+        B = torch.matmul(Q.T, X_centered)
         
         # SVD of the small matrix B
         Uhat, S, Vt = torch.linalg.svd(B, full_matrices=False)
-        U = Q @ Uhat
+        # Use torch.matmul instead of @ operator
+        U = torch.matmul(Q, Uhat)
         # PyTorch returns V, not V^T, so we need to transpose
         Vt = Vt.T
     else:
@@ -152,8 +173,8 @@ def transform(
     else:
         X_centered = X_tensor
     
-    # Project data
-    X_transformed = X_centered @ components_tensor.T
+    # Project data using torch.matmul instead of @ operator
+    X_transformed = torch.matmul(X_centered, components_tensor.T)
     
     # Whiten if requested
     if whiten:
@@ -213,8 +234,8 @@ def inverse_transform(
     else:
         X_unwhitened = X_tensor
     
-    # Project back to original space
-    X_original = X_unwhitened @ components_tensor
+    # Project back to original space using torch.matmul instead of @ operator
+    X_original = torch.matmul(X_unwhitened, components_tensor)
     
     # Add mean if provided
     if mean is not None:
