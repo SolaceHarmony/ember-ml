@@ -84,7 +84,7 @@ def _convert_input(x: TensorLike) -> Any:
 
 
 
-def convert_to_tensor(data: TensorLike, dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
+def convert_to_mlx_tensor(data: TensorLike, dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
     """
     Convert input to MLX array.
     
@@ -148,6 +148,8 @@ def item(data: TensorLike) -> Union[int, float, bool]:
     Returns:
         Standard Python scalar (int, float, or bool)
     """
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+    Tensor = MLXTensor()
     tensor_array = Tensor.convert_to_tensor(data)
     
     # Get the raw value
@@ -197,6 +199,8 @@ def dtype(data: TensorLike) -> Any:
     Returns:
         Data type of the array
     """
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+    Tensor = MLXTensor()
     return Tensor.convert_to_tensor(data).dtype
 
 def copy(data: TensorLike) -> mx.array:

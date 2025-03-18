@@ -4,7 +4,8 @@ Liquid Time Constant (LTC) neuron implementations, including both Euclidean and 
 
 from typing import Optional, Union, List, Dict, Any
 from ember_ml import ops
-from .base import BaseNeuron, BaseChain
+from ember_ml.core.base import BaseNeuron, BaseChain
+from ember_ml.nn.tensor import random_uniform
 
 class LTCNeuron(BaseNeuron):
     """Standard Euclidean LTC neuron implementation."""
@@ -122,7 +123,7 @@ class LTCChain(BaseChain):
             dt=dt
         )
         # Initialize weights for chain connections using ops instead of numpy
-        self.weights = ops.random_uniform(
+        self.weights = random_uniform(
             shape=(num_neurons,),
             minval=0.5,
             maxval=1.5

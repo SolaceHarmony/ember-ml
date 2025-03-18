@@ -4,7 +4,6 @@ import mlx.core as mx
 import numpy
 from typing import Union, Optional, Sequence, Any, Literal, List, TYPE_CHECKING
 from ember_ml.backend.mlx.tensor.dtype import MLXDType
-from ember_ml.backend.mlx.tensor.ops import convert_to_tensor as mlx_convert_to_tensor
 
 # Conditionally import backend types for type checking only
 if TYPE_CHECKING:
@@ -87,7 +86,7 @@ class MLXTensor:
         Returns:
             MLX array
         """
-        from ember_ml.backend.mlx.tensor.ops.utility import convert_to_tensor as convert_to_tensor_func
+        from ember_ml.backend.mlx.tensor.ops.utility import convert_to_mlx_tensor as convert_to_tensor_func
         return convert_to_tensor_func(data, dtype, device)
 
     def slice(self, data: TensorLike, starts: Sequence[int], sizes: Sequence[int]) -> mx.array:
