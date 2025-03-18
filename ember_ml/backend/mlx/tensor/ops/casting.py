@@ -1,8 +1,10 @@
 """MLX tensor casting operations."""
 
-from ember_ml.backend.mlx.types import DType, TensorLike
 import mlx.core
 import mlx.core as mx
+
+from ember_ml.backend.mlx.types import DType, TensorLike
+
 
 def cast(tensor: TensorLike, dtype: DType) -> mlx.core.array:
     """
@@ -20,7 +22,6 @@ def cast(tensor: TensorLike, dtype: DType) -> mlx.core.array:
     """
     # Import MLX specifics lazily
     from ember_ml.backend.mlx.tensor import MLXTensor
-    from ember_ml.backend.mlx.tensor.dtype import MLXDType
 
     # 1. Validate and get the MLX dtype
     from ember_ml.backend.mlx.tensor.ops.utility import _validate_and_get_mlx_dtype

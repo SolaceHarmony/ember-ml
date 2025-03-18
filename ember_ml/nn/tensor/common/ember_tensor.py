@@ -10,7 +10,7 @@ from typing import Any, Optional, List, Union, Tuple, Sequence, Callable, Iterat
 TensorLike = Any
 DType = Any
 if TYPE_CHECKING:
-    from ember_ml.nn.tensor.types import DType, TensorLike
+    from ember_ml.nn.tensor.types import DType
 from ember_ml.nn.tensor.common.dtypes import EmberDType
 from ember_ml.nn.tensor.interfaces import TensorInterface
 from ember_ml.nn.tensor.common import (
@@ -71,8 +71,9 @@ class EmberTensor(TensorInterface):
             device: Optional device to place the tensor on
             requires_grad: Whether the tensor requires gradients
         """
-        from ember_ml.nn.tensor import dtype as get_dtype, to_dtype_str
+        from ember_ml.nn.tensor import dtype as get_dtype
         # Figure out the dtype being inputted
+        processed_dtype = None
         if dtype is not None:
             if isinstance(dtype, EmberDType):
                 # If dtype is an EmberDType, use it directly
@@ -619,9 +620,9 @@ class EmberTensor(TensorInterface):
             import numpy as np
             x_np = to_numpy(x)
             if descending:
-                result = tensor.sort(x_np, axis=axis)[::-1]
+                result = np.sort(x_np, axis=axis)[::-1]
             else:
-                result = tensor.sort(x_np, axis=axis)
+                result = np.sort(x_np, axis=axis)
             return _convert_to_backend_tensor(result)
     
     def argsort(self, x: Any, axis: int = -1, descending: bool = False) -> Any:

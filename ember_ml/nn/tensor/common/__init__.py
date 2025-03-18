@@ -7,7 +7,7 @@ using the backend abstraction layer.
 
 import importlib
 
-from ember_ml.backend import get_backend, get_backend_module
+from ember_ml.backend import get_backend
 
 # Cache for imported backend tensor ops modules
 _BACKEND_TENSOR_OPS_MODULES = {}

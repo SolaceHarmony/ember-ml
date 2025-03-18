@@ -5,7 +5,6 @@ This module provides MLX implementations of loss operations.
 """
 
 import mlx.core as mx
-import numpy as np
 from typing import Optional, Union, Sequence
 
 from ember_ml.backend.mlx.types import TensorLike
@@ -185,7 +184,14 @@ def categorical_crossentropy(y_true: TensorLike, y_pred: TensorLike,
     y_pred_tensor = tensor_ops.convert_to_tensor(y_pred)
     
     if from_logits:
-        log_probs = mx.log_softmax(y_pred_tensor, axis=-1)
+        # Implement log_softmax manually since mx.core doesn't have it
+        # log_softmax(x) = x - log(sum(exp(x)))
+        max_y_pred = mx.max(y_pred_tensor, axis=-1, keepdims=True)
+        y_pred_shifted = mx.subtract(y_pred_tensor, max_y_pred)  # For numerical stability
+        exp_y_pred = mx.exp(y_pred_shifted)
+        sum_exp = mx.sum(exp_y_pred, axis=-1, keepdims=True)
+        log_sum_exp = mx.log(sum_exp)
+        log_probs = mx.subtract(y_pred_shifted, log_sum_exp)
     else:
         y_pred_tensor = mx.clip(y_pred_tensor, EPSILON, 1.0 - EPSILON)
         log_probs = mx.log(y_pred_tensor)

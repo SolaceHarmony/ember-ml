@@ -96,7 +96,7 @@ def to_device(x: TensorLike, device: str) -> mx.array:
     # Ensure input is converted if needed
     from ember_ml.backend.mlx.tensor import MLXTensor
     tensor = MLXTensor()
-    x_tensor = tensor.convert(x)
+    x_tensor = tensor.convert_to_tensor(x)
     # In MLX, tensors generally reside on the default device.
     # Explicit movement isn't the primary mechanism like in PyTorch.
     # We return the tensor, assuming it's now on the (new) default device.

@@ -5,13 +5,12 @@ from typing import Optional, Union
 import mlx.core as mx
 import numpy as np
 
-from ember_ml.backend.mlx.tensor.dtype import MLXDType
 from ember_ml.backend.mlx.types import DType, TensorLike, Shape, ShapeLike, ScalarLike
+
 
 def zeros(shape: 'Shape', dtype: 'Optional[DType]' = None, device: Optional[str] = None) -> 'mx.array':
     """Create an MLX array of zeros."""
     # Validate dtype
-    from ember_ml.backend.mlx.tensor.ops.utility import _create_new_tensor
     # Ensure shape is a tuple
     if isinstance(shape, int):
         shape = (shape,)
@@ -33,8 +32,6 @@ def zeros(shape: 'Shape', dtype: 'Optional[DType]' = None, device: Optional[str]
 
 def ones(shape: 'Shape', dtype: 'Optional[DType]' = None, device: Optional[str] = None) -> 'mx.array':
     """Create an MLX array of ones."""
-    # Validate dtype
-    from ember_ml.backend.mlx.tensor.ops.utility import _create_new_tensor
     # Ensure shape is a tuple
     if isinstance(shape, int):
         shape = (shape,)
@@ -84,8 +81,7 @@ def full(shape: 'ShapeLike', fill_value: 'ScalarLike', dtype: 'Optional[DType]' 
     # Handle scalar shape case
     if isinstance(shape, (int, np.integer)):
         shape = (shape,)
-        
-    from ember_ml.backend.mlx.tensor.ops.utility import _create_new_tensor
+
     # Ensure shape is a tuple
     if isinstance(shape, int):
         shape = (shape,)
@@ -181,7 +177,6 @@ def arange(start: ScalarLike, stop: ScalarLike = None, step: int = 1,
     if hasattr(stop, 'item'):
         stop = float(stop.item())
 
-    from ember_ml.backend.mlx.tensor.ops.utility import _create_new_tensor
     # Validate dtype
     from ember_ml.backend.mlx.tensor.ops.utility import _validate_and_get_mlx_dtype
     mlx_dtype = _validate_and_get_mlx_dtype(dtype)
@@ -203,7 +198,6 @@ def linspace(start: Union[int, float], stop: Union[int, float], num: int,
     start_tensor = MLXTensor().convert_to_tensor(start)
     stop_tensor = MLXTensor().convert_to_tensor(stop)
     num_tensor = MLXTensor().convert_to_tensor(num)
-    from ember_ml.backend.mlx.tensor.ops.utility import _create_new_tensor
     # Validate dtype
     from ember_ml.backend.mlx.tensor.ops.utility import _validate_and_get_mlx_dtype
     mlx_dtype = _validate_and_get_mlx_dtype(dtype)

@@ -549,12 +549,6 @@ def _create_new_tensor(creation_func: Callable, dtype: Optional[Any] = None, dev
         # This might fail if function expects positional args not covered here.
             return creation_func(**kwargs)
 
-    raise TypeError(
-        f"{creation_func.__name__} failed. "
-        f"Input dtype: {dtype}, Resolved native dtype: {target_mlx_dtype}, "
-        f"Type: {type(target_mlx_dtype)}, Kwargs: {kwargs}. Error: {e}"
-    )
-
 # Expose necessary functions
 __all__ = [
     "_convert_input",

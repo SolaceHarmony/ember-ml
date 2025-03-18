@@ -242,7 +242,7 @@ def scatter(indices: TensorLike, updates: TensorLike, shape: Union[ShapeLike, in
             output_shape = (shape_val,)
         else:
             # For arrays, convert to list of ints
-            shape_list = [int(x) for x in shape.tolist()]
+            shape_list = [int(x) for x in shape]
             output_shape = tuple(shape_list)
     else:
         raise TypeError(f"Unsupported type for shape: {type(shape)}")

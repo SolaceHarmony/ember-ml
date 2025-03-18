@@ -1,6 +1,5 @@
 """PyTorch tensor class and operations."""
 
-import torch
 from typing import Union, Optional, Sequence, Any, Literal, List, TYPE_CHECKING, Tuple
 from ember_ml.backend.torch.tensor.dtype import TorchDType
 
@@ -143,8 +142,8 @@ class TorchTensor:
         # Validate the dtype first
         torch_dtype = None
         if dtype is not None:
-            from ember_ml.backend.torch.tensor.ops.casting import _validate_dtype
-            torch_dtype = _validate_dtype(dtype)
+            from ember_ml.backend.torch.tensor.ops.utility import _validate_and_get_torch_dtype
+            torch_dtype = _validate_and_get_torch_dtype(dtype)
         
         # Convert input to PyTorch tensor with the validated dtype and device
         # Use the convert_to_tensor method which already has lazy imports
