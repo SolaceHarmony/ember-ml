@@ -7,24 +7,31 @@ This module provides MLX implementations of the ember_ml I/O operations interfac
 import os
 import mlx.core as mx
 from typing import Any, Optional
+from ember_ml.backend.mlx.config import TensorLike
+from ember_ml.backend.mlx.tensor import MLXTensor
 
-def save(filepath: str, obj: Any, allow_pickle: bool = True) -> None:
+Tensor = MLXTensor()
+
+
+def save(filepath: str, obj: TensorLike, allow_pickle: Optional[bool] = None) -> None:
     """
     Save a tensor or dictionary of tensors to a file.
     
     Args:
         filepath: Path to save the object to
         obj: Tensor or dictionary of tensors to save
-        allow_pickle: Whether to allow saving objects that can't be saved directly
+        allow_pickle: Not supported on MLX
         
     Returns:
         None
     """
+    tensor = Tensor.convert_to_tensor(obj)
+
     # Create directory if it doesn't exist
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
     
     # Save to file using MLX
-    mx.save(filepath, obj)
+    mx.save(filepath, tensor)
 
 def load(filepath: str, allow_pickle: bool = True) -> Any:
     """
@@ -43,7 +50,7 @@ def load(filepath: str, allow_pickle: bool = True) -> Any:
 class MLXIOOps:
     """MLX implementation of I/O operations."""
     
-    def save(self, filepath: str, obj: Any, allow_pickle: bool = True) -> None:
+    def save(self, filepath: str, obj: TensorLike, allow_pickle: Optional[bool]) -> None:
         """
         Save a tensor or dictionary of tensors to a file.
         
@@ -55,9 +62,9 @@ class MLXIOOps:
         Returns:
             None
         """
-        save(filepath, obj, allow_pickle)
+        save(filepath, obj)
     
-    def load(self, filepath: str, allow_pickle: bool = True) -> Any:
+    def load(self, filepath: str, allow_pickle: Optional[bool] = None) -> Any:
         """
         Load a tensor or dictionary of tensors from a file.
         
@@ -68,4 +75,4 @@ class MLXIOOps:
         Returns:
             Loaded tensor or dictionary of tensors
         """
-        return load(filepath, allow_pickle)
+        return load(filepath)

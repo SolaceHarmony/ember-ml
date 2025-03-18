@@ -11,7 +11,7 @@ from ember_ml.backend.mlx.tensor.ops.creation import (
     zeros, ones, zeros_like, ones_like, eye, full, full_like, arange, linspace
 )
 from ember_ml.backend.mlx.tensor.ops.indexing import (
-    slice_tensor, slice_update, gather, tensor_scatter_nd_update,
+    slice_tensor, slice, slice_update, gather, tensor_scatter_nd_update,
     scatter, scatter_add, scatter_max, scatter_min, scatter_mean, scatter_softmax
 )
 from ember_ml.backend.mlx.tensor.ops.manipulation import (
@@ -34,7 +34,7 @@ __all__ = [
     'zeros', 'ones', 'zeros_like', 'ones_like', 'eye', 'full', 'full_like', 'arange', 'linspace',
     
     # Indexing operations
-    'slice_tensor', 'slice_update', 'gather', 'tensor_scatter_nd_update',
+    'slice_tensor', 'slice', 'slice_update', 'gather', 'tensor_scatter_nd_update',
     'scatter', 'scatter_add', 'scatter_max', 'scatter_min', 'scatter_mean', 'scatter_softmax',
     
     # Manipulation operations

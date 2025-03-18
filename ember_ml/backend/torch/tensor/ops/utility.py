@@ -1,7 +1,7 @@
 """PyTorch tensor utility operations."""
 
 import torch
-from typing import Union, Optional, Sequence, Any, List, Tuple
+from typing import Union, Sequence
 
 from ember_ml.backend.torch.tensor.dtype import TorchDType
 
@@ -38,7 +38,12 @@ def convert_to_tensor(tensor_obj, data, dtype=None, device=None):
     if isinstance(data, object) and getattr(data.__class__, '__name__', '') == 'EmberTensor':
         # For EmberTensor, extract the underlying PyTorch tensor
         # We know from inspection that _tensor is a torch.Tensor
-        return getattr(data, '_tensor')
+        if hasattr(data, '_tensor'):
+            return getattr(data, '_tensor')
+    
+    # Handle NumPy arrays - the community loves them so much!
+    if hasattr(data, '__class__') and data.__class__.__module__ == 'numpy' and data.__class__.__name__ == 'ndarray':
+        return torch.from_numpy(data)
     
     # Handle array-like objects
     try:

@@ -5,18 +5,19 @@ This module provides MLX implementations of vector operations.
 """
 
 import mlx.core as mx
-from typing import Optional, Tuple, Any, Sequence
+from typing import Optional, Tuple, Any, Sequence, List, Union
 
 from ember_ml.backend.mlx.tensor import MLXTensor
-from ember_ml.backend.mlx.math_ops import MLXMathOps
+from ember_ml.backend.mlx.math_ops import pi
+from ember_ml.backend.mlx.config import TensorLike
 
-convert_to_tensor = MLXTensor().convert_to_tensor
-pi = MLXMathOps().pi
+Tensor = MLXTensor()
+
 
 class MLXVectorOps:
     """MLX implementation of vector operations."""
 
-    def normalize_vector(self, vector: Any) -> Any:
+    def normalize_vector(self, vector: TensorLike) -> mx.array:
         """
         Normalize a vector to unit length.
 
@@ -26,26 +27,33 @@ class MLXVectorOps:
         Returns:
             Normalized vector
         """
-        vector_tensor = convert_to_tensor(vector)
+        vector_tensor = Tensor.convert_to_tensor(vector)
         norm = mx.linalg.norm(vector_tensor)
 
         # Avoid division by zero
         if norm > 0:
-            return vector_tensor / norm
+            return mx.divide(vector_tensor, norm)
         return vector_tensor
 
-    def compute_energy_stability(self, wave: Any, window_size: int = 100) -> float:
+    def compute_energy_stability(self, wave: TensorLike, window_size: int = 100) -> float:
         """
         Compute the energy stability of a wave signal.
+        
+        Args:
+            wave: Input wave signal
+            window_size: Size of the window for energy computation
+            
+        Returns:
+            Energy stability value between 0 and 1
         """
-        wave_tensor = convert_to_tensor(wave)
+        wave_tensor = Tensor.convert_to_tensor(wave)
 
         if len(wave_tensor.shape) == 0 or wave_tensor.shape[0] < window_size:
             return 1.0  # Perfectly stable for short signals
 
         # Compute energy in windows
         num_windows = wave_tensor.shape[0] // window_size
-        energies = []
+        energies: List[Union[float,Any]] = []
 
         for i in range(num_windows):
             start = i * window_size
@@ -58,26 +66,33 @@ class MLXVectorOps:
         if len(energies) <= 1:
             return 1.0
 
-        energies_tensor = convert_to_tensor(energies)
+        energies_tensor = Tensor.convert_to_tensor(energies)
         energy_mean = mx.mean(energies_tensor)
 
         if energy_mean == 0:
             return 1.0
 
         energy_var = mx.var(energies_tensor)
-        stability = 1.0 / (1.0 + energy_var / energy_mean)
+        stability = mx.divide(1.0, mx.add(1.0, mx.divide(energy_var, energy_mean)))
 
         # Safe conversion to float
         stability_val = mx.array(stability).item()
         return float(str(stability_val))
 
-    def compute_interference_strength(self, wave1: Any, wave2: Any) -> float:
+    def compute_interference_strength(self, wave1: TensorLike, wave2: TensorLike) -> float:
         """
         Compute the interference strength between two wave signals.
+        
+        Args:
+            wave1: First wave signal
+            wave2: Second wave signal
+            
+        Returns:
+            Interference strength value
         """
         # Convert to MLX tensors
-        wave1_tensor = convert_to_tensor(wave1)
-        wave2_tensor = convert_to_tensor(wave2)
+        wave1_tensor = Tensor.convert_to_tensor(wave1)
+        wave2_tensor = Tensor.convert_to_tensor(wave2)
 
         # Ensure waves are the same length
         min_length = min(wave1_tensor.shape[0], wave2_tensor.shape[0])
@@ -87,13 +102,16 @@ class MLXVectorOps:
         # Compute correlation
         wave1_mean = mx.mean(wave1_tensor)
         wave2_mean = mx.mean(wave2_tensor)
-        wave1_centered = wave1_tensor - wave1_mean
-        wave2_centered = wave2_tensor - wave2_mean
+        wave1_centered = mx.subtract(wave1_tensor, wave1_mean)
+        wave2_centered = mx.subtract(wave2_tensor, wave2_mean)
 
-        numerator = mx.sum(wave1_centered * wave2_centered)
-        denominator = mx.sqrt(mx.sum(wave1_centered * wave1_centered)) * mx.sqrt(mx.sum(wave2_centered * wave2_centered))
-        denominator = denominator + convert_to_tensor(1e-8)  # Add epsilon as MLX tensor
-        correlation = numerator / denominator
+        numerator = mx.sum(mx.multiply(wave1_centered, wave2_centered))
+        denominator = mx.multiply(
+            mx.sqrt(mx.sum(mx.multiply(wave1_centered, wave1_centered))),
+            mx.sqrt(mx.sum(mx.multiply(wave2_centered, wave2_centered)))
+        )
+        denominator = mx.add(denominator, Tensor.convert_to_tensor(1e-8))  # Add epsilon as MLX tensor
+        correlation = mx.divide(numerator, denominator)
 
         # Compute phase difference using FFT
         fft1 = mx.fft.fft(wave1_tensor)
@@ -102,27 +120,35 @@ class MLXVectorOps:
         # MLX doesn't have angle() directly, compute phase using arctan2
         phase1 = mx.arctan2(mx.imag(fft1), mx.real(fft1))
         phase2 = mx.arctan2(mx.imag(fft2), mx.real(fft2))
-        phase_diff = mx.abs(phase1 - phase2)
+        phase_diff = mx.abs(mx.divide(phase1, phase2))
         mean_phase_diff = mx.mean(phase_diff)
 
         # Normalize phase difference to [0, 1]
-        pi_tensor = convert_to_tensor(MLXMathOps.pi)
-        normalized_phase_diff = mean_phase_diff / pi_tensor
+        pi_tensor = Tensor.convert_to_tensor(pi)
+        normalized_phase_diff = mx.divide(mean_phase_diff, pi_tensor)
 
         # Compute interference strength
-        interference_strength = correlation * (1.0 - normalized_phase_diff)
+        interference_strength = mx.multiply(correlation, mx.subtract(mx.array(1.0, mx.float32), normalized_phase_diff))
 
         # Safe conversion to float
         val = mx.array(interference_strength).item()
         return float(str(val))
 
-    def compute_phase_coherence(self, wave1: Any, wave2: Any, freq_range: Optional[Tuple[float, float]] = None) -> float:
+    def compute_phase_coherence(self, wave1: TensorLike, wave2: TensorLike, freq_range: Optional[Tuple[float, float]] = None) -> float:
         """
         Compute the phase coherence between two wave signals.
+        
+        Args:
+            wave1: First wave signal
+            wave2: Second wave signal
+            freq_range: Optional frequency range to consider (min_freq, max_freq)
+            
+        Returns:
+            Phase coherence value between 0 and 1
         """
         # Convert to MLX tensors
-        wave1_tensor = convert_to_tensor(wave1)
-        wave2_tensor = convert_to_tensor(wave2)
+        wave1_tensor = Tensor.convert_to_tensor(wave1)
+        wave2_tensor = Tensor.convert_to_tensor(wave2)
 
         # Ensure waves are the same length
         min_length = min(wave1_tensor.shape[0], wave2_tensor.shape[0])
@@ -139,7 +165,7 @@ class MLXVectorOps:
 
         # Compute frequencies using manual calculation since fftfreq isn't available
         n = wave1_tensor.shape[0]
-        freqs = mx.arange(n) / n
+        freqs = mx.divide(mx.arange(n), n)
 
         # Apply frequency range filter if specified
         if freq_range is not None:
@@ -149,24 +175,32 @@ class MLXVectorOps:
             phase2 = mx.where(freq_mask, phase2, mx.zeros_like(phase2))
 
         # Compute phase difference
-        phase_diff = phase1 - phase2
+        phase_diff = mx.subtract(phase1, phase2)
 
         # Use Euler's formula for complex phase calculation
         complex_real = mx.cos(phase_diff)
         complex_imag = mx.sin(phase_diff)
-        coherence = mx.sqrt(mx.mean(complex_real) ** 2 + mx.mean(complex_imag) ** 2)
+        coherence = mx.sqrt(mx.add(mx.power(mx.mean(complex_real), 2), mx.power(mx.mean(complex_imag), 2)))
 
         # Safe conversion to float
         val = mx.array(coherence).item()
         return float(str(val))
 
-    def partial_interference(self, wave1: Any, wave2: Any, window_size: int = 100) -> Any:
+    def partial_interference(self, wave1: TensorLike, wave2: TensorLike, window_size: int = 100) -> mx.array:
         """
         Compute the partial interference between two wave signals over sliding windows.
+        
+        Args:
+            wave1: First wave signal
+            wave2: Second wave signal
+            window_size: Size of the sliding window
+            
+        Returns:
+            Array of interference values for each window
         """
         # Convert to MLX tensors
-        wave1_tensor = convert_to_tensor(wave1)
-        wave2_tensor = convert_to_tensor(wave2)
+        wave1_tensor = Tensor.convert_to_tensor(wave1)
+        wave2_tensor = Tensor.convert_to_tensor(wave2)
 
         # Ensure waves are the same length
         min_length = min(wave1_tensor.shape[0], wave2_tensor.shape[0])
@@ -178,7 +212,7 @@ class MLXVectorOps:
 
         # Initialize result array
         interference = mx.zeros(num_windows)
-        result = []
+        result: List[Union[float,Any]] = []
 
         # Compute interference for each window
         for i in range(num_windows):
@@ -186,10 +220,17 @@ class MLXVectorOps:
             window2 = wave2_tensor[i:i+window_size]
 
             # Compute correlation
-            window1_centered = window1 - mx.mean(window1)
-            window2_centered = window2 - mx.mean(window2)
-            correlation = mx.sum(window1_centered * window2_centered) / (
-                mx.sqrt(mx.sum(window1_centered ** 2)) * mx.sqrt(mx.sum(window2_centered ** 2)) + 1e-8
+            window1_centered = mx.subtract(window1, mx.mean(window1))
+            window2_centered = mx.subtract(window2, mx.mean(window2))
+            correlation = mx.divide(
+                mx.sum(mx.multiply(window1_centered, window2_centered)),
+                mx.add(
+                    mx.multiply(
+                        mx.sqrt(mx.sum(mx.power(window1_centered, 2))),
+                        mx.sqrt(mx.sum(mx.power(window2_centered, 2)))
+                    ),
+                    1e-8
+                )
             )
 
             # Compute FFT for this window
@@ -199,19 +240,20 @@ class MLXVectorOps:
             # Get phases using arctan2
             phase1 = mx.arctan2(mx.imag(fft1), mx.real(fft1))
             phase2 = mx.arctan2(mx.imag(fft2), mx.real(fft2))
-            phase_diff = mx.abs(phase1 - phase2)
+            phase_diff = mx.abs(mx.subtract(phase1, phase2))
             mean_phase_diff = mx.mean(phase_diff)
 
             # Normalize phase difference to [0, 1]
-            normalized_phase_diff = mean_phase_diff / MLXMathOps.pi
+            normalized_phase_diff = mx.divide(mean_phase_diff, pi)
 
             # Compute interference strength
-            val = correlation * (1.0 - normalized_phase_diff)
-            result.append(mx.array(val).item())
+            val = mx.multiply(correlation, mx.subtract(1.0, normalized_phase_diff))
+            
+            result.append(val.item())
 
         return mx.array(result)
 
-    def euclidean_distance(self, x: Any, y: Any) -> Any:
+    def euclidean_distance(self, x: TensorLike, y: TensorLike) -> mx.array:
         """
         Compute the Euclidean distance between two vectors.
 
@@ -222,12 +264,12 @@ class MLXVectorOps:
         Returns:
             Euclidean distance
         """
-        x_tensor = convert_to_tensor(x)
-        y_tensor = convert_to_tensor(y)
+        x_tensor = Tensor.convert_to_tensor(x)
+        y_tensor = Tensor.convert_to_tensor(y)
 
-        return mx.sqrt(mx.sum(mx.square(x_tensor - y_tensor)))
+        return mx.sqrt(mx.sum(mx.square(mx.subtract(x_tensor, y_tensor))))
 
-    def cosine_similarity(self, x: Any, y: Any) -> Any:
+    def cosine_similarity(self, x: TensorLike, y: TensorLike) -> mx.array:
         """
         Compute the cosine similarity between two vectors.
 
@@ -238,15 +280,15 @@ class MLXVectorOps:
         Returns:
             Cosine similarity
         """
-        x_tensor = convert_to_tensor(x)
-        y_tensor = convert_to_tensor(y)
+        x_tensor = Tensor.convert_to_tensor(x)
+        y_tensor = Tensor.convert_to_tensor(y)
 
-        dot_product = mx.sum(x_tensor * y_tensor)
+        dot_product = mx.sum(mx.multiply(x_tensor, y_tensor))
         norm_x = mx.sqrt(mx.sum(mx.square(x_tensor)))
         norm_y = mx.sqrt(mx.sum(mx.square(y_tensor)))
-        return dot_product / (norm_x * norm_y + 1e-8)
+        return mx.divide(dot_product, mx.add(mx.multiply(norm_x, norm_y), 1e-8))
 
-    def exponential_decay(self, initial_value: Any, decay_rate: Any, time_step: Any) -> Any:
+    def exponential_decay(self, initial_value: TensorLike, decay_rate: TensorLike, time_step: TensorLike) -> mx.array:
         """
         Compute exponential decay.
 
@@ -258,13 +300,13 @@ class MLXVectorOps:
         Returns:
             Exponentially decayed value
         """
-        initial_value_tensor = convert_to_tensor(initial_value)
-        decay_rate_tensor = convert_to_tensor(decay_rate)
-        time_step_tensor = convert_to_tensor(time_step)
+        initial_value_tensor = Tensor.convert_to_tensor(initial_value)
+        decay_rate_tensor = Tensor.convert_to_tensor(decay_rate)
+        time_step_tensor = Tensor.convert_to_tensor(time_step)
 
-        return initial_value_tensor * mx.exp(-decay_rate_tensor * time_step_tensor)
+        return mx.multiply(initial_value_tensor, mx.exp(mx.multiply(mx.negative(decay_rate_tensor), time_step_tensor)))
 
-    def gaussian(self, x: Any, mu: Any = 0.0, sigma: Any = 1.0) -> Any:
+    def gaussian(self, x: TensorLike, mu: TensorLike = 0.0, sigma: TensorLike = 1.0) -> mx.array:
         """
         Compute the Gaussian function.
 
@@ -276,31 +318,63 @@ class MLXVectorOps:
         Returns:
             Gaussian function evaluated at x
         """
-        x_tensor = convert_to_tensor(x)
-        mu_tensor = convert_to_tensor(mu)
-        sigma_tensor = convert_to_tensor(sigma)
+        x_tensor = Tensor.convert_to_tensor(x)
+        mu_tensor = Tensor.convert_to_tensor(mu)
+        sigma_tensor = Tensor.convert_to_tensor(sigma)
 
-        return mx.exp(-0.5 * mx.square((x_tensor - mu_tensor) / sigma_tensor)) / (sigma_tensor * mx.sqrt(mx.array(2.0)) * mx.sqrt(MLXMathOps.pi))
+        exponent = mx.multiply(
+            -0.5,
+            mx.square(mx.divide(mx.subtract(x_tensor, mu_tensor), sigma_tensor))
+        )
+        denominator = mx.multiply(
+            sigma_tensor,
+            mx.multiply(mx.sqrt(mx.array(2.0)), mx.sqrt(pi))
+        )
+        return mx.divide(mx.exp(exponent), denominator)
 
-    def fft(self, a: Any, n: Optional[int] = None, axis: int = -1) -> Any:
+    def fft(self, a: TensorLike, n: Optional[int] = None, axis: int = -1) -> mx.array:
         """
         One dimensional discrete Fourier Transform.
+        
+        Args:
+            a: Input array
+            n: Length of the transformed axis
+            axis: Axis over which to compute the FFT
+            
+        Returns:
+            The transformed array
         """
-        a_tensor = convert_to_tensor(a)
+        a_tensor = Tensor.convert_to_tensor(a)
         return mx.fft.fft(a_tensor, n=n, axis=axis)
 
-    def ifft(self, a: Any, n: Optional[int] = None, axis: int = -1) -> Any:
+    def ifft(self, a: TensorLike, n: Optional[int] = None, axis: int = -1) -> mx.array:
         """
         One dimensional inverse discrete Fourier Transform.
+        
+        Args:
+            a: Input array
+            n: Length of the transformed axis
+            axis: Axis over which to compute the IFFT
+            
+        Returns:
+            The inverse transformed array
         """
-        a_tensor = convert_to_tensor(a)
+        a_tensor = Tensor.convert_to_tensor(a)
         return mx.fft.ifft(a_tensor, n=n, axis=axis)
 
-    def fft2(self, a: Any, s: Optional[Tuple[int, int]] = None, axes: Tuple[int, int] = (-2, -1)) -> Any:
+    def fft2(self, a: TensorLike, s: Optional[Tuple[int, int]] = None, axes: Tuple[int, int] = (-2, -1)) -> mx.array:
         """
         Two dimensional discrete Fourier Transform.
+        
+        Args:
+            a: Input array
+            s: Shape of the transformed axes
+            axes: Axes over which to compute the FFT
+            
+        Returns:
+            The transformed array
         """
-        a_tensor = convert_to_tensor(a)
+        a_tensor = Tensor.convert_to_tensor(a)
 
         # MLX doesn't have direct fft2, so we implement it using sequential 1D FFTs
         result = a_tensor
@@ -309,11 +383,19 @@ class MLXVectorOps:
             result = mx.fft.fft(result, n=shape_i, axis=axis)
         return result
 
-    def ifft2(self, a: Any, s: Optional[Tuple[int, int]] = None, axes: Tuple[int, int] = (-2, -1)) -> Any:
+    def ifft2(self, a: TensorLike, s: Optional[Tuple[int, int]] = None, axes: Tuple[int, int] = (-2, -1)) -> mx.array:
         """
         Two dimensional inverse discrete Fourier Transform.
+        
+        Args:
+            a: Input array
+            s: Shape of the transformed axes
+            axes: Axes over which to compute the IFFT
+            
+        Returns:
+            The inverse transformed array
         """
-        a_tensor = convert_to_tensor(a)
+        a_tensor = Tensor.convert_to_tensor(a)
 
         # MLX doesn't have direct ifft2, so we implement it using sequential 1D IFFTs
         result = a_tensor
@@ -322,11 +404,19 @@ class MLXVectorOps:
             result = mx.fft.ifft(result, n=shape_i, axis=axis)
         return result
 
-    def fftn(self, a: Any, s: Optional[Sequence[int]] = None, axes: Optional[Sequence[int]] = None) -> Any:
+    def fftn(self, a: TensorLike, s: Optional[Sequence[int]] = None, axes: Optional[Sequence[int]] = None) -> mx.array:
         """
         N-dimensional discrete Fourier Transform.
+        
+        Args:
+            a: Input array
+            s: Shape of the transformed axes
+            axes: Axes over which to compute the FFT
+            
+        Returns:
+            The transformed array
         """
-        a_tensor = convert_to_tensor(a)
+        a_tensor = Tensor.convert_to_tensor(a)
 
         # If axes not specified, transform over all axes
         if axes is None:
@@ -339,11 +429,19 @@ class MLXVectorOps:
             result = mx.fft.fft(result, n=shape_i, axis=axis)
         return result
 
-    def ifftn(self, a: Any, s: Optional[Sequence[int]] = None, axes: Optional[Sequence[int]] = None) -> Any:
+    def ifftn(self, a: TensorLike, s: Optional[Sequence[int]] = None, axes: Optional[Sequence[int]] = None) -> mx.array:
         """
         N-dimensional inverse discrete Fourier Transform.
+        
+        Args:
+            a: Input array
+            s: Shape of the transformed axes
+            axes: Axes over which to compute the IFFT
+            
+        Returns:
+            The inverse transformed array
         """
-        a_tensor = convert_to_tensor(a)
+        a_tensor = Tensor.convert_to_tensor(a)
 
         # If axes not specified, transform over all axes
         if axes is None:
@@ -356,11 +454,19 @@ class MLXVectorOps:
             result = mx.fft.ifft(result, n=shape_i, axis=axis)
         return result
 
-    def rfft(self, a: Any, n: Optional[int] = None, axis: int = -1) -> Any:
+    def rfft(self, a: TensorLike, n: Optional[int] = None, axis: int = -1) -> mx.array:
         """
         One dimensional discrete Fourier Transform for real input.
+        
+        Args:
+            a: Input array (real)
+            n: Length of the transformed axis
+            axis: Axis over which to compute the RFFT
+            
+        Returns:
+            The transformed array
         """
-        a_tensor = convert_to_tensor(a)
+        a_tensor = Tensor.convert_to_tensor(a)
         # MLX doesn't have direct rfft, so we implement it using regular fft
         # and taking only the non-redundant half
         result = mx.fft.fft(a_tensor, n=n, axis=axis)
@@ -371,11 +477,19 @@ class MLXVectorOps:
         slices[axis] = slice(0, output_size)
         return result[tuple(slices)]
 
-    def irfft(self, a: Any, n: Optional[int] = None, axis: int = -1) -> Any:
+    def irfft(self, a: TensorLike, n: Optional[int] = None, axis: int = -1) -> mx.array:
         """
         One dimensional inverse discrete Fourier Transform for real input.
+        
+        Args:
+            a: Input array
+            n: Length of the transformed axis
+            axis: Axis over which to compute the IRFFT
+            
+        Returns:
+            The inverse transformed array (real)
         """
-        a_tensor = convert_to_tensor(a)
+        a_tensor = Tensor.convert_to_tensor(a)
 
         # Handle the size parameter
         input_shape = a_tensor.shape
@@ -415,11 +529,19 @@ class MLXVectorOps:
         # Perform inverse FFT
         return mx.real(mx.fft.ifft(full_fourier, n=n, axis=axis))
 
-    def rfft2(self, a: Any, s: Optional[Tuple[int, int]] = None, axes: Tuple[int, int] = (-2, -1)) -> Any:
+    def rfft2(self, a: TensorLike, s: Optional[Tuple[int, int]] = None, axes: Tuple[int, int] = (-2, -1)) -> mx.array:
         """
         Two dimensional real discrete Fourier Transform.
+        
+        Args:
+            a: Input array (real)
+            s: Shape of the transformed axes
+            axes: Axes over which to compute the RFFT2
+            
+        Returns:
+            The transformed array
         """
-        a_tensor = convert_to_tensor(a)
+        a_tensor = Tensor.convert_to_tensor(a)
 
         # MLX doesn't have rfft2, so implement using sequential 1D rffts
         result = a_tensor
@@ -433,11 +555,19 @@ class MLXVectorOps:
                 result = mx.fft.fft(result, n=shape_i, axis=axis)
         return result
 
-    def irfft2(self, a: Any, s: Optional[Tuple[int, int]] = None, axes: Tuple[int, int] = (-2, -1)) -> Any:
+    def irfft2(self, a: TensorLike, s: Optional[Tuple[int, int]] = None, axes: Tuple[int, int] = (-2, -1)) -> mx.array:
         """
         Two dimensional inverse real discrete Fourier Transform.
+        
+        Args:
+            a: Input array
+            s: Shape of the transformed axes
+            axes: Axes over which to compute the IRFFT2
+            
+        Returns:
+            The inverse transformed array (real)
         """
-        a_tensor = convert_to_tensor(a)
+        a_tensor = Tensor.convert_to_tensor(a)
 
         # MLX doesn't have irfft2, so implement using sequential 1D iffts
         result = a_tensor
@@ -451,11 +581,19 @@ class MLXVectorOps:
                 result = self.irfft(result, n=shape_i, axis=axis)
         return result
 
-    def rfftn(self, a: Any, s: Optional[Sequence[int]] = None, axes: Optional[Sequence[int]] = None) -> Any:
+    def rfftn(self, a: TensorLike, s: Optional[Sequence[int]] = None, axes: Optional[Sequence[int]] = None) -> mx.array:
         """
         N-dimensional real discrete Fourier Transform.
+        
+        Args:
+            a: Input array (real)
+            s: Shape of the transformed axes
+            axes: Axes over which to compute the RFFTN
+            
+        Returns:
+            The transformed array
         """
-        a_tensor = convert_to_tensor(a)
+        a_tensor = Tensor.convert_to_tensor(a)
 
         # If axes not specified, transform over all axes
         if axes is None:
@@ -473,11 +611,19 @@ class MLXVectorOps:
                 result = mx.fft.fft(result, n=shape_i, axis=axis)
         return result
 
-    def irfftn(self, a: Any, s: Optional[Sequence[int]] = None, axes: Optional[Sequence[int]] = None) -> Any:
+    def irfftn(self, a: TensorLike, s: Optional[Sequence[int]] = None, axes: Optional[Sequence[int]] = None) -> mx.array:
         """
         N-dimensional inverse real discrete Fourier Transform.
+        
+        Args:
+            a: Input array
+            s: Shape of the transformed axes
+            axes: Axes over which to compute the IRFFTN
+            
+        Returns:
+            The inverse transformed array (real)
         """
-        a_tensor = convert_to_tensor(a)
+        a_tensor = Tensor.convert_to_tensor(a)
 
         # If axes not specified, transform over all axes
         if axes is None:

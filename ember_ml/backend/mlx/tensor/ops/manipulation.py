@@ -1,17 +1,17 @@
 """MLX tensor manipulation operations."""
 
 import mlx.core as mx
-from typing import Union, Optional, Sequence, Any, List, Tuple
+from typing import Optional,Union
 
-# Type aliases
-Shape = Union[int, Sequence[int]]
+from ember_ml.backend.mlx.tensor import MLXTensor
+from ember_ml.backend.mlx.config import TensorLike,ShapeLike,Shape
+Tensor = MLXTensor()
 
-def reshape(tensor_obj, tensor, shape):
+def reshape(tensor: TensorLike, shape: ShapeLike) -> mx.array:
     """
     Reshape an MLX array to a new shape.
     
     Args:
-        tensor_obj: MLXTensor instance
         tensor: Input array
         shape: New shape
         
@@ -19,23 +19,23 @@ def reshape(tensor_obj, tensor, shape):
         Reshaped MLX array
     """
     # Ensure shape is a sequence
+
     if isinstance(shape, int):
         shape = (shape,)
-    return mx.reshape(tensor_obj.convert_to_tensor(tensor), shape)
+    return mx.reshape(Tensor.convert_to_tensor(tensor), shape)
 
-def transpose(tensor_obj, tensor, axes=None):
+def transpose(tensor: TensorLike, axes: Optional[Shape]=None):
     """
     Permute the dimensions of an MLX array.
     
     Args:
-        tensor_obj: MLXTensor instance
         tensor: Input array
         axes: Optional permutation of dimensions
         
     Returns:
         Transposed MLX array
     """
-    tensor_array = tensor_obj.convert_to_tensor(tensor)
+    tensor_array = Tensor.convert_to_tensor(tensor)
 
     if axes is None:
         # Default transpose behavior (swap last two dimensions)
@@ -47,40 +47,37 @@ def transpose(tensor_obj, tensor, axes=None):
 
     return mx.transpose(tensor_array, axes)
 
-def concatenate(tensor_obj, tensors, axis=0):
+def concatenate(tensors: list[TensorLike], axis: Optional[int]=0):
     """
     Concatenate MLX arrays along a specified axis.
 
     Args:
-        tensor_obj: MLXTensor instance
         tensors: Sequence of arrays
         axis: Axis along which to concatenate
 
     Returns:
         Concatenated MLX array
     """
-    return mx.concatenate([tensor_obj.convert_to_tensor(arr) for arr in tensors], axis=axis)
+    return mx.concatenate([Tensor.convert_to_tensor(arr) for arr in tensors], axis=axis)
 
-def stack(tensor_obj, tensors, axis=0):
+def stack(tensors : list[TensorLike], axis: Optional[int]=0):
     """
     Stack MLX arrays along a new axis.
 
     Args:
-        tensor_obj: MLXTensor instance
         tensors: Sequence of arrays
         axis: Axis along which to stack
 
     Returns:
         Stacked MLX array
     """
-    return mx.stack([tensor_obj.convert_to_tensor(arr) for arr in tensors], axis=axis)
+    return mx.stack([Tensor.convert_to_tensor(arr) for arr in tensors], axis=axis)
 
-def split(tensor_obj, tensor, num_or_size_splits, axis=0):
+def split(tensor : TensorLike, num_or_size_splits: Union[int,list[int]], axis=0) -> list[mx.array]:
     """
     Split an MLX array into sub-arrays.
 
     Args:
-        tensor_obj: MLXTensor instance
         tensor: Input array
         num_or_size_splits: Number of splits or sizes of each split
         axis: Axis along which to split
@@ -88,9 +85,10 @@ def split(tensor_obj, tensor, num_or_size_splits, axis=0):
     Returns:
         List of sub-arrays
     """
-    tensor_array = tensor_obj.convert_to_tensor(tensor)
+    tensor_array = Tensor.convert_to_tensor(tensor)
+
     # MLX split returns an array or a tuple of arrays
-    result = mx.split(tensor_array, num_or_size_splits, axis=axis)
+    result = mx.split(tensor_array, indices_or_sections=num_or_size_splits, axis=axis)
 
     # Convert to list if it's not already a list
     if isinstance(result, list):
@@ -101,19 +99,18 @@ def split(tensor_obj, tensor, num_or_size_splits, axis=0):
         # If it's a single array, return a list with that array
         return [result]
 
-def expand_dims(tensor_obj, tensor, axis):
+def expand_dims(tensor : TensorLike, axis: ShapeLike) -> mx.array:
     """
     Insert new axes into an MLX array's shape.
 
     Args:
-        tensor_obj: MLXTensor instance
         tensor: Input array
         axis: Position(s) where new axes should be inserted
 
     Returns:
         MLX array with expanded dimensions
     """
-    tensor_array = tensor_obj.convert_to_tensor(tensor)
+    tensor_array = Tensor.convert_to_tensor(tensor)
 
     if isinstance(axis, (list, tuple)):
         for ax in sorted(axis):
@@ -122,31 +119,25 @@ def expand_dims(tensor_obj, tensor, axis):
 
     return mx.expand_dims(tensor_array, axis)
 
-def squeeze(tensor_obj, tensor, axis=None):
+def squeeze(tensor: TensorLike, axis : Union[None,ShapeLike]=None):
     """
     Remove single-dimensional entries from an MLX array's shape.
 
     Args:
-        tensor_obj: MLXTensor instance
         tensor: Input array
         axis: Position(s) where dimensions should be removed
 
     Returns:
         MLX array with squeezed dimensions
     """
-    tensor_array = tensor_obj.convert_to_tensor(tensor)
+    tensor_array = Tensor.convert_to_tensor(tensor)
 
     if axis is None:
         return mx.squeeze(tensor_array)
 
-    if isinstance(axis, (list, tuple)):
-        for ax in sorted(axis, reverse=True):  # Squeeze from highest dim to lowest
-            tensor_array = mx.squeeze(tensor_array, ax)
-        return tensor_array
-
     return mx.squeeze(tensor_array, axis)
 
-def tile(tensor_obj, tensor, reps):
+def tile(tensor : TensorLike, reps : ShapeLike) -> mx.array:
     """
     Construct an MLX array by tiling a given array.
     
@@ -158,10 +149,10 @@ def tile(tensor_obj, tensor, reps):
     Returns:
         Tiled MLX array
     """
-    tensor_array = tensor_obj.convert_to_tensor(tensor)
+    tensor_array = Tensor.convert_to_tensor(tensor)
     return mx.tile(tensor_array, reps)
 
-def pad(tensor_obj, tensor, paddings, constant_values=0):
+def pad(tensor : TensorLike, paddings, constant_values=0):
     """
     Pad a tensor with a constant value.
 
@@ -175,7 +166,7 @@ def pad(tensor_obj, tensor, paddings, constant_values=0):
     Returns:
         Padded tensor
     """
-    tensor_array = tensor_obj.convert_to_tensor(tensor)
+    tensor_array = Tensor.convert_to_tensor(tensor)
 
     # Convert paddings to the format expected by mx.pad
     # MLX expects a tuple of (pad_before, pad_after) for each dimension

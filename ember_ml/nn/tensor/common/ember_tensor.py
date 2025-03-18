@@ -5,17 +5,17 @@ This module provides a common implementation of the tensor interface that works
 with any backend (NumPy, PyTorch, MLX) using the backend abstraction layer.
 """
 
-from typing import Any, Optional, List, Union, Tuple, Sequence, Callable
+from typing import Any, Optional, List, Union, Tuple, Sequence, Callable, Iterator
 
 from ember_ml.nn.tensor.common.dtypes import EmberDType as DType
 from ember_ml.nn.tensor.interfaces import TensorInterface
 from ember_ml.nn.tensor.common import (
     _convert_to_backend_tensor, to_numpy, item, shape, dtype, zeros, ones, zeros_like, ones_like,
     eye, arange, linspace, full, full_like, reshape, transpose, concatenate, stack, split,
-    expand_dims, squeeze, tile, gather, tensor_scatter_nd_update, slice, slice_update,
+    expand_dims, squeeze, tile, gather, scatter, tensor_scatter_nd_update, slice, slice_update,
     cast, copy, var, pad, sort, argsort, maximum, random_normal, random_uniform,
     random_bernoulli, random_gamma, random_exponential, random_poisson,
-    random_categorical, random_permutation, shuffle, set_seed, get_seed
+    random_categorical, random_permutation, shuffle, set_seed, get_seed, tolist
 )
 
 
@@ -29,7 +29,26 @@ class EmberTensor(TensorInterface):
     
     def __repr__(self) -> str:
         """Return a string representation of the tensor."""
-        return f"EmberTensor({to_numpy(self._tensor)})"
+        return self.__str__()
+    
+    def __str__(self) -> str:
+        """Return a string representation of the tensor.
+        
+        Returns a consistent string representation across all backends.
+        """
+        # Create a consistent string representation that doesn't rely on backend-specific methods
+        # Format: array([...], dtype=dtype)
+        if len(self.shape) == 0:  # Scalar
+            return f"array({self.item()}, dtype={self._dtype})"
+        elif len(self.shape) == 1:  # 1D tensor
+            # For 1D tensors, iterate through elements and format them
+            elements = []
+            for i in range(self.shape[0]):
+                elements.append(str(self[i].item()))
+            return f"array([{', '.join(elements)}], dtype={self._dtype})"
+        else:  # Higher dimensional tensor
+            # For higher dimensional tensors, just show shape and dtype
+            return f"array(shape={self.shape}, dtype={self._dtype})"
  
     def __init__(
         self,
@@ -67,23 +86,44 @@ class EmberTensor(TensorInterface):
         from ember_ml.backend import get_device, get_backend
         self._device = device if device is not None else get_device()
         self._requires_grad = requires_grad
+        self._backend = get_backend()
         
         # Store the dtype explicitly
         from ember_ml.nn.tensor.common import dtype as get_dtype
-        self._dtype = processed_dtype if processed_dtype is not None else get_dtype(self._tensor)
-        
-        # Store the backend information
-        self._backend = get_backend()
+        # Get the backend-specific dtype directly from the tensor
+        backend_dtype = get_dtype(self._tensor)
+        # Store our processed dtype or convert from backend dtype
+        if processed_dtype is not None:
+            self._dtype = processed_dtype
+        else:
+            # Convert backend-specific dtype to EmberDType if needed
+            if isinstance(backend_dtype, DType):
+                self._dtype = backend_dtype
+            else:
+                # Extract the name and create an EmberDType
+                dtype_name = str(backend_dtype).split('.')[-1]
+                self._dtype = DType(dtype_name)
 
     def to_backend_tensor(self) -> Any:
         """Get the underlying backend tensor."""
         return self._tensor
 
     def __array__(self) -> Any:
-        """NumPy array interface."""
+        """Array interface.
+        
+        This method is part of NumPy's array interface protocol, which allows
+        NumPy to convert objects to NumPy arrays. We use the to_numpy function
+        from the backend abstraction layer to ensure backend purity.
+        
+        Returns:
+            NumPy array representation of the tensor.
+        """
+        # Use to_numpy from the backend abstraction layer
+        # This is a special case where we're allowed to use NumPy because
+        # it's part of the NumPy array interface protocol
         return to_numpy(self._tensor)
     
-    def __getitem__(self, key) -> 'EmberTensor':
+    def __getitem__(self, key) -> Any:
         """
         Get values at specified indices.
         
@@ -95,7 +135,7 @@ class EmberTensor(TensorInterface):
         """
         # Use slice_update to implement indexing
         result = slice_update(self._tensor, key, None)
-        return EmberTensor(result, device=self.device, requires_grad=self._requires_grad)
+        return result
 
     def item(self) -> Union[int, float, bool]:
         """Get the value of a scalar tensor."""
@@ -103,7 +143,7 @@ class EmberTensor(TensorInterface):
 
     def tolist(self) -> List[Any]:
         """Convert tensor to a (nested) list."""
-        return to_numpy(self._tensor).tolist()
+        return tolist(self._tensor)
 
     @property
     def shape(self) -> Tuple[int, ...]:
@@ -113,7 +153,7 @@ class EmberTensor(TensorInterface):
     @property
     def dtype(self) -> DType:
         """Get the dtype of the tensor."""
-        # Use the stored dtype if available
+        # Use the stored EmberDType if available
         if hasattr(self, '_dtype') and self._dtype is not None:
             # If it's already a DType, return it directly
             if isinstance(self._dtype, DType):
@@ -142,37 +182,27 @@ class EmberTensor(TensorInterface):
     @property
     def backend(self) -> str:
         """Get the backend the tensor is using."""
-        # Use the stored backend if available
-        if hasattr(self, '_backend') and self._backend is not None:
-            return str(self._backend)
-            
-        # Otherwise, infer from device
-        device_str = str(self._device)
-        # Handle MLX DeviceType.gpu format
-        if device_str.startswith("DeviceType."):
-            return device_str.split(".")[-1]
-        return device_str
+        # Return the stored backend name
+        return str(self._backend)
 
     @property
     def requires_grad(self) -> bool:
         """Get whether the tensor requires gradients."""
         return self._requires_grad
 
-    def detach(self) -> 'EmberTensor':
+    def detach(self) -> Any:
         """Create a new tensor detached from the computation graph."""
         # For now, create a new tensor with requires_grad=False
         # Don't pass dtype to avoid calling the dtype property
-        return EmberTensor(
-            self._tensor,
-            device=self.device,
-            requires_grad=False
-        )
+        return self._tensor
 
-    def numpy(self) -> Any:
+    def to_numpy(self) -> Any:
         """Convert tensor to NumPy array."""
-        return to_numpy(self._tensor)
+        result = to_numpy(self._tensor)
+
+        return result
     
-    def zeros(self, shape: Union[int, Sequence[int]], dtype: Optional[DType] = None, device: Optional[str] = None) -> 'EmberTensor':
+    def zeros(self, shape: Union[int, Sequence[int]], dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
         """
         Create a tensor of zeros.
         
@@ -185,9 +215,9 @@ class EmberTensor(TensorInterface):
             Tensor of zeros with the specified shape
         """
         tensor = zeros(shape, dtype=dtype)
-        return EmberTensor(tensor, dtype=dtype, device=device, requires_grad=self._requires_grad)
+        return tensor
     
-    def ones(self, shape: Union[int, Sequence[int]], dtype: Optional[DType] = None, device: Optional[str] = None) -> 'EmberTensor':
+    def ones(self, shape: Union[int, Sequence[int]], dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
         """
         Create a tensor of ones.
         
@@ -200,9 +230,9 @@ class EmberTensor(TensorInterface):
             Tensor of ones with the specified shape
         """
         tensor = ones(shape, dtype=dtype)
-        return EmberTensor(tensor, dtype=dtype, device=device, requires_grad=self._requires_grad)
+        return tensor
     
-    def zeros_like(self, x: Any, dtype: Optional[DType] = None, device: Optional[str] = None) -> 'EmberTensor':
+    def zeros_like(self, x: Any, dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
         """
         Create a tensor of zeros with the same shape as the input.
         
@@ -217,9 +247,9 @@ class EmberTensor(TensorInterface):
         if isinstance(x, EmberTensor):
             x = x.to_backend_tensor()
         tensor = zeros_like(x, dtype=dtype)
-        return EmberTensor(tensor, dtype=dtype, device=device, requires_grad=self._requires_grad)
+        return tensor
     
-    def ones_like(self, x: Any, dtype: Optional[DType] = None, device: Optional[str] = None) -> 'EmberTensor':
+    def ones_like(self, x: Any, dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
         """
         Create a tensor of ones with the same shape as the input.
         
@@ -234,9 +264,9 @@ class EmberTensor(TensorInterface):
         if isinstance(x, EmberTensor):
             x = x.to_backend_tensor()
         tensor = ones_like(x, dtype=dtype)
-        return EmberTensor(tensor, dtype=dtype, device=device, requires_grad=self._requires_grad)
+        return tensor
     
-    def eye(self, n: int, m: Optional[int] = None, dtype: Optional[DType] = None, device: Optional[str] = None) -> 'EmberTensor':
+    def eye(self, n: int, m: Optional[int] = None, dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
         """
         Create an identity matrix.
         
@@ -250,9 +280,9 @@ class EmberTensor(TensorInterface):
             Identity matrix of shape (n, m)
         """
         tensor = eye(n, m, dtype=dtype)
-        return EmberTensor(tensor, dtype=dtype, device=device, requires_grad=self._requires_grad)
+        return tensor
     
-    def arange(self, start: int, stop: Optional[int] = None, step: int = 1, dtype: Optional[DType] = None, device: Optional[str] = None) -> 'EmberTensor':
+    def arange(self, start: int, stop: Optional[int] = None, step: int = 1, dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
         """
         Create a tensor with evenly spaced values within a given interval.
         
@@ -267,9 +297,9 @@ class EmberTensor(TensorInterface):
             Tensor with evenly spaced values
         """
         tensor = arange(start, stop, step, dtype=dtype)
-        return EmberTensor(tensor, dtype=dtype, device=device, requires_grad=self._requires_grad)
+        return tensor
     
-    def linspace(self, start: float, stop: float, num: int, dtype: Optional[DType] = None, device: Optional[str] = None) -> 'EmberTensor':
+    def linspace(self, start: float, stop: float, num: int, dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
         """
         Create a tensor with evenly spaced values within a given interval.
         
@@ -284,9 +314,9 @@ class EmberTensor(TensorInterface):
             Tensor with evenly spaced values
         """
         tensor = linspace(start, stop, num, dtype=dtype)
-        return EmberTensor(tensor, dtype=dtype, device=device, requires_grad=self._requires_grad)
+        return tensor
     
-    def full(self, shape: Union[int, Sequence[int]], fill_value: Union[float, int], dtype: Optional[DType] = None, device: Optional[str] = None) -> 'EmberTensor':
+    def full(self, shape: Union[int, Sequence[int]], fill_value: Union[float, int], dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
         """
         Create a tensor filled with a scalar value.
         
@@ -300,9 +330,9 @@ class EmberTensor(TensorInterface):
             Tensor filled with the specified value
         """
         tensor = full(shape, fill_value, dtype=dtype)
-        return EmberTensor(tensor, dtype=dtype, device=device, requires_grad=self._requires_grad)
+        return tensor
     
-    def full_like(self, x: Any, fill_value: Union[float, int], dtype: Optional[DType] = None, device: Optional[str] = None) -> 'EmberTensor':
+    def full_like(self, x: Any, fill_value: Union[float, int], dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
         """
         Create a tensor filled with a scalar value with the same shape as the input.
         
@@ -318,9 +348,9 @@ class EmberTensor(TensorInterface):
         if isinstance(x, EmberTensor):
             x = x.to_backend_tensor()
         tensor = full_like(x, fill_value, dtype=dtype)
-        return EmberTensor(tensor, dtype=dtype, device=device, requires_grad=self._requires_grad)
+        return tensor
     
-    def reshape(self, x: Any, shape: Union[int, Sequence[int]]) -> 'EmberTensor':
+    def reshape(self, x: Any, shape: Union[int, Sequence[int]]) -> Any:
         """
         Reshape a tensor to a new shape.
         
@@ -334,10 +364,9 @@ class EmberTensor(TensorInterface):
         if isinstance(x, EmberTensor):
             x = x.to_backend_tensor()
         tensor = reshape(x, shape)
-        # Don't pass dtype to avoid calling the dtype property
-        return EmberTensor(tensor, device=self.device, requires_grad=self._requires_grad)
+        return tensor
     
-    def transpose(self, x: Any, axes: Optional[Sequence[int]] = None) -> 'EmberTensor':
+    def transpose(self, x: Any, axes: Optional[Sequence[int]] = None) -> Any:
         """
         Permute the dimensions of a tensor.
         
@@ -351,9 +380,9 @@ class EmberTensor(TensorInterface):
         if isinstance(x, EmberTensor):
             x = x.to_backend_tensor()
         tensor = transpose(x, axes)
-        return EmberTensor(tensor, dtype=self.dtype, device=self.device, requires_grad=self._requires_grad)
+        return tensor
     
-    def concatenate(self, tensors: Sequence[Any], axis: int = 0) -> 'EmberTensor':
+    def concatenate(self, tensors: Sequence[Any], axis: int = 0) -> Any:
         """
         Concatenate tensors along a specified axis.
         
@@ -366,9 +395,9 @@ class EmberTensor(TensorInterface):
         """
         backend_tensors = [t.to_backend_tensor() if isinstance(t, EmberTensor) else t for t in tensors]
         tensor = concatenate(backend_tensors, axis)
-        return EmberTensor(tensor, dtype=self.dtype, device=self.device, requires_grad=self._requires_grad)
+        return tensor
     
-    def stack(self, tensors: Sequence[Any], axis: int = 0) -> 'EmberTensor':
+    def stack(self, tensors: Sequence[Any], axis: int = 0) -> Any:
         """
         Stack tensors along a new axis.
         
@@ -381,7 +410,7 @@ class EmberTensor(TensorInterface):
         """
         backend_tensors = [t.to_backend_tensor() if isinstance(t, EmberTensor) else t for t in tensors]
         tensor = stack(backend_tensors, axis)
-        return EmberTensor(tensor, dtype=self.dtype, device=self.device, requires_grad=self._requires_grad)
+        return tensor
     
     def split(self, x: Any, num_or_size_splits: Union[int, Sequence[int]], axis: int = 0) -> List[TensorInterface]:
         """
@@ -400,7 +429,7 @@ class EmberTensor(TensorInterface):
         tensors = split(x, num_or_size_splits, axis)
         return [EmberTensor(t, dtype=self.dtype, device=self.device, requires_grad=self._requires_grad) for t in tensors]
     
-    def expand_dims(self, x: Any, axis: Union[int, Sequence[int]]) -> 'EmberTensor':
+    def expand_dims(self, x: Any, axis: Union[int, Sequence[int]]) -> Any:
         """
         Insert new axes into a tensor's shape.
         
@@ -414,9 +443,9 @@ class EmberTensor(TensorInterface):
         if isinstance(x, EmberTensor):
             x = x.to_backend_tensor()
         tensor = expand_dims(x, axis)
-        return EmberTensor(tensor, dtype=self.dtype, device=self.device, requires_grad=self._requires_grad)
+        return tensor
     
-    def squeeze(self, x: Any, axis: Optional[Union[int, Sequence[int]]] = None) -> 'EmberTensor':
+    def squeeze(self, x: Any, axis: Optional[Union[int, Sequence[int]]] = None) -> Any:
         """
         Remove single-dimensional entries from a tensor's shape.
         
@@ -430,9 +459,9 @@ class EmberTensor(TensorInterface):
         if isinstance(x, EmberTensor):
             x = x.to_backend_tensor()
         tensor = squeeze(x, axis)
-        return EmberTensor(tensor, dtype=self.dtype, device=self.device, requires_grad=self._requires_grad)
+        return tensor
     
-    def tile(self, x: Any, reps: Sequence[int]) -> 'EmberTensor':
+    def tile(self, x: Any, reps: Sequence[int]) -> Any:
         """
         Construct a tensor by tiling a given tensor.
         
@@ -446,9 +475,9 @@ class EmberTensor(TensorInterface):
         if isinstance(x, EmberTensor):
             x = x.to_backend_tensor()
         tensor = tile(x, reps)
-        return EmberTensor(tensor, dtype=self.dtype, device=self.device, requires_grad=self._requires_grad)
+        return tensor
     
-    def gather(self, x: Any, indices: Any, axis: int = 0) -> 'EmberTensor':
+    def gather(self, x: Any, indices: Any, axis: int = 0) -> Any:
         """
         Gather slices from a tensor along an axis.
         
@@ -465,9 +494,47 @@ class EmberTensor(TensorInterface):
         if isinstance(indices, EmberTensor):
             indices = indices.to_backend_tensor()
         tensor = gather(x, indices, axis)
-        return EmberTensor(tensor, dtype=self.dtype, device=self.device, requires_grad=self._requires_grad)
+        return tensor
     
-    def convert_to_tensor(self, x: Any, dtype: Optional[DType] = None, device: Optional[str] = None) -> 'EmberTensor':
+    def scatter(self, data: Optional[Any] = None, indices: Optional[Any] = None,
+                dim_size: Optional[Any] = None, aggr: str = 'sum', axis: int = 0) -> Any:
+        """
+        Scatter data according to indices into a new tensor.
+        
+        If data is None, the current tensor (self) is used as the data to scatter.
+        
+        Args:
+            data: The data to scatter. If None, self is used.
+            indices: The indices to scatter the data to
+            dim_size: The size of the output tensor along the specified axis
+            aggr: The aggregation method ('sum', 'mean', 'max', 'min')
+            axis: The axis along which to scatter
+            
+        Returns:
+            The scattered tensor
+        """
+        # Handle the case where the method is called as x.scatter(indices, dim_size)
+        # instead of x.scatter(None, indices, dim_size)
+        if indices is None and data is not None:
+            indices = data
+            data = None
+            
+        # Use self as the data to scatter if data is None
+        if data is None:
+            data = self._tensor
+        elif isinstance(data, EmberTensor):
+            data = data.to_backend_tensor()
+        else:
+            data = _convert_to_backend_tensor(data)
+            
+        indices = _convert_to_backend_tensor(indices)
+        if dim_size is not None:
+            dim_size = _convert_to_backend_tensor(dim_size)
+            
+        tensor = scatter(data, indices, dim_size, aggr, axis)
+        return tensor
+    
+    def convert_to_tensor(self, x: Any, dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
         """
         Convert input to a tensor.
         
@@ -480,9 +547,9 @@ class EmberTensor(TensorInterface):
             Tensor representation of the input
         """
         tensor = _convert_to_backend_tensor(x, dtype=dtype)
-        return EmberTensor(tensor, dtype=dtype, device=device, requires_grad=self._requires_grad)
+        return tensor
     
-    def cast(self, x: Any, dtype: Union[DType, str, Callable[[], Any]]) -> 'EmberTensor':
+    def cast(self, x: Any, dtype: Union[DType, str, Callable[[], Any]]) -> Any:
         """
         Cast a tensor to a different data type.
         
@@ -510,9 +577,9 @@ class EmberTensor(TensorInterface):
         if isinstance(x, EmberTensor):
             x = x.to_backend_tensor()
         tensor = cast(x, processed_dtype)
-        return EmberTensor(tensor, dtype=processed_dtype, device=self.device, requires_grad=self._requires_grad)
+        return tensor
     
-    def copy(self, x: Any) -> 'EmberTensor':
+    def copy(self, x: Any) -> Any:
         """
         Create a copy of a tensor.
         
@@ -525,9 +592,9 @@ class EmberTensor(TensorInterface):
         if isinstance(x, EmberTensor):
             x = x.to_backend_tensor()
         tensor = copy(x)
-        return EmberTensor(tensor, dtype=self.dtype, device=self.device, requires_grad=self._requires_grad)
+        return tensor
     
-    def var(self, x: Any, axis: Optional[Union[int, Sequence[int]]] = None, keepdims: bool = False) -> 'EmberTensor':
+    def var(self, x: Any, axis: Optional[Union[int, Sequence[int]]] = None, keepdims: bool = False) -> Any:
         """
         Compute the variance of a tensor along specified axes.
         
@@ -542,9 +609,9 @@ class EmberTensor(TensorInterface):
         if isinstance(x, EmberTensor):
             x = x.to_backend_tensor()
         tensor = var(x, axis, keepdims)
-        return EmberTensor(tensor, dtype=self.dtype, device=self.device, requires_grad=self._requires_grad)
+        return tensor
     
-    def sort(self, x: Any, axis: int = -1, descending: bool = False) -> 'EmberTensor':
+    def sort(self, x: Any, axis: int = -1, descending: bool = False) -> Any:
         """
         Sort a tensor along a specified axis.
         
@@ -559,9 +626,9 @@ class EmberTensor(TensorInterface):
         if isinstance(x, EmberTensor):
             x = x.to_backend_tensor()
         tensor = sort(x, axis, descending)
-        return EmberTensor(tensor, dtype=self.dtype, device=self.device, requires_grad=self._requires_grad)
+        return tensor
     
-    def argsort(self, x: Any, axis: int = -1, descending: bool = False) -> 'EmberTensor':
+    def argsort(self, x: Any, axis: int = -1, descending: bool = False) -> Any:
         """
         Return the indices that would sort a tensor along a specified axis.
         
@@ -576,9 +643,9 @@ class EmberTensor(TensorInterface):
         if isinstance(x, EmberTensor):
             x = x.to_backend_tensor()
         tensor = argsort(x, axis, descending)
-        return EmberTensor(tensor, dtype=self.dtype, device=self.device, requires_grad=self._requires_grad)
+        return tensor
     
-    def slice(self, x: Any, starts: Sequence[int], sizes: Sequence[int]) -> 'EmberTensor':
+    def slice(self, x: Any, starts: Sequence[int], sizes: Sequence[int]) -> Any:
         """
         Extract a slice from a tensor.
         
@@ -593,9 +660,9 @@ class EmberTensor(TensorInterface):
         if isinstance(x, EmberTensor):
             x = x.to_backend_tensor()
         tensor = slice(x, starts, sizes)
-        return EmberTensor(tensor, dtype=self.dtype, device=self.device, requires_grad=self._requires_grad)
+        return tensor
     
-    def slice_update(self, x: Any, slices: Union[List, Tuple], updates: Any) -> 'EmberTensor':
+    def slice_update(self, x: Any, slices: Union[List, Tuple], updates: Any) -> Any:
         """
         Update a tensor at specific indices.
         
@@ -612,9 +679,9 @@ class EmberTensor(TensorInterface):
         if isinstance(updates, EmberTensor):
             updates = updates.to_backend_tensor()
         tensor = slice_update(x, slices, updates)
-        return EmberTensor(tensor, dtype=self.dtype, device=self.device, requires_grad=self._requires_grad)
+        return tensor
     
-    def pad(self, x: Any, paddings: Sequence[Sequence[int]], constant_values: Union[int, float] = 0) -> 'EmberTensor':
+    def pad(self, x: Any, paddings: Sequence[Sequence[int]], constant_values: Union[int, float] = 0) -> Any:
         """
         Pad a tensor with a constant value.
         
@@ -630,9 +697,9 @@ class EmberTensor(TensorInterface):
         if isinstance(x, EmberTensor):
             x = x.to_backend_tensor()
         tensor = pad(x, paddings, constant_values)
-        return EmberTensor(tensor, dtype=self.dtype, device=self.device, requires_grad=self._requires_grad)
+        return tensor
     
-    def tensor_scatter_nd_update(self, tensor: Any, indices: Any, updates: Any) -> 'EmberTensor':
+    def tensor_scatter_nd_update(self, tensor: Any, indices: Any, updates: Any) -> Any:
         """
         Updates values of a tensor at specified indices.
 
@@ -651,9 +718,11 @@ class EmberTensor(TensorInterface):
         if isinstance(updates, EmberTensor):
             updates = updates.to_backend_tensor()
         result = tensor_scatter_nd_update(tensor, indices, updates)
-        return EmberTensor(result, dtype=self.dtype, device=self.device, requires_grad=self._requires_grad)
+        return result
     
-    def maximum(self, x1: Any, x2: Any) -> 'EmberTensor':
+    # Removed duplicate scatter method
+    
+    def maximum(self, x1: Any, x2: Any) -> Any:
         """
         Element-wise maximum of two tensors.
         
@@ -669,10 +738,10 @@ class EmberTensor(TensorInterface):
         if isinstance(x2, EmberTensor):
             x2 = x2.to_backend_tensor()
         tensor = maximum(x1, x2)
-        return EmberTensor(tensor, dtype=self.dtype, device=self.device, requires_grad=self._requires_grad)
+        return tensor
     
     def random_normal(self, shape: Union[int, Sequence[int]], mean: float = 0.0, stddev: float = 1.0,
-                     dtype: Optional[DType] = None, device: Optional[str] = None) -> 'EmberTensor':
+                      dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
         """
         Create a tensor with random values from a normal distribution.
         
@@ -687,10 +756,10 @@ class EmberTensor(TensorInterface):
             Tensor with random normal values
         """
         tensor = random_normal(shape, mean, stddev, dtype, device)
-        return EmberTensor(tensor, dtype=dtype, device=device, requires_grad=self._requires_grad)
+        return tensor
     
     def random_uniform(self, shape: Union[int, Sequence[int]], minval: float = 0.0, maxval: float = 1.0,
-                      dtype: Optional[DType] = None, device: Optional[str] = None) -> 'EmberTensor':
+                      dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
         """
         Create a tensor with random values from a uniform distribution.
         
@@ -705,10 +774,10 @@ class EmberTensor(TensorInterface):
             Tensor with random uniform values
         """
         tensor = random_uniform(shape, minval, maxval, dtype, device)
-        return EmberTensor(tensor, dtype=dtype, device=device, requires_grad=self._requires_grad)
+        return tensor
     
     def random_binomial(self, shape: Union[int, Sequence[int]], p: float = 0.5,
-                       dtype: Optional[DType] = None, device: Optional[str] = None) -> 'EmberTensor':
+                       dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
         """
         Create a tensor with random values from a binomial distribution.
         
@@ -722,10 +791,10 @@ class EmberTensor(TensorInterface):
             Tensor with random binomial values
         """
         tensor = random_bernoulli(shape, p, dtype, device)
-        return EmberTensor(tensor, dtype=dtype, device=device, requires_grad=self._requires_grad)
+        return tensor
     
     def random_gamma(self, shape: Union[int, Sequence[int]], alpha: float = 1.0, beta: float = 1.0,
-                    dtype: Optional[DType] = None, device: Optional[str] = None) -> 'EmberTensor':
+                    dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
         """
         Generate random values from a gamma distribution.
         
@@ -740,10 +809,10 @@ class EmberTensor(TensorInterface):
             Tensor with random values from a gamma distribution
         """
         tensor = random_gamma(shape, alpha, beta, dtype, device)
-        return EmberTensor(tensor, dtype=dtype, device=device, requires_grad=self._requires_grad)
+        return tensor
     
     def random_exponential(self, shape: Union[int, Sequence[int]], scale: float = 1.0,
-                          dtype: Optional[DType] = None, device: Optional[str] = None) -> 'EmberTensor':
+                          dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
         """
         Generate random values from an exponential distribution.
         
@@ -757,10 +826,10 @@ class EmberTensor(TensorInterface):
             Tensor with random values from an exponential distribution
         """
         tensor = random_exponential(shape, scale, dtype, device)
-        return EmberTensor(tensor, dtype=dtype, device=device, requires_grad=self._requires_grad)
+        return tensor
     
     def random_poisson(self, shape: Union[int, Sequence[int]], lam: float = 1.0,
-                      dtype: Optional[DType] = None, device: Optional[str] = None) -> 'EmberTensor':
+                      dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
         """
         Generate random values from a Poisson distribution.
         
@@ -774,10 +843,10 @@ class EmberTensor(TensorInterface):
             Tensor with random values from a Poisson distribution
         """
         tensor = random_poisson(shape, lam, dtype, device)
-        return EmberTensor(tensor, dtype=dtype, device=device, requires_grad=self._requires_grad)
+        return tensor
     
     def random_categorical(self, logits: Any, num_samples: int,
-                          dtype: Optional[DType] = None, device: Optional[str] = None) -> 'EmberTensor':
+                          dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
         """
         Draw samples from a categorical distribution.
         
@@ -793,14 +862,14 @@ class EmberTensor(TensorInterface):
         if isinstance(logits, EmberTensor):
             logits = logits.to_backend_tensor()
         tensor = random_categorical(logits, num_samples, dtype, device)
-        return EmberTensor(tensor, dtype=dtype, device=device, requires_grad=self._requires_grad)
+        return tensor
     
-    def random_permutation(self, x: Union[int, Any], dtype: Optional[DType] = None, device: Optional[str] = None) -> 'EmberTensor':
+    def random_permutation(self, x: Union[int, Any], dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
         """
         Randomly permute a sequence or return a permuted range.
         
         Args:
-            x: If x is an integer, randomly permute np.arange(x).
+            x: If x is an integer, randomly permute a range of integers from 0 to x-1.
                If x is an array, make a copy and shuffle the elements randomly.
             dtype: Optional data type
             device: Optional device to place the tensor on
@@ -811,9 +880,9 @@ class EmberTensor(TensorInterface):
         if isinstance(x, EmberTensor):
             x = x.to_backend_tensor()
         tensor = random_permutation(x, dtype, device)
-        return EmberTensor(tensor, dtype=dtype, device=device, requires_grad=self._requires_grad)
+        return tensor
     
-    def shuffle(self, x: Any) -> 'EmberTensor':
+    def shuffle(self, x: Any) -> Any:
         """
         Randomly shuffle a tensor along the first dimension.
         
@@ -826,7 +895,7 @@ class EmberTensor(TensorInterface):
         if isinstance(x, EmberTensor):
             x = x.to_backend_tensor()
         tensor = shuffle(x)
-        return EmberTensor(tensor, dtype=self.dtype, device=self.device, requires_grad=self._requires_grad)
+        return tensor
     
     def set_seed(self, seed: int) -> None:
         """
@@ -877,7 +946,7 @@ class EmberTensor(TensorInterface):
             'dtype': dtype_str,
             'device': self._device,
             'requires_grad': self._requires_grad,
-            'backend': self._backend if hasattr(self, '_backend') else None
+            'backend': self._backend
         }
     
     def __setstate__(self, state: dict) -> None:
@@ -892,7 +961,7 @@ class EmberTensor(TensorInterface):
         dtype_str = state['dtype']
         device = state['device']
         requires_grad = state['requires_grad']
-        backend = state.get('backend', None)
+        backend = state.get('backend', None)  # Get backend if available, otherwise None
         
         # Convert the numpy array back to a backend tensor
         self._tensor = _convert_to_backend_tensor(tensor_data, dtype=dtype_str)
@@ -901,14 +970,23 @@ class EmberTensor(TensorInterface):
         self._device = device
         self._requires_grad = requires_grad
         self._dtype = DType(dtype_str.split('.')[-1]) if dtype_str else None
-        self._backend = backend
+        
+        # Set the backend if available
+        if backend is not None:
+            self._backend = backend
+        else:
+            # If backend is not available, get the current backend
+            from ember_ml.backend import get_backend
+            self._backend = get_backend()
     
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Any]:
         """
         Make the tensor iterable.
         
         Returns:
-            Iterator over the tensor elements
+            Iterator over the tensor elements, where each element is a raw tensor
         """
-        # Convert to numpy and iterate over it
-        return iter(to_numpy(self._tensor))
+        # Iterate directly over the backend tensor
+        for element in self._tensor:
+            # Return the raw tensor element
+            yield element

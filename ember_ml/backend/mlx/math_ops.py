@@ -6,20 +6,16 @@ This module provides MLX implementations of math operations.
 
 import mlx.core as mx
 from typing import Union, Optional, Sequence, List, Tuple, Literal
-
+import numpy as np
 from ember_ml.backend.mlx.tensor.ops import cast
 from ember_ml.backend.mlx.tensor import MLXTensor, MLXDType
+from ember_ml.backend.mlx.config import TensorLike, ShapeLike
 
 # Create instances for tensor and dtype operations
-tensor_obj = MLXTensor()
+Tensor = MLXTensor()
 dtype_obj = MLXDType()
 
-# Import from tensor_ops
-from ember_ml.backend.mlx.tensor import MLXTensor
-
-convert_to_tensor = MLXTensor().convert_to_tensor
-
-def add(x: mx.array, y: mx.array) -> mx.array:
+def add(x: TensorLike, y: TensorLike) -> mx.array: 
     """
     Add two MLX arrays element-wise.
     
@@ -30,9 +26,9 @@ def add(x: mx.array, y: mx.array) -> mx.array:
     Returns:
         Element-wise sum
     """
-    return mx.add(convert_to_tensor(x), convert_to_tensor(y))
+    return mx.add(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
-def subtract(x: mx.array, y: mx.array) -> mx.array:
+def subtract(x: TensorLike, y: TensorLike) -> mx.array:
     """
     Subtract two MLX arrays element-wise.
     
@@ -43,9 +39,9 @@ def subtract(x: mx.array, y: mx.array) -> mx.array:
     Returns:
         Element-wise difference
     """
-    return mx.subtract(convert_to_tensor(x), convert_to_tensor(y))
+    return mx.subtract(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
-def multiply(x: mx.array, y: mx.array) -> mx.array:
+def multiply(x: TensorLike, y: TensorLike) -> mx.array:
     """
     Multiply two MLX arrays element-wise.
     
@@ -56,9 +52,9 @@ def multiply(x: mx.array, y: mx.array) -> mx.array:
     Returns:
         Element-wise product
     """
-    return mx.multiply(convert_to_tensor(x), convert_to_tensor(y))
+    return mx.multiply(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
-def divide(x: mx.array, y: mx.array) -> mx.array:
+def divide(x: TensorLike, y: TensorLike) -> mx.array:
     """
     Divide two MLX arrays element-wise.
     
@@ -69,9 +65,9 @@ def divide(x: mx.array, y: mx.array) -> mx.array:
     Returns:
         Element-wise quotient
     """
-    return mx.divide(convert_to_tensor(x), convert_to_tensor(y))
+    return mx.divide(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
-def dot(x: mx.array, y: mx.array) -> mx.array:
+def dot(x: TensorLike, y: TensorLike) -> mx.array:
     """
     Compute the dot product of two MLX arrays.
     
@@ -82,8 +78,8 @@ def dot(x: mx.array, y: mx.array) -> mx.array:
     Returns:
         Dot product
     """
-    x_array = convert_to_tensor(x)
-    y_array = convert_to_tensor(y)
+    x_array = Tensor.convert_to_tensor(x)
+    y_array = Tensor.convert_to_tensor(y)
     
     # Handle different dimensions
     if mx.equal(mx.array(len(x_array.shape)), mx.array(1)) and mx.equal(mx.array(len(y_array.shape)), mx.array(1)):
@@ -91,7 +87,7 @@ def dot(x: mx.array, y: mx.array) -> mx.array:
     else:
         return mx.matmul(x_array, y_array)
 
-def matmul(x: mx.array, y: mx.array) -> mx.array:
+def matmul(x: TensorLike, y: TensorLike) -> mx.array:
     """
     Compute the matrix product of two MLX arrays.
     
@@ -102,9 +98,9 @@ def matmul(x: mx.array, y: mx.array) -> mx.array:
     Returns:
         Matrix product
     """
-    return mx.matmul(convert_to_tensor(x), convert_to_tensor(y))
+    return mx.matmul(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
-def mean(x: mx.array, axis: Optional[Union[int, Sequence[int]]] = None, keepdims: bool = False) -> mx.array:
+def mean(x: TensorLike, axis: Optional[ShapeLike] = None, keepdims: bool = False) -> mx.array:
     """
     Compute the mean of an MLX array along specified axes.
     
@@ -116,7 +112,7 @@ def mean(x: mx.array, axis: Optional[Union[int, Sequence[int]]] = None, keepdims
     Returns:
         Mean of the array
     """
-    x_array = convert_to_tensor(x)
+    x_array = Tensor.convert_to_tensor(x)
     
     if axis is None:
         return mx.mean(x_array, keepdims=keepdims)
@@ -131,7 +127,8 @@ def mean(x: mx.array, axis: Optional[Union[int, Sequence[int]]] = None, keepdims
     
     return mx.mean(x_array, axis=axis, keepdims=keepdims)
 
-def sum(x: mx.array, axis: Optional[Union[int, Sequence[int]]] = None, keepdims: bool = False) -> mx.array:
+def sum(x: TensorLike, 
+        axis: Optional[ShapeLike] = None, keepdims: bool = False) -> mx.array:
     """
     Compute the sum of an MLX array along specified axes.
     
@@ -143,7 +140,7 @@ def sum(x: mx.array, axis: Optional[Union[int, Sequence[int]]] = None, keepdims:
     Returns:
         Sum of the array
     """
-    x_array = convert_to_tensor(x)
+    x_array = Tensor.convert_to_tensor(x)
     
     if axis is None:
         return mx.sum(x_array, keepdims=keepdims)
@@ -158,7 +155,7 @@ def sum(x: mx.array, axis: Optional[Union[int, Sequence[int]]] = None, keepdims:
     
     return mx.sum(x_array, axis=axis, keepdims=keepdims)
 
-def var(x: mx.array, axis: Optional[Union[int, Sequence[int]]] = None, keepdims: bool = False) -> mx.array:
+def var(x: TensorLike, axis: Optional[ShapeLike] = None, keepdims: bool = False) -> mx.array:
     """
     Compute the variance of an MLX array along specified axes.
     
@@ -170,7 +167,7 @@ def var(x: mx.array, axis: Optional[Union[int, Sequence[int]]] = None, keepdims:
     Returns:
         Variance of the array
     """
-    x_array = convert_to_tensor(x)
+    x_array = Tensor.convert_to_tensor(x)
     
     if axis is None:
         return mx.var(x_array, keepdims=keepdims)
@@ -185,7 +182,7 @@ def var(x: mx.array, axis: Optional[Union[int, Sequence[int]]] = None, keepdims:
     
     return mx.var(x_array, axis=axis, keepdims=keepdims)
 
-def exp(x: mx.array) -> mx.array:
+def exp(x: TensorLike) -> mx.array:
     """
     Compute the exponential of an MLX array element-wise.
     
@@ -195,9 +192,9 @@ def exp(x: mx.array) -> mx.array:
     Returns:
         Element-wise exponential
     """
-    return mx.exp(convert_to_tensor(x))
+    return mx.exp(Tensor.convert_to_tensor(x))
 
-def log(x: mx.array) -> mx.array:
+def log(x: TensorLike) -> mx.array:
     """
     Compute the natural logarithm of an MLX array element-wise.
     
@@ -207,9 +204,10 @@ def log(x: mx.array) -> mx.array:
     Returns:
         Element-wise logarithm
     """
-    return mx.log(convert_to_tensor(x))
+    return mx.log(Tensor.convert_to_tensor(x))
 
-def pow(x: mx.array, y: mx.array) -> mx.array:
+def pow(x: TensorLike, 
+        y: TensorLike) -> mx.array:
     """
     Compute x raised to the power of y element-wise.
     
@@ -220,9 +218,9 @@ def pow(x: mx.array, y: mx.array) -> mx.array:
     Returns:
         Element-wise power
     """
-    return mx.power(convert_to_tensor(x), convert_to_tensor(y))
+    return mx.power(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
-def sqrt(x: mx.array) -> mx.array:
+def sqrt(x: TensorLike) -> mx.array:
     """
     Compute the square root of an MLX array element-wise.
     
@@ -232,9 +230,11 @@ def sqrt(x: mx.array) -> mx.array:
     Returns:
         Element-wise square root
     """
-    return mx.sqrt(convert_to_tensor(x))
+    return mx.sqrt(Tensor.convert_to_tensor(x))
 
-def clip(x: mx.array, min_val: Union[float, mx.array], max_val: Union[float, mx.array]) -> mx.array:
+def clip(x: TensorLike, 
+         min_val: TensorLike, 
+         max_val: TensorLike) -> mx.array:
     """
     Clip the values of an MLX array to a specified range.
     
@@ -246,9 +246,9 @@ def clip(x: mx.array, min_val: Union[float, mx.array], max_val: Union[float, mx.
     Returns:
         Clipped array
     """
-    x_array = convert_to_tensor(x)
-    min_val = convert_to_tensor(min_val)
-    max_val = convert_to_tensor(max_val)
+    x_array = Tensor.convert_to_tensor(x)
+    min_val = Tensor.convert_to_tensor(min_val)
+    max_val = Tensor.convert_to_tensor(max_val)
     
     return mx.clip(x_array, min_val, max_val)
 
@@ -262,11 +262,11 @@ def sigmoid(x: mx.array) -> mx.array:
     Returns:
         Element-wise sigmoid
     """
-    x_array = convert_to_tensor(x)
+    x_array = Tensor.convert_to_tensor(x)
     x_safe = clip(x_array, -88.0, 88.0)  # Prevent overflow
     return mx.sigmoid(x_safe)
 
-def softplus(x: mx.array) -> mx.array:
+def softplus(x: TensorLike) -> mx.array:
     """
     Compute the softplus of an MLX array element-wise.
     
@@ -278,12 +278,12 @@ def softplus(x: mx.array) -> mx.array:
     Returns:
         Element-wise softplus
     """
-    x_array = convert_to_tensor(x)
+    x_array = Tensor.convert_to_tensor(x)
     x_safe = clip(x_array, -88.0, 88.0)  # Prevent overflow
     # softplus(x) = log(1 + exp(x))
     return mx.log(mx.add(1.0, mx.exp(x_safe)))
 
-def tanh(x: mx.array) -> mx.array:
+def tanh(x: TensorLike) -> mx.array:
     """
     Compute the hyperbolic tangent of an MLX array element-wise.
     
@@ -293,9 +293,9 @@ def tanh(x: mx.array) -> mx.array:
     Returns:
         Element-wise tanh
     """
-    return mx.tanh(convert_to_tensor(x))
+    return mx.tanh(Tensor.convert_to_tensor(x))
 
-def relu(x: mx.array) -> mx.array:
+def relu(x: TensorLike) -> mx.array:
     """
     Compute the rectified linear unit of an MLX array element-wise.
     
@@ -305,9 +305,9 @@ def relu(x: mx.array) -> mx.array:
     Returns:
         Element-wise ReLU
     """
-    return mx.maximum(0, convert_to_tensor(x))
+    return mx.maximum(0, Tensor.convert_to_tensor(x))
 
-def abs(x: mx.array) -> mx.array:
+def abs(x: TensorLike) -> mx.array:
     """
     Compute the absolute value of an MLX array element-wise.
     
@@ -317,10 +317,10 @@ def abs(x: mx.array) -> mx.array:
     Returns:
         Element-wise absolute value
     """
-    return mx.abs(convert_to_tensor(x))
+    return mx.abs(Tensor.convert_to_tensor(x))
 
 
-def negative(x: mx.array) -> mx.array:
+def negative(x: TensorLike) -> mx.array:
     """
     Compute the negative of an MLX array element-wise.
     
@@ -330,10 +330,10 @@ def negative(x: mx.array) -> mx.array:
     Returns:
         Element-wise negative
     """
-    return mx.negative(convert_to_tensor(x))
+    return mx.negative(Tensor.convert_to_tensor(x))
 
 
-def sign(x: mx.array) -> mx.array:
+def sign(x: TensorLike) -> mx.array:
     """
     Compute the sign of an MLX array element-wise.
     
@@ -343,7 +343,7 @@ def sign(x: mx.array) -> mx.array:
     Returns:
         Element-wise sign (-1 for negative, 0 for zero, 1 for positive)
     """
-    x_tensor = convert_to_tensor(x)
+    x_tensor = Tensor.convert_to_tensor(x)
     # Compute sign using comparisons
     positive = mx.array(1.0, dtype=x_tensor.dtype)
     negative = mx.array(-1.0, dtype=x_tensor.dtype)
@@ -353,7 +353,7 @@ def sign(x: mx.array) -> mx.array:
     return mx.where(x_tensor > 0, positive, mx.where(x_tensor < 0, negative, zero))
 
 
-def sin(x: mx.array) -> mx.array:
+def sin(x: TensorLike) -> mx.array:
     """
     Compute the sine of an MLX array element-wise.
     
@@ -363,10 +363,10 @@ def sin(x: mx.array) -> mx.array:
     Returns:
         Element-wise sine
     """
-    return mx.sin(convert_to_tensor(x))
+    return mx.sin(Tensor.convert_to_tensor(x))
 
 
-def cos(x: mx.array) -> mx.array:
+def cos(x: TensorLike) -> mx.array:
     """
     Compute the cosine of an MLX array element-wise.
     
@@ -376,10 +376,10 @@ def cos(x: mx.array) -> mx.array:
     Returns:
         Element-wise cosine
     """
-    return mx.cos(convert_to_tensor(x))
+    return mx.cos(Tensor.convert_to_tensor(x))
 
 
-def tan(x: mx.array) -> mx.array:
+def tan(x: TensorLike) -> mx.array:
     """
     Compute the tangent of an MLX array element-wise.
     
@@ -389,12 +389,12 @@ def tan(x: mx.array) -> mx.array:
     Returns:
         Element-wise tangent
     """
-    x_tensor = convert_to_tensor(x)
+    x_tensor = Tensor.convert_to_tensor(x)
     # tan(x) = sin(x) / cos(x)
     return mx.divide(mx.sin(x_tensor), mx.cos(x_tensor))
 
 
-def sinh(x: mx.array) -> mx.array:
+def sinh(x: TensorLike) -> mx.array:
     """
     Compute the hyperbolic sine of an MLX array element-wise.
     
@@ -404,12 +404,12 @@ def sinh(x: mx.array) -> mx.array:
     Returns:
         Element-wise hyperbolic sine
     """
-    x_tensor = convert_to_tensor(x)
+    x_tensor = Tensor.convert_to_tensor(x)
     # sinh(x) = (exp(x) - exp(-x)) / 2
     return mx.divide(mx.subtract(mx.exp(x_tensor), mx.exp(mx.negative(x_tensor))), 2.0)
 
 
-def cosh(x: mx.array) -> mx.array:
+def cosh(x: TensorLike) -> mx.array:
     """
     Compute the hyperbolic cosine of an MLX array element-wise.
     
@@ -419,12 +419,12 @@ def cosh(x: mx.array) -> mx.array:
     Returns:
         Element-wise hyperbolic cosine
     """
-    x_tensor = convert_to_tensor(x)
+    x_tensor = Tensor.convert_to_tensor(x)
     # cosh(x) = (exp(x) + exp(-x)) / 2
     return mx.divide(mx.add(mx.exp(x_tensor), mx.exp(mx.negative(x_tensor))), 2.0)
 
 
-def log10(x: mx.array) -> mx.array:
+def log10(x: TensorLike) -> mx.array:
     """
     Compute the base-10 logarithm of an MLX array element-wise.
     
@@ -434,12 +434,12 @@ def log10(x: mx.array) -> mx.array:
     Returns:
         Element-wise base-10 logarithm
     """
-    x_tensor = convert_to_tensor(x)
+    x_tensor = Tensor.convert_to_tensor(x)
     # log10(x) = log(x) / log(10)
     return mx.divide(mx.log(x_tensor), mx.log(mx.array(10.0)))
 
 
-def log2(x: mx.array) -> mx.array:
+def log2(x: TensorLike) -> mx.array:
     """
     Compute the base-2 logarithm of an MLX array element-wise.
     
@@ -449,12 +449,12 @@ def log2(x: mx.array) -> mx.array:
     Returns:
         Element-wise base-2 logarithm
     """
-    x_tensor = convert_to_tensor(x)
+    x_tensor = Tensor.convert_to_tensor(x)
     # log2(x) = log(x) / log(2)
     return mx.divide(mx.log(x_tensor), mx.log(mx.array(2.0)))
 
 
-def square(x: mx.array) -> mx.array:
+def square(x: TensorLike) -> mx.array:
     """
     Compute the square of an MLX array element-wise.
     
@@ -464,11 +464,12 @@ def square(x: mx.array) -> mx.array:
     Returns:
         Element-wise square
     """
-    x_tensor = convert_to_tensor(x)
+    x_tensor = Tensor.convert_to_tensor(x)
     return mx.multiply(x_tensor, x_tensor)
 
 
-def mod(x: mx.array, y: mx.array) -> mx.array:
+def mod(x: TensorLike, 
+        y: TensorLike) -> mx.array:
     """
     Compute the remainder of division of x by y element-wise.
     
@@ -479,15 +480,16 @@ def mod(x: mx.array, y: mx.array) -> mx.array:
     Returns:
         Element-wise remainder
     """
-    x_tensor = convert_to_tensor(x)
-    y_tensor = convert_to_tensor(y)
+    x_tensor = Tensor.convert_to_tensor(x)
+    y_tensor = Tensor.convert_to_tensor(y)
     
     # Use divmod to get the remainder
     _, remainder = mx.divmod(x_tensor, y_tensor)
     return remainder
 
 
-def floor_divide(x: mx.array, y: mx.array) -> mx.array:
+def floor_divide(x: TensorLike, 
+                 y: TensorLike) -> mx.array:
     """
     Element-wise integer division.
     
@@ -500,14 +502,15 @@ def floor_divide(x: mx.array, y: mx.array) -> mx.array:
     Returns:
         Element-wise integer quotient (a // b)
     """
-    x_tensor = convert_to_tensor(x)
-    y_tensor = convert_to_tensor(y)
+    x_tensor = Tensor.convert_to_tensor(x)
+    y_tensor = Tensor.convert_to_tensor(y)
     
     # Use floor_divide from MLX
     return mx.floor_divide(x_tensor, y_tensor)
 
 
-def min(x: mx.array, axis: Optional[Union[int, Sequence[int]]] = None, keepdims: bool = False) -> mx.array:
+def min(x: TensorLike, 
+        axis: Optional[ShapeLike] = None, keepdims: bool = False) -> mx.array:
     """
     Compute the minimum value of an MLX array along specified axes.
     
@@ -519,7 +522,7 @@ def min(x: mx.array, axis: Optional[Union[int, Sequence[int]]] = None, keepdims:
     Returns:
         Minimum value of the array
     """
-    x_array = convert_to_tensor(x)
+    x_array = Tensor.convert_to_tensor(x)
     
     if axis is None:
         # Flatten the array and find the minimum
@@ -537,7 +540,8 @@ def min(x: mx.array, axis: Optional[Union[int, Sequence[int]]] = None, keepdims:
     return mx.min(x_array, axis=axis, keepdims=keepdims)
 
 
-def max(x: mx.array, axis: Optional[Union[int, Sequence[int]]] = None, keepdims: bool = False) -> mx.array:
+def max(x: TensorLike, 
+        axis: Optional[ShapeLike] = None, keepdims: bool = False) -> mx.array:
     """
     Compute the maximum value of an MLX array along specified axes.
     
@@ -549,7 +553,7 @@ def max(x: mx.array, axis: Optional[Union[int, Sequence[int]]] = None, keepdims:
     Returns:
         Maximum value of the array
     """
-    x_array = convert_to_tensor(x)
+    x_array = Tensor.convert_to_tensor(x)
     
     if axis is None:
         # Flatten the array and find the maximum
@@ -566,7 +570,8 @@ def max(x: mx.array, axis: Optional[Union[int, Sequence[int]]] = None, keepdims:
     
     return mx.max(x_array, axis=axis, keepdims=keepdims)
 
-def softmax(x: mx.array, axis: int = -1) -> mx.array:
+def softmax(x: TensorLike,
+            axis: int = -1) -> mx.array:
     """
     Compute the softmax of an MLX array along a specified axis.
     
@@ -577,7 +582,7 @@ def softmax(x: mx.array, axis: int = -1) -> mx.array:
     Returns:
         Softmax of the array
     """
-    x_array = convert_to_tensor(x)
+    x_array = Tensor.convert_to_tensor(x)
     x_max = mx.max(x_array, axis=axis, keepdims=True)
     exp_x = mx.exp(mx.subtract(x_array, x_max))
     return mx.divide(exp_x, mx.sum(exp_x, axis=axis, keepdims=True))
@@ -593,11 +598,12 @@ def sort(x: mx.array, axis: int = -1) -> mx.array:
     Returns:
         Sorted array
     """
-    x_array = convert_to_tensor(x)
+    x_array = Tensor.convert_to_tensor(x)
     return mx.sort(x_array, axis=axis)
 
 
-def gradient(f: mx.array, *varargs, axis: Optional[Union[int, Sequence[int]]] = None,
+def gradient(f: TensorLike, 
+             *varargs, axis: Optional[ShapeLike] = None,
             edge_order: Literal[1, 2] = 1) -> Union[mx.array, List[mx.array]]:
     """
     Return the gradient of an N-dimensional array.
@@ -620,11 +626,8 @@ def gradient(f: mx.array, *varargs, axis: Optional[Union[int, Sequence[int]]] = 
     """
     from ember_ml.backend.mlx.tensor.ops import scatter
     from ember_ml.backend.mlx.tensor import MLXTensor
-    
-    # Create a tensor instance for tensor operations
-    tensor_obj = MLXTensor()
-    
-    f_array = convert_to_tensor(f)
+        
+    f_array = Tensor.convert_to_tensor(f)
     
     # Get the shape of the input array
     f_shape = f_array.shape
@@ -638,7 +641,7 @@ def gradient(f: mx.array, *varargs, axis: Optional[Union[int, Sequence[int]]] = 
         # Use provided spacing
         dx = []
         for arg in varargs:
-            dx.append(convert_to_tensor(arg))
+            dx.append(Tensor.convert_to_tensor(arg))
     
     # Determine which axes to calculate gradient along
     axes = list(range(ndim)) if axis is None else [axis] if isinstance(axis, int) else list(axis)
@@ -682,21 +685,21 @@ def gradient(f: mx.array, *varargs, axis: Optional[Union[int, Sequence[int]]] = 
             # Scatter the beginning values
             if begin is not None and len(begin_indices) > 0:
                 begin_flat = mx.reshape(begin, (-1,))
-                grad_i_flat = scatter(tensor_obj, begin_flat, mx.array(begin_indices), grad_i_flat.shape[0], aggr="add")
+                grad_i_flat = scatter(begin_flat, mx.array(begin_indices), grad_i_flat.shape[0], aggr="add")
                 grad_i = mx.reshape(grad_i_flat, f_array.shape)
             
             # Scatter the middle values
             if middle is not None and len(middle_indices) > 0:
                 middle_flat = mx.reshape(middle, (-1,))
                 grad_i_flat = mx.reshape(grad_i, (-1,))
-                grad_i_flat = scatter(tensor_obj, middle_flat, mx.array(middle_indices), grad_i_flat.shape[0], aggr="add")
+                grad_i_flat = scatter(middle_flat, mx.array(middle_indices), grad_i_flat.shape[0], aggr="add")
                 grad_i = mx.reshape(grad_i_flat, f_array.shape)
             
             # Scatter the end values
             if end is not None and len(end_indices) > 0:
                 end_flat = mx.reshape(end, (-1,))
                 grad_i_flat = mx.reshape(grad_i, (-1,))
-                grad_i_flat = scatter(tensor_obj, end_flat, mx.array(end_indices), grad_i_flat.shape[0], aggr="add")
+                grad_i_flat = scatter(end_flat, mx.array(end_indices), grad_i_flat.shape[0], aggr="add")
                 grad_i = mx.reshape(grad_i_flat, f_array.shape)
             
         elif edge_order == 2:
@@ -731,21 +734,21 @@ def gradient(f: mx.array, *varargs, axis: Optional[Union[int, Sequence[int]]] = 
             # Scatter the beginning values
             if begin is not None and len(begin_indices) > 0:
                 begin_flat = mx.reshape(begin, (-1,))
-                grad_i_flat = scatter(tensor_obj, begin_flat, mx.array(begin_indices), grad_i_flat.shape[0], aggr="add")
+                grad_i_flat = scatter(begin_flat, mx.array(begin_indices), grad_i_flat.shape[0], aggr="add")
                 grad_i = mx.reshape(grad_i_flat, f_array.shape)
             
             # Scatter the middle values
             if middle is not None and len(middle_indices) > 0:
                 middle_flat = mx.reshape(middle, (-1,))
                 grad_i_flat = mx.reshape(grad_i, (-1,))
-                grad_i_flat = scatter(tensor_obj, middle_flat, mx.array(middle_indices), grad_i_flat.shape[0], aggr="add")
+                grad_i_flat = scatter(middle_flat, mx.array(middle_indices), grad_i_flat.shape[0], aggr="add")
                 grad_i = mx.reshape(grad_i_flat, f_array.shape)
             
             # Scatter the end values
             if end is not None and len(end_indices) > 0:
                 end_flat = mx.reshape(end, (-1,))
                 grad_i_flat = mx.reshape(grad_i, (-1,))
-                grad_i_flat = scatter(tensor_obj, end_flat, mx.array(end_indices), grad_i_flat.shape[0], aggr="add")
+                grad_i_flat = scatter(end_flat, mx.array(end_indices), grad_i_flat.shape[0], aggr="add")
                 grad_i = mx.reshape(grad_i_flat, f_array.shape)
         
         grad.append(grad_i)
@@ -767,7 +770,7 @@ def cumsum(x: mx.array, axis: Optional[int] = None) -> mx.array:
     Returns:
         Array with cumulative sums
     """
-    x_array = convert_to_tensor(x)
+    x_array = Tensor.convert_to_tensor(x)
     return mx.cumsum(x_array, axis=axis)
 
 def eigh(a: mx.array) -> Tuple[mx.array, mx.array]:
@@ -780,7 +783,7 @@ def eigh(a: mx.array) -> Tuple[mx.array, mx.array]:
     Returns:
         Tuple of (eigenvalues, eigenvectors)
     """
-    a_array = convert_to_tensor(a)
+    a_array = Tensor.convert_to_tensor(a)
     
     # MLX doesn't have a direct eigh function yet
     raise NotImplementedError(
@@ -813,8 +816,8 @@ def _calculate_pi_value(precision_digits=15):
     
     def binary_split(a, b):
         """Recursive binary split for the Chudnovsky algorithm."""
-        a_tensor = convert_to_tensor(a)
-        b_tensor = convert_to_tensor(b)
+        a_tensor = Tensor.convert_to_tensor(a)
+        b_tensor = Tensor.convert_to_tensor(b)
         diff = mx.subtract(b_tensor, a_tensor)
         
         if mx.equal(diff, mx.array(1)):
@@ -859,11 +862,11 @@ def _calculate_pi_value(precision_digits=15):
         return Pab, Qab, Tab
     
     # Number of terms needed for the desired precision
-    precision_tensor = convert_to_tensor(precision_digits)
+    precision_tensor = Tensor.convert_to_tensor(precision_digits)
     terms_float = mx.divide(precision_tensor, DIGITS_PER_TERM)
     terms_float = mx.add(terms_float, mx.array(1))
     terms = mx.floor(terms_float)  # Convert to integer
-    terms_int = cast(tensor_obj, terms, dtype=dtype_obj.int32)
+    terms_int = cast(terms, mx.int32)
     
     # Compute the binary split
     P, Q, T = binary_split(0, terms_int)
@@ -880,6 +883,8 @@ def _calculate_pi_value(precision_digits=15):
 # Calculate pi with appropriate precision for MLX (float32)
 # Ensure it's a scalar with shape (1,) as per MLX conventions
 PI_CONSTANT = _calculate_pi_value(15)  # Increased precision to match reference value
+
+pi : mx.array = mx.array([PI_CONSTANT], dtype=mx.float32)
 
 
 # pi is now a class variable, not a function
@@ -1042,6 +1047,8 @@ class MLXMathOps:
         """Compute the eigenvalues and eigenvectors of a Hermitian or symmetric matrix."""
         return eigh(a)
     
-    pi : mx.array = mx.array([PI_CONSTANT], dtype=mx.float32)
+    @property
+    def pi(self):
+        """Return the value of pi."""
+        return mx.array([PI_CONSTANT], dtype=mx.float32)
     
-    # pi_func is removed as pi is now a class variable

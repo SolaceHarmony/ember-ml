@@ -3,47 +3,9 @@
 import mlx.core as mx
 from typing import Union, Optional, Sequence, Any, Literal
 
-from ember_ml.backend.mlx.tensor.dtype import MLXDType, DType
+from ember_ml.backend.mlx.tensor.dtype import MLXDType
+from ember_ml.backend.mlx.config import DType, Shape
 
-# Type aliases
-Shape = Union[int, Sequence[int]]
-
-def _convert_input(x: Any) -> mx.array:
-    """Convert input to MLX array."""
-    if isinstance(x, mx.array):
-        return x
-    # Check for NumPy arrays by type name rather than direct import
-    elif hasattr(x, '__class__') and x.__class__.__module__ == 'numpy' and x.__class__.__name__ == 'ndarray':
-        return mx.array(x)
-    return mx.array(x)
-
-def _validate_dtype(dtype_cls: MLXDType, dtype: Optional[DType]) -> Optional[Any]:
-    """
-    Validate and convert dtype to MLX format.
-    
-    Args:
-        dtype_cls: MLXDType instance for conversions
-        dtype: Input dtype to validate
-        
-    Returns:
-        Validated MLX dtype or None
-    """
-    if dtype is None:
-        return None
-    
-    # Handle string dtypes
-    if isinstance(dtype, str):
-        return dtype_cls.from_dtype_str(dtype)
-        
-    # Handle EmberDType objects
-    if hasattr(dtype, 'name'):
-        return dtype_cls.from_dtype_str(str(dtype.name))
-        
-    # If it's already an MLX dtype, return as is
-    if isinstance(dtype, type(mx.float32)):
-        return dtype
-        
-    raise ValueError(f"Invalid dtype: {dtype}")
 
 class MLXTensor:
     """MLX tensor operations."""
@@ -65,7 +27,7 @@ class MLXTensor:
             MLX array of zeros
         """
         from ember_ml.backend.mlx.tensor.ops.creation import zeros as zeros_func
-        return zeros_func(self, shape, dtype, device)
+        return zeros_func(shape, dtype, device)
     
     def ones(self, shape: Shape, dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
         """
@@ -80,7 +42,7 @@ class MLXTensor:
             MLX array of ones
         """
         from ember_ml.backend.mlx.tensor.ops.creation import ones as ones_func
-        return ones_func(self, shape, dtype, device)
+        return ones_func(shape, dtype, device)
 
     def convert_to_tensor(self, data: Any, dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
             """
@@ -95,7 +57,7 @@ class MLXTensor:
                 MLX array
             """
             from ember_ml.backend.mlx.tensor.ops.utility import convert_to_tensor as convert_to_tensor_func
-            return convert_to_tensor_func(self, data, dtype, device)
+            return convert_to_tensor_func(data, dtype, device)
 
     def slice(self, data: Any, starts: Sequence[int], sizes: Sequence[int]) -> mx.array:
             """
@@ -109,8 +71,8 @@ class MLXTensor:
             Returns:
                 Sliced tensor
             """
-            from ember_ml.backend.mlx.tensor.ops.indexing import slice_tensor as slice_tensor_func
-            return slice_tensor_func(self, data, starts, sizes)
+            from ember_ml.backend.mlx.tensor.ops.indexing import slice as slice_func
+            return slice_func(data, starts, sizes)
     
     def slice_update(self, data: Any, slices: Any, updates: Any) -> mx.array:
             """
@@ -125,7 +87,7 @@ class MLXTensor:
                 Updated tensor
             """
             from ember_ml.backend.mlx.tensor.ops.indexing import slice_update as slice_update_func
-            return slice_update_func(self, data, slices, updates)
+            return slice_update_func(data, slices, updates)
 
     def tensor_scatter_nd_update(self, data: Any, indices: Any, updates: Any) -> mx.array:
             """
@@ -140,7 +102,7 @@ class MLXTensor:
                 Updated tensor
             """
             from ember_ml.backend.mlx.tensor.ops.indexing import tensor_scatter_nd_update as tensor_scatter_nd_update_func
-            return tensor_scatter_nd_update_func(self, data, indices, updates)
+            return tensor_scatter_nd_update_func(data, indices, updates)
 
     def item(self, data):
             """
@@ -153,7 +115,7 @@ class MLXTensor:
                 Standard Python scalar (int, float, or bool)
             """
             from ember_ml.backend.mlx.tensor.ops.utility import item as item_func
-            return item_func(self, data)
+            return item_func(data)
 
     def shape(self, data):
             """
@@ -166,7 +128,7 @@ class MLXTensor:
                 Shape of the array
             """
             from ember_ml.backend.mlx.tensor.ops.utility import shape as shape_func
-            return shape_func(self, data)
+            return shape_func(data)
 
     def dtype(self, data):
             """
@@ -179,7 +141,7 @@ class MLXTensor:
                 Data type of the array
             """
             from ember_ml.backend.mlx.tensor.ops.utility import dtype as dtype_func
-            return dtype_func(self, data)
+            return dtype_func(data)
 
     def zeros_like(self, data, dtype=None, device=None):
             """
@@ -194,7 +156,7 @@ class MLXTensor:
                 MLX array of zeros with the same shape as data
             """
             from ember_ml.backend.mlx.tensor.ops.creation import zeros_like as zeros_like_func
-            return zeros_like_func(self, data, dtype, device)
+            return zeros_like_func(data, dtype, device)
 
     def ones_like(self, data, dtype=None, device=None):
             """
@@ -209,7 +171,7 @@ class MLXTensor:
                 MLX array of ones with the same shape as data
             """
             from ember_ml.backend.mlx.tensor.ops.creation import ones_like as ones_like_func
-            return ones_like_func(self, data, dtype, device)
+            return ones_like_func(data, dtype, device)
 
     def eye(self, n, m=None, dtype=None, device=None):
         """
@@ -225,7 +187,7 @@ class MLXTensor:
             MLX identity matrix of shape (n, m)
         """
         from ember_ml.backend.mlx.tensor.ops.creation import eye as eye_func
-        return eye_func(self, n, m, dtype, device)
+        return eye_func(n, m, dtype, device)
 
     def reshape(self, data, shape):
             """
@@ -239,7 +201,7 @@ class MLXTensor:
                 Reshaped MLX array
             """
             from ember_ml.backend.mlx.tensor.ops.manipulation import reshape as reshape_func
-            return reshape_func(self, data, shape)
+            return reshape_func(data, shape)
 
     def transpose(self, data, axes=None):
             """
@@ -253,7 +215,7 @@ class MLXTensor:
                 Transposed MLX array
             """
             from ember_ml.backend.mlx.tensor.ops.manipulation import transpose as transpose_func
-            return transpose_func(self, data, axes)
+            return transpose_func(data, axes)
 
     def concatenate(self, data, axis=0):
             """
@@ -267,7 +229,7 @@ class MLXTensor:
                 Concatenated MLX array
             """
             from ember_ml.backend.mlx.tensor.ops.manipulation import concatenate as concatenate_func
-            return concatenate_func(self, data, axis)
+            return concatenate_func(data, axis)
 
     def stack(self, data, axis=0):
             """
@@ -281,7 +243,7 @@ class MLXTensor:
                 Stacked MLX array
             """
             from ember_ml.backend.mlx.tensor.ops.manipulation import stack as stack_func
-            return stack_func(self, data, axis)
+            return stack_func(data, axis)
 
     def split(self, data, num_or_size_splits, axis=0):
             """
@@ -296,7 +258,7 @@ class MLXTensor:
                 List of sub-arrays
             """
             from ember_ml.backend.mlx.tensor.ops.manipulation import split as split_func
-            return split_func(self, data, num_or_size_splits, axis)
+            return split_func(data, num_or_size_splits, axis)
 
     def expand_dims(self, data, axis):
             """
@@ -310,7 +272,7 @@ class MLXTensor:
                 MLX array with expanded dimensions
             """
             from ember_ml.backend.mlx.tensor.ops.manipulation import expand_dims as expand_dims_func
-            return expand_dims_func(self, data, axis)
+            return expand_dims_func(data, axis)
 
     def squeeze(self, data, axis=None):
             """
@@ -324,7 +286,7 @@ class MLXTensor:
                 MLX array with squeezed dimensions
             """
             from ember_ml.backend.mlx.tensor.ops.manipulation import squeeze as squeeze_func
-            return squeeze_func(self, data, axis)
+            return squeeze_func(data, axis)
 
     def copy(self, data):
             """
@@ -337,7 +299,7 @@ class MLXTensor:
                 Copy of the array
             """
             from ember_ml.backend.mlx.tensor.ops.utility import copy as copy_func
-            return copy_func(self, data)
+            return copy_func(data)
 
     # This method is already defined above
 
@@ -355,7 +317,7 @@ class MLXTensor:
                 MLX array filled with the specified value
             """
             from ember_ml.backend.mlx.tensor.ops.creation import full as full_func
-            return full_func(self, shape, fill_value, dtype, device)
+            return full_func(shape, fill_value, dtype, device)
 
     def full_like(self, data, fill_value, dtype=None, device=None):
             """
@@ -371,7 +333,7 @@ class MLXTensor:
                 MLX array filled with the specified value with the same shape as data
             """
             from ember_ml.backend.mlx.tensor.ops.creation import full_like as full_like_func
-            return full_like_func(self, data, fill_value, dtype, device)
+            return full_like_func(data, fill_value, dtype, device)
 
     def arange(self, start, stop=None, step=1, dtype=None, device=None):
         """
@@ -388,7 +350,7 @@ class MLXTensor:
             MLX array with evenly spaced values
         """
         from ember_ml.backend.mlx.tensor.ops.creation import arange as arange_func
-        return arange_func(self, start, stop, step, dtype, device)
+        return arange_func(start, stop, step, dtype, device)
 
     def linspace(self, start, stop, num, dtype=None, device=None):
         """
@@ -405,7 +367,7 @@ class MLXTensor:
             MLX array with evenly spaced values
         """
         from ember_ml.backend.mlx.tensor.ops.creation import linspace as linspace_func
-        return linspace_func(self, start, stop, num, dtype, device)
+        return linspace_func(start, stop, num, dtype, device)
 
     def tile(self, data, reps):
             """
@@ -419,7 +381,7 @@ class MLXTensor:
                 Tiled MLX array
             """
             from ember_ml.backend.mlx.tensor.ops.manipulation import tile as tile_func
-            return tile_func(self, data, reps)
+            return tile_func(data, reps)
 
     def gather(self, data, indices, axis=0):
             """
@@ -434,7 +396,7 @@ class MLXTensor:
                 Gathered tensor
             """
             from ember_ml.backend.mlx.tensor.ops.indexing import gather as gather_func
-            return gather_func(self, data, indices, axis)
+            return gather_func(data, indices, axis)
 
     # This method is already defined above at line 75
 
@@ -452,7 +414,7 @@ class MLXTensor:
                 Padded tensor
             """
             from ember_ml.backend.mlx.tensor.ops.manipulation import pad as pad_func
-            return pad_func(self, data, paddings, constant_values)
+            return pad_func(data, paddings, constant_values)
     
     def cast(self, data, dtype):
             """
@@ -466,11 +428,16 @@ class MLXTensor:
                 Tensor with new data type
             """
             from ember_ml.backend.mlx.tensor.ops.casting import cast as cast_func
-            return cast_func(self, data, dtype)
-    
+            return cast_func(data, dtype)
+
     def to_numpy(self, data):
             """
             Convert an MLX array to a NumPy array.
+            
+            IMPORTANT: This function is provided ONLY for visualization/plotting libraries 
+            that specifically require NumPy arrays. It should NOT be used for general tensor 
+            conversions or operations. Ember ML has a zero backend design where EmberTensor 
+            relies entirely on the selected backend for representation.
             
             Args:
                 data: Input MLX array
@@ -479,7 +446,10 @@ class MLXTensor:
                 NumPy array
             """
             from ember_ml.backend.mlx.tensor.ops.utility import to_numpy as to_numpy_func
-            return to_numpy_func(self, data)
+            if data is not None:
+                  return to_numpy_func(data)
+            else:
+                  return self
     
     def var(self, data, axis=None, keepdims=False):
             """
@@ -494,7 +464,7 @@ class MLXTensor:
                 Variance of the array
             """
             from ember_ml.backend.mlx.tensor.ops.utility import var as var_func
-            return var_func(self, data, axis, keepdims)
+            return var_func(data, axis, keepdims)
     
     def sort(self, data, axis=-1, descending=False):
             """
@@ -509,7 +479,7 @@ class MLXTensor:
                 Sorted array
             """
             from ember_ml.backend.mlx.tensor.ops.utility import sort as sort_func
-            return sort_func(self, data, axis, descending)
+            return sort_func(data, axis, descending)
     
     def argsort(self, data, axis=-1, descending=False):
             """
@@ -524,7 +494,7 @@ class MLXTensor:
                 Indices that would sort the array
             """
             from ember_ml.backend.mlx.tensor.ops.utility import argsort as argsort_func
-            return argsort_func(self, data, axis, descending)
+            return argsort_func(data, axis, descending)
     
     def maximum(self, data1, data2):
             """
@@ -538,7 +508,7 @@ class MLXTensor:
                 Element-wise maximum
             """
             from ember_ml.backend.mlx.tensor.ops.utility import maximum as maximum_func
-            return maximum_func(self, data1, data2)
+            return maximum_func(data1, data2)
     
     def random_normal(self, shape: Shape, mean: float = 0.0, stddev: float = 1.0,
                      dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
@@ -556,7 +526,7 @@ class MLXTensor:
             MLX array with random normal values
         """
         from ember_ml.backend.mlx.tensor.ops.random import random_normal as random_normal_func
-        return random_normal_func(self, shape, mean, stddev, dtype, device)
+        return random_normal_func(shape, mean, stddev, dtype, device)
     
     def random_uniform(self, shape: Shape, minval: float = 0.0, maxval: float = 1.0,
                       dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
@@ -574,7 +544,7 @@ class MLXTensor:
             MLX array with random uniform values
         """
         from ember_ml.backend.mlx.tensor.ops.random import random_uniform as random_uniform_func
-        return random_uniform_func(self, shape, minval, maxval, dtype, device)
+        return random_uniform_func(shape, minval, maxval, dtype, device)
     
     def random_binomial(self, shape: Shape, p: float = 0.5,
                        dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
@@ -591,7 +561,7 @@ class MLXTensor:
             MLX array with random binomial values
         """
         from ember_ml.backend.mlx.tensor.ops.random import random_binomial as random_binomial_func
-        return random_binomial_func(self, shape, p, dtype, device)
+        return random_binomial_func(shape, p, dtype, device)
     
     def random_gamma(self, shape: Shape, alpha: float = 1.0, beta: float = 1.0,
                     dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
@@ -609,7 +579,7 @@ class MLXTensor:
             MLX array with random values from a gamma distribution
         """
         from ember_ml.backend.mlx.tensor.ops.random import random_gamma as random_gamma_func
-        return random_gamma_func(self, shape, alpha, beta, dtype, device)
+        return random_gamma_func(shape, alpha, beta, dtype, device)
     
     def random_exponential(self, shape: Shape, scale: float = 1.0,
                           dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
@@ -626,7 +596,7 @@ class MLXTensor:
             MLX array with random values from an exponential distribution
         """
         from ember_ml.backend.mlx.tensor.ops.random import random_exponential as random_exponential_func
-        return random_exponential_func(self, shape, scale, dtype, device)
+        return random_exponential_func(shape, scale, dtype, device)
     
     def random_poisson(self, shape: Shape, lam: float = 1.0,
                       dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
@@ -643,7 +613,7 @@ class MLXTensor:
             MLX array with random values from a Poisson distribution
         """
         from ember_ml.backend.mlx.tensor.ops.random import random_poisson as random_poisson_func
-        return random_poisson_func(self, shape, lam, dtype, device)
+        return random_poisson_func(shape, lam, dtype, device)
     
     def random_categorical(self, data: Any, num_samples: int,
                                dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
@@ -660,7 +630,7 @@ class MLXTensor:
                 MLX array with random categorical values
             """
             from ember_ml.backend.mlx.tensor.ops.random import random_categorical as random_categorical_func
-            return random_categorical_func(self, data, num_samples, dtype, device)
+            return random_categorical_func(data, num_samples, dtype, device)
     
     def random_permutation(self, data: Union[int, Any], dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
             """
@@ -676,7 +646,7 @@ class MLXTensor:
                 Permuted array
             """
             from ember_ml.backend.mlx.tensor.ops.random import random_permutation as random_permutation_func
-            return random_permutation_func(self, data, dtype, device)
+            return random_permutation_func(data, dtype, device)
     
     def shuffle(self, data: Any) -> mx.array:
             """
@@ -689,7 +659,7 @@ class MLXTensor:
                 Shuffled MLX array
             """
             from ember_ml.backend.mlx.tensor.ops.random import shuffle as shuffle_func
-            return shuffle_func(self, data)
+            return shuffle_func(data)
     
     def set_seed(self, seed: int) -> None:
         """
@@ -699,7 +669,7 @@ class MLXTensor:
             seed: Random seed
         """
         from ember_ml.backend.mlx.tensor.ops.random import set_seed as set_seed_func
-        return set_seed_func(self, seed)
+        return set_seed_func(seed)
     
     def get_seed(self) -> Optional[int]:
         """
@@ -709,7 +679,7 @@ class MLXTensor:
             Current random seed (None if not set)
         """
         from ember_ml.backend.mlx.tensor.ops.random import get_seed as get_seed_func
-        return get_seed_func(self)
+        return get_seed_func()
     
     def scatter(self, data: Any, indices: Any, dim_size: Optional[int] = None,
                     aggr: Literal["add", "max", "mean", "softmax", "min"] = "add", axis: int = 0) -> mx.array:
@@ -727,4 +697,4 @@ class MLXTensor:
                 Tensor with scattered values
             """
             from ember_ml.backend.mlx.tensor.ops.indexing import scatter as scatter_func
-            return scatter_func(self, data, indices, dim_size, aggr, axis)
+            return scatter_func(data, indices, dim_size, aggr, axis)

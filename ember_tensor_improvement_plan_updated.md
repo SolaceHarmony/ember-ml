@@ -23,6 +23,10 @@
    - The current implementation doesn't clearly distinguish between the public `convert_to_tensor` (which should return EmberTensor) and the internal `_convert_to_backend_tensor` (which should return backend-specific tensors)
    - This leads to inconsistent return types and potential bugs
 
+6. **Backend Purity Violations**:
+   - The `__array__` method uses `to_numpy()` which violates backend purity
+   - The `__iter__` method also uses `to_numpy()` instead of iterating on the backend tensor directly
+
 ## Backend Architecture Analysis
 
 After thoroughly examining the backend implementations, I've identified the following key architectural patterns:
@@ -48,6 +52,12 @@ After thoroughly examining the backend implementations, I've identified the foll
    - Frontend tensor operations are defined as lambda functions in `ember_ml/nn/tensor/common/__init__.py`
    - These functions delegate to the backend implementations through `_get_tensor_ops()`
    - EmberTensor methods call these lambda functions
+
+5. **Backend Iteration Behavior**:
+   - PyTorch tensors return `torch.Tensor` objects when iterating
+   - MLX arrays return `mlx.core.array` objects when iterating
+   - Both maintain their dtype and other properties
+   - MLX uses shape (1,) for scalars, while PyTorch uses dimension 0
 
 ## Proposed Solutions
 
@@ -154,7 +164,7 @@ def backend(self) -> str:
     return self._backend
 ```
 
-### 4. Serialization Support
+### 4. Backend-Agnostic Serialization Support
 
 ```python
 def __getstate__(self):
@@ -187,15 +197,48 @@ def __setstate__(self, state):
     finally:
         # Restore the current backend
         set_backend(current_backend)
-
-def __iter__(self):
-    """Make the tensor iterable."""
-    # Convert to numpy and iterate
-    for item in to_numpy(self._tensor):
-        yield item
 ```
 
-### 5. Preserve Existing Method Structure
+### 5. Backend-Agnostic Array Interface
+
+```python
+def __array__(self) -> Any:
+    """Array interface."""
+    return self.tolist()
+```
+
+This implementation uses the backend-agnostic `tolist()` method instead of converting to NumPy directly, avoiding any NumPy dependencies in the frontend.
+
+### 6. Backend-Agnostic Iteration
+
+```python
+def __iter__(self):
+    """
+    Make the tensor iterable.
+    
+    Returns:
+        Iterator over the tensor elements, where each element is an EmberTensor
+    """
+    # Iterate directly over the backend tensor
+    for element in self._tensor:
+        # Wrap each element in an EmberTensor to maintain backend purity
+        yield EmberTensor(element, dtype=self._dtype, device=self.device, requires_grad=self._requires_grad)
+```
+
+This implementation:
+1. Iterates directly over the backend tensor
+2. For each element, wraps it in an EmberTensor
+3. Preserves the dtype, device, and requires_grad properties
+4. Returns EmberTensor objects, not raw backend tensors or NumPy arrays
+
+This approach follows the pattern demonstrated in both PyTorch and MLX, where:
+- PyTorch returns torch.Tensor objects when iterating
+- MLX returns mlx.core.array objects when iterating
+- Both maintain their dtype and other properties
+
+The implementation aligns with MLX's approach for handling scalars (using shape (1,)) and ensures that iteration works consistently across all backends while maintaining backend purity.
+
+### 7. Preserve Existing Method Structure
 
 The current implementation already has a comprehensive set of methods for tensor operations. We should maintain this structure while ensuring consistent dtype and backend handling:
 
@@ -232,13 +275,19 @@ def zeros(self, shape: Union[int, Sequence[int]], dtype: Optional[DType] = None,
    - Update property accessors
    - Implement serialization methods
 
-2. **Phase 2: Method Updates**
+2. **Phase 2: Backend Purity Improvements**
+   - Update `__array__` to use `tolist()` instead of `to_numpy()`
+   - Update `__iter__` to return EmberTensor objects
+   - Ensure all methods maintain backend purity
+
+3. **Phase 3: Method Updates**
    - Update existing methods to use the stored dtype and backend
    - Ensure consistent property propagation
 
-3. **Phase 3: Testing**
+4. **Phase 4: Testing**
    - Create comprehensive tests for dtype consistency
    - Test serialization across backends
+   - Test iteration behavior with different backends
    - Verify backward compatibility
 
 ## Benefits
@@ -248,13 +297,16 @@ def zeros(self, shape: Union[int, Sequence[int]], dtype: Optional[DType] = None,
 3. **Enhanced Debugging**: Backend tracking makes it easier to diagnose issues
 4. **Future Extensibility**: Cleaner architecture allows for easier addition of new features
 5. **Clear API Boundaries**: Separation of public and internal functions improves code clarity
+6. **Backend Purity**: Avoiding NumPy dependencies in the frontend ensures backend purity
 
 ## Immediate Next Steps
 
 1. Implement the separation of public and internal convert_to_tensor functions
 2. Update __all__ to not export _convert_to_backend_tensor
 3. Add explicit dtype and backend storage in `__init__`
-4. Add serialization methods (`__getstate__`, `__setstate__`, `__iter__`)
-5. Update the dtype property to use the stored dtype
-6. Add backend property to expose backend information
-7. Create tests to verify consistent behavior
+4. Update `__array__` to use `tolist()` instead of `to_numpy()`
+5. Update `__iter__` to return EmberTensor objects
+6. Add serialization methods (`__getstate__` and `__setstate__`)
+7. Update the dtype property to use the stored dtype
+8. Add backend property to expose backend information
+9. Create tests to verify consistent behavior

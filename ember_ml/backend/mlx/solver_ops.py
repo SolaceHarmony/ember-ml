@@ -8,11 +8,14 @@ import mlx.core as mx
 from typing import Union, Tuple, Optional, Literal
 
 # Import from tensor_ops
-from ember_ml.backend.mlx.tensor import MLXTensor
+from ember_ml.backend.mlx.tensor import MLXTensor, MLXDType
+from ember_ml.backend.mlx.config import TensorLike
+import numpy as np
+Tensor = MLXTensor()
+dtype_obj = MLXDType()
 
-convert_to_tensor = MLXTensor().convert_to_tensor
 
-def inv(A: mx.array) -> mx.array:
+def inv(A: TensorLike) -> mx.array:
     """
     Inverts a square matrix using Gauss-Jordan elimination.
     
@@ -62,7 +65,8 @@ def inv(A: mx.array) -> mx.array:
     
     return inv_A
 
-def solve(a: mx.array, b: mx.array) -> mx.array:
+def solve(a: TensorLike, 
+          b: TensorLike) -> mx.array:
     """
     Solve a linear system of equations Ax = b for x using MLX backend.
     
@@ -88,7 +92,8 @@ def solve(a: mx.array, b: mx.array) -> mx.array:
     return mx.matmul(a_inv, b_array)
 
 
-def svd(a: mx.array, full_matrices: bool = True, compute_uv: bool = True) -> Union[mx.array, Tuple[mx.array, mx.array, mx.array]]:
+def svd(a: TensorLike, 
+        full_matrices: bool = True, compute_uv: bool = True) -> Union[mx.array, Tuple[mx.array, mx.array, mx.array]]:
     """
     Compute the singular value decomposition of a matrix using power iteration.
     
@@ -106,7 +111,7 @@ def svd(a: mx.array, full_matrices: bool = True, compute_uv: bool = True) -> Uni
         a more sophisticated algorithm.
     """
     # Convert input to MLX array with float32 dtype
-    a_array = mx.array(a, dtype=mx.float32)
+    a_array = Tensor.convert_to_tensor(a, dtype=dtype_obj.float32)
     
     # Get matrix dimensions
     m, n = a_array.shape
@@ -225,7 +230,7 @@ def svd(a: mx.array, full_matrices: bool = True, compute_uv: bool = True) -> Uni
             return s
 
 
-def eig(a: mx.array) -> Tuple[mx.array, mx.array]:
+def eig(a: TensorLike) -> Tuple[mx.array, mx.array]:
     """
     Compute the eigenvalues and eigenvectors of a square matrix using power iteration.
     
@@ -241,7 +246,7 @@ def eig(a: mx.array) -> Tuple[mx.array, mx.array]:
         a more sophisticated algorithm.
     """
     # Convert input to MLX array with float32 dtype
-    a_array = mx.array(a, dtype=mx.float32)
+    a_array = Tensor.convert_to_tensor(a, dtype=dtype_obj.float32)
     
     # Get matrix dimensions
     n = a_array.shape[0]
@@ -289,7 +294,7 @@ def eig(a: mx.array) -> Tuple[mx.array, mx.array]:
     return eigenvalues, eigenvectors
 
 
-def eigvals(a: mx.array) -> mx.array:
+def eigvals(a: TensorLike) -> mx.array:
     """
     Compute the eigenvalues of a square matrix.
     
@@ -299,11 +304,12 @@ def eigvals(a: mx.array) -> mx.array:
     Returns:
         Eigenvalues of the matrix
     """
-    eigenvalues, _ = eig(a)
+    tensor_obj = Tensor.convert_to_tensor(a)
+    eigenvalues, _ = eig(tensor_obj)
     return eigenvalues
 
 
-def det(a: mx.array) -> mx.array:
+def det(a: TensorLike) -> mx.array:
     """
     Compute the determinant of a square matrix.
     
@@ -314,7 +320,8 @@ def det(a: mx.array) -> mx.array:
         Determinant of the matrix
     """
     # Convert input to MLX array
-    a_array = mx.array(a)
+    a_array = Tensor.convert_to_tensor(a)
+
     
     # Get matrix dimensions
     n = a_array.shape[0]
@@ -366,7 +373,10 @@ def det(a: mx.array) -> mx.array:
     return det_value
 
 
-def norm(x: mx.array, ord: Optional[Union[int, str]] = None, axis: Optional[Union[int, Tuple[int, ...]]] = None, keepdim: bool = False) -> mx.array:
+def norm(x: TensorLike, 
+         ord: Optional[Union[int, str]] = None, 
+         axis: Optional[Union[int, Tuple[int, ...]]] = None, 
+         keepdim: bool = False) -> mx.array:
     """
     Compute the matrix or vector norm.
     
@@ -380,7 +390,7 @@ def norm(x: mx.array, ord: Optional[Union[int, str]] = None, axis: Optional[Unio
         Norm of the matrix or vector
     """
     # Convert input to MLX array
-    x_array = mx.array(x)
+    x_array = Tensor.convert_to_tensor(x)
     
     # Default values
     if ord is None:
@@ -480,7 +490,8 @@ def norm(x: mx.array, ord: Optional[Union[int, str]] = None, axis: Optional[Unio
     return result
 
 
-def qr(a: mx.array, mode: str = 'reduced') -> Tuple[mx.array, mx.array]:
+def qr(a: TensorLike, 
+       mode: Literal['reduced','complete','r','raw'] = 'reduced') -> Tuple[mx.array, mx.array]:
     """
     Compute the QR decomposition of a matrix using Gram-Schmidt orthogonalization.
     
@@ -497,7 +508,7 @@ def qr(a: mx.array, mode: str = 'reduced') -> Tuple[mx.array, mx.array]:
         a more sophisticated algorithm.
     """
     # Convert input to MLX array with float32 dtype
-    a_array = mx.array(a, dtype=mx.float32)
+    a_array = Tensor.convert_to_tensor(a, dtype=dtype_obj.float32)
     
     # Get matrix dimensions
     m, n = a_array.shape
@@ -568,7 +579,7 @@ def qr(a: mx.array, mode: str = 'reduced') -> Tuple[mx.array, mx.array]:
         return q, r
 
 
-def cholesky(a: mx.array) -> mx.array:
+def cholesky(a: TensorLike) -> mx.array:
     """
     Compute the Cholesky decomposition of a positive definite matrix.
     
@@ -584,7 +595,7 @@ def cholesky(a: mx.array) -> mx.array:
         a more sophisticated algorithm.
     """
     # Convert input to MLX array with float32 dtype
-    a_array = mx.array(a, dtype=mx.float32)
+    a_array = Tensor.convert_to_tensor(a, dtype=dtype_obj.float32)
     
     # Get matrix dimensions
     n = a_array.shape[0]
@@ -620,7 +631,7 @@ def cholesky(a: mx.array) -> mx.array:
     return l
 
 
-def lstsq(a: mx.array, b: mx.array, rcond: Optional[float] = None) -> Tuple[mx.array, mx.array, mx.array, mx.array]:
+def lstsq(a: TensorLike, b: TensorLike, rcond: Optional[float] = None) -> Tuple[mx.array, mx.array, mx.array, mx.array]:
     """
     Compute the least-squares solution to a linear matrix equation.
     
@@ -638,9 +649,10 @@ def lstsq(a: mx.array, b: mx.array, rcond: Optional[float] = None) -> Tuple[mx.a
         a more sophisticated algorithm.
     """
     # Convert inputs to MLX arrays with float32 dtype
-    a_array = mx.array(a, dtype=mx.float32)
-    b_array = mx.array(b, dtype=mx.float32)
     
+    a_array = Tensor.convert_to_tensor(a, dtype=dtype_obj.float32)
+    b_array = Tensor.convert_to_tensor(b, dtype=dtype_obj.float32)
+                                       
     # Get matrix dimensions
     m, n = a_array.shape
     
@@ -721,7 +733,7 @@ class MLXSolverOps:
         """Compute the matrix or vector norm."""
         return norm(x, ord=ord, axis=axis, keepdim=keepdims)
     
-    def qr(self, a, mode='reduced'):
+    def qr(self, a, mode: Literal['reduced','complete','r','raw'] ='reduced'):
         """Compute the QR decomposition of a matrix."""
         return qr(a, mode=mode)
     
