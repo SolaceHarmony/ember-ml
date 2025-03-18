@@ -4,7 +4,7 @@ import mlx.core as mx
 from typing import Optional,Union
 
 from ember_ml.backend.mlx.tensor import MLXTensor
-from ember_ml.backend.mlx.config import TensorLike,ShapeLike,Shape
+from ember_ml.backend.mlx.types import TensorLike,ShapeLike,Shape
 Tensor = MLXTensor()
 
 def reshape(tensor: TensorLike, shape: ShapeLike) -> mx.array:

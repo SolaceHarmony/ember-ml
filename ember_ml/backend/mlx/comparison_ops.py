@@ -9,7 +9,7 @@ from typing import Any
 
 # Import from tensor_ops
 from ember_ml.backend.mlx.tensor import MLXTensor
-from ember_ml.backend.mlx.config import TensorLike
+from ember_ml.backend.mlx.types import TensorLike
 
 Tensor = MLXTensor()
 
