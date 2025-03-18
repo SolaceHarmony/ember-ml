@@ -3,9 +3,7 @@
 import mlx.core as mx
 from typing import Optional,Union
 
-from ember_ml.backend.mlx.tensor import MLXTensor
 from ember_ml.backend.mlx.types import TensorLike,ShapeLike,Shape
-Tensor = MLXTensor()
 
 def reshape(tensor: TensorLike, shape: ShapeLike) -> mx.array:
     """
@@ -22,6 +20,9 @@ def reshape(tensor: TensorLike, shape: ShapeLike) -> mx.array:
 
     if isinstance(shape, int):
         shape = (shape,)
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    Tensor = MLXTensor()
+
     return mx.reshape(Tensor.convert_to_tensor(tensor), shape)
 
 def transpose(tensor: TensorLike, axes: Optional[Shape]=None):
@@ -35,6 +36,9 @@ def transpose(tensor: TensorLike, axes: Optional[Shape]=None):
     Returns:
         Transposed MLX array
     """
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    Tensor = MLXTensor()
+
     tensor_array = Tensor.convert_to_tensor(tensor)
 
     if axes is None:
@@ -58,6 +62,9 @@ def concatenate(tensors: list[TensorLike], axis: Optional[int]=0):
     Returns:
         Concatenated MLX array
     """
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    Tensor = MLXTensor()
+
     return mx.concatenate([Tensor.convert_to_tensor(arr) for arr in tensors], axis=axis)
 
 def stack(tensors : list[TensorLike], axis: Optional[int]=0):
@@ -71,6 +78,9 @@ def stack(tensors : list[TensorLike], axis: Optional[int]=0):
     Returns:
         Stacked MLX array
     """
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    Tensor = MLXTensor()
+
     return mx.stack([Tensor.convert_to_tensor(arr) for arr in tensors], axis=axis)
 
 def split(tensor : TensorLike, num_or_size_splits: Union[int,list[int]], axis=0) -> list[mx.array]:
@@ -85,6 +95,9 @@ def split(tensor : TensorLike, num_or_size_splits: Union[int,list[int]], axis=0)
     Returns:
         List of sub-arrays
     """
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    Tensor = MLXTensor()
+
     tensor_array = Tensor.convert_to_tensor(tensor)
 
     # MLX split returns an array or a tuple of arrays
@@ -110,6 +123,9 @@ def expand_dims(tensor : TensorLike, axis: ShapeLike) -> mx.array:
     Returns:
         MLX array with expanded dimensions
     """
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    Tensor = MLXTensor()
+
     tensor_array = Tensor.convert_to_tensor(tensor)
 
     if isinstance(axis, (list, tuple)):
@@ -130,6 +146,9 @@ def squeeze(tensor: TensorLike, axis : Union[None,ShapeLike]=None):
     Returns:
         MLX array with squeezed dimensions
     """
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    Tensor = MLXTensor()
+
     tensor_array = Tensor.convert_to_tensor(tensor)
 
     if axis is None:
@@ -149,6 +168,9 @@ def tile(tensor : TensorLike, reps : ShapeLike) -> mx.array:
     Returns:
         Tiled MLX array
     """
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    Tensor = MLXTensor()
+
     tensor_array = Tensor.convert_to_tensor(tensor)
     return mx.tile(tensor_array, reps)
 
@@ -166,6 +188,9 @@ def pad(tensor : TensorLike, paddings, constant_values=0):
     Returns:
         Padded tensor
     """
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    Tensor = MLXTensor()
+
     tensor_array = Tensor.convert_to_tensor(tensor)
 
     # Convert paddings to the format expected by mx.pad

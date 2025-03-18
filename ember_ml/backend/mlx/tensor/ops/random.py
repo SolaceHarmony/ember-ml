@@ -4,11 +4,9 @@ import mlx.core as mx
 from typing import Union, Optional, Sequence, Any, List, Tuple
 
 from ember_ml.backend.mlx.tensor.dtype import MLXDType
-from ember_ml.backend.mlx.tensor.tensor import MLXTensor
 from ember_ml.backend.mlx.types import Shape, TensorLike, DType
 
 # Create single instances to reuse throughout the module
-Tensor = MLXTensor()
 DTypeHandler = MLXDType()
 
 def random_normal(shape: Shape, mean: float = 0.0, stddev: float = 1.0,
@@ -286,6 +284,9 @@ def random_categorical(logits: TensorLike, num_samples: int,
         MLX array with random categorical values
     """
     # Convert to MLX array if needed
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+    Tensor = MLXTensor()
+
     logits_tensor = Tensor.convert_to_tensor(logits)
     
     # MLX's categorical function takes num_samples parameter
@@ -318,6 +319,8 @@ def random_permutation(x: Union[int, TensorLike], dtype: Optional[DType] = None,
         return arr[indices]
     else:
         # Convert to MLX array if needed
+        from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+        Tensor = MLXTensor()
         arr = Tensor.convert_to_tensor(x)
         indices = mx.random.permutation(arr.shape[0])
         return arr[indices]
@@ -332,6 +335,9 @@ def shuffle(x: TensorLike) -> mx.array:
     Returns:
         Shuffled MLX array
     """
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+    Tensor = MLXTensor()
+
     x_tensor = Tensor.convert_to_tensor(x)
     
     # Get the shape of the tensor

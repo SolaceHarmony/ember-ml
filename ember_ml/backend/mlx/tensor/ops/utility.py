@@ -5,10 +5,8 @@ from typing import Any, Optional, Sequence, Tuple, Union
 import mlx.core as mx
 
 from ember_ml.backend.mlx.tensor.dtype import MLXDType
-from ember_ml.backend.mlx.tensor.tensor import MLXTensor
 from ember_ml.backend.mlx.types import TensorLike, DType
 
-Tensor = MLXTensor()
 DTypeHandler = MLXDType()
 
 def _convert_input(x: TensorLike) -> Any:
@@ -134,6 +132,8 @@ def to_numpy(data: TensorLike) -> Any:
     """
     # This is a special case where we need to use NumPy directly
     # It's only used for visualization or when explicitly requested
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+    Tensor = MLXTensor()
     tensor_data = Tensor.convert_to_tensor(data)
     import numpy as np
     return np.array(tensor_data)
@@ -183,6 +183,8 @@ def shape(data: TensorLike) -> Tuple[int, ...]:
     Returns:
         Shape of the array
     """
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+    Tensor = MLXTensor()
     return Tensor.convert_to_tensor(data).shape
 
 def dtype(data: TensorLike) -> Any:
@@ -208,6 +210,8 @@ def copy(data: TensorLike) -> mx.array:
         Copy of the array
     """
     # MLX arrays are immutable, so we can just convert to a new array
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+    Tensor = MLXTensor()
     return Tensor.convert_to_tensor(data)
 
 def var(data: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None, keepdims: bool = False) -> mx.array:
@@ -222,6 +226,8 @@ def var(data: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None, keep
     Returns:
         Variance of the array
     """
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+    Tensor = MLXTensor()
     tensor_array = Tensor.convert_to_tensor(data)
     return mx.var(tensor_array, axis=axis, keepdims=keepdims)
 
@@ -237,6 +243,8 @@ def sort(data: TensorLike, axis: int = -1, descending: bool = False) -> mx.array
     Returns:
         Sorted array
     """
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+    Tensor = MLXTensor()
     tensor_array = Tensor.convert_to_tensor(data)
     sorted_array = mx.sort(tensor_array, axis=axis)
     
@@ -261,6 +269,8 @@ def argsort(data: TensorLike, axis: int = -1, descending: bool = False) -> mx.ar
     Returns:
         Indices that would sort the array
     """
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+    Tensor = MLXTensor()
     tensor_array = Tensor.convert_to_tensor(data)
     
     if descending:
@@ -288,6 +298,8 @@ def maximum(data1: TensorLike, data2: TensorLike) -> mx.array:
     Returns:
         Element-wise maximum
     """
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+    Tensor = MLXTensor()
     data1_array = Tensor.convert_to_tensor(data1)
     data2_array = Tensor.convert_to_tensor(data2)
     return mx.maximum(data1_array, data2_array)
