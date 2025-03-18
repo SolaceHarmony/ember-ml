@@ -7,7 +7,7 @@ This module provides MLX implementations of the ember_ml I/O operations interfac
 import os
 import mlx.core as mx
 from typing import Any, Optional
-from ember_ml.backend.mlx.config import TensorLike
+from ember_ml.backend.mlx.types import TensorLike
 from ember_ml.backend.mlx.tensor import MLXTensor
 
 Tensor = MLXTensor()

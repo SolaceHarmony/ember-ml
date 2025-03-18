@@ -5,14 +5,14 @@ from typing import Union, Optional, Sequence, Any, List, Tuple
 
 from ember_ml.backend.mlx.tensor.dtype import MLXDType
 from ember_ml.backend.mlx.tensor.tensor import MLXTensor
-from ember_ml.backend.mlx.config import Shape, TensorLike, DType
+from ember_ml.backend.mlx.types import Shape, TensorLike, DType
 
 # Create single instances to reuse throughout the module
 Tensor = MLXTensor()
 DTypeHandler = MLXDType()
 
 def random_normal(shape: Shape, mean: float = 0.0, stddev: float = 1.0,
-                 dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
+                 dtype: Optional[DType] = None, device: Optional[str] = None) -> 'mx.array':
     """
     Create a tensor with random values from a normal distribution.
     

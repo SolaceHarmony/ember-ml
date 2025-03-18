@@ -4,9 +4,9 @@ from typing import Any, Optional, Sequence, Tuple, Union
 
 import mlx.core as mx
 
-from ember_ml.backend.mlx.tensor.dtype import DType, MLXDType
+from ember_ml.backend.mlx.tensor.dtype import MLXDType
 from ember_ml.backend.mlx.tensor.tensor import MLXTensor
-from ember_ml.backend.mlx.config import Shape, TensorLike
+from ember_ml.backend.mlx.types import TensorLike, DType
 
 Tensor = MLXTensor()
 DTypeHandler = MLXDType()

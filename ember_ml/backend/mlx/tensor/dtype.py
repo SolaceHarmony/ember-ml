@@ -7,8 +7,6 @@ This module provides MLX implementations of data type operations.
 import mlx.core as mx
 from typing import Union, Any, Optional
 
-# Type aliases
-DType = Any
 
 
 class MLXDType:
@@ -79,7 +77,7 @@ class MLXDType:
         """Get a data type by name."""
         return self.from_dtype_str(name)
 
-    def to_dtype_str(self, dtype: Union[DType, str, None]) -> Optional[str]:
+    def to_dtype_str(self, dtype: Union[Any, str, None]) -> Optional[str]:
         """
         Convert an MLX data type to a dtype string.
         
@@ -120,7 +118,7 @@ class MLXDType:
             return dtype_map[dtype]
         else:
             raise ValueError(f"Cannot convert {dtype} to EmberDType")
-    def validate_dtype(self, dtype: Optional[DType]) -> Optional[Any]:
+    def validate_dtype(self, dtype: Optional[Any]) -> Optional[Any]:
         """
         Validate and convert dtype to MLX format.
         
@@ -147,7 +145,7 @@ class MLXDType:
             return dtype
             
         raise ValueError(f"Invalid dtype: {dtype}")
-    def from_dtype_str(self, dtype: Union[Any, str, None]) -> Optional[DType]:
+    def from_dtype_str(self, dtype: Union[Any, str, None]) -> Optional[Any]:
         """
         Convert a dtype string to an MLX data type.
         

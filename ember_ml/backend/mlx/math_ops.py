@@ -9,7 +9,7 @@ from typing import Union, Optional, Sequence, List, Tuple, Literal
 import numpy as np
 from ember_ml.backend.mlx.tensor.ops import cast
 from ember_ml.backend.mlx.tensor import MLXTensor, MLXDType
-from ember_ml.backend.mlx.config import TensorLike, ShapeLike
+from ember_ml.backend.mlx.types import TensorLike, ShapeLike
 
 # Create instances for tensor and dtype operations
 Tensor = MLXTensor()

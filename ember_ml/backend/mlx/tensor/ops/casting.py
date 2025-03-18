@@ -2,11 +2,8 @@
 
 import mlx.core
 from typing import Any, Optional
-from ember_ml.backend.mlx.config import DType
 from ember_ml.backend.mlx.tensor.dtype import MLXDType
-from ember_ml.backend.mlx.tensor.tensor import MLXTensor
-
-Tensor = MLXTensor()  
+from ember_ml.backend.mlx.types import DType, TensorLike
 
 def _validate_dtype(dtype_cls: MLXDType, dtype: DType) -> Optional[Any]:
     """
@@ -32,23 +29,26 @@ def _validate_dtype(dtype_cls: MLXDType, dtype: DType) -> Optional[Any]:
         
     raise ValueError(f"Invalid dtype: {dtype}")
 
-def cast(tensor, dtype):
+def cast(tensor: TensorLike, dtype: DType) -> mlx.core.array:
     """
     Cast a tensor to a new data type.
     
     Args:
-        tensor_obj: MLXTensor instance
         tensor: Input tensor
         dtype: Target data type
         
     Returns:
         Tensor with new data type
     """
+    # Import MLXTensor lazily to avoid circular import
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+    tensor_obj = MLXTensor()
+    
     # Get the tensor array from the tensor object
-    tensor_array = Tensor.convert_to_tensor(tensor)
+    tensor_array = tensor_obj.convert_to_tensor(tensor)
     
     # Validate the dtype
-    mlx_dtype = _validate_dtype(Tensor._dtype_cls, dtype)
+    mlx_dtype = _validate_dtype(MLXDType(), dtype)
     
     # If mlx_dtype is None, return the tensor as is
     if mlx_dtype is None:

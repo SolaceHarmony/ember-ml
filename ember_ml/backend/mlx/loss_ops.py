@@ -8,7 +8,7 @@ import mlx.core as mx
 from typing import Optional, Union, Sequence, cast
 
 from ember_ml.backend.mlx.tensor.tensor import MLXTensor
-from ember_ml.backend.mlx.config import TensorLike, Shape, ShapeLike
+from ember_ml.backend.mlx.types import TensorLike, Shape, ShapeLike
 from ember_ml.backend.mlx.tensor.ops.indexing import scatter
 
 # Create a tensor instance for tensor operations
