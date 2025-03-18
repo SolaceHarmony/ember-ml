@@ -59,7 +59,6 @@ __all__ = [
     'pad',
     
     # Indexing operations
-    'slice_tensor',
     'slice',
     'slice_update',
     'gather',

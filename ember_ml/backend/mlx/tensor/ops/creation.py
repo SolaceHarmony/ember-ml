@@ -195,9 +195,9 @@ def linspace(start: Union[int, float], stop: Union[int, float], num: int,
     """Create evenly spaced numbers over a specified interval."""
     # Validate dtype
     from ember_ml.backend.mlx.tensor import MLXTensor
-    start_tensor = MLXTensor().convert_to_tensor(start)
-    stop_tensor = MLXTensor().convert_to_tensor(stop)
-    num_tensor = MLXTensor().convert_to_tensor(num)
+    start = MLXTensor().convert_to_tensor(start)
+    stop = MLXTensor().convert_to_tensor(stop)
+    num = MLXTensor().convert_to_tensor(num)
     # Validate dtype
     from ember_ml.backend.mlx.tensor.ops.utility import _validate_and_get_mlx_dtype
     mlx_dtype = _validate_and_get_mlx_dtype(dtype)
