@@ -803,4 +803,4 @@ class MLXTensor:
             Tensor with scattered values
         """
         from ember_ml.backend.mlx.tensor.ops.indexing import scatter as scatter_func
-        return scatter_func(data, indices, dim_size, aggr, axis)
+        return scatter_func(data, indices, dim_size, aggr)
