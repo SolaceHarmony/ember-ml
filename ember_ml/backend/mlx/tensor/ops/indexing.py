@@ -5,126 +5,11 @@ from typing import Any, List, Literal, Optional, Sequence, Union, cast, Protocol
 import mlx.core as mx
 import numpy as np
 
-from ember_ml.backend.mlx.tensor.tensor import MLXTensor
 from ember_ml.backend.mlx.types import (
-    DType, TensorLike, Shape, DimSize, Axis,
-    SupportsItem, SupportsAsType
+    DType, TensorLike, Shape, DimSize, Axis
 )
 
-@runtime_checkable
-class SupportsInt(Protocol):
-    """Protocol for objects that support conversion to int."""
-    def __int__(self) -> int: ...
-
-@runtime_checkable
-class SupportsFloat(Protocol):
-    """Protocol for objects that support conversion to float."""
-    def __float__(self) -> float: ...
-
-@runtime_checkable
-class ArrayToList(Protocol):
-    """Protocol for objects that support tolist()."""
-    def tolist(self) -> Union[List[Any], Any]: ...
-
-NumberType = TypeVar('NumberType', int, float, np.integer, np.floating)
-
-def _safe_int_conversion(x: Any) -> int:
-    """Safely convert any numeric value to int."""
-    try:
-        # Handle numpy types directly
-        if isinstance(x, np.integer):
-            return int(x)
-        if isinstance(x, np.floating):
-            return int(float(x))
-            
-        # Handle MLX array
-        if isinstance(x, mx.array):
-            # Convert single-element array to scalar
-            if x.size == 1:
-                scalar = x.item()
-                if isinstance(scalar, (int, float, np.integer, np.floating)):
-                    return int(scalar)
-            raise TypeError(f"Cannot convert MLX array of shape {x.shape} to int")
-            
-        # Handle objects with item() method
-        if isinstance(x, SupportsItem):
-            val = x.item()
-            if isinstance(val, (int, float, np.integer, np.floating)):
-                return int(val)
-            raise TypeError(f"item() returned unsupported type: {type(val)}")
-            
-        # Handle basic numeric types
-        if isinstance(x, int):
-            return x
-        if isinstance(x, float):
-            return int(x)
-            
-        # Handle objects with __int__ method
-        if isinstance(x, SupportsInt):
-            return int(x)
-            
-        # Handle objects with __float__ method
-        if isinstance(x, SupportsFloat):
-            return int(float(x))
-            
-        raise TypeError(f"Cannot convert {type(x)} to int")
-    except Exception as e:
-        raise TypeError(f"Failed to convert {type(x)} to int: {str(e)}")
-
-def _handle_mlx_array(x: mx.array) -> List[int]:
-    """Safely convert MLX array to list of integers."""
-    try:
-        # For single element arrays
-        if x.size == 1:
-            return [_safe_int_conversion(x.item())]
-            
-        # For multi-element arrays
-        np_array = np.array(x.tolist())  # Convert to numpy for safe iteration
-        return [_safe_int_conversion(i) for i in np_array.flat]
-    except Exception as e:
-        raise TypeError(f"Failed to convert MLX array to list: {str(e)}")
-
-def _ensure_list(x: Any) -> List[int]:
-    """Convert any input to a list of integers safely."""
-    if x is None:
-        raise TypeError("Cannot convert None to list of integers")
-    
-    if isinstance(x, mx.array):
-        return _handle_mlx_array(x)
-    
-    if isinstance(x, (list, tuple)):
-        return [_safe_int_conversion(i) for i in x]
-    
-    if isinstance(x, (int, float, np.integer, np.floating)):
-        return [_safe_int_conversion(x)]
-    
-    if isinstance(x, np.ndarray):
-        return [_safe_int_conversion(i) for i in x.flat]
-    
-    if isinstance(x, ArrayToList):
-        try:
-            vals = x.tolist()
-            if isinstance(vals, (list, tuple)):
-                return [_safe_int_conversion(i) for i in vals]
-            return [_safe_int_conversion(vals)]
-        except Exception as e:
-            raise TypeError(f"Failed to convert {type(x)} to list: {str(e)}")
-    
-    # Try direct conversion as last resort
-    return [_safe_int_conversion(x)]
-
-def _to_int_list(x: Any) -> List[int]:
-    """Safe conversion to list of integers with validation."""
-    try:
-        result = _ensure_list(x)
-        if not result:
-            raise ValueError("Empty sequence")
-        return result
-    except Exception as e:
-        raise TypeError(f"Failed to convert {type(x)} to list of integers: {e}")
-
 # Create an instance of MLXTensor for conversion
-Tensor = MLXTensor()
 
 __all__ = [
     'slice_tensor',
@@ -140,24 +25,24 @@ __all__ = [
     'slice'  # Alias for backward compatibility
 ]
 
-def slice_tensor(tensor: Any, starts: Any, sizes: Any) -> mx.array:
+def slice_tensor(tensor: TensorLike, starts: Shape, sizes: Any) -> mx.array:
     """Extract a slice from a tensor."""
     # Convert input to MLX array
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+    Tensor = MLXTensor()
     tensor_array = Tensor.convert_to_tensor(tensor)
     
-    # Convert starts and sizes to integer lists
-    starts_list = _to_int_list(starts)
-    sizes_list = _to_int_list(sizes)
-    
     # Create axes as a list of integers
-    axes = list(range(len(starts_list)))
+    axes = list(range(len(starts)))
     
     # Use MLX's slice function with proper types
-    return mx.slice(tensor_array, mx.array(starts_list), axes, sizes_list)
+    return mx.slice(tensor_array, mx.array(starts), axes, sizes)
 
 def gather(tensor: Any, indices: Any, axis: int = 0) -> mx.array:
     """Gather slices from a tensor along an axis."""
     # Convert inputs to MLX arrays
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+    Tensor = MLXTensor()
     tensor_array = Tensor.convert_to_tensor(tensor)
     indices_array = Tensor.convert_to_tensor(indices)
     
@@ -170,6 +55,8 @@ def gather(tensor: Any, indices: Any, axis: int = 0) -> mx.array:
 def tensor_scatter_nd_update(tensor: Any, indices: Any, updates: Any) -> mx.array:
     """Update tensor elements at given indices."""
     # Convert inputs to MLX arrays
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+    Tensor = MLXTensor()
     tensor_array = Tensor.convert_to_tensor(tensor)
     indices_array = Tensor.convert_to_tensor(indices)
     updates_array = Tensor.convert_to_tensor(updates)
@@ -193,6 +80,8 @@ def tensor_scatter_nd_update(tensor: Any, indices: Any, updates: Any) -> mx.arra
 def slice_update(tensor: Any, slices: Any, updates: Optional[Any] = None) -> mx.array:
     """Update a tensor at specific indices."""
     # Convert inputs to MLX arrays
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+    Tensor = MLXTensor()
     tensor_array = Tensor.convert_to_tensor(tensor)
     slices_array = Tensor.convert_to_tensor(slices)
     
@@ -221,6 +110,8 @@ def scatter(data: Any, indices: Any, dim_size: Optional[Union[int, mx.array]] = 
            aggr: str = "add", axis: int = 0) -> mx.array:
     """Scatter values into a new tensor."""
     # Convert inputs to MLX arrays
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+    Tensor = MLXTensor()
     data_array = Tensor.convert_to_tensor(data)
     indices_array = Tensor.convert_to_tensor(indices)
     
@@ -269,24 +160,32 @@ def scatter_op(src: mx.array, index: mx.array, dim_size: int,
 
 def scatter_add(src: Any, index: Any, dim_size: int, axis: int = 0) -> mx.array:
     """Scatter values using addition."""
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+    Tensor = MLXTensor()
     src_array = Tensor.convert_to_tensor(src)
     index_array = Tensor.convert_to_tensor(index)
     return scatter_op(src_array, index_array, _safe_int_conversion(dim_size), axis, "add")
 
 def scatter_max(src: Any, index: Any, dim_size: int, axis: int = 0) -> mx.array:
     """Scatter values using maximum."""
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+    Tensor = MLXTensor()
     src_array = Tensor.convert_to_tensor(src)
     index_array = Tensor.convert_to_tensor(index)
     return scatter_op(src_array, index_array, _safe_int_conversion(dim_size), axis, "max")
 
 def scatter_min(src: Any, index: Any, dim_size: int, axis: int = 0) -> mx.array:
     """Scatter values using minimum."""
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+    Tensor = MLXTensor()
     src_array = Tensor.convert_to_tensor(src)
     index_array = Tensor.convert_to_tensor(index)
     return scatter_op(src_array, index_array, _safe_int_conversion(dim_size), axis, "min")
 
 def scatter_mean(values: Any, index: Any, dim_size: int, axis: int = 0) -> mx.array:
     """Scatter values and compute mean."""
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+    Tensor = MLXTensor()
     values_array = Tensor.convert_to_tensor(values)
     index_array = Tensor.convert_to_tensor(index)
     dim_size_int = _safe_int_conversion(dim_size)
@@ -306,6 +205,8 @@ def scatter_mean(values: Any, index: Any, dim_size: int, axis: int = 0) -> mx.ar
 
 def scatter_softmax(values: Any, index: Any, dim_size: int, axis: int = 0) -> mx.array:
     """Scatter values and compute softmax."""
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+    Tensor = MLXTensor()
     values_array = Tensor.convert_to_tensor(values)
     index_array = Tensor.convert_to_tensor(index)
     dim_size_int = _safe_int_conversion(dim_size)

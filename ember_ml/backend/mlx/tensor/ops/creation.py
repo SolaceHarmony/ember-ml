@@ -6,7 +6,6 @@ import mlx.core as mx
 import numpy as np
 
 from ember_ml.backend.mlx.tensor.dtype import MLXDType
-from ember_ml.backend.mlx.tensor.tensor import MLXTensor as Tensor
 from ember_ml.backend.mlx.types import DType, TensorLike, Shape, ShapeLike, ScalarLike
 
 def zeros(shape: 'Shape', dtype: 'Optional[DType]' = None, device: Optional[str] = None) -> 'mx.array':
@@ -30,6 +29,7 @@ def ones(shape: 'Shape', dtype: 'Optional[DType]' = None, device: Optional[str] 
 def zeros_like(tensor: 'TensorLike', dtype: 'Optional[DType]' = None, device: Optional[str] = None) -> 'mx.array':
     """Create an MLX array of zeros with the same shape as the input."""
     # Convert input to MLX array
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor as Tensor
     tensor_array = Tensor().convert_to_tensor(tensor)
     
     # Get shape of input tensor
@@ -41,6 +41,7 @@ def zeros_like(tensor: 'TensorLike', dtype: 'Optional[DType]' = None, device: Op
 def ones_like(tensor: 'TensorLike', dtype: 'Optional[DType]' = None, device: Optional[str] = None) -> 'mx.array':
     """Create an MLX array of ones with the same shape as the input."""
     # Convert input to MLX array
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor as Tensor
     tensor_array = Tensor().convert_to_tensor(tensor)
     
     # Get shape of input tensor
@@ -65,6 +66,7 @@ def full(shape: 'ShapeLike', fill_value: 'ScalarLike', dtype: 'Optional[DType]' 
 def full_like(tensor: 'TensorLike', fill_value: 'ScalarLike', dtype: 'Optional[DType]' = None, device: Optional[str] = None) -> 'mx.array':
     """Create a tensor filled with fill_value with the same shape as input."""
     # Convert input to MLX array
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor as Tensor
     tensor_array = Tensor().convert_to_tensor(tensor)
     
     # Get shape of input tensor
