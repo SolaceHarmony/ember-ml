@@ -53,9 +53,11 @@ expand_dims = lambda *args, **kwargs: _get_tensor_ops().expand_dims(*args, **kwa
 squeeze = lambda *args, **kwargs: _get_tensor_ops().squeeze(*args, **kwargs)
 tile = lambda *args, **kwargs: _get_tensor_ops().tile(*args, **kwargs)
 gather = lambda *args, **kwargs: _get_tensor_ops().gather(*args, **kwargs)
+scatter = lambda *args, **kwargs: _get_tensor_ops().scatter(*args, **kwargs)
 tensor_scatter_nd_update = lambda *args, **kwargs: _get_tensor_ops().tensor_scatter_nd_update(*args, **kwargs)
 slice = lambda *args, **kwargs: _get_tensor_ops().slice(*args, **kwargs)
 slice_update = lambda *args, **kwargs: _get_tensor_ops().slice_update(*args, **kwargs)
+# Rename the current function to indicate it's internal
 _convert_to_backend_tensor = lambda *args, **kwargs: _get_tensor_ops().convert_to_tensor(*args, **kwargs)
 shape = lambda *args, **kwargs: _get_tensor_ops().shape(*args, **kwargs)
 dtype = lambda *args, **kwargs: _get_tensor_ops().dtype(*args, **kwargs)
@@ -67,6 +69,7 @@ item = lambda *args, **kwargs: _get_tensor_ops().item(*args, **kwargs)
 sort = lambda *args, **kwargs: _get_tensor_ops().sort(*args, **kwargs)
 argsort = lambda *args, **kwargs: _get_tensor_ops().argsort(*args, **kwargs)
 to_numpy = lambda *args, **kwargs: _get_tensor_ops().to_numpy(*args, **kwargs)
+tolist = lambda *args, **kwargs: _get_tensor_ops().tolist(*args, **kwargs)
 random_uniform = lambda *args, **kwargs: _get_tensor_ops().random_uniform(*args, **kwargs)
 random_normal = lambda *args, **kwargs: _get_tensor_ops().random_normal(*args, **kwargs)
 maximum = lambda *args, **kwargs: _get_tensor_ops().maximum(*args, **kwargs)
@@ -110,6 +113,7 @@ __all__ = [
     'squeeze',
     'tile',
     'gather',
+    'scatter',
     'tensor_scatter_nd_update',
     'slice',
     'slice_update',
@@ -123,6 +127,7 @@ __all__ = [
     'sort',
     'argsort',
     'to_numpy',
+    'tolist',
     'random_uniform',
     'random_normal',
     'maximum',

@@ -5,14 +5,16 @@ This module provides MLX implementations of device operations.
 """
 
 import mlx.core as mx
-from typing import Union, Optional, Dict, Any
+import mlx.core
+from typing import Optional, Dict, Any
 
 # Import from tensor_ops
 from ember_ml.backend.mlx.tensor import MLXTensor
+from ember_ml.backend.mlx.config import TensorLike
 
-convert_to_tensor = MLXTensor().convert_to_tensor
+Tensor = MLXTensor()
 
-def to_device(x: mx.array, device: str) -> mx.array:
+def to_device(x: TensorLike, device: str) -> mx.array:
     """
     Move an MLX array to the specified device.
     
@@ -24,7 +26,7 @@ def to_device(x: mx.array, device: str) -> mx.array:
         MLX array (unchanged)
     """
     # MLX automatically uses the most efficient device (Metal on Apple Silicon)
-    return convert_to_tensor(x)
+    return Tensor.convert_to_tensor(x)
 
 def get_device(x: mx.array) -> str:
     """
@@ -36,7 +38,11 @@ def get_device(x: mx.array) -> str:
     Returns:
         Device of the array (always 'mps' for MLX backend on Apple Silicon)
     """
-    return 'mps'  # MLX uses Metal on Apple Silicon
+    device = mlx.core.default_device()
+    if device == mx.cpu:
+        return 'cpu'
+    else:
+        return 'gpu'
 
 def get_available_devices() -> list[str]:
     """

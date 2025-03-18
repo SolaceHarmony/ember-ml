@@ -5,10 +5,10 @@ This module provides the base Wiring class that defines the interface
 for all wiring configurations.
 """
 
-from typing import Optional, Tuple, Dict, Any, Union
+from typing import Optional, Tuple, Dict, Any
 from ember_ml import ops
-from ember_ml.nn.tensor import EmberTensor, int32
-from ember_ml.nn.tensor.common import zeros, convert_to_tensor, copy
+from ember_ml.nn.tensor import EmberTensor, int32, convert_to_tensor
+from ember_ml.nn.tensor.common import zeros, copy
 
 class Wiring:
     """
@@ -44,9 +44,9 @@ class Wiring:
         self.seed = seed
         
         # Initialize masks
-        self._input_mask = None
-        self._recurrent_mask = None
-        self._output_mask = None
+        self._input_mask: Optional[EmberTensor] = None
+        self._recurrent_mask: Optional[EmberTensor] = None
+        self._output_mask: Optional[EmberTensor] = None
         
         # Initialize adjacency matrices
         self.adjacency_matrix = zeros([units, units], dtype=int32)
@@ -90,7 +90,7 @@ class Wiring:
         """
         return self.input_dim is not None
     
-    def get_input_mask(self) -> EmberTensor:
+    def get_input_mask(self) -> Optional[EmberTensor]:
         """
         Get the input mask.
         
@@ -104,7 +104,7 @@ class Wiring:
             self._input_mask, self._recurrent_mask, self._output_mask = self.build()
         
         return convert_to_tensor(self._input_mask) if not isinstance(self._input_mask, EmberTensor) else self._input_mask
-    def get_recurrent_mask(self) -> EmberTensor:
+    def get_recurrent_mask(self) -> Optional[EmberTensor]:
         """
         Get the recurrent mask.
         
@@ -120,7 +120,7 @@ class Wiring:
         # Return the mask directly
         return self._recurrent_mask
     
-    def get_output_mask(self) -> EmberTensor:
+    def get_output_mask(self) -> Optional[EmberTensor]:
         """
         Get the output mask.
         

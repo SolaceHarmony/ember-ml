@@ -1,56 +1,102 @@
 """MLX tensor utility operations."""
 
+from typing import Any, Optional, Sequence, Tuple, Union
+
 import mlx.core as mx
-from typing import Union, Optional, Sequence, Any, List, Tuple
 
-from ember_ml.backend.mlx.tensor.dtype import MLXDType, DType
+from ember_ml.backend.mlx.tensor.dtype import DType, MLXDType
+from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+from ember_ml.backend.mlx.config import Shape, TensorLike
 
-# Type aliases
-Shape = Union[int, Sequence[int]]
+Tensor = MLXTensor()
+DTypeHandler = MLXDType()
 
-def _convert_input(x: Any) -> mx.array:
-    """Convert input to MLX array."""
-    if isinstance(x, mx.array):
-        return x
-    # Check for NumPy arrays by type name rather than direct import
-    elif hasattr(x, '__class__') and x.__class__.__module__ == 'numpy' and x.__class__.__name__ == 'ndarray':
-        return mx.array(x)
-    return mx.array(x)
-
-def _validate_dtype(dtype_cls: MLXDType, dtype: Optional[DType]) -> Optional[Any]:
-    """
-    Validate and convert dtype to MLX format.
-    
-    Args:
-        dtype_cls: MLXDType instance for conversions
-        dtype: Input dtype to validate
-        
-    Returns:
-        Validated MLX dtype or None
-    """
-    if dtype is None:
-        return None
-    
-    # Handle string dtypes
-    if isinstance(dtype, str):
-        return dtype_cls.from_dtype_str(dtype)
-        
-    # Handle EmberDType objects
-    if hasattr(dtype, 'name'):
-        return dtype_cls.from_dtype_str(str(dtype.name))
-        
-    # If it's already an MLX dtype, return as is
-    if isinstance(dtype, type(mx.float32)):
-        return dtype
-        
-    raise ValueError(f"Invalid dtype: {dtype}")
-
-def convert_to_tensor(tensor_obj, data: Any, dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
+def _convert_input(x: TensorLike) -> Any:
     """
     Convert input to MLX array.
     
+    Handles various input types:
+    - MLX arrays (returned as-is)
+    - NumPy arrays (converted to MLX arrays)
+    - MLXTensor objects (extract underlying data)
+    - Python scalars (int, float, bool)
+    - Python sequences (list, tuple)
+    
+    Special handling for:
+    - 0D tensors (scalars)
+    - 1D tensors (vectors)
+    - 2D tensors (matrices)
+    - Higher dimensional tensors
+    
     Args:
-        tensor_obj: MLXTensor instance
+        x: Input data to convert
+        
+    Returns:
+        MLX array
+        
+    Raises:
+        ValueError: If the input cannot be converted to an MLX array
+    """
+    # Already an MLX array - check by type and module
+    # Use the correct module reference: mlx.core
+    if (isinstance(x, mx.array) or 
+        (hasattr(x, '__class__') and
+         hasattr(x.__class__, '__module__') and
+         x.__class__.__module__ == 'mlx.core' and
+         x.__class__.__name__ == 'array')):
+        return x
+        
+    # Handle MLXTensor objects
+    if (hasattr(x, '__class__') and 
+        hasattr(x.__class__, '__name__') and 
+        x.__class__.__name__ == 'MLXTensor'):
+        return mx.array(x)
+            
+    # Check for NumPy arrays by type name rather than direct import
+    # NumPy is allowed as an input tensor because many frameworks use NumPy
+    if (hasattr(x, '__class__') and 
+        x.__class__.__module__ == 'numpy' and 
+        x.__class__.__name__ == 'ndarray'):
+        return mx.array(x)
+        
+    # Handle Python scalars (0D tensors)
+    if isinstance(x, (int, float, bool)):
+        try:
+            return mx.array(x)
+        except Exception as e:
+            raise ValueError(f"Cannot convert scalar {type(x)} to MLX array: {e}")
+    
+    # Handle Python sequences (potential 1D or higher tensors)
+    if isinstance(x, (list, tuple)):
+        try:
+            # Check if it's a nested sequence (2D or higher)
+            if x and isinstance(x[0], (list, tuple)):
+                # Handle potential jagged arrays by ensuring consistent dimensions
+                shapes = [len(item) for item in x if isinstance(item, (list, tuple))]
+                if len(set(shapes)) > 1:
+                    # Jagged array - warn but proceed
+                    import warnings
+                    warnings.warn(f"Converting jagged array with inconsistent shapes: {shapes}")
+            return mx.array(x)
+        except Exception as e:
+            raise ValueError(f"Cannot convert sequence {type(x)} to MLX array: {e}")
+    
+    # For any other type, reject it
+    raise ValueError(f"Cannot convert {type(x)} to MLX array. Only int, float, bool, list, tuple, numpy.ndarray, and mlx.core.array are supported.")
+
+
+
+def convert_to_tensor(data: TensorLike, dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
+    """
+    Convert input to MLX array.
+    
+    Handles various input types with special attention to dimensionality:
+    - 0D tensors (scalars)
+    - 1D tensors (vectors)
+    - 2D tensors (matrices)
+    - Higher dimensional tensors
+    
+    Args:
         data: Input data
         dtype: Optional data type
         device: Ignored for MLX backend
@@ -60,18 +106,27 @@ def convert_to_tensor(tensor_obj, data: Any, dtype: Optional[DType] = None, devi
     """
     tensor = _convert_input(data)
     if dtype is not None:
-        mlx_dtype = _validate_dtype(tensor_obj._dtype_cls, dtype)
+        mlx_dtype = DTypeHandler.validate_dtype(dtype)
         if mlx_dtype is not None:
             tensor = tensor.astype(mlx_dtype)
-    # device parameter is ignored for MLX backend
+    
+    # Ensure proper dimensionality
+    # If data is a scalar but we need a 0-dim tensor, reshape accordingly
+    if isinstance(data, (int, float, bool)) and tensor.ndim > 0:
+        tensor = mx.reshape(tensor, ())
+        
     return tensor
 
-def to_numpy(tensor_obj, data: Any) -> List:
+def to_numpy(data: TensorLike) -> Any:
     """
     Convert an MLX array to a NumPy array.
     
+    IMPORTANT: This function is provided ONLY for visualization/plotting libraries 
+    that specifically require NumPy arrays. It should NOT be used for general tensor 
+    conversions or operations. Ember ML has a zero backend design where EmberTensor 
+    relies entirely on the selected backend for representation.
+    
     Args:
-        tensor_obj: MLXTensor instance
         data: Input MLX array
         
     Returns:
@@ -79,21 +134,21 @@ def to_numpy(tensor_obj, data: Any) -> List:
     """
     # This is a special case where we need to use NumPy directly
     # It's only used for visualization or when explicitly requested
-    tensor_array = tensor_obj.convert_to_tensor(data)
-    return tensor_array.tolist()
+    tensor_data = Tensor.convert_to_tensor(data)
+    import numpy as np
+    return np.array(tensor_data)
 
-def item(tensor_obj, data: Any) -> Union[int, float, bool]:
+def item(data: TensorLike) -> Union[int, float, bool]:
     """
     Extract the scalar value from a tensor.
     
     Args:
-        tensor_obj: MLXTensor instance
         data: Input tensor containing a single element
         
     Returns:
         Standard Python scalar (int, float, or bool)
     """
-    tensor_array = tensor_obj.convert_to_tensor(data)
+    tensor_array = Tensor.convert_to_tensor(data)
     
     # Get the raw value
     raw_value = tensor_array.item()
@@ -118,52 +173,48 @@ def item(tensor_obj, data: Any) -> Union[int, float, bool]:
         # If all else fails, return False
         return False
 
-def shape(tensor_obj, data: Any) -> Tuple[int, ...]:
+def shape(data: TensorLike) -> Tuple[int, ...]:
     """
     Get the shape of a tensor.
     
     Args:
-        tensor_obj: MLXTensor instance
         data: Input array
         
     Returns:
         Shape of the array
     """
-    return tensor_obj.convert_to_tensor(data).shape
+    return Tensor.convert_to_tensor(data).shape
 
-def dtype(tensor_obj, data: Any) -> Any:
+def dtype(data: TensorLike) -> Any:
     """
     Get the data type of a tensor.
     
     Args:
-        tensor_obj: MLXTensor instance
         data: Input array
         
     Returns:
         Data type of the array
     """
-    return tensor_obj.convert_to_tensor(data).dtype
+    return Tensor.convert_to_tensor(data).dtype
 
-def copy(tensor_obj, data: Any) -> mx.array:
+def copy(data: TensorLike) -> mx.array:
     """
     Create a copy of an MLX array.
     
     Args:
-        tensor_obj: MLXTensor instance
         data: Input array
         
     Returns:
         Copy of the array
     """
     # MLX arrays are immutable, so we can just convert to a new array
-    return tensor_obj.convert_to_tensor(data)
+    return Tensor.convert_to_tensor(data)
 
-def var(tensor_obj, data: Any, axis: Optional[Union[int, Sequence[int]]] = None, keepdims: bool = False) -> mx.array:
+def var(data: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None, keepdims: bool = False) -> mx.array:
     """
     Compute the variance of a tensor.
     
     Args:
-        tensor_obj: MLXTensor instance
         data: Input array
         axis: Axis or axes along which to compute the variance
         keepdims: Whether to keep the dimensions or not
@@ -171,15 +222,14 @@ def var(tensor_obj, data: Any, axis: Optional[Union[int, Sequence[int]]] = None,
     Returns:
         Variance of the array
     """
-    tensor_array = tensor_obj.convert_to_tensor(data)
+    tensor_array = Tensor.convert_to_tensor(data)
     return mx.var(tensor_array, axis=axis, keepdims=keepdims)
 
-def sort(tensor_obj, data: Any, axis: int = -1, descending: bool = False) -> mx.array:
+def sort(data: TensorLike, axis: int = -1, descending: bool = False) -> mx.array:
     """
     Sort a tensor along the given axis.
     
     Args:
-        tensor_obj: MLXTensor instance
         data: Input array
         axis: Axis along which to sort
         descending: Whether to sort in descending order
@@ -187,7 +237,7 @@ def sort(tensor_obj, data: Any, axis: int = -1, descending: bool = False) -> mx.
     Returns:
         Sorted array
     """
-    tensor_array = tensor_obj.convert_to_tensor(data)
+    tensor_array = Tensor.convert_to_tensor(data)
     sorted_array = mx.sort(tensor_array, axis=axis)
     
     if descending:
@@ -199,12 +249,11 @@ def sort(tensor_obj, data: Any, axis: int = -1, descending: bool = False) -> mx.
     
     return sorted_array
 
-def argsort(tensor_obj, data: Any, axis: int = -1, descending: bool = False) -> mx.array:
+def argsort(data: TensorLike, axis: int = -1, descending: bool = False) -> mx.array:
     """
     Return the indices that would sort a tensor along the given axis.
     
     Args:
-        tensor_obj: MLXTensor instance
         data: Input array
         axis: Axis along which to sort
         descending: Whether to sort in descending order
@@ -212,7 +261,7 @@ def argsort(tensor_obj, data: Any, axis: int = -1, descending: bool = False) -> 
     Returns:
         Indices that would sort the array
     """
-    tensor_array = tensor_obj.convert_to_tensor(data)
+    tensor_array = Tensor.convert_to_tensor(data)
     
     if descending:
         # For descending order, we need to negate the array, get the argsort, and then use those indices
@@ -228,18 +277,17 @@ def argsort(tensor_obj, data: Any, axis: int = -1, descending: bool = False) -> 
     else:
         return mx.argsort(tensor_array, axis=axis)
 
-def maximum(tensor_obj, data1: Any, data2: Any) -> mx.array:
+def maximum(data1: TensorLike, data2: TensorLike) -> mx.array:
     """
     Element-wise maximum of two arrays.
     
     Args:
-        tensor_obj: MLXTensor instance
         data1: First input array
         data2: Second input array
         
     Returns:
         Element-wise maximum
     """
-    data1_array = tensor_obj.convert_to_tensor(data1)
-    data2_array = tensor_obj.convert_to_tensor(data2)
+    data1_array = Tensor.convert_to_tensor(data1)
+    data2_array = Tensor.convert_to_tensor(data2)
     return mx.maximum(data1_array, data2_array)

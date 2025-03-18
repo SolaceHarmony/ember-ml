@@ -154,6 +154,7 @@ softmax = lambda *args, **kwargs: math_ops().softmax(*args, **kwargs)
 gradient = lambda *args, **kwargs: math_ops().gradient(*args, **kwargs)
 cumsum = lambda *args, **kwargs: math_ops().cumsum(*args, **kwargs)
 eigh = lambda *args, **kwargs: math_ops().eigh(*args, **kwargs)
+pi = math_ops().pi
 
 # Device operations
 to_device = lambda *args, **kwargs: device_ops().to_device(*args, **kwargs)

@@ -14,6 +14,7 @@ DType = Any
 class MLXDType:
     """MLX implementation of data type operations."""
 
+
     @property
     def float16(self):
         """Get the float16 data type."""
@@ -119,7 +120,33 @@ class MLXDType:
             return dtype_map[dtype]
         else:
             raise ValueError(f"Cannot convert {dtype} to EmberDType")
-
+    def validate_dtype(self, dtype: Optional[DType]) -> Optional[Any]:
+        """
+        Validate and convert dtype to MLX format.
+        
+        Args:
+            dtype_cls: MLXDType instance for conversions
+            dtype: Input dtype to validate
+            
+        Returns:
+            Validated MLX dtype or None
+        """
+        if dtype is None:
+            return None
+        
+        # Handle string dtypes
+        if isinstance(dtype, str):
+            return self.from_dtype_str(dtype)
+            
+        # Handle EmberDType objects
+        if hasattr(dtype, 'name'):
+            return self.from_dtype_str(str(dtype.name))
+            
+        # If it's already an MLX dtype, return as is
+        if isinstance(dtype, type(mx.float32)):
+            return dtype
+            
+        raise ValueError(f"Invalid dtype: {dtype}")
     def from_dtype_str(self, dtype: Union[Any, str, None]) -> Optional[DType]:
         """
         Convert a dtype string to an MLX data type.
