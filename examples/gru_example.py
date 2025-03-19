@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 from ember_ml import ops
 from ember_ml.nn.modules.rnn import GRU, GRUCell
-from ember_ml.nn import Module, Sequential
+from ember_ml.nn import Module, Sequential, tensor
 from ember_ml.training import Optimizer, Loss
 
 def generate_sine_wave_data(num_samples=1000, seq_length=100, num_features=1):
@@ -58,8 +58,8 @@ def generate_sine_wave_data(num_samples=1000, seq_length=100, num_features=1):
 def train_gru_model(model, X_train, y_train, epochs=50, batch_size=32, learning_rate=0.001):
     """Train a GRU model."""
     # Convert data to tensors
-    X_train_tensor = ops.convert_to_tensor(X_train, dtype=ops.float32)
-    y_train_tensor = ops.convert_to_tensor(y_train, dtype=ops.float32)
+    X_train_tensor = tensor.convert_to_tensor(X_train, dtype=ops.float32)
+    y_train_tensor = tensor.convert_to_tensor(y_train, dtype=ops.float32)
     
     # Define optimizer and loss function
     optimizer = Optimizer.adam(model.parameters(), learning_rate=learning_rate)
@@ -105,8 +105,8 @@ def train_gru_model(model, X_train, y_train, epochs=50, batch_size=32, learning_
 def evaluate_model(model, X_test, y_test):
     """Evaluate a GRU model."""
     # Convert data to tensors
-    X_test_tensor = ops.convert_to_tensor(X_test, dtype=ops.float32)
-    y_test_tensor = ops.convert_to_tensor(y_test, dtype=ops.float32)
+    X_test_tensor = tensor.convert_to_tensor(X_test, dtype=ops.float32)
+    y_test_tensor = tensor.convert_to_tensor(y_test, dtype=ops.float32)
     
     # Make predictions
     y_pred = model(X_test_tensor)
@@ -196,8 +196,8 @@ def main():
     # Convert to numpy for visualization
     X_test_np = ops.to_numpy(X_test)
     y_test_np = ops.to_numpy(y_test)
-    single_layer_losses_np = ops.to_numpy(ops.convert_to_tensor(single_layer_losses))
-    multi_layer_losses_np = ops.to_numpy(ops.convert_to_tensor(multi_layer_losses))
+    single_layer_losses_np = ops.to_numpy(tensor.convert_to_tensor(single_layer_losses))
+    multi_layer_losses_np = ops.to_numpy(tensor.convert_to_tensor(multi_layer_losses))
     
     # Plot the results
     plt.figure(figsize=(15, 10))

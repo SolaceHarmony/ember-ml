@@ -5,10 +5,8 @@ This module provides the AutoNCP class, which is a convenience wrapper
 around the NCP class that automatically configures the wiring.
 """
 
-import numpy as np
-from typing import Optional, Tuple, Dict, Any, Union, List
+from typing import Optional, Dict, Any
 
-from ember_ml import ops
 from ember_ml.nn.modules.ncp import NCP
 from ember_ml.nn.wirings.ncp_wiring import NCPWiring
 

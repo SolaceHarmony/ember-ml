@@ -10,6 +10,7 @@ import pytest
 import numpy as np
 from ember_ml.backend import set_backend
 from ember_ml import ops
+from ember_ml.nn import tensor
 from ember_ml.utils import backend_utils
 
 class TestMathOpsComparison:
@@ -28,10 +29,10 @@ class TestMathOpsComparison:
         # Operations to test
         self.operations = [
             ("add", lambda x: ops.add(x, x)),
-            ("subtract", lambda x: ops.subtract(x, ops.ones_like(x))),
-            ("multiply", lambda x: ops.multiply(x, ops.full_like(x, 2.0))),
-            ("divide", lambda x: ops.divide(x, ops.full_like(x, 2.0))),
-            ("pow", lambda x: ops.pow(x, ops.full_like(x, 2.0))),
+            ("subtract", lambda x: ops.subtract(x, tensor.ones_like(x))),
+            ("multiply", lambda x: ops.multiply(x, tensor.full_like(x, 2.0))),
+            ("divide", lambda x: ops.divide(x, tensor.full_like(x, 2.0))),
+            ("pow", lambda x: ops.pow(x, tensor.full_like(x, 2.0))),
             ("sqrt", lambda x: ops.sqrt(x)),
             ("exp", lambda x: ops.exp(x)),
             ("log", lambda x: ops.log(ops.abs(x))),
@@ -69,12 +70,14 @@ class TestMathOpsComparison:
         pi_values = {}
         for backend in self.backends:
             set_backend(backend)
+            # Initialize pi_value to None
+            pi_value = None
             try:
                 # Try different ways to access pi
                 try:
                     # First try to access pi directly from ops
                     if hasattr(ops, 'pi'):
-                        pi_value = ops.pi()
+                        pi_value = ops.pi
                     else:
                         # Try to access pi as a property or method from math_ops
                         math_ops = ops.math_ops()
@@ -85,7 +88,7 @@ class TestMathOpsComparison:
                             else:
                                 pi_value = pi_attr
                         elif hasattr(math_ops, 'pi_func'):
-                            pi_value = math_ops.pi_func()
+                            pi_value = math_ops.pi
                         else:
                             # Fallback to direct constant access
                             if backend == "numpy":
@@ -97,6 +100,10 @@ class TestMathOpsComparison:
                             elif backend == "mlx":
                                 import mlx.core as mx
                                 pi_value = mx.array(3.141592653589793)
+                    
+                    # Only proceed if pi_value is set
+                    if pi_value is None:
+                        raise ValueError("Could not obtain pi value")
                     
                     # Convert to float for comparison
                     pi_float = float(backend_utils.tensor_to_numpy_safe(pi_value))
@@ -158,10 +165,10 @@ class TestMathOpsComparison:
             for op_name, op_func in self.operations:
                 try:
                     # Convert data to tensor using ops for the current backend
-                    tensor = ops.convert_to_tensor(data)
+                    tensor_func = tensor.convert_to_tensor(data)
                     
                     # Apply the operation
-                    result = op_func(tensor)
+                    result = op_func(tensor_func)
                     
                     # Convert result to numpy for comparison using backend_utils
                     result_np = backend_utils.tensor_to_numpy_safe(result)
@@ -189,14 +196,14 @@ class TestMathOpsComparison:
                             # Handle scalar results
                             if np.isscalar(result1) or (isinstance(result1, (list, np.ndarray)) and np.size(result1) == 1):
                                 if np.isscalar(result1):
-                                    scalar1 = float(result1)
+                                    scalar1 = float(tensor.convert_to_tensor(result1).to_numpy())
                                 else:
-                                    scalar1 = float(np.array(result1).flatten()[0])
+                                    scalar1 = float(tensor.convert_to_tensor(np.array(result1).flatten()[0]).to_numpy())
                                 
                                 if np.isscalar(result2):
-                                    scalar2 = float(result2)
+                                    scalar2 = float(tensor.convert_to_tensor(result2).to_numpy())
                                 else:
-                                    scalar2 = float(np.array(result2).flatten()[0])
+                                    scalar2 = float(tensor.convert_to_tensor(np.array(result2).flatten()[0]).to_numpy())
                                 
                                 diff = abs(scalar1 - scalar2)
                                 print(f"  Difference between {backend1} and {backend2}: {diff}")

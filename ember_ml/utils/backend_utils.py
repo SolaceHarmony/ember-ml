@@ -8,7 +8,7 @@ common operations in a backend-agnostic way.
 
 import logging
 from typing import Any, List, Optional, Tuple, Union, Dict
-
+from ember_ml.nn import tensor
 # Set up logging
 logger = logging.getLogger('ember_ml.utils.backend')
 
@@ -98,7 +98,7 @@ def convert_to_tensor_safe(data: Any) -> Any:
         return None
     
     try:
-        return ops.convert_to_tensor(data)
+        return tensor.convert_to_tensor(data)
     except Exception as e:
         logger.warning(f"Error converting to tensor: {e}")
         # Re-raise the exception since ember_ml is required

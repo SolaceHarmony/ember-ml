@@ -6,16 +6,17 @@ from typing import Optional
 from abc import ABC, abstractmethod
 
 from ember_ml import ops
-from ember_ml.ops.tensor import EmberTensor
+from ember_ml.nn.tensor import EmberTensor as Tensor
+from ember_ml.nn.tensor import float32, shape, full_like, expand_dims, arange, transpose, full_like
+from ember_ml.nn.tensor import concatenate, cast, tile, reshape
 from ember_ml.nn.modules import Module
 from ember_ml.nn.linear import Linear
 from ember_ml.nn.container import Dropout
 
-# Type aliases
-Tensor = EmberTensor
+convert_to_tensor = Tensor().convert_to_tensor
 
 # Constants
-NINF = ops.convert_to_tensor(-1.0e38)  # Approximation of negative infinity
+NINF = convert_to_tensor([(-1.0e38,)],float32)  # Approximation of negative infinity
 
 class BaseAttention(Module, ABC):
     """Abstract base class for attention mechanisms."""
@@ -69,10 +70,10 @@ class AttentionMask:
         Returns:
             Padding mask [batch_size, max_len]
         """
-        batch_size = ops.shape(lengths)[0]
+        batch_size = shape(lengths)[0]
         mask = ops.less(
-            ops.expand_dims(ops.arange(max_len), 0),
-            ops.expand_dims(lengths, 1)
+            expand_dims(arange(max_len), 0),
+            expand_dims(lengths, 1)
         )
         return mask
     
@@ -88,11 +89,11 @@ class AttentionMask:
             Causal mask [seq_len, seq_len]
         """
         # Create a matrix where each row i contains [0, 1, 2, ..., seq_len-1]
-        row_indices = ops.expand_dims(ops.arange(seq_len), 0)
+        row_indices = expand_dims(arange(seq_len), 0)
         # Create a matrix where each column j contains [0, 1, 2, ..., seq_len-1]
-        col_indices = ops.expand_dims(ops.arange(seq_len), 1)
+        col_indices = expand_dims(arange(seq_len), 1)
         # Create a lower triangular matrix where entry (i,j) is 1 if j <= i, else 0
-        return ops.cast(ops.less_equal(col_indices, row_indices), ops.float32)
+        return cast(ops.less_equal(col_indices, row_indices), float32)
     
     @staticmethod
     def create_window_mask(seq_len: int, window_size: int) -> Tensor:
@@ -107,12 +108,12 @@ class AttentionMask:
             Window mask [seq_len, seq_len]
         """
         # Create a matrix where each row i contains [0, 1, 2, ..., seq_len-1]
-        row_indices = ops.expand_dims(ops.arange(seq_len), 0)
+        row_indices = expand_dims(arange(seq_len), 0)
         # Create a matrix where each column j contains [0, 1, 2, ..., seq_len-1]
-        col_indices = ops.expand_dims(ops.arange(seq_len), 1)
+        col_indices = expand_dims(arange(seq_len), 1)
         # Create a mask where entry (i,j) is 1 if |i-j| <= window_size, else 0
         distance = ops.abs(ops.subtract(row_indices, col_indices))
-        return ops.cast(ops.less_equal(distance, window_size), ops.float32)
+        return cast(ops.less_equal(distance, window_size), float32)
 
 class AttentionScore:
     """Utility class for computing attention scores."""
@@ -129,7 +130,7 @@ class AttentionScore:
         Returns:
             Attention scores [..., query_len, key_len]
         """
-        return ops.matmul(query, ops.transpose(key, axes=(-2, -1)))
+        return ops.matmul(query, transpose(key, axes=(-2, -1)))
     
     @staticmethod
     def scaled_dot_product(query: Tensor,
@@ -147,8 +148,8 @@ class AttentionScore:
             Scaled attention scores [..., query_len, key_len]
         """
         return ops.divide(
-            ops.matmul(query, ops.transpose(key, axes=(-2, -1))),
-            ops.convert_to_tensor(scale)
+            ops.matmul(query, transpose(key, axes=(-2, -1))),
+            convert_to_tensor(scale)
         )
     
     @staticmethod
@@ -168,20 +169,20 @@ class AttentionScore:
         Returns:
             Attention scores [..., query_len, key_len]
         """
-        q_len = ops.shape(query)[-2]
-        k_len = ops.shape(key)[-2]
+        q_len = shape(query)[-2]
+        k_len = shape(key)[-2]
         
         # Expand dimensions for broadcasting
-        query_expanded = ops.expand_dims(query, -2)
+        query_expanded = expand_dims(query, -2)
         # Repeat query for each key
-        query_expanded = ops.tile(query_expanded, [1, 1, k_len, 1])
+        query_expanded = tile(query_expanded, [1, 1, k_len, 1])
         
-        key_expanded = ops.expand_dims(key, -3)
+        key_expanded = expand_dims(key, -3)
         # Repeat key for each query
-        key_expanded = ops.tile(key_expanded, [1, q_len, 1, 1])
+        key_expanded = tile(key_expanded, [1, q_len, 1, 1])
         
         # Concatenate query and key
-        combined = ops.concatenate([query_expanded, key_expanded], axis=-1)
+        combined = concatenate([query_expanded, key_expanded], axis=-1)
         
         # Apply weight and optional bias
         scores = ops.matmul(combined, weight)
@@ -211,7 +212,7 @@ class AttentionLayer(BaseAttention):
         self.query = Linear(query_dim, hidden_dim)
         self.key = Linear(key_dim, hidden_dim)
         self.value = Linear(value_dim, hidden_dim)
-        self.scale = ops.sqrt(ops.convert_to_tensor(hidden_dim))
+        self.scale = ops.sqrt(convert_to_tensor(hidden_dim))
         self._attention_weights = None
         
     def forward(self,
@@ -241,7 +242,7 @@ class AttentionLayer(BaseAttention):
         
         # Apply mask if provided
         if mask is not None:
-            scores = ops.where(ops.equal(mask, 0), ops.full_like(scores, NINF), scores)
+            scores = ops.where(ops.equal(mask, 0), full_like(scores, NINF), scores)
         
         # Apply attention weights
         self._attention_weights = ops.softmax(scores, axis=-1)
@@ -307,24 +308,24 @@ class MultiHeadAttention(BaseAttention):
         Returns:
             Attention output [batch, query_len, embed_dim]
         """
-        batch_size = ops.shape(query)[0]
-        query_len = ops.shape(query)[1]
-        key_len = ops.shape(key)[1]
+        batch_size = shape(query)[0]
+        query_len = shape(query)[1]
+        key_len = shape(key)[1]
         
-        scaling = ops.sqrt(ops.convert_to_tensor(self.head_dim))
+        scaling = ops.sqrt(convert_to_tensor(self.head_dim))
         
         # Linear projections and reshape
         q = self.q_proj(query)
-        q = ops.reshape(q, (batch_size, query_len, self.num_heads, self.head_dim))
-        q = ops.transpose(q, (0, 2, 1, 3))  # [batch, num_heads, query_len, head_dim]
+        q = reshape(q, (batch_size, query_len, self.num_heads, self.head_dim))
+        q = transpose(q, (0, 2, 1, 3))  # [batch, num_heads, query_len, head_dim]
         
         k = self.k_proj(key)
-        k = ops.reshape(k, (batch_size, key_len, self.num_heads, self.head_dim))
-        k = ops.transpose(k, (0, 2, 1, 3))  # [batch, num_heads, key_len, head_dim]
+        k = reshape(k, (batch_size, key_len, self.num_heads, self.head_dim))
+        k = transpose(k, (0, 2, 1, 3))  # [batch, num_heads, key_len, head_dim]
         
         v = self.v_proj(value)
-        v = ops.reshape(v, (batch_size, key_len, self.num_heads, self.head_dim))
-        v = ops.transpose(v, (0, 2, 1, 3))  # [batch, num_heads, key_len, head_dim]
+        v = reshape(v, (batch_size, key_len, self.num_heads, self.head_dim))
+        v = transpose(v, (0, 2, 1, 3))  # [batch, num_heads, key_len, head_dim]
         
         # Compute attention scores
         scores = AttentionScore.scaled_dot_product(q, k, scaling)
@@ -332,8 +333,8 @@ class MultiHeadAttention(BaseAttention):
         # Apply mask if provided
         if mask is not None:
             # Add a dimension for the heads
-            mask_expanded = ops.expand_dims(mask, axis=1)
-            scores = ops.where(ops.equal(mask_expanded, 0), ops.full_like(scores, NINF), scores)
+            mask_expanded = expand_dims(mask, axis=1)
+            scores = ops.where(ops.equal(mask_expanded, 0), full_like(scores, NINF), scores)
         
         # Apply attention weights
         self._attention_weights = ops.softmax(scores, axis=-1)
@@ -343,8 +344,8 @@ class MultiHeadAttention(BaseAttention):
         attn_output = ops.matmul(self._attention_weights, v)
         
         # Reshape and project output
-        attn_output = ops.transpose(attn_output, (0, 2, 1, 3))
-        attn_output = ops.reshape(attn_output, (batch_size, query_len, self.embed_dim))
+        attn_output = transpose(attn_output, (0, 2, 1, 3))
+        attn_output = reshape(attn_output, (batch_size, query_len, self.embed_dim))
         attn_output = self.out_proj(attn_output)
         
         return attn_output

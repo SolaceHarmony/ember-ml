@@ -8,10 +8,12 @@ import torch
 import torch.nn.functional as F
 from typing import Any, Optional, Union, Sequence, Tuple, List, cast
 
-from ember_ml.ops.interfaces.loss_ops import LossOps
-from ember_ml.backend.torch.tensor_ops import TorchTensorOps
+from ember_ml.backend.torch.tensor.tensor import TorchTensor
 
-class TorchLossOps(LossOps):
+# Create a tensor instance for tensor operations
+_tensor_ops = TorchTensor()
+
+class TorchLossOps:
     """PyTorch implementation of loss operations."""
     
     def mean_squared_error(self, y_true: Any, y_pred: Any, 
@@ -29,8 +31,8 @@ class TorchLossOps(LossOps):
         Returns:
             Mean squared error
         """
-        y_true = TorchTensorOps().convert_to_tensor(y_true)
-        y_pred = TorchTensorOps().convert_to_tensor(y_pred)
+        y_true = _tensor_tensor.convert_to_tensor(y_true)
+        y_pred = _tensor_tensor.convert_to_tensor(y_pred)
         
         squared_error = torch.square(y_true - y_pred)
         
@@ -61,8 +63,8 @@ class TorchLossOps(LossOps):
         Returns:
             Mean absolute error
         """
-        y_true = TorchTensorOps().convert_to_tensor(y_true)
-        y_pred = TorchTensorOps().convert_to_tensor(y_pred)
+        y_true = _tensor_tensor.convert_to_tensor(y_true)
+        y_pred = _tensor_tensor.convert_to_tensor(y_pred)
         
         absolute_error = torch.abs(y_true - y_pred)
         
@@ -94,8 +96,8 @@ class TorchLossOps(LossOps):
         Returns:
             Binary crossentropy loss
         """
-        y_true = TorchTensorOps().convert_to_tensor(y_true)
-        y_pred = TorchTensorOps().convert_to_tensor(y_pred)
+        y_true = _tensor_tensor.convert_to_tensor(y_true)
+        y_pred = _tensor_tensor.convert_to_tensor(y_pred)
         
         # Use PyTorch's binary cross entropy function
         if from_logits:
@@ -131,8 +133,8 @@ class TorchLossOps(LossOps):
         Returns:
             Categorical crossentropy loss
         """
-        y_true = TorchTensorOps().convert_to_tensor(y_true)
-        y_pred = TorchTensorOps().convert_to_tensor(y_pred)
+        y_true = _tensor_tensor.convert_to_tensor(y_true)
+        y_pred = _tensor_tensor.convert_to_tensor(y_pred)
         
         # Use PyTorch's cross entropy function
         if from_logits:
@@ -189,8 +191,8 @@ class TorchLossOps(LossOps):
         Returns:
             Sparse categorical crossentropy loss
         """
-        y_true = TorchTensorOps().convert_to_tensor(y_true)
-        y_pred = TorchTensorOps().convert_to_tensor(y_pred)
+        y_true = _tensor_tensor.convert_to_tensor(y_true)
+        y_pred = _tensor_tensor.convert_to_tensor(y_pred)
         
         # PyTorch's cross_entropy expects class indices, which is what sparse categorical uses
         if from_logits:
@@ -246,8 +248,8 @@ class TorchLossOps(LossOps):
         Returns:
             Huber loss
         """
-        y_true = TorchTensorOps().convert_to_tensor(y_true)
-        y_pred = TorchTensorOps().convert_to_tensor(y_pred)
+        y_true = _tensor_tensor.convert_to_tensor(y_true)
+        y_pred = _tensor_tensor.convert_to_tensor(y_pred)
         
         # Use PyTorch's smooth_l1_loss which is equivalent to Huber loss
         # with delta=1.0, and scale it appropriately for other delta values
@@ -297,8 +299,8 @@ class TorchLossOps(LossOps):
         Returns:
             Log-cosh loss
         """
-        y_true = TorchTensorOps().convert_to_tensor(y_true)
-        y_pred = TorchTensorOps().convert_to_tensor(y_pred)
+        y_true = _tensor_tensor.convert_to_tensor(y_true)
+        y_pred = _tensor_tensor.convert_to_tensor(y_pred)
         
         error = y_pred - y_true
         

@@ -5,15 +5,15 @@ This module provides MLX implementations of comparison operations.
 """
 
 import mlx.core as mx
-from typing import Union, Sequence, Optional, Tuple, Any, List
+from typing import Any
 
-# Type aliases
-ArrayLike = Union[mx.array, float, int, list, tuple]
+# Import from tensor_ops
+from ember_ml.backend.mlx.tensor import MLXTensor
+from ember_ml.backend.mlx.types import TensorLike
 
-# Import convert_to_tensor from tensor_ops
-from ember_ml.backend.mlx.tensor_ops import convert_to_tensor
+Tensor = MLXTensor()
 
-def equal(x: ArrayLike, y: ArrayLike) -> mx.array:
+def equal(x: TensorLike, y: TensorLike) -> mx.array:
     """
     Check if two MLX arrays are equal element-wise.
     
@@ -24,9 +24,9 @@ def equal(x: ArrayLike, y: ArrayLike) -> mx.array:
     Returns:
         Boolean array with True where elements are equal
     """
-    return mx.equal(convert_to_tensor(x), convert_to_tensor(y))
+    return mx.equal(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
-def not_equal(x: ArrayLike, y: ArrayLike) -> mx.array:
+def not_equal(x: TensorLike, y: TensorLike) -> mx.array:
     """
     Check if two MLX arrays are not equal element-wise.
     
@@ -37,9 +37,9 @@ def not_equal(x: ArrayLike, y: ArrayLike) -> mx.array:
     Returns:
         Boolean array with True where elements are not equal
     """
-    return mx.not_equal(convert_to_tensor(x), convert_to_tensor(y))
+    return mx.not_equal(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
-def less(x: ArrayLike, y: ArrayLike) -> mx.array:
+def less(x: TensorLike, y: TensorLike) -> mx.array:
     """
     Check if elements of the first MLX array are less than the second element-wise.
     
@@ -50,9 +50,9 @@ def less(x: ArrayLike, y: ArrayLike) -> mx.array:
     Returns:
         Boolean array with True where elements of x are less than y
     """
-    return mx.less(convert_to_tensor(x), convert_to_tensor(y))
+    return mx.less(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
-def less_equal(x: ArrayLike, y: ArrayLike) -> mx.array:
+def less_equal(x: TensorLike, y: TensorLike) -> mx.array:
     """
     Check if elements of the first MLX array are less than or equal to the second element-wise.
     
@@ -63,9 +63,9 @@ def less_equal(x: ArrayLike, y: ArrayLike) -> mx.array:
     Returns:
         Boolean array with True where elements of x are less than or equal to y
     """
-    return mx.less_equal(convert_to_tensor(x), convert_to_tensor(y))
+    return mx.less_equal(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
-def greater(x: ArrayLike, y: ArrayLike) -> mx.array:
+def greater(x: TensorLike, y: TensorLike) -> mx.array:
     """
     Check if elements of the first MLX array are greater than the second element-wise.
     
@@ -76,9 +76,9 @@ def greater(x: ArrayLike, y: ArrayLike) -> mx.array:
     Returns:
         Boolean array with True where elements of x are greater than y
     """
-    return mx.greater(convert_to_tensor(x), convert_to_tensor(y))
+    return mx.greater(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
-def greater_equal(x: ArrayLike, y: ArrayLike) -> mx.array:
+def greater_equal(x: TensorLike, y: TensorLike) -> mx.array:
     """
     Check if elements of the first MLX array are greater than or equal to the second element-wise.
     
@@ -89,9 +89,9 @@ def greater_equal(x: ArrayLike, y: ArrayLike) -> mx.array:
     Returns:
         Boolean array with True where elements of x are greater than or equal to y
     """
-    return mx.greater_equal(convert_to_tensor(x), convert_to_tensor(y))
+    return mx.greater_equal(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
-def logical_and(x: ArrayLike, y: ArrayLike) -> mx.array:
+def logical_and(x: TensorLike, y: TensorLike) -> mx.array:
     """
     Compute the logical AND of two MLX arrays element-wise.
     
@@ -102,9 +102,9 @@ def logical_and(x: ArrayLike, y: ArrayLike) -> mx.array:
     Returns:
         Boolean array with True where both x and y are True
     """
-    return mx.logical_and(convert_to_tensor(x), convert_to_tensor(y))
+    return mx.logical_and(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
-def logical_or(x: ArrayLike, y: ArrayLike) -> mx.array:
+def logical_or(x: TensorLike, y: TensorLike) -> mx.array:
     """
     Compute the logical OR of two MLX arrays element-wise.
     
@@ -115,9 +115,9 @@ def logical_or(x: ArrayLike, y: ArrayLike) -> mx.array:
     Returns:
         Boolean array with True where either x or y is True
     """
-    return mx.logical_or(convert_to_tensor(x), convert_to_tensor(y))
+    return mx.logical_or(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
-def logical_not(x: ArrayLike) -> mx.array:
+def logical_not(x: mx.array) -> mx.array:
     """
     Compute the logical NOT of an MLX array element-wise.
     
@@ -127,9 +127,9 @@ def logical_not(x: ArrayLike) -> mx.array:
     Returns:
         Boolean array with True where x is False
     """
-    return mx.logical_not(convert_to_tensor(x))
+    return mx.logical_not(Tensor.convert_to_tensor(x))
 
-def logical_xor(x: ArrayLike, y: ArrayLike) -> mx.array:
+def logical_xor(x: TensorLike, y: TensorLike) -> mx.array:
     """
     Compute the logical XOR of two MLX arrays element-wise.
     
@@ -140,12 +140,12 @@ def logical_xor(x: ArrayLike, y: ArrayLike) -> mx.array:
     Returns:
         Boolean array with True where exactly one of x or y is True
     """
-    x_tensor = convert_to_tensor(x)
-    y_tensor = convert_to_tensor(y)
+    x_tensor = Tensor.convert_to_tensor(x)
+    y_tensor = Tensor.convert_to_tensor(y)
     return mx.bitwise_xor(x_tensor, y_tensor)
 
 
-def allclose(x: ArrayLike, y: ArrayLike, rtol: float = 1e-5, atol: float = 1e-8) -> mx.array:
+def allclose(x: TensorLike, y: TensorLike, rtol: float = 1e-5, atol: float = 1e-8) -> mx.array:
     """
     Check if all elements of two MLX arrays are close within a tolerance.
     
@@ -158,12 +158,12 @@ def allclose(x: ArrayLike, y: ArrayLike, rtol: float = 1e-5, atol: float = 1e-8)
     Returns:
         Boolean indicating if all elements are close
     """
-    x_tensor = convert_to_tensor(x)
-    y_tensor = convert_to_tensor(y)
+    x_tensor = Tensor.convert_to_tensor(x)
+    y_tensor = Tensor.convert_to_tensor(y)
     return mx.allclose(x_tensor, y_tensor, rtol=rtol, atol=atol)
 
 
-def isclose(x: ArrayLike, y: ArrayLike, rtol: float = 1e-5, atol: float = 1e-8) -> mx.array:
+def isclose(x: TensorLike, y: TensorLike, rtol: float = 1e-5, atol: float = 1e-8) -> mx.array:
     """
     Check if elements of two MLX arrays are close within a tolerance element-wise.
     
@@ -176,15 +176,15 @@ def isclose(x: ArrayLike, y: ArrayLike, rtol: float = 1e-5, atol: float = 1e-8) 
     Returns:
         Boolean array with True where elements are close
     """
-    x_tensor = convert_to_tensor(x)
-    y_tensor = convert_to_tensor(y)
+    x_tensor = Tensor.convert_to_tensor(x)
+    y_tensor = Tensor.convert_to_tensor(y)
     # Implement isclose using the formula: |x - y| <= atol + rtol * |y|
     abs_diff = mx.abs(mx.subtract(x_tensor, y_tensor))
     tolerance = mx.add(atol, mx.multiply(rtol, mx.abs(y_tensor)))
     return mx.less_equal(abs_diff, tolerance)
 
 
-def all(x: ArrayLike, axis: Any = None, keepdims: bool = False) -> mx.array:
+def all(x: mx.array, axis: Any = None, keepdims: bool = False) -> mx.array:
     """
     Check if all elements in a tensor are True.
     
@@ -199,11 +199,11 @@ def all(x: ArrayLike, axis: Any = None, keepdims: bool = False) -> mx.array:
         If axis is specified, the result is a tensor with the specified
         axes reduced.
     """
-    x_tensor = convert_to_tensor(x)
+    x_tensor = Tensor.convert_to_tensor(x)
     return mx.all(x_tensor, axis=axis, keepdims=keepdims)
 
 
-def where(condition: ArrayLike, x: ArrayLike, y: ArrayLike) -> mx.array:
+def where(condition: mx.array, x: TensorLike, y: TensorLike) -> mx.array:
     """
     Return elements chosen from x or y depending on condition.
     
@@ -215,9 +215,9 @@ def where(condition: ArrayLike, x: ArrayLike, y: ArrayLike) -> mx.array:
     Returns:
         Array with values from x where condition is True, and values from y elsewhere
     """
-    condition_tensor = convert_to_tensor(condition)
-    x_tensor = convert_to_tensor(x)
-    y_tensor = convert_to_tensor(y)
+    condition_tensor = Tensor.convert_to_tensor(condition)
+    x_tensor = Tensor.convert_to_tensor(x)
+    y_tensor = Tensor.convert_to_tensor(y)
     return mx.where(condition_tensor, x_tensor, y_tensor)
 
 

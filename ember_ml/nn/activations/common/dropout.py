@@ -8,12 +8,9 @@ using the ops abstraction layer.
 from typing import Any, Optional, Union, List, Tuple
 
 from ember_ml import ops
-from ember_ml.ops.tensor import EmberTensor
+from ember_ml.nn import tensor
+from ember_ml.nn.tensor import EmberTensor
 from ember_ml.nn.activations.interfaces.activation import ActivationInterface
-
-# Type aliases
-Tensor = EmberTensor
-
 
 class Dropout(ActivationInterface):
     """
@@ -37,7 +34,7 @@ class Dropout(ActivationInterface):
         self.rate = rate
         self.training = training
         
-    def __call__(self, x: Tensor) -> Tensor:
+    def __call__(self, x: EmberTensor) -> EmberTensor:
         """
         Apply dropout activation function.
         
@@ -52,15 +49,15 @@ class Dropout(ActivationInterface):
             
         # Create a random mask
         mask = ops.greater_equal(
-            ops.random_uniform(ops.shape(x)),
-            ops.convert_to_tensor(self.rate)
+            tensor.random_uniform(tensor.shape(x)),
+            tensor.convert_to_tensor(self.rate)
         )
         
         # Apply mask and scale
-        scale = ops.convert_to_tensor(1.0 / (1.0 - self.rate))
-        return ops.multiply(ops.where(mask, x, ops.zeros_like(x)), scale)
+        scale = tensor.convert_to_tensor(1.0 / (1.0 - self.rate))
+        return ops.multiply(ops.where(mask, x, tensor.zeros_like(x)), scale)
         
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: EmberTensor) -> EmberTensor:
         """
         Forward pass of dropout activation.
         

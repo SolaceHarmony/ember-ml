@@ -8,8 +8,9 @@ which divides neurons into sensory, inter, and motor neurons.
 from typing import Optional, Tuple, List, Dict, Any
 
 from ember_ml import ops
+
 from ember_ml.nn.wirings.wiring import Wiring
-from ember_ml.ops.tensor import EmberTensor
+from ember_ml.nn.tensor import EmberTensor, int32, zeros, ones, random_uniform
 
 class NCPWiring(Wiring):
     """
@@ -86,21 +87,27 @@ class NCPWiring(Wiring):
         self.motor_to_motor_sparsity = motor_to_motor_sparsity or sparsity_level
         self.motor_to_inter_sparsity = motor_to_inter_sparsity or sparsity_level
     
-    def build(self) -> Tuple[Any, Any, Any]:
+    def build(self, input_dim=None) -> Tuple[EmberTensor, EmberTensor, EmberTensor]:
         """
         Build the NCP wiring configuration.
         
+        Args:
+            input_dim: Input dimension (optional)
+            
         Returns:
             Tuple of (input_mask, recurrent_mask, output_mask)
         """
+        # Set input_dim if provided
+        if input_dim is not None:
+            self.set_input_dim(input_dim)
         # Set random seed for reproducibility
         if self.seed is not None:
             ops.random_ops().set_seed(self.seed)
         
         # Create masks
-        recurrent_mask = EmberTensor.zeros((self.units, self.units), dtype='int32')
-        input_mask = EmberTensor.ones((self.input_dim,), dtype='int32')
-        output_mask = EmberTensor.zeros((self.units,), dtype='int32')
+        recurrent_mask = zeros((self.units, self.units), dtype=int32)
+        input_mask = ones((self.input_dim,), dtype=int32)
+        output_mask = zeros((self.units,), dtype=int32)
         
         # Define neuron group indices
         sensory_start = 0
@@ -111,7 +118,7 @@ class NCPWiring(Wiring):
         motor_end = inter_end + self.motor_neurons
         
         # Create output mask (only motor neurons contribute to output)
-        output_mask = EmberTensor.zeros((self.units,), dtype='int32')
+        output_mask = zeros((self.units,), dtype=int32)
         
         # Set motor neurons to 1
         output_mask_list = [0] * self.units
@@ -119,7 +126,7 @@ class NCPWiring(Wiring):
             output_mask_list[i] = 1
         
         # Create a new tensor with the updated values
-        output_mask = EmberTensor(output_mask_list, dtype='int32')
+        output_mask = EmberTensor(output_mask_list, dtype=int32)
         
         # Create connections using ops functions
         # We'll use a functional approach with lists and convert to tensors
@@ -131,46 +138,46 @@ class NCPWiring(Wiring):
         if self.sensory_neurons > 0 and self.inter_neurons > 0:
             for i in range(sensory_start, sensory_end):
                 for j in range(inter_start, inter_end):
-                    if ops.random_uniform(()) >= self.sensory_to_inter_sparsity:
+                    if random_uniform(()) >= self.sensory_to_inter_sparsity:
                         recurrent_mask_list[i][j] = 1
         
         # Sensory to motor connections
         if self.sensory_neurons > 0 and self.motor_neurons > 0:
             for i in range(sensory_start, sensory_end):
                 for j in range(motor_start, motor_end):
-                    if ops.random_uniform(()) >= self.sensory_to_motor_sparsity:
+                    if random_uniform(()) >= self.sensory_to_motor_sparsity:
                         recurrent_mask_list[i][j] = 1
         
         # Inter to inter connections
         if self.inter_neurons > 0:
             for i in range(inter_start, inter_end):
                 for j in range(inter_start, inter_end):
-                    if ops.random_uniform(()) >= self.inter_to_inter_sparsity:
+                    if random_uniform(()) >= self.inter_to_inter_sparsity:
                         recurrent_mask_list[i][j] = 1
         
         # Inter to motor connections
         if self.inter_neurons > 0 and self.motor_neurons > 0:
             for i in range(inter_start, inter_end):
                 for j in range(motor_start, motor_end):
-                    if ops.random_uniform(()) >= self.inter_to_motor_sparsity:
+                    if random_uniform(()) >= self.inter_to_motor_sparsity:
                         recurrent_mask_list[i][j] = 1
         
         # Motor to motor connections
         if self.motor_neurons > 0:
             for i in range(motor_start, motor_end):
                 for j in range(motor_start, motor_end):
-                    if ops.random_uniform(()) >= self.motor_to_motor_sparsity:
+                    if random_uniform(()) >= self.motor_to_motor_sparsity:
                         recurrent_mask_list[i][j] = 1
         
         # Motor to inter connections
         if self.motor_neurons > 0 and self.inter_neurons > 0:
             for i in range(motor_start, motor_end):
                 for j in range(inter_start, inter_end):
-                    if ops.random_uniform(()) >= self.motor_to_inter_sparsity:
+                    if random_uniform(()) >= self.motor_to_inter_sparsity:
                         recurrent_mask_list[i][j] = 1
         
         # Convert the list to a tensor
-        recurrent_mask = EmberTensor(recurrent_mask_list, dtype='int32')
+        recurrent_mask = EmberTensor(recurrent_mask_list, dtype=int32)
         
         return input_mask, recurrent_mask, output_mask
     

@@ -12,6 +12,7 @@ from collections import OrderedDict
 from typing import Dict, Iterator, Optional, Set, Tuple, Union, Any, List
 
 from ember_ml import ops
+from ember_ml.nn import tensor
 
 class Parameter:
     """
@@ -20,7 +21,6 @@ class Parameter:
     Parameters are tensors that require gradients and are updated during
     the optimization process.
     """
-    
     def __init__(self, data, requires_grad=True):
         """
         Initialize a parameter with data.
@@ -29,11 +29,12 @@ class Parameter:
             data: Initial data for the parameter
             requires_grad: Whether the parameter requires gradients
         """
-        self.data = ops.convert_to_tensor(data)
+        self.data = tensor.convert_to_tensor(data)
         self.requires_grad = requires_grad
         self.grad = None
     
     def __repr__(self):
+        return f"Parameter(shape={tensor.shape(self.data)}, dtype={tensor.dtype(self.data)})"
         return f"Parameter(shape={ops.shape(self.data)}, dtype={ops.dtype(self.data)})"
 
 class BaseModule:
@@ -95,7 +96,7 @@ class BaseModule:
         if buffer is None:
             self._buffers.pop(name, None)
         else:
-            self._buffers[name] = ops.convert_to_tensor(buffer)
+            self._buffers[name] = tensor.convert_to_tensor(buffer)
     
     def add_module(self, name: str, module: Optional['BaseModule']) -> None:
         """
@@ -246,13 +247,13 @@ class BaseModule:
         """
         for param in self.parameters():
             if dtype is not None:
-                param.data = ops.cast(param.data, dtype)
+                param.data = tensor.cast(param.data, dtype)
             if device is not None:
                 param.data = ops.to_device(param.data, device)
         
         for key, buf in self._buffers.items():
             if dtype is not None:
-                self._buffers[key] = ops.cast(buf, dtype)
+                self._buffers[key] = tensor.cast(buf, dtype)
             if device is not None:
                 self._buffers[key] = ops.to_device(buf, device)
         
@@ -302,4 +303,4 @@ class BaseModule:
         """Set gradients of all parameters to zero."""
         for param in self.parameters():
             if param.grad is not None:
-                param.grad = ops.zeros_like(param.grad)
+                param.grad = tensor.zeros_like(param.grad)

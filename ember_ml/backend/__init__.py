@@ -10,14 +10,18 @@ import sys
 import platform
 import importlib
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Any
+
+# Import tensor classes from all backends
+from ember_ml.backend.torch.tensor import TorchDType, TorchTensor
+from ember_ml.backend.numpy.tensor import NumpyDType, NumpyTensor
+from ember_ml.backend.mlx.tensor import MLXDType, MLXTensor
 
 # Available backends
 _BACKENDS = {
     'numpy': 'ember_ml.backend.numpy',
     'torch': 'ember_ml.backend.torch',
-    'mlx': 'ember_ml.backend.mlx',
-    'ember': 'ember_ml.backend.ember'
+    'mlx': 'ember_ml.backend.mlx'
 }
 
 # Path to the .ember directory in the user's home directory
@@ -113,6 +117,17 @@ def get_backend_module():
         # Import the backend module
         if backend in _BACKENDS:
             _CURRENT_BACKEND_MODULE = importlib.import_module(_BACKENDS[backend])
+            
+            # Add tensor classes to the backend module
+            if backend == 'numpy':
+                setattr(_CURRENT_BACKEND_MODULE, 'DType', NumpyDType)
+                setattr(_CURRENT_BACKEND_MODULE, 'Tensor', NumpyTensor)
+            elif backend == 'torch':
+                setattr(_CURRENT_BACKEND_MODULE, 'DType', TorchDType)
+                setattr(_CURRENT_BACKEND_MODULE, 'Tensor', TorchTensor)
+            elif backend == 'mlx':
+                setattr(_CURRENT_BACKEND_MODULE, 'DType', MLXDType)
+                setattr(_CURRENT_BACKEND_MODULE, 'Tensor', MLXTensor)
         else:
             raise ValueError(f"Invalid backend: {backend}. Available backends: {list(_BACKENDS.keys())}")
     
@@ -139,12 +154,15 @@ def get_device(tensor=None):
         return 'cpu'
     elif backend == 'torch':
         import torch
-        return 'cuda' if torch.cuda.is_available() else 'cpu'
+        if torch.cuda.is_available():
+            return 'cuda'
+        elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+            return 'mps'
+        else:
+            return 'cpu'
     elif backend == 'mlx':
         import mlx.core as mx
         return mx.default_device().type
-    elif backend == 'ember':
-        return 'cpu'  # EmberTensor currently only supports CPU
     else:
         return 'cpu'
 
@@ -192,9 +210,6 @@ def set_device(device):
         if device_str != 'cpu':
             raise ValueError(f"Invalid device for MLX: {device_str}")
         # MLX doesn't support explicit device setting yet
-    elif backend == 'ember':
-        if device_str != 'cpu':
-            raise ValueError(f"Ember backend only supports 'cpu' device")
     elif device_str != 'cpu':
         raise ValueError(f"Backend {backend} only supports 'cpu' device")
 
@@ -205,6 +220,14 @@ def auto_select_backend():
         import torch
         if torch.cuda.is_available():
             return 'torch', 'cuda'
+    except ImportError:
+        pass
+
+    # Check for PyTorch with MPS (Apple Silicon)
+    try:
+        import torch
+        if hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+            return 'torch', 'mps'
     except ImportError:
         pass
 
@@ -222,13 +245,6 @@ def auto_select_backend():
             return 'mlx', None
         except ImportError:
             pass
-    
-    # Check for Ember backend
-    try:
-        from ember_ml.ops.tensor import EmberTensor
-        return 'ember', None
-    except ImportError:
-        pass
     
     # Fallback to NumPy
     return 'numpy', None

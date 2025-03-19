@@ -11,8 +11,7 @@ import os
 from typing import Dict, List, Optional, Tuple, Union, Any
 
 from ember_ml import ops
-from ember_ml.backend import get_backend, set_backend
-
+from ember_ml.nn import tensor
 class RBM:
     """
     Backend-agnostic implementation of a Restricted Boltzmann Machine.
@@ -75,7 +74,7 @@ class RBM:
         self.weights = ops.random_normal(
             (n_visible, n_hidden), 
             mean=0.0, 
-            stddev=0.01 / ops.sqrt(ops.convert_to_tensor(n_visible))
+            stddev=0.01 / ops.sqrt(tensor.convert_to_tensor(n_visible))
         )
         self.visible_bias = ops.zeros(n_visible)
         self.hidden_bias = ops.zeros(n_hidden)
@@ -294,9 +293,9 @@ class RBM:
             List of reconstruction errors per epoch
         """
         # Convert data to tensors
-        data = ops.convert_to_tensor(data)
+        data = tensor.convert_to_tensor(data)
         if validation_data is not None:
-            validation_data = ops.convert_to_tensor(validation_data)
+            validation_data = tensor.convert_to_tensor(validation_data)
         
         n_samples = len(data)
         n_batches = max(n_samples // self.batch_size, 1)
@@ -308,8 +307,8 @@ class RBM:
         for epoch in range(epochs):
             # Shuffle data for each epoch
             indices = ops.to_numpy(ops.random_uniform((n_samples,)))
-            indices = ops.convert_to_tensor(indices.argsort())
-            shuffled_data = ops.convert_to_tensor([data[i] for i in ops.to_numpy(indices)])
+            indices = tensor.convert_to_tensor(indices.argsort())
+            shuffled_data = tensor.convert_to_tensor([data[i] for i in ops.to_numpy(indices)])
             
             epoch_error = 0
             for batch_idx in range(n_batches):
@@ -358,13 +357,13 @@ class RBM:
         if self.reconstruction_error_threshold is None:
             errors = self.reconstruction_error(data, per_sample=True)
             self.reconstruction_error_threshold = float(ops.to_numpy(
-                ops.convert_to_tensor(sorted(ops.to_numpy(errors)))[int(0.95 * len(errors))]
+                tensor.convert_to_tensor(sorted(ops.to_numpy(errors)))[int(0.95 * len(errors))]
             ))
         
         if self.free_energy_threshold is None:
             energies = self.free_energy(data)
             self.free_energy_threshold = float(ops.to_numpy(
-                ops.convert_to_tensor(sorted(ops.to_numpy(energies)))[int(0.05 * len(energies))]
+                tensor.convert_to_tensor(sorted(ops.to_numpy(energies)))[int(0.05 * len(energies))]
             ))
         
         return self.training_errors
@@ -379,7 +378,7 @@ class RBM:
         Returns:
             Hidden representation [n_samples, n_hidden]
         """
-        data = ops.convert_to_tensor(data)
+        data = tensor.convert_to_tensor(data)
         return self.compute_hidden_probabilities(data)
     
     def reconstruct(self, data):
@@ -392,7 +391,7 @@ class RBM:
         Returns:
             Reconstructed data [n_samples, n_visible]
         """
-        data = ops.convert_to_tensor(data)
+        data = tensor.convert_to_tensor(data)
         hidden_probs = self.compute_hidden_probabilities(data)
         hidden_states = self.sample_hidden_states(hidden_probs)
         visible_probs = self.compute_visible_probabilities(hidden_states)
@@ -409,7 +408,7 @@ class RBM:
         Returns:
             Reconstruction error (mean or per sample)
         """
-        data = ops.convert_to_tensor(data)
+        data = tensor.convert_to_tensor(data)
         reconstructed = self.reconstruct(data)
         squared_error = ops.sum(ops.pow(ops.subtract(data, reconstructed), 2), axis=1)
         
@@ -431,7 +430,7 @@ class RBM:
         Returns:
             Free energy for each sample [n_samples]
         """
-        data = ops.convert_to_tensor(data)
+        data = tensor.convert_to_tensor(data)
         visible_bias_term = ops.dot(data, self.visible_bias)
         hidden_term = ops.sum(
             ops.log(ops.add(1, ops.exp(ops.add(ops.dot(data, self.weights), self.hidden_bias)))),
@@ -451,7 +450,7 @@ class RBM:
         Returns:
             Anomaly scores [n_samples]
         """
-        data = ops.convert_to_tensor(data)
+        data = tensor.convert_to_tensor(data)
         
         if method == 'reconstruction':
             return self.reconstruction_error(data, per_sample=True)
@@ -472,7 +471,7 @@ class RBM:
         Returns:
             Boolean array indicating anomalies [n_samples]
         """
-        data = ops.convert_to_tensor(data)
+        data = tensor.convert_to_tensor(data)
         scores = self.anomaly_score(data, method)
         
         if method == 'reconstruction':
@@ -498,7 +497,7 @@ class RBM:
         """
         # Initialize visible state
         if start_data is not None:
-            visible_state = ops.convert_to_tensor(start_data)
+            visible_state = tensor.convert_to_tensor(start_data)
         else:
             visible_state = ops.random_uniform((1, self.n_visible))
         
@@ -587,9 +586,9 @@ class RBM:
         )
         
         # Set model parameters
-        rbm.weights = ops.convert_to_tensor(model_data['weights'])
-        rbm.visible_bias = ops.convert_to_tensor(model_data['visible_bias'])
-        rbm.hidden_bias = ops.convert_to_tensor(model_data['hidden_bias'])
+        rbm.weights = tensor.convert_to_tensor(model_data['weights'])
+        rbm.visible_bias = tensor.convert_to_tensor(model_data['visible_bias'])
+        rbm.hidden_bias = tensor.convert_to_tensor(model_data['hidden_bias'])
         rbm.training_errors = model_data['training_errors']
         rbm.reconstruction_error_threshold = model_data['reconstruction_error_threshold']
         rbm.free_energy_threshold = model_data['free_energy_threshold']

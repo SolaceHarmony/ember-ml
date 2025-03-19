@@ -31,8 +31,9 @@ python utils/emberlint.py path/to/modified/file.py --verbose
 
 ✅ **REQUIRED**:
 - Import ops from ember_ml (`from ember_ml import ops`)
+- Import tensor from ember_ml.nn (`from ember_ml.nn import tensor`)
 - Use ops functions for all mathematical operations (`ops.sin()`, `ops.matmul()`)
-- Use ops for tensor creation and manipulation (`ops.convert_to_tensor()`)
+- Use tensor functions for tensor creation and manipulation (`tensor.convert_to_tensor()`)
 
 **EXCEPTION**: NumPy usage is permitted ONLY for visualization/plotting libraries that specifically require it, and ONLY after thorough testing to confirm that it is required (causes an exception or other issue when using the abstraction layer). Even in these cases, the code should be isolated and clearly documented.
 
@@ -43,8 +44,8 @@ python utils/emberlint.py path/to/modified/file.py --verbose
 - Hardcoding data types that may not be compatible with all backends
 
 ✅ **REQUIRED**:
-- Use `ops.cast()` with appropriate dtype
-- Use dtype constants from `ember_ml.ops.dtypes`
+- Use `nn.tensor.cast()` with appropriate dtype
+- Use dtype constants from `ember_ml.nn.tensor` (e.g., `tensor.int32`, `tensor.float32`)
 
 ### 3. NO DIRECT PYTHON OPERATORS
 
@@ -86,28 +87,52 @@ The backend implementations are organized in a modular folder structure:
 
 ```
 ember_ml/backend/
-├── numpy/             # NumPy backend implementations
-│   ├── tensor_ops.py  # Tensor operations
-│   ├── math_ops.py    # Math operations
-│   ├── random_ops.py  # Random operations
-│   ├── io_ops.py      # I/O operations
+├── numpy/                # NumPy backend implementations
+│   ├── math_ops.py       # Math operations
+│   ├── comparison_ops.py # Comparison operations
+│   ├── device_ops.py     # Device operations
+│   ├── feature_ops.py    # Feature extraction operations
+│   ├── io_ops.py         # I/O operations
+│   ├── loss_ops.py       # Loss functions
+│   ├── solver_ops.py     # Solver operations
+│   ├── vector_ops.py     # Vector operations
+│   ├── tensor/           # Tensor implementations
+│   │   ├── tensor.py     # Tensor class
+│   │   ├── dtype.py      # Data type class
+│   │   └── ...
 │   └── ...
-├── torch/             # PyTorch backend implementations
-│   ├── tensor_ops.py
+├── torch/                # PyTorch backend implementations
 │   ├── math_ops.py
-│   ├── random_ops.py
+│   ├── comparison_ops.py
+│   ├── device_ops.py
+│   ├── feature_ops.py
 │   ├── io_ops.py
+│   ├── loss_ops.py
+│   ├── solver_ops.py
+│   ├── vector_ops.py
+│   ├── tensor/           # Tensor implementations
+│   │   ├── tensor.py     # Tensor class
+│   │   ├── dtype.py      # Data type class
+│   │   └── ...
 │   └── ...
-├── mlx/               # MLX backend implementations
-│   ├── tensor_ops.py
+├── mlx/                  # MLX backend implementations
 │   ├── math_ops.py
-│   ├── random_ops.py
+│   ├── comparison_ops.py
+│   ├── device_ops.py
+│   ├── feature_ops.py
 │   ├── io_ops.py
+│   ├── loss_ops.py
+│   ├── solver_ops.py
+│   ├── vector_ops.py
+│   ├── tensor/           # Tensor implementations
+│   │   ├── tensor.py     # Tensor class
+│   │   ├── dtype.py      # Data type class
+│   │   └── ...
 │   └── ...
 └── ...
 ```
 
-Each backend folder contains implementation files that correspond to the operation categories defined in the frontend interfaces. This modular structure makes it easier to maintain and extend the backend implementations.
+Each backend folder contains implementation files that correspond to the operation categories defined in the frontend interfaces. The `tensor` subfolder contains the backend-specific tensor and data type implementations. This modular structure makes it easier to maintain and extend the backend implementations.
 
 ### Interface Definition and Implementation
 
@@ -170,10 +195,22 @@ Follow the established module structure:
 ```
 ember_ml/
 ├── backend/       # Backend abstraction system
-├── ops/           # Operations (math, tensor, random)
+├── ops/           # Operations (math)
 ├── nn/            # Neural network components
+│   ├── tensor/    # Tensor operations and abstractions (including random operations)
+│   ├── activations/ # Activation functions
+│   ├── container/ # Container modules like Linear
+│   ├── modules/   # Neural network modules (including RNN modules)
+│   ├── wirings/   # Connectivity patterns (being moved into modules)
+│   └── ...
 ├── features/      # Feature extraction
 ├── models/        # Model implementations
+│   ├── rbm/       # Restricted Boltzmann Machine implementations
+│   ├── liquid/    # Liquid neural network implementations
+│   └── ...
+├── attention/     # Attention mechanisms
+├── core/          # Core functionality
+├── utils/         # Utility functions
 └── ...            # Other modules
 ```
 
@@ -217,7 +254,7 @@ def function_name(param1: Type1, param2: Type2) -> ReturnType:
 Use type annotations for all function parameters and return values:
 
 ```python
-def process_data(data: Union[List[float], np.ndarray, torch.Tensor]) -> ops.Tensor:
+def process_data(data: Union[List[float], tensor.EmberTensor]) -> tensor.EmberTensor:
     """Process the input data."""
     # Implementation
 ```
@@ -253,11 +290,12 @@ def process_data(data):
 
 ✅ **CORRECT**:
 ```python
+from ember_ml.nn import tensor
 from ember_ml import ops
 
 def process_data(data):
-    tensor = ops.convert_to_tensor(data)
-    return ops.sin(tensor)
+    data_tensor = tensor.convert_to_tensor(data)
+    return ops.sin(data_tensor)
 ```
 
 ### 2. Precision Loss
@@ -270,11 +308,12 @@ def normalize(x):
 
 ✅ **CORRECT**:
 ```python
+from ember_ml.nn import tensor
 from ember_ml import ops
 
 def normalize(x):
-    x_tensor = ops.convert_to_tensor(x)
-    return ops.divide(x_tensor, ops.convert_to_tensor(255.0))
+    x_tensor = tensor.convert_to_tensor(x)
+    return ops.divide(x_tensor, tensor.convert_to_tensor(255.0))
 ```
 
 ### 3. Direct Operators
@@ -287,10 +326,13 @@ def add_tensors(a, b):
 
 ✅ **CORRECT**:
 ```python
+from ember_ml.nn import tensor
 from ember_ml import ops
 
 def add_tensors(a, b):
-    return ops.add(a, b)
+    a_tensor = tensor.convert_to_tensor(a)
+    b_tensor = tensor.convert_to_tensor(b)
+    return ops.add(a_tensor, b_tensor)
 ```
 
 ### 4. Backend Implementation Outside Backend Directory
@@ -308,11 +350,57 @@ def extract_features(data):
 ✅ **CORRECT**:
 ```python
 # In features/extractor.py
+from ember_ml.nn import tensor
 from ember_ml import ops
 
 def extract_features(data):
     # Use ops abstraction
-    return ops.relu(data)
+    data_tensor = tensor.convert_to_tensor(data)
+    return ops.relu(data_tensor)
+```
+
+### 5. Tensor Operation Mistakes
+
+❌ **WRONG**:
+```python
+# Using torch-specific tensor operations
+hidden_states = hidden_probs + torch.randn_like(hidden_probs)
+visible_states = torch.bernoulli(visible_probs)
+```
+
+✅ **CORRECT**:
+```python
+# Using backend-agnostic tensor operations
+from ember_ml.nn import tensor
+hidden_states = hidden_probs + tensor.random_normal(tensor.shape(hidden_probs), device=self.device)
+visible_states = tensor.random_bernoulli(visible_probs)
+```
+
+### 6. Mixing Frontend and Backend
+
+❌ **WRONG**:
+```python
+# Mixing frontend and backend
+import numpy as np
+from ember_ml import ops
+
+def process_tensor(x):
+    # Converting to numpy array and back
+    np_array = np.array(x)
+    result = np.sin(np_array)
+    return tensor.convert_to_tensor(result)
+```
+
+✅ **CORRECT**:
+```python
+# Using only frontend abstractions
+from ember_ml.nn import tensor
+from ember_ml import ops
+
+def process_tensor(x):
+    # Using only the abstraction layer
+    x_tensor = tensor.convert_to_tensor(x)
+    return ops.sin(x_tensor)
 ```
 
 ## Implementation Guidelines
@@ -335,6 +423,15 @@ When implementing feature extraction components:
 2. Use the `TemporalStrideProcessor` for time series data
 3. Ensure all components are backend-agnostic
 
+### Tensor Operations
+
+When working with tensor operations:
+
+1. **Use nn.tensor Module**: For tensor operations, use the `nn.tensor` module which provides backend-agnostic tensor operations
+2. **Common Operations**: Use functions like `random_bernoulli`, `random_uniform`, `transpose`, `shape`, etc. from the `nn.tensor` module
+3. **Avoid Direct Backend Access**: Never directly access backend-specific tensor implementations
+4. **Handle Device Placement**: Use the device parameter in tensor creation functions to ensure proper device placement
+
 ### Neural Networks
 
 When implementing neural network components:
@@ -342,14 +439,18 @@ When implementing neural network components:
 1. Use the `nn` module for layers and cells
 2. Use the `wirings` module for connectivity patterns
 3. Ensure all components work with the backend abstraction system
+4. Use activation functions from `nn.activations` module
+5. Use container modules from `nn.container` module
 
 ### RBM and Liquid Networks
 
 When working with RBMs and liquid networks:
 
-1. Use the established patterns in `models/rbm.py` and `models/liquid.py`
+1. Use the established patterns in `models/rbm/rbm.py` and `models/liquid/` directory
 2. Ensure compatibility with the feature extraction pipeline
 3. Follow the CfC architecture for temporal processing
+4. Use tensor operations from the nn.tensor module for tensor manipulations
+5. Use ops functions for mathematical operations to maintain backend agnosticism
 
 ## Development Process Guidelines
 
@@ -360,7 +461,7 @@ When working with RBMs and liquid networks:
    - Check off items as they are completed
    - Review the checklist before marking the task as complete
 
-2. **Completion Verification**: Never mark anything as done unless it's truly complete
+2. **Completion Verification**: Never mark anything as done unless its truly complete
    - All requirements must be fully implemented
    - All tests must pass
    - All documentation must be updated
@@ -400,7 +501,7 @@ Before submitting any code, verify that:
 6. ✅ No direct Python operators on tensors - use ops functions for all operations
 7. ✅ Code follows the established module and file organization - frontend abstractions, backend implementations, etc.
 8. ✅ No backend implementations outside the backend directory - all backend code should be in backend/
-9. ✅ All tensor operations go through the ops abstraction layer - no direct backend access
+9. ✅ All tensor operations go through the nn.tensor abstraction layer - no direct backend access
 10. ✅ Unit tests cover all code paths - test with different backends
 11. ✅ Integration tests verify component interactions  - test across component boundaries
 12. ✅ All tasks in your checklist are completed and verified
@@ -488,8 +589,9 @@ For each backend (NumPy, PyTorch, MLX), implement the function in the appropriat
 
 1. Create a simple test that uses the ops abstraction layer (NOT direct backend calls):
    ```python
+   from ember_ml.nn import tensor
    from ember_ml import ops
-   result = ops.new_function(ops.convert_to_tensor([1, 2, 3]), ops.convert_to_tensor([4, 5, 6]))
+   result = ops.new_function(tensor.convert_to_tensor([1, 2, 3]), tensor.convert_to_tensor([4, 5, 6]))
    print(result)
    ```
 2. Verify the function works as expected

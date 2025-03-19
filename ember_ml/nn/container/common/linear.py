@@ -10,7 +10,7 @@ from typing import Optional, Union, Tuple, Any, Dict, List
 from ember_ml import ops
 from ember_ml.nn.modules import Module, Parameter
 from ember_ml.nn.container.interfaces import ContainerInterfaces
-
+from ember_ml.nn import tensor
 class Linear(Module, ContainerInterfaces):
     """
     Applies a linear transformation to the incoming data: y = x @ W.T + b
@@ -65,7 +65,7 @@ class Linear(Module, ContainerInterfaces):
             Output tensor of shape (..., out_features)
         """
         # Ensure x is a tensor
-        x = ops.convert_to_tensor(x)
+        x = tensor.convert_to_tensor(x)
         
         # Compute the linear transformation
         output = ops.matmul(x, ops.transpose(self.weight))

@@ -10,7 +10,7 @@ from typing import Optional, Union, Tuple, Any, Dict, List, Sequence
 from ember_ml import ops
 from ember_ml.nn.modules import Module
 from ember_ml.nn.container.interfaces import ContainerInterfaces
-
+from ember_ml.nn import tensor
 class Sequential(Module, ContainerInterfaces):
     """
     A sequential container.
@@ -44,7 +44,7 @@ class Sequential(Module, ContainerInterfaces):
             Output tensor after passing through all layers
         """
         # Ensure x is a tensor
-        x = ops.convert_to_tensor(x)
+        x = tensor.convert_to_tensor(x)
         
         # Pass input through each layer in sequence
         for layer in self.layers:

@@ -16,7 +16,11 @@ DType = Union[np.dtype, str, None]
 from ember_ml.backend.numpy.config import DEFAULT_DEVICE
 
 # Import from tensor_ops
-from ember_ml.backend.numpy.tensor_ops import convert_to_tensor
+from ember_ml.backend.numpy.tensor import NumpyTensor, NumpyDType
+
+# Convert to tensor
+convert_to_tensor = NumpyTensor().convert_to_tensor
+dtype = NumpyDType()
 
 # Try to import psutil for memory info
 try:
@@ -79,6 +83,7 @@ def memory_usage(device: Optional[str] = None) -> float:
     
     if HAVE_PSUTIL:
         # Get system memory usage
+        import psutil
         mem = psutil.virtual_memory()
         return mem.used
     else:
@@ -100,6 +105,7 @@ def memory_info(device: Optional[str] = None) -> Dict[str, Any]:
     
     if HAVE_PSUTIL:
         # Get system memory information
+        import psutil  # Import psutil locally when needed
         mem = psutil.virtual_memory()
         
         return {

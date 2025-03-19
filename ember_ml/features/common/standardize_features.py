@@ -8,7 +8,7 @@ making it compatible with all backends (NumPy, PyTorch, MLX).
 from typing import Any
 
 from ember_ml import ops
-
+from ember_ml.nn import tensor
 
 class Standardize:
     """Standardize features by removing the mean and scaling to unit variance.
@@ -45,7 +45,7 @@ class Standardize:
         Returns:
             Self
         """
-        X_tensor = ops.convert_to_tensor(X)
+        X_tensor = tensor.convert_to_tensor(X)
         self.with_mean_ = with_mean
         self.with_std_ = with_std
         self.axis_ = axis
@@ -85,7 +85,7 @@ class Standardize:
         if self.mean_ is None and self.scale_ is None:
             raise ValueError("Standardize not fitted. Call fit() first.")
         
-        X_tensor = ops.convert_to_tensor(X)
+        X_tensor = tensor.convert_to_tensor(X)
         
         # Center data
         if self.with_mean_ and self.mean_ is not None:
@@ -142,7 +142,7 @@ class Standardize:
         if self.mean_ is None and self.scale_ is None:
             raise ValueError("Standardize not fitted. Call fit() first.")
         
-        X_tensor = ops.convert_to_tensor(X)
+        X_tensor = tensor.convert_to_tensor(X)
         
         # Unscale data
         if self.with_std_ and self.scale_ is not None:

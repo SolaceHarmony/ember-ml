@@ -1,19 +1,18 @@
 """
-NumPy comparison operations for ember_ml.
+NumPy implementation of comparison operations.
 
 This module provides NumPy implementations of comparison operations.
 """
 
 import numpy as np
-from typing import Union, Any, Sequence
+from typing import Union, Any
 
-# Type aliases
-ArrayLike = Union[np.ndarray, float, int, list, tuple]
-Shape = Union[int, Sequence[int]]
-DType = Union[np.dtype, str, None]
+# Import from tensor_ops
+from ember_ml.backend.numpy.tensor import NumpyTensor
 
+convert_to_tensor = NumpyTensor().convert_to_tensor
 
-def equal(x: Any, y: Any) -> np.ndarray:
+def equal(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     """
     Check if two tensors are equal element-wise.
     
@@ -27,7 +26,7 @@ def equal(x: Any, y: Any) -> np.ndarray:
     return np.equal(x, y)
 
 
-def not_equal(x: Any, y: Any) -> np.ndarray:
+def not_equal(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     """
     Check if two tensors are not equal element-wise.
     
@@ -41,7 +40,7 @@ def not_equal(x: Any, y: Any) -> np.ndarray:
     return np.not_equal(x, y)
 
 
-def less(x: Any, y: Any) -> np.ndarray:
+def less(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     """
     Check if one tensor is less than another element-wise.
     
@@ -55,7 +54,7 @@ def less(x: Any, y: Any) -> np.ndarray:
     return np.less(x, y)
 
 
-def less_equal(x: Any, y: Any) -> np.ndarray:
+def less_equal(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     """
     Check if one tensor is less than or equal to another element-wise.
     
@@ -69,7 +68,7 @@ def less_equal(x: Any, y: Any) -> np.ndarray:
     return np.less_equal(x, y)
 
 
-def greater(x: Any, y: Any) -> np.ndarray:
+def greater(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     """
     Check if one tensor is greater than another element-wise.
     
@@ -83,7 +82,7 @@ def greater(x: Any, y: Any) -> np.ndarray:
     return np.greater(x, y)
 
 
-def greater_equal(x: Any, y: Any) -> np.ndarray:
+def greater_equal(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     """
     Check if one tensor is greater than or equal to another element-wise.
     
