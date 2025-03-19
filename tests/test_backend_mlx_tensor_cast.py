@@ -11,12 +11,12 @@ from ember_ml.backend.mlx.tensor import MLXTensor, cast
 tensor = mx.array([1, 2, 3], dtype=mx.float32)
 
 # Test the standalone cast() function
-tensor_obj = MLXTensor()
-result1 = cast(tensor_obj, tensor, 'float64')
+result1 = cast(tensor, 'float32')
 print("Standalone function result dtype:", result1.dtype)
 
 # Test the MLXTensor.cast() method
-result2 = tensor_obj.cast(tensor, 'float64')
+tensor_obj = MLXTensor()
+result2 = tensor_obj.cast(tensor, 'float32')
 print("Method result dtype:", result2.dtype)
 
 # Verify that both approaches give the same result
