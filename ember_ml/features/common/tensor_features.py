@@ -9,7 +9,7 @@ from typing import Any, Optional, Union, Sequence, List, Tuple, cast
 
 from ember_ml import ops
 from ember_ml.features.interfaces.tensor_features import TensorFeaturesInterface
-
+from ember_ml.nn import tensor
 
 class TensorFeatures(TensorFeaturesInterface):
     """Backend-agnostic implementation of tensor feature operations."""
@@ -35,7 +35,7 @@ class TensorFeatures(TensorFeaturesInterface):
             A tensor with one-hot encoding.
         """
         # Convert indices to tensor if needed
-        indices = ops.convert_to_tensor(indices)
+        indices = tensor.convert_to_tensor(indices)
         
         # Get the shape of the output tensor
         shape = list(ops.shape(indices))
@@ -93,9 +93,9 @@ class TensorFeatures(TensorFeaturesInterface):
             The updated tensor.
         """
         # Convert inputs to tensors
-        tensor = ops.convert_to_tensor(tensor)
-        indices = ops.convert_to_tensor(indices)
-        updates = ops.convert_to_tensor(updates)
+        tensor = tensor.convert_to_tensor(tensor)
+        indices = tensor.convert_to_tensor(indices)
+        updates = tensor.convert_to_tensor(updates)
         
         # Create a copy of the tensor to update
         result = ops.copy(tensor)

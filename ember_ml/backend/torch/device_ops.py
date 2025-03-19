@@ -5,14 +5,14 @@ This module provides PyTorch implementations of device operations.
 """
 
 import torch
-from typing import Optional, List, Dict, Any
+from typing import Union, Optional, Dict, Any
 
 # Import from tensor_ops
-from ember_ml.backend.torch.tensor_ops import convert_to_tensor, ArrayLike
-from ember_ml.backend.torch.config import DEFAULT_DEVICE, _default_device
+from ember_ml.backend.torch.tensor import TorchTensor
 
+convert_to_tensor = TorchTensor().convert_to_tensor
 
-def to_device(x: ArrayLike, device: str) -> torch.Tensor:
+def to_device(x: torch.Tensor, device: str) -> torch.Tensor:
     """
     Move a tensor to the specified device.
     
@@ -27,7 +27,7 @@ def to_device(x: ArrayLike, device: str) -> torch.Tensor:
     return x_tensor.to(device)
 
 
-def get_device(x: ArrayLike) -> str:
+def get_device(x: torch.Tensor) -> str:
     """
     Get the device of a tensor.
     
@@ -41,7 +41,7 @@ def get_device(x: ArrayLike) -> str:
     return str(x_tensor.device)
 
 
-def get_available_devices() -> List[str]:
+def get_available_devices() -> list[str]:
     """
     Get a list of available devices.
     
@@ -70,11 +70,12 @@ def set_default_device(device: str) -> None:
     if device.startswith('cuda'):
         if torch.cuda.is_available():
             device_idx = 0
+            device_idx_str = '0'
             if ':' in device:
                 # Use convert_to_tensor and cast instead of int()
                 device_idx_str = device.split(':')[1]
-                device_idx_tensor = convert_to_tensor(device_idx_str)
-                device_idx = device_idx_tensor.to(torch.int32).item()
+            device_idx_tensor = convert_to_tensor(device_idx_str)
+            device_idx = int(device_idx_tensor.to(torch.int32).item())
             torch.cuda.set_device(device_idx)
 
 
@@ -130,20 +131,22 @@ def memory_usage(device: Optional[str] = None) -> Dict[str, int]:
                 device_idx = device_idx_tensor.to(torch.int32).item()
             
             # Get memory information
-            allocated = torch.cuda.memory_allocated(device_idx)
-            reserved = torch.cuda.memory_reserved(device_idx)
+            device_str = f'cuda:{device_idx}'
+            allocated = torch.cuda.memory_allocated(device_str)
+            reserved = torch.cuda.memory_reserved(device_str)
             
-            # Get total memory
-            total = torch.cuda.get_device_properties(device_idx).total_memory
+            # Get total memory - ensure device_idx is an integer
+            device_idx_int = int(device_idx)  # Explicit cast to int
+            total = torch.cuda.get_device_properties(device_idx_int).total_memory
             
             # Calculate free memory using torch.subtract instead of direct subtraction
-            free = torch.subtract(torch.tensor(total), torch.tensor(reserved)).item()
+            free = int(torch.subtract(torch.tensor(total), torch.tensor(reserved)).item())
             
             return {
-                'allocated': allocated,
-                'reserved': reserved,
+                'allocated': int(allocated),
+                'reserved': int(reserved),
                 'free': free,
-                'total': total
+                'total': int(total)
             }
     
     # For CPU or other devices, return zeros
@@ -180,7 +183,7 @@ def synchronize(device: Optional[str] = None) -> None:
                 # Use convert_to_tensor and cast instead of int()
                 device_idx_str = device.split(':')[1]
                 device_idx_tensor = convert_to_tensor(device_idx_str)
-                device_idx = device_idx_tensor.to(torch.int32).item()
+                device_idx = int(device_idx_tensor.to(torch.int32).item())
             torch.cuda.synchronize(device_idx)
 
 

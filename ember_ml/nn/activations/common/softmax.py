@@ -8,11 +8,8 @@ using the ops abstraction layer.
 from typing import Any, Optional, Union, List, Tuple
 
 from ember_ml import ops
-from ember_ml.ops.tensor import EmberTensor
+from ember_ml.nn.tensor import EmberTensor
 from ember_ml.nn.activations.interfaces.activation import ActivationInterface
-
-# Type aliases
-Tensor = EmberTensor
 
 
 class Softmax(ActivationInterface):
@@ -34,7 +31,7 @@ class Softmax(ActivationInterface):
         """
         self.axis = axis
         
-    def __call__(self, x: Tensor) -> Tensor:
+    def __call__(self, x: EmberTensor) -> EmberTensor:
         """
         Apply softmax activation function.
         
@@ -47,7 +44,7 @@ class Softmax(ActivationInterface):
         exp_x = ops.exp(x)
         return ops.divide(exp_x, ops.sum(exp_x, axis=self.axis, keepdims=True))
         
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: EmberTensor) -> EmberTensor:
         """
         Forward pass of softmax activation.
         

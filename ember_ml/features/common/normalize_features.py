@@ -8,7 +8,7 @@ making it compatible with all backends (NumPy, PyTorch, MLX).
 from typing import Optional, Any, Tuple
 
 from ember_ml import ops
-
+from ember_ml.nn import tensor
 
 class Normalize:
     """Scale input vectors individually to unit norm.
@@ -44,7 +44,7 @@ class Normalize:
         Returns:
             Self
         """
-        X_tensor = ops.convert_to_tensor(X)
+        X_tensor = tensor.convert_to_tensor(X)
         self.norm_ = norm
         self.axis_ = axis
         
@@ -73,7 +73,7 @@ class Normalize:
         if self.norms_ is None:
             raise ValueError("Normalize not fitted. Call fit() first.")
         
-        X_tensor = ops.convert_to_tensor(X)
+        X_tensor = tensor.convert_to_tensor(X)
         
         # Avoid division by zero
         eps = ops.finfo(X_tensor.dtype).eps

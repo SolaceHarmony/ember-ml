@@ -11,7 +11,7 @@ import numpy as np
 
 from ember_ml import ops
 from ember_ml.features.interfaces.tensor_ops import TensorOpsInterface
-
+from ember_ml.nn import tensor
 
 class TensorOps(TensorOpsInterface):
     """Backend-agnostic implementation of tensor operations."""
@@ -37,7 +37,7 @@ class TensorOps(TensorOpsInterface):
             A tensor with one-hot encoding.
         """
         # Convert indices to tensor if needed
-        indices = ops.convert_to_tensor(indices)
+        indices = tensor.convert_to_tensor(indices)
         
         # Get the shape of the output tensor
         shape = list(ops.shape(indices))
@@ -113,9 +113,9 @@ class TensorOps(TensorOpsInterface):
             The updated tensor.
         """
         # Convert inputs to tensors
-        tensor = ops.convert_to_tensor(tensor)
-        indices = ops.convert_to_tensor(indices)
-        updates = ops.convert_to_tensor(updates)
+        tensor = tensor.convert_to_tensor(tensor)
+        indices = tensor.convert_to_tensor(indices)
+        updates = tensor.convert_to_tensor(updates)
         
         # Create a copy of the tensor to update
         result = ops.copy(tensor)
@@ -172,7 +172,7 @@ class TensorOps(TensorOpsInterface):
                 tensor_np[tuple(idx)] = updates_np
             
             # Convert back to MLX tensor
-            result = ops.convert_to_tensor(tensor_np)
+            result = tensor.convert_to_tensor(tensor_np)
         
         else:
             raise ValueError(f"Unsupported backend: {backend}")

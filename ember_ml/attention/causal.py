@@ -6,7 +6,9 @@ from dataclasses import dataclass
 from typing import Optional, Dict, List, Tuple, Any
 
 from ember_ml import ops
-from ember_ml.ops.tensor import EmberTensor
+from ember_ml.nn.tensor import EmberTensor, convert_to_tensor, float32, EmberDType, cast, zeros_like
+from ember_ml.nn.tensor import full_like, copy, ones_like, reshape, shape, zeros, transpose, expand_dims
+from ember_ml.nn.tensor import item, int32, concatenate
 from ember_ml.nn.linear import Linear
 from ember_ml.nn.container import Sequential, Dropout
 from ember_ml.nn.activations import Tanh
@@ -14,14 +16,15 @@ from ember_ml.attention.base import BaseAttention
 
 # Type aliases
 Tensor = EmberTensor
+dtype = EmberDType
 
 # Constants
-NINF = ops.convert_to_tensor(-1.0e38)  # Approximation of negative infinity
+NINF = convert_to_tensor(-1.0e38)  # Approximation of negative infinity
 
 # Helper functions
 def get_scalar_value(x: Tensor) -> float:
     """Get scalar value from single-element tensor."""
-    return ops.cast(x.data, ops.float32)
+    return cast(x.cast(x,float), float32)
 
 def normalize(x: Tensor, axis: int = -1) -> Tensor:
     """Apply softmax normalization."""
@@ -30,11 +33,11 @@ def normalize(x: Tensor, axis: int = -1) -> Tensor:
 
 def zero_masking(x: Tensor, mask: Tensor) -> Tensor:
     """Apply zero masking to tensor."""
-    return ops.where(mask, x, ops.zeros_like(x))
+    return ops.where(mask, x, zeros_like(x))
 
 def masked_fill(x: Tensor, mask: Tensor, value: float) -> Tensor:
     """Fill masked positions with value."""
-    value_tensor = ops.full_like(x, value)
+    value_tensor = full_like(x, value)
     return ops.where(mask, value_tensor, x)
 
 @dataclass
@@ -52,7 +55,7 @@ class AttentionState:
                 ops.add(self.temporal_weight, self.causal_weight),
                 self.novelty_weight
             ),
-            ops.convert_to_tensor(3.0)
+            convert_to_tensor(3.0)
         )
 
 class CausalMemory:
@@ -78,7 +81,7 @@ class CausalMemory:
             effect: Effect state tensor
             accuracy: Prediction accuracy
         """
-        self.cause_effect_pairs.append((ops.copy(cause), ops.copy(effect)))
+        self.cause_effect_pairs.append((copy(cause), copy(effect)))
         self.prediction_accuracy.append(accuracy)
         
         if len(self.cause_effect_pairs) > self.max_size:
@@ -97,8 +100,8 @@ class CausalMemory:
             Cosine similarity value
         """
         # Reshape inputs to 1D
-        a_flat = ops.reshape(a, (-1,))
-        b_flat = ops.reshape(b, (-1,))
+        a_flat = reshape(a, (-1,))
+        b_flat = reshape(b, (-1,))
         
         # Compute dot product
         dot_product = ops.sum(ops.multiply(a_flat, b_flat))
@@ -110,7 +113,7 @@ class CausalMemory:
         # Compute similarity
         similarity = ops.divide(dot_product, ops.multiply(norm_a, norm_b))
         
-        return ops.cast(similarity.data, ops.float32)  # Safe conversion to float
+        return cast(similarity.data, float32)  # Safe conversion to float
 
     def get_similar_causes(self,
                           current_state: Tensor,
@@ -149,10 +152,10 @@ class CausalMemory:
         if not similar_indices:
             # Return zero tensor with same shape as current_state and zero confidence
             if self.cause_effect_pairs:
-                empty_shape = ops.shape(self.cause_effect_pairs[0][1])
-                return ops.zeros(empty_shape), 0.0
+                empty_shape = shape(self.cause_effect_pairs[0][1])
+                return zeros(empty_shape), 0.0
             else:
-                return ops.zeros_like(current_state), 0.0
+                return zeros_like(current_state), 0.0
             
         # Get top-k similar causes
         similarities = []
@@ -166,7 +169,7 @@ class CausalMemory:
         
         # Weighted average of effects
         total_weight = sum(sim for _, sim in top_k)
-        predicted_effect = ops.zeros_like(self.cause_effect_pairs[0][1])
+        predicted_effect = zeros_like(self.cause_effect_pairs[0][1])
         
         for idx, sim in top_k:
             weight = ops.divide(sim, total_weight)
@@ -176,7 +179,7 @@ class CausalMemory:
         # Compute confidence
         confidence = ops.divide(
             sum(ops.multiply(sim, self.prediction_accuracy[idx]) for idx, sim in top_k),
-            ops.convert_to_tensor(len(top_k))
+            convert_to_tensor(len(top_k))
         )
         
         return predicted_effect, confidence
@@ -248,23 +251,29 @@ class PredictionAttention(BaseAttention):
 
         Returns:
             Attention output [batch, query_len, hidden_size]
+            
+        Note:
+            If inputs are invalid, returns a zero tensor with same shape as input query.
         """
-        batch_size = ops.shape(query)[0]
-        query_len = ops.shape(query)[1]
-        key_len = ops.shape(key)[1]
+        # Early validation to ensure we always return a Tensor
+        if query is None or key is None or value is None:
+            return zeros_like(query)
+        batch_size = shape(query)[0]
+        query_len = shape(query)[1]
+        key_len = shape(key)[1]
         
         # Project inputs
         q = self.q_proj(query)
-        q = ops.reshape(q, (batch_size, query_len, self.num_heads, self.head_dim))
-        q = ops.transpose(q, (0, 2, 1, 3))
+        q = reshape(q, (batch_size, query_len, self.num_heads, self.head_dim))
+        q = transpose(q, (0, 2, 1, 3))
         
         k = self.k_proj(key)
-        k = ops.reshape(k, (batch_size, key_len, self.num_heads, self.head_dim))
-        k = ops.transpose(k, (0, 2, 1, 3))
+        k = reshape(k, (batch_size, key_len, self.num_heads, self.head_dim))
+        k = transpose(k, (0, 2, 1, 3))
         
         v = self.v_proj(value)
-        v = ops.reshape(v, (batch_size, key_len, self.num_heads, self.head_dim))
-        v = ops.transpose(v, (0, 2, 1, 3))
+        v = reshape(v, (batch_size, key_len, self.num_heads, self.head_dim))
+        v = transpose(v, (0, 2, 1, 3))
         
         # Make predictions
         predicted_values = self.predictor(key)
@@ -273,22 +282,22 @@ class PredictionAttention(BaseAttention):
             axis=-1,
             keepdims=True
         )
-        neg_one = ops.convert_to_tensor(-1.0)
+        neg_one = convert_to_tensor(-1.0)
         prediction_weights = normalize(ops.multiply(prediction_error, neg_one), axis=1)
         
         # Compute attention scores
-        k_t = ops.transpose(k, (0, 1, 3, 2))  # Transpose for matmul
-        scores = ops.divide(ops.matmul(q, k_t), ops.sqrt(ops.convert_to_tensor(self.head_dim)))
+        k_t = transpose(k, (0, 1, 3, 2))  # Transpose for matmul
+        scores = ops.divide(ops.matmul(q, k_t), ops.sqrt(convert_to_tensor(self.head_dim)))
         
         # Apply prediction weights
-        prediction_weights_expanded = ops.expand_dims(prediction_weights, axis=1)
+        prediction_weights_expanded = expand_dims(prediction_weights, axis=1)
         scores = ops.multiply(scores, prediction_weights_expanded)
         
         # Apply mask if provided
         if mask is not None:
-            mask_expanded = ops.expand_dims(mask, axis=1)
+            mask_expanded = expand_dims(mask, axis=1)
             mask_value = NINF  # Use the predefined constant
-            scores = ops.where(ops.equal(mask_expanded, 0), ops.full_like(scores, mask_value), scores)
+            scores = ops.where(ops.equal(mask_expanded, 0), full_like(scores, mask_value), scores)
         
         # Apply attention weights
         attention_weights = normalize(scores, axis=-1)
@@ -298,25 +307,25 @@ class PredictionAttention(BaseAttention):
         attn_output = ops.matmul(self._attention_weights, v)
         
         # Reshape and project output
-        attn_output = ops.transpose(attn_output, (0, 2, 1, 3))
-        attn_output = ops.reshape(attn_output, (batch_size, query_len, self.hidden_size))
+        attn_output = transpose(attn_output, (0, 2, 1, 3))
+        attn_output = reshape(attn_output, (batch_size, query_len, self.hidden_size))
         attn_output = self.out_proj(attn_output)
         
         # Update memory with predictions
         for i in range(batch_size):
-            key_len_minus_one = ops.subtract(key_len, ops.convert_to_tensor(1))
-            for j in range(ops.cast(key_len_minus_one, ops.int32)):
+            key_len_minus_one = ops.subtract(key_len, convert_to_tensor(1))
+            for j in range(cast(key_len_minus_one,int32)):
                 # Use slice instead of direct indexing
-                cause = ops.slice(key, [i, j, 0], [1, 1, -1])
-                cause = ops.reshape(cause, ops.shape(cause)[2:])  # Remove batch and seq dims
+                cause = slice(key, [i, j, 0], [1, 1, -1])
+                cause = reshape(cause, shape(cause)[2:])  # Remove batch and seq dims
                 
-                j_plus_one = ops.add(j, ops.convert_to_tensor(1))
-                effect = ops.slice(value, [i, j_plus_one, 0], [1, 1, -1])
-                effect = ops.reshape(effect, ops.shape(effect)[2:])  # Remove batch and seq dims
+                j_plus_one = ops.add(j, convert_to_tensor(1))
+                effect = slice(value, [i, j_plus_one, 0], [1, 1, -1])
+                effect = reshape(effect, shape(effect)[2:])  # Remove batch and seq dims
                 
-                error_val = ops.slice(prediction_error, [i, j], [1, 1])
-                one = ops.convert_to_tensor(1.0)
-                accuracy = ops.subtract(one, ops.cast(ops.item(error_val), ops.float32))
+                error_val = slice(prediction_error, [i, j], [1, 1])
+                one = convert_to_tensor(1.0)
+                accuracy = ops.subtract(one, cast(item(error_val, float32)))
                 self.memory.add(cause, effect, accuracy)
         
         return attn_output
@@ -357,7 +366,7 @@ class CausalAttention(BaseAttention):
         
         # Learnable components
         self.temporal_proj = Linear(hidden_size, hidden_size)
-        self.causal_proj = Linear(ops.multiply(hidden_size, ops.convert_to_tensor(2)), hidden_size)
+        self.causal_proj = Linear(ops.multiply(hidden_size, convert_to_tensor(2)), hidden_size)
         self.novelty_proj = Linear(hidden_size, 1)
         
         # Store attention weights
@@ -380,18 +389,18 @@ class CausalAttention(BaseAttention):
         Returns:
             Attention output [batch_size, hidden_size]
         """
-        batch_size = ops.shape(query)[0]
+        batch_size = shape(query)[0]
         attention_states = []
         
         # Process each item in batch
         attention_weights = []
         for i in range(batch_size):
             # Use slice instead of direct indexing
-            query_i = ops.slice(query, [i, 0], [1, -1])
-            query_i = ops.reshape(query_i, ops.shape(query_i)[1:])  # Remove batch dim
+            query_i = slice(query, [i, 0], [1, -1])
+            query_i = reshape(query_i, shape(query_i)[1:])  # Remove batch dim
             
-            key_i = ops.slice(key, [i, 0], [1, -1])
-            key_i = ops.reshape(key_i, ops.shape(key_i)[1:])  # Remove batch dim
+            key_i = slice(key, [i, 0], [1, -1])
+            key_i = reshape(key_i, shape(key_i)[1:])  # Remove batch dim
             
             state = self.update(
                 i,  # Use batch index as neuron_id
@@ -402,13 +411,13 @@ class CausalAttention(BaseAttention):
             attention_weights.append(state.compute_total())
             
         # Convert to tensor and apply sigmoid for normalization
-        self._attention_weights = ops.sigmoid(ops.convert_to_tensor(
+        self._attention_weights = ops.sigmoid(convert_to_tensor(
             attention_weights
         ))
-        self._attention_weights = ops.reshape(self._attention_weights, (batch_size, 1, 1))
+        self._attention_weights = reshape(self._attention_weights, (batch_size, 1, 1))
         
         # Apply attention weights
-        output = ops.multiply(value, ops.reshape(self._attention_weights, (batch_size, 1)))
+        output = ops.multiply(value, reshape(self._attention_weights, (batch_size, 1)))
         
         return output
     
@@ -435,16 +444,16 @@ class CausalAttention(BaseAttention):
         state = self.states.get(neuron_id, AttentionState())
         
         # Update temporal weight
-        neg_decay_rate = ops.multiply(ops.convert_to_tensor(-self.decay_rate), len(self.history))
+        neg_decay_rate = ops.multiply(convert_to_tensor(-self.decay_rate), len(self.history))
         temporal_decay = ops.exp(neg_decay_rate)
         temporal_features = self.temporal_proj(current_state)
         state.temporal_weight = ops.multiply(ops.mean(temporal_features), temporal_decay)
         
         # Update causal weight
         prediction_error = ops.subtract(target_state, current_state)
-        causal_input = ops.concatenate([current_state, prediction_error])
+        causal_input = concatenate([current_state, prediction_error])
         causal_features = self.causal_proj(causal_input)
-        one = ops.convert_to_tensor(1.0)
+        one = convert_to_tensor(1.0)
         prediction_accuracy = ops.subtract(one, ops.min(
             ops.norm(prediction_error),
             one

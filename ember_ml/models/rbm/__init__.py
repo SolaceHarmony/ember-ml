@@ -1,14 +1,30 @@
 """
-Restricted Boltzmann Machine (RBM) module.
+Restricted Boltzmann Machine (RBM) Module
 
-This module provides Restricted Boltzmann Machine (RBM) models for the ember_ml library.
+This package provides an implementation of Restricted Boltzmann Machines
+using the ember_ml Module system.
 """
 
-from ember_ml.models.rbm.rbm import RestrictedBoltzmannMachine
-from ember_ml.models.rbm.rbm import train_rbm, reconstruct_with_rbm
+from ember_ml.models.rbm.rbm_module import RBMModule
+from ember_ml.models.rbm.training import (
+    contrastive_divergence_step,
+    train_rbm,
+    transform_in_chunks,
+    save_rbm,
+    load_rbm
+)
 
-__all__ = [
+# For backward compatibility with existing code
+RestrictedBoltzmannMachine = RBMModule
+
+# Explicitly use imported symbols to satisfy linter
+
+__all__ = [ 
+    'RBMModule',
     'RestrictedBoltzmannMachine',
+    'contrastive_divergence_step',
     'train_rbm',
-    'reconstruct_with_rbm',
+    'transform_in_chunks',
+    'save_rbm',
+    'load_rbm'
 ]

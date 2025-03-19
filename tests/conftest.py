@@ -8,7 +8,8 @@ import pytest
 import os
 import sys
 import logging
-import numpy as np
+from ember_ml.nn import tensor
+from ember_ml.nn.tensor import set_seed
 
 # Add parent directory to path to import ember_ml
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -57,7 +58,7 @@ def available_backends():
 def random_seed():
     """Set random seed for reproducibility."""
     seed = 42
-    np.random.seed(seed)
+    set_seed(seed)
     backend_utils.initialize_random_seed(seed)
     return seed
 
@@ -68,7 +69,7 @@ def numpy_backend():
     original_backend = get_backend()
     set_backend('numpy')
     yield
-    set_backend(original_backend)
+    set_backend(original_backend or 'numpy')  # Default to numpy if None
 
 
 @pytest.fixture
@@ -79,7 +80,7 @@ def torch_backend():
         original_backend = get_backend()
         set_backend('torch')
         yield
-        set_backend(original_backend)
+        set_backend(original_backend or 'numpy')  # Default to numpy if None
     except ImportError:
         pytest.skip("PyTorch not available")
 
@@ -92,7 +93,7 @@ def mlx_backend():
         original_backend = get_backend()
         set_backend('mlx')
         yield
-        set_backend(original_backend)
+        set_backend(original_backend or 'numpy')  # Default to numpy if None
     except ImportError:
         pytest.skip("MLX not available")
 
@@ -121,25 +122,25 @@ def any_backend(request):
     yield backend_name
     
     # Restore original backend
-    set_backend(original_backend)
+    set_backend(original_backend or 'numpy')  # Default to numpy if None
 
 
 @pytest.fixture
 def sample_tensor_1d():
     """Create a 1D sample tensor."""
-    return ops.convert_to_tensor([1.0, 2.0, 3.0, 4.0, 5.0])
+    return tensor.convert_to_tensor([1.0, 2.0, 3.0, 4.0, 5.0])
 
 
 @pytest.fixture
 def sample_tensor_2d():
     """Create a 2D sample tensor."""
-    return ops.convert_to_tensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]])
+    return tensor.convert_to_tensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]])
 
 
 @pytest.fixture
 def sample_tensor_3d():
     """Create a 3D sample tensor."""
-    return ops.convert_to_tensor([
+    return tensor.convert_to_tensor([
         [[1.0, 2.0], [3.0, 4.0]],
         [[5.0, 6.0], [7.0, 8.0]],
         [[9.0, 10.0], [11.0, 12.0]]

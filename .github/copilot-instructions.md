@@ -32,7 +32,7 @@ python utils/emberlint.py path/to/modified/file.py --verbose
 ✅ **REQUIRED**:
 - Import ops from ember_ml (`from ember_ml import ops`)
 - Use ops functions for all mathematical operations (`ops.sin()`, `ops.matmul()`)
-- Use ops for tensor creation and manipulation (`ops.convert_to_tensor()`)
+- Use ops for tensor creation and manipulation (`tensor.convert_to_tensor()`)
 
 **EXCEPTION**: NumPy usage is permitted ONLY for visualization/plotting libraries that specifically require it, and ONLY after thorough testing to confirm that it is required (causes an exception or other issue when using the abstraction layer). Even in these cases, the code should be isolated and clearly documented.
 
@@ -256,7 +256,7 @@ def process_data(data):
 from ember_ml import ops
 
 def process_data(data):
-    tensor = ops.convert_to_tensor(data)
+    tensor = tensor.convert_to_tensor(data)
     return ops.sin(tensor)
 ```
 
@@ -273,8 +273,8 @@ def normalize(x):
 from ember_ml import ops
 
 def normalize(x):
-    x_tensor = ops.convert_to_tensor(x)
-    return ops.divide(x_tensor, ops.convert_to_tensor(255.0))
+    x_tensor = tensor.convert_to_tensor(x)
+    return ops.divide(x_tensor, tensor.convert_to_tensor(255.0))
 ```
 
 ### 3. Direct Operators
@@ -489,7 +489,7 @@ For each backend (NumPy, PyTorch, MLX), implement the function in the appropriat
 1. Create a simple test that uses the ops abstraction layer (NOT direct backend calls):
    ```python
    from ember_ml import ops
-   result = ops.new_function(ops.convert_to_tensor([1, 2, 3]), ops.convert_to_tensor([4, 5, 6]))
+   result = ops.new_function(tensor.convert_to_tensor([1, 2, 3]), tensor.convert_to_tensor([4, 5, 6]))
    print(result)
    ```
 2. Verify the function works as expected

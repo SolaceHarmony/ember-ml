@@ -7,7 +7,7 @@ This script tests the solver operations implemented in the NumPy backend.
 import importlib
 from ember_ml.backend import set_backend
 from ember_ml import ops
-
+from ember_ml.nn import tensor
 def test_solve():
     """Test the solve operation."""
     # Reset the ops module to clear cached instances
@@ -17,14 +17,14 @@ def test_solve():
     set_backend("numpy")
     
     # Create a simple linear system
-    a = ops.convert_to_tensor([[3, 1], [1, 2]])
-    b = ops.convert_to_tensor([9, 8])
+    a = tensor.convert_to_tensor([[3, 1], [1, 2]])
+    b = tensor.convert_to_tensor([9, 8])
     
     # Solve the system using our implementation
     x = ops.solve(a, b)
     
     # Expected solution
-    x_expected = ops.convert_to_tensor([2, 3])
+    x_expected = tensor.convert_to_tensor([2, 3])
     
     # Check that the results are close
     assert ops.allclose(x, x_expected)
@@ -39,13 +39,13 @@ def test_inv():
     set_backend("numpy")
     
     # Create a simple matrix
-    a = ops.convert_to_tensor([[3, 1], [1, 2]])
+    a = tensor.convert_to_tensor([[3, 1], [1, 2]])
     
     # Compute the inverse using our implementation
     a_inv = ops.inv(a)
     
     # Expected inverse
-    a_inv_expected = ops.convert_to_tensor([[2/5, -1/5], [-1/5, 3/5]])
+    a_inv_expected = tensor.convert_to_tensor([[2/5, -1/5], [-1/5, 3/5]])
     
     # Check that the results are close
     assert ops.allclose(a_inv, a_inv_expected)
@@ -60,13 +60,13 @@ def test_det():
     set_backend("numpy")
     
     # Create a simple matrix
-    a = ops.convert_to_tensor([[3, 1], [1, 2]])
+    a = tensor.convert_to_tensor([[3, 1], [1, 2]])
     
     # Compute the determinant using our implementation
     det_a = ops.det(a)
     
     # Expected determinant
-    det_a_expected = ops.convert_to_tensor(5)
+    det_a_expected = tensor.convert_to_tensor(5)
     
     # Check that the results are close
     assert ops.isclose(det_a, det_a_expected)
@@ -81,13 +81,13 @@ def test_norm():
     set_backend("numpy")
     
     # Create a simple matrix
-    a = ops.convert_to_tensor([[3, 1], [1, 2]])
+    a = tensor.convert_to_tensor([[3, 1], [1, 2]])
     
     # Compute the norm using our implementation
     norm_a = ops.norm(a)
     
     # Expected norm (Frobenius norm)
-    norm_a_expected = ops.convert_to_tensor(ops.sqrt(3*3 + 1*1 + 1*1 + 2*2))
+    norm_a_expected = tensor.convert_to_tensor(ops.sqrt(3*3 + 1*1 + 1*1 + 2*2))
     
     # Check that the results are close
     assert ops.isclose(norm_a, norm_a_expected)
@@ -102,7 +102,7 @@ def test_qr():
     set_backend("numpy")
     
     # Create a simple matrix
-    a = ops.convert_to_tensor([[3, 1], [1, 2], [0, 1]])
+    a = tensor.convert_to_tensor([[3, 1], [1, 2], [0, 1]])
     
     # Compute the QR decomposition using our implementation
     q, r = ops.qr(a)
@@ -128,7 +128,7 @@ def test_svd():
     set_backend("numpy")
     
     # Create a simple matrix
-    a = ops.convert_to_tensor([[3, 1], [1, 2], [0, 1]])
+    a = tensor.convert_to_tensor([[3, 1], [1, 2], [0, 1]])
     
     # Compute the SVD using our implementation
     u, s, vh = ops.svd(a)
@@ -164,7 +164,7 @@ def test_cholesky():
     set_backend("numpy")
     
     # Create a positive definite matrix
-    a = ops.convert_to_tensor([[4, 1], [1, 3]])
+    a = tensor.convert_to_tensor([[4, 1], [1, 3]])
     
     # Compute the Cholesky decomposition using our implementation
     l = ops.cholesky(a)
@@ -185,8 +185,8 @@ def test_lstsq():
     set_backend("numpy")
     
     # Create an overdetermined system
-    a = ops.convert_to_tensor([[3, 1], [1, 2], [0, 1]])
-    b = ops.convert_to_tensor([9, 8, 3])
+    a = tensor.convert_to_tensor([[3, 1], [1, 2], [0, 1]])
+    b = tensor.convert_to_tensor([9, 8, 3])
     
     # Compute the least-squares solution using our implementation
     x, residuals, rank, s = ops.lstsq(a, b)
@@ -196,7 +196,7 @@ def test_lstsq():
     residual_norm = ops.norm(ops.subtract(ax, b))
     
     # Try a different solution and check that it has a larger residual
-    x_bad = ops.add(x, ops.convert_to_tensor([0.1, 0.1]))
+    x_bad = ops.add(x, tensor.convert_to_tensor([0.1, 0.1]))
     ax_bad = ops.matmul(a, x_bad)
     residual_norm_bad = ops.norm(ops.subtract(ax_bad, b))
     
@@ -213,7 +213,7 @@ def test_eig():
     set_backend("numpy")
     
     # Create a simple matrix
-    a = ops.convert_to_tensor([[3, 1], [1, 2]])
+    a = tensor.convert_to_tensor([[3, 1], [1, 2]])
     
     # Compute the eigenvalues and eigenvectors using our implementation
     eigenvalues, eigenvectors = ops.eig(a)
@@ -236,7 +236,7 @@ def test_eigvals():
     set_backend("numpy")
     
     # Create a simple matrix
-    a = ops.convert_to_tensor([[3, 1], [1, 2]])
+    a = tensor.convert_to_tensor([[3, 1], [1, 2]])
     
     # Compute the eigenvalues using our implementation
     eigenvalues = ops.eigvals(a)

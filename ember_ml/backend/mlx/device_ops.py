@@ -1,19 +1,20 @@
 """
-MLX implementation of device operations.
+MLX device operations for ember_ml.
 
 This module provides MLX implementations of device operations.
 """
 
 import mlx.core as mx
-from typing import Union, Optional, List, Dict, Any
+import mlx.core
+from typing import Optional, Dict, Any
 
-# Type aliases
-ArrayLike = Union[mx.array, float, int, list, tuple]
+# Import from tensor_ops
+from ember_ml.backend.mlx.tensor import MLXTensor
+from ember_ml.backend.mlx.types import TensorLike
 
-# Import convert_to_tensor from tensor_ops
-from ember_ml.backend.mlx.tensor_ops import convert_to_tensor
+Tensor = MLXTensor()
 
-def to_device(x: ArrayLike, device: str) -> mx.array:
+def to_device(x: TensorLike, device: str) -> mx.array:
     """
     Move an MLX array to the specified device.
     
@@ -25,9 +26,9 @@ def to_device(x: ArrayLike, device: str) -> mx.array:
         MLX array (unchanged)
     """
     # MLX automatically uses the most efficient device (Metal on Apple Silicon)
-    return convert_to_tensor(x)
+    return Tensor.convert_to_tensor(x)
 
-def get_device(x: ArrayLike) -> str:
+def get_device(x: mx.array) -> str:
     """
     Get the device of an MLX array.
     
@@ -37,9 +38,13 @@ def get_device(x: ArrayLike) -> str:
     Returns:
         Device of the array (always 'mps' for MLX backend on Apple Silicon)
     """
-    return 'mps'  # MLX uses Metal on Apple Silicon
+    device = mlx.core.default_device()
+    if device == mx.cpu:
+        return 'cpu'
+    else:
+        return 'gpu'
 
-def get_available_devices() -> List[str]:
+def get_available_devices() -> list[str]:
     """
     Get a list of available devices.
     
@@ -138,7 +143,12 @@ def get_default_device() -> str:
     """
     # Convert MLX Device to string
     device = mx.default_device()
-    return str(device)
+    device_str = str(device)
+    
+    # Extract just the device type without the "DeviceType." prefix
+    if device_str.startswith("DeviceType."):
+        return device_str.split(".")[-1]
+    return device_str
 
 
 def set_default_device(device: str) -> None:

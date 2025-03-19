@@ -9,7 +9,7 @@ from typing import Optional, Dict, Any, Union, Tuple
 from math import log
 
 from ember_ml import ops
-
+from ember_ml.nn import tensor
 
 def _svd_flip(u, v):
     """Sign correction for SVD to ensure deterministic output.
@@ -233,7 +233,7 @@ class PCA:
         Returns:
             Self
         """
-        X_tensor = ops.convert_to_tensor(X)
+        X_tensor = tensor.convert_to_tensor(X)
         self.n_samples_, self.n_features_ = ops.shape(X_tensor)
         self.whiten_ = whiten
         
@@ -243,7 +243,7 @@ class PCA:
                 svd_solver = "full"
             elif n_components is not None and ops.less(
                 n_components, 
-                ops.multiply(0.8, ops.convert_to_tensor(min(self.n_samples_, self.n_features_)))
+                ops.multiply(0.8, tensor.convert_to_tensor(min(self.n_samples_, self.n_features_)))
             ):
                 svd_solver = "randomized"
             else:
@@ -346,7 +346,7 @@ class PCA:
         if self.components_ is None:
             raise ValueError("PCA not fitted. Call fit() first.")
         
-        X_tensor = ops.convert_to_tensor(X)
+        X_tensor = tensor.convert_to_tensor(X)
         X_centered = ops.subtract(X_tensor, self.mean_)
         X_transformed = ops.matmul(X_centered, ops.transpose(self.components_))
         
@@ -402,7 +402,7 @@ class PCA:
         if self.components_ is None:
             raise ValueError("PCA not fitted. Call fit() first.")
         
-        X_tensor = ops.convert_to_tensor(X)
+        X_tensor = tensor.convert_to_tensor(X)
         
         if self.whiten_:
             # Avoid division by zero
