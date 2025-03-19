@@ -73,7 +73,7 @@ def mse(y_true: TensorLike, y_pred: TensorLike,
     Returns:
         Mean squared error
     """
-    from ember_ml.backend.torch.tensor.ops.utility import convert_to_torch_tensor # Use functional import
+    from ember_ml.backend.torch.tensor.ops.utility import _convert_to_torch_tensor # Use functional import
     y_true_t = convert_to_torch_tensor(data=y_true)
     y_pred_t = convert_to_torch_tensor(data=y_pred)
     

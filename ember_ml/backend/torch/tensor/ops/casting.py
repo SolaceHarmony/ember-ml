@@ -1,9 +1,10 @@
 """PyTorch tensor casting operations."""
 
 import torch
+
 # from typing import Optional # Removed unused import
-from ember_ml.backend.torch.tensor.dtype import TorchDType
 from ember_ml.backend.torch.types import DType, TensorLike
+
 
 # _validate_dtype helper function removed. Logic moved to TorchDType.validate_dtype
 

@@ -1,10 +1,9 @@
 """PyTorch tensor manipulation operations."""
 
+from typing import Union, Optional, Sequence, Any, List
+
 import torch
 import torch.nn.functional as F
-from typing import Union, Optional, Sequence, Any, List, Tuple
-
-# Import TorchTensor directly in each function where it's needed
 
 # Type aliases
 Shape = Sequence[int]

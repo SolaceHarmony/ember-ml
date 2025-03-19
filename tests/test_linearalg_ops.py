@@ -6,9 +6,7 @@ This module tests the linear algebra operations in the Ember ML framework.
 
 import pytest
 import numpy as np
-import ember_ml.ops as ops
-from ember_ml.ops import linearalg
-from ember_ml.nn import tensor
+
 from ember_ml.backend import set_backend
 
 # Test backends
@@ -18,7 +16,9 @@ BACKENDS = ['numpy', 'torch', 'mlx']
 def test_qr_decomposition(backend):
     """Test QR decomposition."""
     set_backend(backend)
-    
+    import ember_ml.ops as ops
+    from ember_ml.ops import linearalg
+    from ember_ml.nn import tensor
     # Create a test matrix
     a = tensor.convert_to_tensor([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
     
@@ -42,7 +42,9 @@ def test_qr_decomposition(backend):
 def test_diag_vector_to_matrix(backend):
     """Test diagonal operation (vector to matrix)."""
     set_backend(backend)
-    
+    import ember_ml.ops as ops
+    from ember_ml.ops import linearalg
+    from ember_ml.nn import tensor
     # Create a test vector
     v = tensor.convert_to_tensor([1.0, 2.0, 3.0])
     
@@ -63,7 +65,9 @@ def test_diag_vector_to_matrix(backend):
 def test_diag_matrix_to_vector(backend):
     """Test diagonal operation (matrix to vector)."""
     set_backend(backend)
-    
+    import ember_ml.ops as ops
+    from ember_ml.ops import linearalg
+    from ember_ml.nn import tensor
     # Create a test matrix
     m = tensor.convert_to_tensor([
         [1.0, 2.0, 3.0],
@@ -84,7 +88,9 @@ def test_diag_matrix_to_vector(backend):
 def test_diag_with_offset(backend):
     """Test diagonal operation with offset."""
     set_backend(backend)
-    
+    import ember_ml.ops as ops
+    from ember_ml.ops import linearalg
+    from ember_ml.nn import tensor
     # Create a test matrix
     m = tensor.convert_to_tensor([
         [1.0, 2.0, 3.0],
@@ -110,7 +116,9 @@ def test_diag_with_offset(backend):
 def test_diagonal(backend):
     """Test diagonal operation."""
     set_backend(backend)
-    
+    import ember_ml.ops as ops
+    from ember_ml.ops import linearalg
+    from ember_ml.nn import tensor
     # Create a test matrix
     m = tensor.convert_to_tensor([
         [1.0, 2.0, 3.0],
@@ -131,7 +139,9 @@ def test_diagonal(backend):
 def test_diagonal_with_offset(backend):
     """Test diagonal operation with offset."""
     set_backend(backend)
-    
+    import ember_ml.ops as ops
+    from ember_ml.ops import linearalg
+    from ember_ml.nn import tensor
     # Create a test matrix
     m = tensor.convert_to_tensor([
         [1.0, 2.0, 3.0],

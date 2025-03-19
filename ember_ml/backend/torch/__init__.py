@@ -6,9 +6,6 @@ This module provides PyTorch implementations of tensor operations.
 
 # Define the list of symbols to export
 __all__ = [
-    # Configuration variables
-    'DEFAULT_DEVICE',
-    'DEFAULT_DTYPE',
     
     # Math operations
     'add', 'subtract', 'multiply', 'divide', 'matmul', 'dot',

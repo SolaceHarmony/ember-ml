@@ -1,12 +1,14 @@
 """PyTorch tensor creation operations."""
 
+from typing import Optional, Union
+
 import torch
-from typing import Any, Optional, Union, Sequence, List, Tuple
+from torch import Tensor
 
 from ember_ml.backend.torch.tensor.dtype import TorchDType
-
+from ember_ml.backend.torch.tensor.ops.utility import _create_new_tensor  # Import the helper
 from ember_ml.backend.torch.types import TensorLike, DType, Shape, ShapeLike, ScalarLike
-from ember_ml.backend.torch.tensor.ops.utility import _create_new_tensor # Import the helper
+
 
 def zeros(shape: Shape, dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
     """
@@ -182,7 +184,7 @@ def linspace(start: Union[int, float], stop: Union[int, float], num: int,
     # Pass start, end (stop in torch), steps (num in torch) via kwargs
     return _create_new_tensor(torch.linspace, dtype=dtype, device=device, start=start, end=stop, steps=num)
 
-def meshgrid(*arrays: TensorLike, indexing: str = 'xy') -> List[torch.Tensor]:
+def meshgrid(*arrays: TensorLike, indexing: str = 'xy') -> tuple[Tensor, ...]:
     """
     Generate multidimensional coordinate grids from 1-D coordinate arrays.
 

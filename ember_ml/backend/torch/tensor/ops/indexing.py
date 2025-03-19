@@ -1,11 +1,13 @@
 """PyTorch tensor indexing operations."""
 
+from typing import Optional, Literal
+
 import torch
 
-from typing import Sequence, Optional, Literal, Union
 from ember_ml.backend.torch.types import (
     TensorLike, Shape
 )
+
 
 def nonzero(tensor: TensorLike) -> torch.Tensor:
     """
@@ -119,9 +121,8 @@ def gather(tensor: TensorLike, indices: TensorLike, axis: int = 0) -> torch.Tens
     """
     from ember_ml.backend.torch.tensor import TorchTensor
     Tensor = TorchTensor()
-    from ember_ml.backend.torch.tensor.tensor import convert_to_tensor
-    tensor_array = convert_to_tensor(tensor)
-    indices_array = convert_to_tensor(indices)
+    tensor_array = Tensor.convert_to_tensor(tensor)
+    indices_array = Tensor.convert_to_tensor(indices)
     indices_array = indices_array.long()
     
     # For 1D indices with multi-dimensional tensor, we need to handle it specially

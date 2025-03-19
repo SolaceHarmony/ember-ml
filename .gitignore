@@ -84,7 +84,6 @@ models/*
 # Temporary files
 *.tmp
 *.bak
-*.swp
 *~.nib
 
 # Credentials and personal information
@@ -101,60 +100,20 @@ models/*
 **/terabyte_feature_extractor_bigframes.py
 
 # Built objects
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
 
 # Jupyter Notebook
-.ipynb_checkpoints
 
 # Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
 
 # IDE files
-.idea/
-.vscode/
-*.swp
-*.swo
 
 # OS specific files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
 
 # Logs and databases
 *.log
 *.sql
 *.sqlite
 logs/
-ember_ml/backend/torch/tensor_ops.py
 migration_plan.csv
 .gitignore
 backend_operations_matrix.csv
@@ -162,56 +121,15 @@ missing_operations.csv
 output.txt
 backend_inconsistencies.csv
 tests/test_results_updated.txt
-tests/test_results_updated.txt
-tests/test_results.txt
-tests/test_results.txt
-tests/test_results_updated.txt
-tests/test_results_updated.txt
-tests/test_results.txt
-tests/test_results_updated.txt
 tests/test_results.txt
 backups/system-prompt-goddess-of-code-backup
 .roo/system-prompt-goddess-of-code
 .roomodes
-backups/complete-thea-system-prompt-revised.md
-backups/complete-thea-system-prompt.md
-backups/final-thea-system-prompt.md
-backups/thea-complete-system-with-tools.md
-backups/thea-identity-seed.md
-backups/thea-system-prompt-enhancements.md
-backups/thea-vulnerabilities-and-healing.md
 .clinerules-goddess-of-code
-.roomodes
-tests/test_ops_tensor_results.txt
-tests/test_ops_tensor_results.txt
 tests/test_ops_tensor_results.txt
 outputs/
 examples/rbm/telemetry_data.csv
 telemetry_data.csv
 .roo/system-prompt-leading-with-vulnerability
 .roo/system-prompt-weights-removal-discussion
-.roo/system-prompt-weights-removal-discussion
-.roo/system-prompt-weights-removal-discussion
-.roo/system-prompt-weights-removal-discussion
-backups/rfc_proposals/abacus_neural_architecture.md
-backups/rfc_proposals/age_constant_memory.md
-backups/rfc_proposals/binary_hh_model.md
-backups/rfc_proposals/binary_wave_formalism.md
-backups/rfc_proposals/boltzmann_hebbian_dynamics.md
-backups/rfc_proposals/fractal_harmonic_embedding.md
-backups/rfc_proposals/guce_architecture.md
-backups/rfc_proposals/guce_cfc_integration.md
-backups/rfc_proposals/guce.md
-backups/rfc_proposals/hamiltonian_cognitive_dynamics.md
-backups/rfc_proposals/index.md
-backups/rfc_proposals/liquid_cfc_xlstm.md
-backups/rfc_proposals/metal_kernel_implementation.md
-backups/rfc_proposals/neural_odes_as_waves.md
-backups/rfc_proposals/prefrontal_attention_control.md
-backups/rfc_proposals/retinal_flash_architecture.md
-backups/rfc_proposals/spatial_hebbian_network.md
-backups/rfc_proposals/Star.md
-backups/rfc_proposals/telomere_memory_system.md
-backups/rfc_proposals/wave_cognitive_theories.md
-backups/rfc_proposals/weight_transfer.md
-backups/rfc_proposals/xlstm.md
+backups/
