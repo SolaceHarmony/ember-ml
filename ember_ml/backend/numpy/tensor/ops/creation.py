@@ -1,204 +1,113 @@
 """NumPy tensor creation operations."""
 
+from typing import Any, List, Optional, Union
+
 import numpy as np
-from typing import Union, Optional, Sequence, Any
 
 from ember_ml.backend.numpy.tensor.dtype import NumpyDType
+from ember_ml.backend.numpy.types import DType, TensorLike, Shape, ShapeLike, ScalarLike
 
-# Type aliases
-Shape = Union[int, Sequence[int]]
-
-def zeros(tensor_obj, shape, dtype=None, device=None):
-    """
-    Create a tensor of zeros.
+def zeros(shape: 'Shape', dtype: 'Optional[DType]' = None, device: Optional[str] = None) -> 'np.ndarray':
+    """Create a NumPy array of zeros."""
+    # Validate dtype
+    dtype_cls = NumpyDType()
+    numpy_dtype = dtype_cls.from_dtype_str(dtype) if dtype else None
     
-    Args:
-        tensor_obj: NumpyTensor instance
-        shape: The shape of the tensor
-        dtype: Optional data type
-        device: Ignored for NumPy backend
-        
-    Returns:
-        Tensor of zeros
-    """
-    numpy_dtype = None
-    if dtype is not None:
-        numpy_dtype = NumpyDType().from_dtype_str(dtype)
-    
+    # Create zeros array with the specified shape and dtype
     return np.zeros(shape, dtype=numpy_dtype)
 
-def ones(tensor_obj, shape, dtype=None, device=None):
-    """
-    Create a tensor of ones.
+def ones(shape: 'Shape', dtype: 'Optional[DType]' = None, device: Optional[str] = None) -> 'np.ndarray':
+    """Create a NumPy array of ones."""
+    # Validate dtype
+    dtype_cls = NumpyDType()
+    numpy_dtype = dtype_cls.from_dtype_str(dtype) if dtype else None
     
-    Args:
-        tensor_obj: NumpyTensor instance
-        shape: The shape of the tensor
-        dtype: Optional data type
-        device: Ignored for NumPy backend
-        
-    Returns:
-        Tensor of ones
-    """
-    numpy_dtype = None
-    if dtype is not None:
-        numpy_dtype = NumpyDType().from_dtype_str(dtype)
-    
+    # Create ones array with the specified shape and dtype
     return np.ones(shape, dtype=numpy_dtype)
 
-def zeros_like(tensor_obj, tensor, dtype=None, device=None):
-    """
-    Create a tensor of zeros with the same shape as the input.
+def zeros_like(tensor: 'TensorLike', dtype: 'Optional[DType]' = None, device: Optional[str] = None) -> 'np.ndarray':
+    """Create a NumPy array of zeros with the same shape as the input."""
+    # Convert input to NumPy array
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor as Tensor
+    tensor_array = Tensor().convert_to_tensor(tensor)
     
-    Args:
-        tensor_obj: NumpyTensor instance
-        tensor: The input tensor
-        dtype: Optional data type
-        device: Ignored for NumPy backend
-        
-    Returns:
-        Tensor of zeros with the same shape as the input
-    """
-    numpy_dtype = None
-    if dtype is not None:
-        numpy_dtype = NumpyDType().from_dtype_str(dtype)
+    # Get shape of input tensor
+    shape = tensor_array.shape
     
-    if isinstance(tensor, np.ndarray):
-        return np.zeros_like(tensor, dtype=numpy_dtype)
-    
-    # Convert to NumPy array first
-    tensor = tensor_obj.convert_to_tensor(tensor)
-    return np.zeros_like(tensor, dtype=numpy_dtype)
+    # Create zeros array with the same shape
+    return zeros(shape, dtype, device)
 
-def ones_like(tensor_obj, tensor, dtype=None, device=None):
-    """
-    Create a tensor of ones with the same shape as the input.
+def ones_like(tensor: 'TensorLike', dtype: 'Optional[DType]' = None, device: Optional[str] = None) -> 'np.ndarray':
+    """Create a NumPy array of ones with the same shape as the input."""
+    # Convert input to NumPy array
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor as Tensor
+    tensor_array = Tensor().convert_to_tensor(tensor)
     
-    Args:
-        tensor_obj: NumpyTensor instance
-        tensor: The input tensor
-        dtype: Optional data type
-        device: Ignored for NumPy backend
-        
-    Returns:
-        Tensor of ones with the same shape as the input
-    """
-    numpy_dtype = None
-    if dtype is not None:
-        numpy_dtype = NumpyDType().from_dtype_str(dtype)
+    # Get shape of input tensor
+    shape = tensor_array.shape
     
-    if isinstance(tensor, np.ndarray):
-        return np.ones_like(tensor, dtype=numpy_dtype)
-    
-    # Convert to NumPy array first
-    tensor = tensor_obj.convert_to_tensor(tensor)
-    return np.ones_like(tensor, dtype=numpy_dtype)
+    # Create ones array with the same shape
+    return ones(shape, dtype, device)
 
-def eye(tensor_obj, n, m=None, dtype=None, device=None):
-    """
-    Create an identity matrix.
-    
-    Args:
-        tensor_obj: NumpyTensor instance
-        n: Number of rows
-        m: Number of columns (default: n)
-        dtype: Optional data type
-        device: Ignored for NumPy backend
+def full(shape: 'ShapeLike', fill_value: 'ScalarLike', dtype: 'Optional[DType]' = None, device: Optional[str] = None) -> 'np.ndarray':
+    """Create a tensor filled with a scalar value."""
+    # Handle scalar shape case
+    if isinstance(shape, (int, np.integer)):
+        shape = (shape,)
         
-    Returns:
-        Identity matrix
-    """
-    numpy_dtype = None
-    if dtype is not None:
-        numpy_dtype = NumpyDType().from_dtype_str(dtype)
+    # Validate dtype
+    dtype_cls = NumpyDType()
+    numpy_dtype = dtype_cls.from_dtype_str(dtype) if dtype else None
     
-    return np.eye(n, m, dtype=numpy_dtype)
-
-def full(tensor_obj, shape, fill_value, dtype=None, device=None):
-    """
-    Create a tensor filled with a scalar value.
-    
-    Args:
-        tensor_obj: NumpyTensor instance
-        shape: Shape of the tensor
-        fill_value: Value to fill the tensor with
-        dtype: Optional data type
-        device: Ignored for NumPy backend
-        
-    Returns:
-        Tensor filled with the specified value
-    """
-    numpy_dtype = None
-    if dtype is not None:
-        numpy_dtype = NumpyDType().from_dtype_str(dtype)
-    
+    # Create array of the specified shape filled with fill_value
     return np.full(shape, fill_value, dtype=numpy_dtype)
 
-def full_like(tensor_obj, tensor, fill_value, dtype=None, device=None):
-    """
-    Create a tensor filled with a scalar value with the same shape as the input.
+def full_like(tensor: 'TensorLike', fill_value: 'ScalarLike', dtype: 'Optional[DType]' = None, device: Optional[str] = None) -> 'np.ndarray':
+    """Create a tensor filled with fill_value with the same shape as input."""
+    # Convert input to NumPy array
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor as Tensor
+    tensor_array = Tensor().convert_to_tensor(tensor)
     
-    Args:
-        tensor_obj: NumpyTensor instance
-        tensor: Input tensor
-        fill_value: Value to fill the tensor with
-        dtype: Optional data type
-        device: Ignored for NumPy backend
-        
-    Returns:
-        Tensor filled with the specified value with the same shape as tensor
-    """
-    tensor_np = tensor_obj.convert_to_tensor(tensor)
+    # Get shape of input tensor
+    shape = tensor_array.shape
     
-    numpy_dtype = None
-    if dtype is not None:
-        numpy_dtype = NumpyDType().from_dtype_str(dtype)
-    elif numpy_dtype is None:
-        numpy_dtype = tensor_np.dtype
-    
-    return np.full_like(tensor_np, fill_value, dtype=numpy_dtype)
+    # Create array with the same shape filled with fill_value
+    return full(shape, fill_value, dtype, device)
 
-def arange(tensor_obj, start, stop=None, step=1, dtype=None, device=None):
-    """
-    Create a tensor with evenly spaced values within a given interval.
+def eye(n: int, m: Optional[int] = None, dtype: 'Optional[DType]' = None, device: Optional[str] = None) -> 'np.ndarray':
+    """Create an identity matrix."""
+    # If m is not specified, use n
+    if m is None:
+        m = n
     
-    Args:
-        tensor_obj: NumpyTensor instance
-        start: Start of interval (inclusive)
-        stop: End of interval (exclusive)
-        step: Spacing between values
-        dtype: Optional data type
-        device: Ignored for NumPy backend
-        
-    Returns:
-        Tensor with evenly spaced values
-    """
-    numpy_dtype = None
-    if dtype is not None:
-        numpy_dtype = NumpyDType().from_dtype_str(dtype)
+    # Validate dtype
+    dtype_cls = NumpyDType()
+    numpy_dtype = dtype_cls.from_dtype_str(dtype) if dtype else None
     
+    # Create identity matrix
+    return np.eye(n, m, dtype=numpy_dtype)
+
+def arange(start: Union[int, float], stop: Optional[Union[int, float]] = None, step: int = 1,
+           dtype: 'Optional[DType]' = None, device: Optional[str] = None) -> 'np.ndarray':
+    """Create a sequence of numbers."""
+    # Validate dtype
+    dtype_cls = NumpyDType()
+    numpy_dtype = dtype_cls.from_dtype_str(dtype) if dtype else None
+    
+    # Handle single argument case
     if stop is None:
-        # If only one argument is provided, it's the stop value
-        return np.arange(start=0, stop=start, step=step, dtype=numpy_dtype)
-    return np.arange(start=start, stop=stop, step=step, dtype=numpy_dtype)
+        stop = start
+        start = 0
+    
+    # Create sequence
+    return np.arange(start, stop, step, dtype=numpy_dtype)
 
-def linspace(tensor_obj, start, stop, num, dtype=None, device=None):
-    """
-    Create a tensor with evenly spaced values within a given interval.
+def linspace(start: Union[int, float], stop: Union[int, float], num: int,
+             dtype: 'Optional[DType]' = None, device: Optional[str] = None) -> 'np.ndarray':
+    """Create evenly spaced numbers over a specified interval."""
+    # Validate dtype
+    dtype_cls = NumpyDType()
+    numpy_dtype = dtype_cls.from_dtype_str(dtype) if dtype else None
     
-    Args:
-        tensor_obj: NumpyTensor instance
-        start: Start of interval (inclusive)
-        stop: End of interval (inclusive)
-        num: Number of values to generate
-        dtype: Optional data type
-        device: Ignored for NumPy backend
-        
-    Returns:
-        Tensor with evenly spaced values
-    """
-    numpy_dtype = None
-    if dtype is not None:
-        numpy_dtype = NumpyDType().from_dtype_str(dtype)
-    
-    return np.linspace(start=start, stop=stop, num=num, dtype=numpy_dtype)
+    # Create evenly spaced sequence
+    return np.linspace(start, stop, num, dtype=numpy_dtype)

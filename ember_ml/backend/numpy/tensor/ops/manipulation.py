@@ -1,175 +1,198 @@
 """NumPy tensor manipulation operations."""
 
 import numpy as np
-from typing import Union, Optional, Sequence, Any, List, Tuple
+from typing import Optional, Union, List
 
-# Type aliases
-Shape = Union[int, Sequence[int]]
+from ember_ml.backend.numpy.types import TensorLike, ShapeLike, Shape
 
-def reshape(tensor_obj, tensor, shape):
+def reshape(tensor: TensorLike, shape: ShapeLike) -> np.ndarray:
     """
-    Reshape a tensor.
+    Reshape a NumPy array to a new shape.
     
     Args:
-        tensor_obj: NumpyTensor instance
-        tensor: The tensor to reshape
-        shape: The new shape
+        tensor: Input array
+        shape: New shape
         
     Returns:
-        Reshaped tensor
+        Reshaped NumPy array
     """
-    if not isinstance(tensor, np.ndarray):
-        tensor = tensor_obj.convert_to_tensor(tensor)
+    # Ensure shape is a sequence
+    if isinstance(shape, int):
+        shape = (shape,)
     
-    return tensor.reshape(shape)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    
+    return np.reshape(Tensor.convert_to_tensor(tensor), shape)
 
-def transpose(tensor_obj, tensor, axes=None):
+def transpose(tensor: TensorLike, axes: Optional[Shape] = None) -> np.ndarray:
     """
-    Transpose a tensor.
+    Permute the dimensions of a NumPy array.
     
     Args:
-        tensor_obj: NumpyTensor instance
-        tensor: The tensor to transpose
+        tensor: Input array
         axes: Optional permutation of dimensions
         
     Returns:
-        Transposed tensor
+        Transposed NumPy array
     """
-    if not isinstance(tensor, np.ndarray):
-        tensor = tensor_obj.convert_to_tensor(tensor)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    Tensor = NumpyTensor()
     
-    return np.transpose(tensor, axes)
+    tensor_array = Tensor.convert_to_tensor(tensor)
+    
+    if axes is None:
+        # Default transpose behavior (swap last two dimensions)
+        ndim = len(tensor_array.shape)
+        if ndim <= 1:
+            return tensor_array
+        axes = list(range(ndim))
+        axes[-1], axes[-2] = axes[-2], axes[-1]
+    
+    return np.transpose(tensor_array, axes)
 
-def concatenate(tensor_obj, tensors, axis=0):
+def concatenate(tensors: List[TensorLike], axis: int = 0) -> np.ndarray:
     """
-    Concatenate tensors along a specified axis.
+    Concatenate NumPy arrays along a specified axis.
     
     Args:
-        tensor_obj: NumpyTensor instance
-        tensors: The tensors to concatenate
-        axis: The axis along which to concatenate
+        tensors: Sequence of arrays
+        axis: Axis along which to concatenate
         
     Returns:
-        Concatenated tensor
+        Concatenated NumPy array
     """
-    # Convert to NumPy arrays
-    numpy_tensors = [tensor_obj.convert_to_tensor(t) for t in tensors]
-    return np.concatenate(numpy_tensors, axis=axis)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    
+    return np.concatenate([Tensor.convert_to_tensor(arr) for arr in tensors], axis=axis)
 
-def stack(tensor_obj, tensors, axis=0):
+def stack(tensors: List[TensorLike], axis: int = 0) -> np.ndarray:
     """
-    Stack tensors along a new axis.
+    Stack NumPy arrays along a new axis.
     
     Args:
-        tensor_obj: NumpyTensor instance
-        tensors: The tensors to stack
-        axis: The axis along which to stack
+        tensors: Sequence of arrays
+        axis: Axis along which to stack
         
     Returns:
-        Stacked tensor
+        Stacked NumPy array
     """
-    # Convert to NumPy arrays
-    numpy_tensors = [tensor_obj.convert_to_tensor(t) for t in tensors]
-    return np.stack(numpy_tensors, axis=axis)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    
+    return np.stack([Tensor.convert_to_tensor(arr) for arr in tensors], axis=axis)
 
-def split(tensor_obj, tensor, num_or_size_splits, axis=0):
+def split(tensor: TensorLike, num_or_size_splits: Union[int, List[int]], axis: int = 0) -> List[np.ndarray]:
     """
-    Split a tensor into sub-tensors.
+    Split a NumPy array into sub-arrays.
     
     Args:
-        tensor_obj: NumpyTensor instance
-        tensor: The tensor to split
+        tensor: Input array
         num_or_size_splits: Number of splits or sizes of each split
-        axis: The axis along which to split
+        axis: Axis along which to split
         
     Returns:
-        List of sub-tensors
+        List of sub-arrays
     """
-    if not isinstance(tensor, np.ndarray):
-        tensor = tensor_obj.convert_to_tensor(tensor)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    
+    tensor_array = Tensor.convert_to_tensor(tensor)
     
     if isinstance(num_or_size_splits, int):
-        # Avoid using int() and division operator
-        # Just use array_split directly
-        return np.array_split(tensor, num_or_size_splits, axis=axis)
+        # Use array_split for integer splits
+        result = np.array_split(tensor_array, num_or_size_splits, axis=axis)
+    else:
+        # Use split for explicit section sizes
+        result = np.split(tensor_array, num_or_size_splits, axis=axis)
     
-    return np.split(tensor, num_or_size_splits, axis=axis)
+    # Convert to list if it's not already a list
+    if isinstance(result, list):
+        return result
+    else:
+        # If it's a single array, return a list with that array
+        return [result]
 
-def expand_dims(tensor_obj, tensor, axis):
+def expand_dims(tensor: TensorLike, axis: ShapeLike) -> np.ndarray:
     """
-    Insert a new axis into a tensor's shape.
+    Insert new axes into a NumPy array's shape.
     
     Args:
-        tensor_obj: NumpyTensor instance
-        tensor: The tensor to expand
-        axis: The axis at which to insert the new dimension
+        tensor: Input array
+        axis: Position(s) where new axes should be inserted
         
     Returns:
-        Expanded tensor
+        NumPy array with expanded dimensions
     """
-    if not isinstance(tensor, np.ndarray):
-        tensor = tensor_obj.convert_to_tensor(tensor)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    Tensor = NumpyTensor()
     
-    if isinstance(axis, int):
-        return np.expand_dims(tensor, axis)
+    tensor_array = Tensor.convert_to_tensor(tensor)
     
-    # Handle multiple axes
-    result = tensor
-    for ax in sorted(axis):
-        result = np.expand_dims(result, ax)
-    return result
+    if isinstance(axis, (list, tuple)):
+        for ax in sorted(axis):
+            tensor_array = np.expand_dims(tensor_array, ax)
+        return tensor_array
+    
+    return np.expand_dims(tensor_array, axis)
 
-def squeeze(tensor_obj, tensor, axis=None):
+def squeeze(tensor: TensorLike, axis: Optional[Union[int, List[int]]] = None) -> np.ndarray:
     """
-    Remove single-dimensional entries from a tensor's shape.
+    Remove single-dimensional entries from a NumPy array's shape.
     
     Args:
-        tensor_obj: NumpyTensor instance
-        tensor: The tensor to squeeze
-        axis: The axis to remove
+        tensor: Input array
+        axis: Position(s) where dimensions should be removed
         
     Returns:
-        Squeezed tensor
+        NumPy array with squeezed dimensions
     """
-    if not isinstance(tensor, np.ndarray):
-        tensor = tensor_obj.convert_to_tensor(tensor)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    Tensor = NumpyTensor()
     
-    return np.squeeze(tensor, axis=axis)
+    tensor_array = Tensor.convert_to_tensor(tensor)
+    
+    return np.squeeze(tensor_array, axis=axis)
 
-def tile(tensor_obj, tensor, reps):
+def tile(tensor: TensorLike, reps: List[int]) -> np.ndarray:
     """
-    Construct a tensor by tiling a given tensor.
+    Construct a NumPy array by tiling a given array.
     
     Args:
-        tensor_obj: NumpyTensor instance
-        tensor: Input tensor
-        reps: Number of repetitions along each dimension
+        tensor: Input array
+        reps: Number of repetitions for each dimension
         
     Returns:
-        Tiled tensor
+        Tiled NumPy array
     """
-    tensor_np = tensor_obj.convert_to_tensor(tensor)
-    return np.tile(tensor_np, reps)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    
+    tensor_array = Tensor.convert_to_tensor(tensor)
+    return np.tile(tensor_array, reps)
 
-def pad(tensor_obj, tensor, paddings, constant_values=0):
+def pad(tensor: TensorLike, paddings: List[List[int]], constant_values: int = 0) -> np.ndarray:
     """
     Pad a tensor with a constant value.
     
     Args:
-        tensor_obj: NumpyTensor instance
         tensor: Input tensor
-        paddings: Sequence of sequences of integers specifying the padding for each dimension
-                Each inner sequence should contain two integers: [pad_before, pad_after]
+        paddings: List of lists of integers specifying the padding for each dimension
+                 Each inner list should contain two integers: [pad_before, pad_after]
         constant_values: Value to pad with
         
     Returns:
         Padded tensor
     """
-    tensor_np = tensor_obj.convert_to_tensor(tensor)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    
+    tensor_array = Tensor.convert_to_tensor(tensor)
     
     # Convert paddings to the format expected by np.pad
     # NumPy expects ((pad_before_dim1, pad_after_dim1), (pad_before_dim2, pad_after_dim2), ...)
     pad_width = tuple(tuple(p) for p in paddings)
     
     # Pad the tensor
-    return np.pad(tensor_np, pad_width, mode='constant', constant_values=constant_values)
+    return np.pad(tensor_array, pad_width, mode='constant', constant_values=constant_values)

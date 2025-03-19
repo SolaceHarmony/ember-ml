@@ -67,10 +67,19 @@ def slice_update(tensor: TensorLike, slices: TensorLike, updates: Optional[Tenso
     from ember_ml.backend.mlx.tensor.tensor import MLXTensor
     Tensor = MLXTensor()
     tensor_array = Tensor.convert_to_tensor(tensor)
-    slices_array = Tensor.convert_to_tensor(slices)
     
-    # Convert slices to integer list
-    indices_list = slices_array.tolist()
+    # Handle the case where slices is an integer (single index)
+    if isinstance(slices, (int, np.integer)):
+        # Convert to a list with a single element
+        indices_list = [int(slices)]
+    else:
+        # Convert slices to MLX array and then to list
+        slices_array = Tensor.convert_to_tensor(slices)
+        indices_list = slices_array.tolist()
+        
+        # Handle the case where tolist() returns an int
+        if isinstance(indices_list, (int, np.integer)):
+            indices_list = [indices_list]
     
     # Create axes as list of integers
     axes = list(range(len(indices_list)))

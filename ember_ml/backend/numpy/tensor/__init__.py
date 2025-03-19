@@ -6,20 +6,23 @@ This module provides NumPy implementations of tensor operations.
 
 from ember_ml.backend.numpy.tensor.dtype import NumpyDType
 from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
-from ember_ml.backend.numpy.tensor.ops.casting import cast
-from ember_ml.backend.numpy.tensor.ops.creation import (
-    zeros, ones, eye, zeros_like, ones_like, full, full_like, arange, linspace
-)
-from ember_ml.backend.numpy.tensor.ops.manipulation import (
-    reshape, transpose, concatenate, stack, split, expand_dims, squeeze, tile, pad
-)
-from ember_ml.backend.numpy.tensor.ops.indexing import (
-    slice_tensor, slice_update, gather, tensor_scatter_nd_update
-)
-from ember_ml.backend.numpy.tensor.ops.utility import (
-    convert_to_tensor, to_numpy, item, shape, dtype, copy, var, sort, argsort, maximum
-)
-from ember_ml.backend.numpy.tensor.ops.random import (
+from ember_ml.backend.numpy.tensor.ops import (
+    # Casting operations
+    cast,
+    
+    # Creation operations
+    zeros, ones, eye, zeros_like, ones_like, full, full_like, arange, linspace,
+    
+    # Manipulation operations
+    reshape, transpose, concatenate, stack, split, expand_dims, squeeze, tile, pad,
+    
+    # Indexing operations
+    slice as slice_tensor, slice_update, gather, tensor_scatter_nd_update,
+    
+    # Utility operations
+    convert_to_numpy_tensor as convert_to_tensor, to_numpy, item, shape, dtype, copy, var, sort, argsort, maximum,
+    
+    # Random operations
     random_normal, random_uniform, random_binomial, random_gamma, random_exponential,
     random_poisson, random_categorical, random_permutation, shuffle, set_seed, get_seed
 )
