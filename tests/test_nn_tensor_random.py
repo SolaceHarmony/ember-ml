@@ -9,7 +9,7 @@ import pytest
 import numpy as np
 from ember_ml import ops
 from ember_ml.nn.tensor import (
-    random_normal, random_uniform, random_binomial,
+    random_normal, random_uniform, random_bernoulli,
     shape, dtype, to_numpy, arange,
     set_seed, get_seed, shuffle
 )
@@ -127,16 +127,16 @@ class TestRandomGeneration:
         x = random_uniform(shape, minval, maxval, dtype=dtype)
         assert x.dtype == dtype
 
-    def test_random_binomial(self, backend):
-        """Test random_binomial operation."""
+    def test_random_bernoulli(self, backend):
+        """Test random_bernoulli operation."""
         if backend == 'mlx':
-            pytest.skip("MLX backend doesn't implement random_binomial correctly")
+            pytest.skip("MLX backend doesn't implement random_bernoulli correctly")
             
         try:
             # Test with 1D shape
             shape = (1000,)
             p = 0.5
-            x = random_binomial(shape, p)
+            x = random_bernoulli(shape, p)
             assert x.shape == shape
             
             # Check statistical properties
@@ -147,7 +147,7 @@ class TestRandomGeneration:
             # Test with 2D shape
             shape = (100, 100)
             p = 0.7
-            x = random_binomial(shape, p)
+            x = random_bernoulli(shape, p)
             assert x.shape == shape
             
             # Check statistical properties
@@ -167,10 +167,10 @@ class TestRandomGeneration:
             else:
                 pytest.skip(f"Unknown backend: {backend}")
                 
-            x = random_binomial(shape, p, dtype=dtype)
+            x = random_bernoulli(shape, p, dtype=dtype)
             assert x.dtype == dtype
         except (NotImplementedError, AttributeError):
-            pytest.skip(f"{backend} backend doesn't implement random_binomial")
+            pytest.skip(f"{backend} backend doesn't implement random_bernoulli")
 
 class TestRandomSeed:
     """Tests for random seed management."""

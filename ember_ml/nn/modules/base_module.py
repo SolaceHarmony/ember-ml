@@ -34,8 +34,12 @@ class Parameter:
         self.grad = None
     
     def __repr__(self):
-        return f"Parameter(shape={tensor.shape(self.data)}, dtype={tensor.dtype(self.data)})"
-        return f"Parameter(shape={ops.shape(self.data)}, dtype={ops.dtype(self.data)})"
+        shape_val = tensor.shape(self.data)
+        try:
+            dtype_val = tensor.dtype(self.data)
+            return f"Parameter(shape={shape_val}, dtype={dtype_val})"
+        except:
+            return f"Parameter(shape={shape_val})"
 
 class BaseModule:
     """

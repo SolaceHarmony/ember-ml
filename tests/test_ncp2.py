@@ -1,5 +1,6 @@
 import numpy as np
 from ember_ml import ops
+from ember_ml.nn import tensor
 from ember_ml.nn.modules import NCP
 from ember_ml.nn.wirings import NCPWiring
 
@@ -32,10 +33,10 @@ print(f"- bias: {ncp.bias}")
 
 # Create input
 batch_size = 2
-inputs = ops.random_normal((batch_size, 15))
+inputs = tensor.random_normal((batch_size, 15))
 
 # Forward pass
 output = ncp(inputs)
 
-print(f"\nInput shape: {ops.shape(inputs)}")
-print(f"Output shape: {ops.shape(output)}")
+print(f"\nInput shape: {tensor.shape(inputs)}")
+print(f"Output shape: {tensor.shape(output)}")

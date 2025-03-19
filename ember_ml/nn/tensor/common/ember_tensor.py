@@ -150,20 +150,14 @@ class EmberTensor(TensorInterface):
         """Get the dtype of the tensor."""
         # Use the stored EmberDType if available
         if hasattr(self, '_dtype') and self._dtype is not None:
-            # If it's already a DType, return it directly
-            if isinstance(self._dtype, DType):
-                return self._dtype
-            # If it's a string or other format, convert to DType
-            return DType(str(self._dtype).split('.')[-1])
+            # Return the stored dtype directly
+            return self._dtype
             
         # Otherwise, get it from the backend tensor
         backend_dtype = dtype(self._tensor)
-        # Convert backend-specific dtype to EmberDType
-        if isinstance(backend_dtype, DType):
-            return backend_dtype
-        # If it's a backend-specific dtype, extract the name and create an EmberDType
+        # If it's a backend-specific dtype, extract the name and create a string representation
         dtype_name = str(backend_dtype).split('.')[-1]
-        return DType(dtype_name)
+        return dtype_name
 
     @property
     def device(self) -> str:
