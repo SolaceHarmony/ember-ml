@@ -8,6 +8,28 @@ This directory contains development plans and technical documentation for Ember 
 - **README_BACKEND_FIX.md**: Documentation of the backend switching fix implementation
 - **sigmoid_consolidation_plan.md**: Plan for consolidating sigmoid function implementations across the codebase
 
+### Implementation Plans
+- **ember_tensor_improvement_plan.md**: Plan for improving the EmberTensor design
+- **ember_tensor_improvement_plan_updated.md**: Updated plan for improving the EmberTensor design
+- **mlx_backend_strong_typing_implementation_plan.md**: Plan for implementing strong typing in the MLX backend
+- **mlx_backend_strong_typing_implementation_plan_updated.md**: Updated plan for implementing strong typing in the MLX backend
+- **tester_mode_implementation_plan.md**: Plan for implementing the tester mode
+
+### Audit Plans
+- **mlx_backend_strong_typing_audit_plan.md**: Plan for auditing strong typing in the MLX backend
+
+### Configuration Plans
+- **mlx_backend_strong_typing_config_plan.md**: Plan for configuring strong typing in the MLX backend
+
+### Surveys
+- **mlx_backend_typing_survey.md**: Survey of typing in the MLX backend
+
+### Testing
+- **test_plan.md**: Comprehensive test plan for the ember_ml library
+
+### Test Results
+- **ember_tensor_api_changes.md**: Test results for EmberTensor API changes
+
 ## Purpose
 
 These documents outline development plans, architectural decisions, and implementation details for Ember ML. They serve as a reference for developers working on the project and provide context for understanding the codebase.
@@ -33,6 +55,11 @@ This directory contains the consolidated and up-to-date documentation for the Em
 - **compatibility_plans/**: Documentation related to compatibility plans
 - **architecture/**: Documentation related to architecture
 - **project/**: Documentation related to the project as a whole
+- **audit/**: Documentation related to code audits and reviews
+- **config/**: Documentation related to configuration plans
+- **surveys/**: Documentation related to code surveys and analysis
+- **testing/**: Documentation related to test plans and strategies
+- **test_results/**: Documentation related to test results and analysis
 
 ## Using This Documentation
 
