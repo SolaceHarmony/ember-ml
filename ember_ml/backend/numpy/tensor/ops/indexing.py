@@ -1,25 +1,19 @@
 """NumPy tensor indexing operations."""
 
+from typing import Any, List, Literal, Optional, Sequence, Union
+
 import numpy as np
-from typing import Union, Sequence
 
-# Type aliases
-Shape = Union[int, Sequence[int]]
+from ember_ml.backend.numpy.types import (
+    TensorLike, Shape
+)
 
-def slice_tensor(tensor_obj, tensor, starts, sizes):
-    """
-    Extract a slice from a tensor.
-    
-    Args:
-        tensor_obj: NumpyTensor instance
-        tensor: Input tensor
-        starts: Starting indices for each dimension
-        sizes: Size of the slice in each dimension. A value of -1 means "all remaining elements in this dimension"
-        
-    Returns:
-        Sliced tensor
-    """
-    tensor_np = tensor_obj.convert_to_tensor(tensor)
+def slice_tensor(tensor: TensorLike, starts: Shape, sizes: Shape) -> np.ndarray:
+    """Extract a slice from a tensor."""
+    # Convert input to NumPy array
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    tensor_array = Tensor.convert_to_tensor(tensor)
     
     # Create a list of slice objects for each dimension
     slice_objects = []
@@ -33,140 +27,133 @@ def slice_tensor(tensor_obj, tensor, starts, sizes):
             slice_objects.append(slice(start, end))
     
     # Extract the slice
-    return tensor_np[tuple(slice_objects)]
+    return tensor_array[tuple(slice_objects)]
 
-def slice_update(tensor_obj, tensor, starts, updates):
-    """
-    Update a slice of a tensor with new values.
+def gather(tensor: TensorLike, indices: TensorLike, axis: int = 0) -> np.ndarray:
+    """Gather slices from a tensor along an axis."""
+    # Convert inputs to NumPy arrays
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    tensor_array = Tensor.convert_to_tensor(tensor)
+    indices_array = Tensor.convert_to_tensor(indices)
     
-    Args:
-        tensor_obj: NumpyTensor instance
-        tensor: Input tensor to update
-        starts: Starting indices for each dimension
-        updates: Values to insert at the specified indices
+    # Ensure indices are integers
+    indices_int = indices_array.astype(np.int64)
+    
+    # Use take operation for gathering
+    return np.take(tensor_array, indices_int, axis=axis)
+
+def tensor_scatter_nd_update(tensor: TensorLike, indices: TensorLike, updates: TensorLike) -> np.ndarray:
+    """Update tensor elements at given indices."""
+    # Convert inputs to NumPy arrays
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    tensor_array = Tensor.convert_to_tensor(tensor)
+    indices_array = Tensor.convert_to_tensor(indices)
+    updates_array = Tensor.convert_to_tensor(updates)
+    
+    # Create a copy of the tensor
+    result = tensor_array.copy()
+    
+    # Ensure indices are integers
+    indices_array = indices_array.astype(np.int64)
+    
+    # Iterate over the indices and apply updates
+    for i in range(indices_array.shape[0]):
+        # Extract indices for this update
+        idx = []
+        for j in range(indices_array.shape[1]):
+            # Get each dimension's index value
+            idx.append(indices_array[i, j])
         
-    Returns:
-        Updated tensor
-    """
-    tensor_np = tensor_obj.convert_to_tensor(tensor)
-    updates_np = tensor_obj.convert_to_tensor(updates)
+        # Apply the update directly using tuple indexing
+        result[tuple(idx)] = updates_array[i]
+    
+    return result
+
+def slice_update(tensor: TensorLike, slices: TensorLike, updates: Optional[TensorLike] = None) -> np.ndarray:
+    """Update a tensor at specific indices."""
+    # Convert inputs to NumPy arrays
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    tensor_array = Tensor.convert_to_tensor(tensor)
+    slices_array = Tensor.convert_to_tensor(slices)
     
     # Create a copy of the input tensor
-    result = tensor_np.copy()
+    result = tensor_array.copy()
+    
+    # If updates is None, return slice of tensor
+    if updates is None:
+        # Create a list of slice objects for each dimension
+        slice_objects = []
+        for i, start in enumerate(slices_array):
+            slice_objects.append(slice(start, start + 1))
+        
+        # Extract the slice
+        return tensor_array[tuple(slice_objects)]
+    
+    # Convert updates to NumPy array
+    updates_array = Tensor.convert_to_tensor(updates)
     
     # Create a list of slice objects for each dimension
     slice_objects = []
-    for i, (start, size) in enumerate(zip(starts, updates_np.shape)):
+    for i, (start, size) in enumerate(zip(slices_array, updates_array.shape)):
         # Use np.add instead of + operator
         end = np.add(start, size)
         slice_objects.append(slice(start, end))
     
     # Update the tensor at the specified indices
-    result[tuple(slice_objects)] = updates_np
+    result[tuple(slice_objects)] = updates_array
     
     return result
 
-def gather(tensor_obj, tensor, indices, axis=0):
-    """
-    Gather slices from a tensor along an axis.
-    
-    Args:
-        tensor_obj: NumpyTensor instance
-        tensor: Input tensor
-        indices: Indices of slices to gather
-        axis: Axis along which to gather
-        
-    Returns:
-        Gathered tensor
-    """
-    tensor_np = tensor_obj.convert_to_tensor(tensor)
-    indices_np = tensor_obj.convert_to_tensor(indices)
-    
-    # Convert indices to integers
-    indices_np = indices_np.astype(np.int64)
-    
-    return np.take(tensor_np, indices_np, axis=axis)
-
-def scatter(tensor_obj, src, index, dim_size=None, aggr="add", axis=0):
-    """
-    Scatter values from src into a new tensor of size dim_size along the given axis.
-    
-    Args:
-        tensor_obj: NumpyTensor instance
-        src: Source tensor containing values to scatter
-        index: Indices where to scatter the values
-        dim_size: Size of the output tensor along the given axis. If None, uses the maximum index + 1
-        aggr: Aggregation method to use for duplicate indices ("add", "max", "mean", "softmax", "min")
-        axis: Axis along which to scatter
-        
-    Returns:
-        Tensor with scattered values
-    """
+def scatter(data: TensorLike, indices: TensorLike, dim_size: Optional[Union[int, np.ndarray]] = None,
+           aggr: Literal["add", "max", "min", "mean", "softmax"] = "add", axis: int = 0) -> np.ndarray:
+    """Scatter values into a new tensor."""
     # Convert inputs to NumPy arrays
-    src_np = tensor_obj.convert_to_tensor(src)
-    index_np = tensor_obj.convert_to_tensor(index)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    data_array = Tensor.convert_to_tensor(data)
+    indices_array = Tensor.convert_to_tensor(indices)
     
     # Ensure indices are integers
-    index_np = index_np.astype(np.int64)
+    indices_int = indices_array.astype(np.int64)
     
-    # Determine the output shape
+    # Handle dim_size
     if dim_size is None:
-        dim_size = np.add(np.max(index_np), 1)
+        computed_dim_size = int(np.max(indices_int) + 1)
+    else:
+        computed_dim_size = int(dim_size)
     
     # Create output shape
-    output_shape = list(src_np.shape)
-    output_shape[axis] = dim_size
+    output_shape = list(data_array.shape)
+    output_shape[axis] = computed_dim_size
     
-    # Initialize output tensor with zeros
-    if aggr == "min":
-        # For min aggregation, initialize with large values
-        output = np.full(output_shape, np.finfo(src_np.dtype).max, dtype=src_np.dtype)
+    # Initialize output tensor based on operation
+    if aggr == "add" or aggr == "mean" or aggr == "softmax":
+        output = np.zeros(output_shape, dtype=data_array.dtype)
+    elif aggr == "max":
+        output = np.full(output_shape, -np.inf, dtype=data_array.dtype)
+    elif aggr == "min":
+        output = np.full(output_shape, np.inf, dtype=data_array.dtype)
     else:
-        output = np.zeros(output_shape, dtype=src_np.dtype)
+        raise ValueError(f"Unknown operation: {aggr}")
     
     # Handle 1D case (most common)
-    if index_np.ndim == 1:
-        for i, idx in enumerate(index_np):
-            # Select the appropriate slice from src_np
+    if indices_int.ndim == 1:
+        for i, idx in enumerate(indices_int):
+            # Select the appropriate slice from data_array
             if axis == 0:
                 # If scattering along axis 0, select the i-th element
-                src_value = src_np[i]
+                src_value = data_array[i]
                 # Create the output index
-                # Use list and tuple conversion instead of + operator
-                out_idx_list = [idx]
-                for j in src_value.shape:
-                    out_idx_list.append(range(j))
-                out_idx = tuple(out_idx_list)
+                out_idx = tuple([idx] + [slice(None)] * (len(output_shape) - 1))
             else:
                 # For other axes, we need to create more complex indexing
-                idx_tuple = tuple(slice(None) if j != axis else i for j in range(src_np.ndim))
-                src_value = src_np[idx_tuple]
+                idx_tuple = tuple(slice(None) if j != axis else i for j in range(data_array.ndim))
+                src_value = data_array[idx_tuple]
                 # Create the output index
                 out_idx = tuple(slice(None) if j != axis else idx for j in range(output.ndim))
-            
-            # Apply the aggregation method
-            if aggr == "add":
-                output[out_idx] += src_value
-            elif aggr == "max":
-                output[out_idx] = np.maximum(output[out_idx], src_value)
-            elif aggr == "min":
-                output[out_idx] = np.minimum(output[out_idx], src_value)
-            elif aggr == "mean":
-                # For mean, we need to count occurrences and divide later
-                output[out_idx] += src_value
-                # TODO: Implement proper mean aggregation
-            elif aggr == "softmax":
-                # TODO: Implement softmax aggregation
-                output[out_idx] += src_value
-    else:
-        # Handle multi-dimensional indices
-        # This is a simplified implementation that may not handle all cases
-        for i in range(src_np.shape[0]):
-            idx = index_np[i]
-            src_value = src_np[i]
-            
-            # Create the output index
-            out_idx = tuple(slice(None) if j != axis else idx for j in range(output.ndim))
             
             # Apply the aggregation method
             if aggr == "add":
@@ -185,39 +172,52 @@ def scatter(tensor_obj, src, index, dim_size=None, aggr="add", axis=0):
     
     return output
 
-def tensor_scatter_nd_update(tensor_obj, tensor, indices, updates):
-    """
-    Updates values of a tensor at specified indices.
+# Helper functions for scatter operations
+def scatter_add(src: TensorLike, index: TensorLike, dim_size: int, axis: int = 0) -> np.ndarray:
+    """Scatter values using addition."""
+    return scatter(src, index, dim_size, "add", axis)
+
+def scatter_max(src: TensorLike, index: TensorLike, dim_size: int, axis: int = 0) -> np.ndarray:
+    """Scatter values using maximum."""
+    return scatter(src, index, dim_size, "max", axis)
+
+def scatter_min(src: TensorLike, index: TensorLike, dim_size: int, axis: int = 0) -> np.ndarray:
+    """Scatter values using minimum."""
+    return scatter(src, index, dim_size, "min", axis)
+
+def scatter_mean(values: TensorLike, index: TensorLike, dim_size: int, axis: int = 0) -> np.ndarray:
+    """Scatter values and compute mean."""
+    # First compute sum
+    sum_result = scatter(values, index, dim_size, "add", axis)
     
-    Args:
-        tensor_obj: NumpyTensor instance
-        tensor: Input tensor to update
-        indices: Indices at which to update values (N-dimensional indices)
-        updates: Values to insert at the specified indices
-        
-    Returns:
-        Updated tensor
-    """
-    # Create a copy of the tensor
-    tensor_np = tensor_obj.convert_to_tensor(tensor)
-    indices_np = tensor_obj.convert_to_tensor(indices)
-    updates_np = tensor_obj.convert_to_tensor(updates)
+    # Then compute count
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    ones = np.ones_like(Tensor.convert_to_tensor(values))
+    count = scatter(ones, index, dim_size, "add", axis)
     
-    # Ensure indices are integers
-    indices_np = indices_np.astype(np.int64)
+    # Avoid division by zero
+    count = np.where(count == 0, np.ones_like(count), count)
     
-    # Create a copy of the tensor
-    result = tensor_np.copy()
+    # Compute mean
+    return np.divide(sum_result, count)
+
+def scatter_softmax(values: TensorLike, index: TensorLike, dim_size: int, axis: int = 0) -> np.ndarray:
+    """Scatter values and compute softmax."""
+    # First compute max for numerical stability
+    max_vals = scatter(values, index, dim_size, "max", axis)
     
-    # Iterate over the indices and apply updates
-    for i in range(indices_np.shape[0]):
-        # Extract indices for this update
-        idx = []
-        for j in range(indices_np.shape[1]):
-            # Get each dimension's index value
-            idx.append(indices_np[i, j])
-        
-        # Apply the update directly using tuple indexing
-        result[tuple(idx)] = updates_np[i]
+    # Compute exp(x - max)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    values_array = Tensor.convert_to_tensor(values)
+    exp_vals = np.exp(values_array - max_vals)
     
-    return result
+    # Sum exp values
+    sum_exp = scatter(exp_vals, index, dim_size, "add", axis)
+    
+    # Compute softmax
+    return np.divide(exp_vals, sum_exp)
+
+# Alias for backward compatibility
+slice = slice_tensor

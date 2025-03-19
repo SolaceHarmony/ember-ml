@@ -221,23 +221,40 @@ def diag(x: TensorLike, k: int = 0) -> mx.array:
         n = x_array.shape[0]
         
         # Calculate the size of the output matrix
-        if k >= 0:
-            m = n + k
-        else:
-            m = n - k
+        m = mx.where(mx.greater_equal(mx.array(k), mx.array(0)),
+                     mx.add(n, k),
+                     mx.subtract(n, mx.negative(k)))
+            
+        # Ensure we use a compatible dtype (not int64)
+        dtype = x_array.dtype
+        if dtype == mx.int64:
+            dtype = mx.int32
             
         # Create a zero matrix
-        result = mx.zeros((m, m), dtype=x_array.dtype)
+        result = mx.zeros((m, m), dtype=dtype)
+        
+        # Import the scatter function from indexing
+        from ember_ml.backend.mlx.tensor.ops.indexing import scatter_add
         
         # Fill the diagonal
-        if k >= 0:
-            # Diagonal above the main diagonal
-            for i in range(n):
-                result = result.at[i, i + k].set(x_array[i])
-        else:
-            # Diagonal below the main diagonal
-            for i in range(n):
-                result = result.at[i - k, i].set(x_array[i])
+        # Use mx.greater_equal for comparison
+        is_non_negative = mx.greater_equal(mx.array(k), mx.array(0))
+        
+        for i in range(n):
+            # Create a copy of the result
+            result_copy = mx.array(result)
+            
+            # Use mx.where to conditionally select the indices
+            row = mx.where(is_non_negative,
+                          mx.array(i),
+                          mx.subtract(mx.array(i), mx.array(k)))
+            col = mx.where(is_non_negative,
+                          mx.add(mx.array(i), mx.array(k)),
+                          mx.array(i))
+            
+            # Update the element directly
+            result_copy = result_copy.at[int(row.item()), int(col.item())].add(x_array[i])
+            result = result_copy
                 
         return result
     
@@ -246,27 +263,44 @@ def diag(x: TensorLike, k: int = 0) -> mx.array:
         rows, cols = x_array.shape
         
         # Calculate the length of the diagonal
-        if k >= 0:
-            diag_len = min(rows, cols - k)
-        else:
-            diag_len = min(rows + k, cols)
+        # Use mx.greater_equal, mx.subtract, mx.add, and mx.minimum for operations
+        is_non_negative = mx.greater_equal(mx.array(k), mx.array(0))
+        diag_len_if_positive = mx.minimum(mx.array(rows), mx.subtract(mx.array(cols), mx.array(k)))
+        diag_len_if_negative = mx.minimum(mx.add(mx.array(rows), mx.array(k)), mx.array(cols))
+        diag_len = mx.where(is_non_negative, diag_len_if_positive, diag_len_if_negative).item()
             
-        if diag_len <= 0:
+        # Use mx.less_equal for comparison
+        if mx.less_equal(mx.array(diag_len), mx.array(0)):
             # Empty diagonal
             return mx.array([], dtype=x_array.dtype)
             
+        # Ensure we use a compatible dtype (not int64)
+        dtype = x_array.dtype
+        if dtype == mx.int64:
+            dtype = mx.int32
+            
         # Create an array to hold the diagonal
-        result = mx.zeros((diag_len,), dtype=x_array.dtype)
+        result = mx.zeros((diag_len,), dtype=dtype)
         
         # Extract the diagonal
-        if k >= 0:
-            # Diagonal above the main diagonal
-            for i in range(diag_len):
-                result = result.at[i].set(x_array[i, i + k])
-        else:
-            # Diagonal below the main diagonal
-            for i in range(diag_len):
-                result = result.at[i].set(x_array[i - k, i])
+        # Use mx.greater_equal for comparison
+        is_non_negative = mx.greater_equal(mx.array(k), mx.array(0))
+        
+        for i in range(diag_len):
+            # Create a copy of the result
+            result_copy = mx.array(result)
+            
+            # Use mx.where to conditionally select the indices
+            row = mx.where(is_non_negative,
+                          mx.array(i),
+                          mx.subtract(mx.array(i), mx.array(k)))
+            col = mx.where(is_non_negative,
+                          mx.add(mx.array(i), mx.array(k)),
+                          mx.array(i))
+            
+            # Update the element directly
+            result_copy = result_copy.at[i].add(x_array[int(row.item()), int(col.item())])
+            result = result_copy
                 
         return result
     
@@ -296,7 +330,8 @@ def diagonal(x: TensorLike, offset: int = 0, axis1: int = 0, axis2: int = 1) -> 
         raise ValueError("Input must have at least 2 dimensions")
         
     # Ensure axis1 and axis2 are different
-    if axis1 == axis2:
+    # Use mx.equal for comparison
+    if mx.equal(mx.array(axis1), mx.array(axis2)):
         raise ValueError("axis1 and axis2 must be different")
         
     # Normalize axes
@@ -307,19 +342,49 @@ def diagonal(x: TensorLike, offset: int = 0, axis1: int = 0, axis2: int = 1) -> 
         axis2 += ndim
         
     # Ensure axes are valid
-    if axis1 < 0 or axis1 >= ndim or axis2 < 0 or axis2 >= ndim:
+    # Use mx.less, mx.greater_equal, mx.logical_or for comparisons
+    axis1_invalid = mx.logical_or(
+        mx.less(mx.array(axis1), mx.array(0)),
+        mx.greater_equal(mx.array(axis1), mx.array(ndim))
+    )
+    axis2_invalid = mx.logical_or(
+        mx.less(mx.array(axis2), mx.array(0)),
+        mx.greater_equal(mx.array(axis2), mx.array(ndim))
+    )
+    
+    if mx.logical_or(axis1_invalid, axis2_invalid).item():
         raise ValueError("axis1 and axis2 must be within the dimensions of the input array")
         
     # Get the shape of the input array
     shape = x_array.shape
     
     # Calculate the length of the diagonal
-    if offset >= 0:
-        diag_len = max(0, min(shape[axis1], shape[axis2] - offset))
-    else:
-        diag_len = max(0, min(shape[axis1] + offset, shape[axis2]))
+    # Use mx.greater_equal, mx.maximum, mx.minimum, mx.subtract, mx.add for operations
+    is_non_negative = mx.greater_equal(mx.array(offset), mx.array(0))
+    
+    # Calculate diagonal length for positive offset
+    diag_len_if_positive = mx.maximum(
+        mx.array(0),
+        mx.minimum(
+            mx.array(shape[axis1]),
+            mx.subtract(mx.array(shape[axis2]), mx.array(offset))
+        )
+    )
+    
+    # Calculate diagonal length for negative offset
+    diag_len_if_negative = mx.maximum(
+        mx.array(0),
+        mx.minimum(
+            mx.add(mx.array(shape[axis1]), mx.array(offset)),
+            mx.array(shape[axis2])
+        )
+    )
+    
+    # Select the appropriate length based on offset sign
+    diag_len = mx.where(is_non_negative, diag_len_if_positive, diag_len_if_negative).item()
         
-    if diag_len == 0:
+    # Use mx.equal for comparison
+    if mx.equal(mx.array(diag_len), mx.array(0)):
         # Empty diagonal
         return mx.array([], dtype=x_array.dtype)
         
@@ -328,20 +393,40 @@ def diagonal(x: TensorLike, offset: int = 0, axis1: int = 0, axis2: int = 1) -> 
     result_shape.pop(max(axis1, axis2))
     result_shape.pop(min(axis1, axis2))
     result_shape.append(diag_len)
-    result = mx.zeros(tuple(result_shape), dtype=x_array.dtype)
+    
+    # Ensure we use a compatible dtype (not int64)
+    dtype = x_array.dtype
+    if dtype == mx.int64:
+        dtype = mx.int32
+    
+    result = mx.zeros(tuple(result_shape), dtype=dtype)
     
     # Extract the diagonal
     # This is a simplified implementation that works for common cases
     # For a more general implementation, we would need to handle arbitrary axes
     
     # Handle the case where axis1 and axis2 are the first two dimensions
-    if (axis1 == 0 and axis2 == 1) or (axis1 == 1 and axis2 == 0):
+    # Use mx.equal and mx.logical_or for comparisons
+    is_first_two_dims = mx.logical_or(
+        mx.logical_and(
+            mx.equal(mx.array(axis1), mx.array(0)),
+            mx.equal(mx.array(axis2), mx.array(1))
+        ),
+        mx.logical_and(
+            mx.equal(mx.array(axis1), mx.array(1)),
+            mx.equal(mx.array(axis2), mx.array(0))
+        )
+    )
+    
+    if is_first_two_dims.item():
         # Transpose if needed
-        if axis1 > axis2:
+        # Use mx.greater for comparison
+        if mx.greater(mx.array(axis1), mx.array(axis2)).item():
             x_array = mx.transpose(x_array, (1, 0) + tuple(range(2, ndim)))
             
         # Extract the diagonal
-        if offset >= 0:
+        # Use mx.greater_equal for comparison
+        if mx.greater_equal(mx.array(offset), mx.array(0)).item():
             for i in range(diag_len):
                 # Get the slice for the current diagonal element
                 slices = [i, i + offset] + [slice(None)] * (ndim - 2)
@@ -349,9 +434,17 @@ def diagonal(x: TensorLike, offset: int = 0, axis1: int = 0, axis2: int = 1) -> 
                 # Get the diagonal element
                 diag_element = x_array[tuple(slices)]
                 
+                # Ensure diag_element is not int64
+                if diag_element.dtype == mx.int64:
+                    diag_element = diag_element.astype(mx.int32)
+                
                 # Set the result
                 result_slices = [slice(None)] * (ndim - 2) + [i]
-                result = result.at[tuple(result_slices)].set(diag_element)
+                # Use direct assignment for updating
+                result_copy = mx.array(result)
+                # Use add instead of direct assignment
+                result_copy = result_copy.at[tuple(result_slices)].add(diag_element)
+                result = result_copy
         else:
             for i in range(diag_len):
                 # Get the slice for the current diagonal element
@@ -360,13 +453,67 @@ def diagonal(x: TensorLike, offset: int = 0, axis1: int = 0, axis2: int = 1) -> 
                 # Get the diagonal element
                 diag_element = x_array[tuple(slices)]
                 
+                # Ensure diag_element is not int64
+                if diag_element.dtype == mx.int64:
+                    diag_element = diag_element.astype(mx.int32)
+                
                 # Set the result
                 result_slices = [slice(None)] * (ndim - 2) + [i]
-                result = result.at[tuple(result_slices)].set(diag_element)
+                # Use direct assignment for updating
+                result_copy = mx.array(result)
+                # Use add instead of direct assignment
+                result_copy = result_copy.at[tuple(result_slices)].add(diag_element)
+                result = result_copy
     else:
         # For arbitrary axes, we need to permute the dimensions
-        # This is a more complex case that would require a more general implementation
-        # For now, we'll raise an error
-        raise NotImplementedError("diagonal with arbitrary axes is not yet implemented")
+        # Create a permutation that brings axis1 and axis2 to the front
+        perm = list(range(ndim))
+        perm.remove(axis1)
+        perm.remove(axis2)
+        perm = [axis1, axis2] + perm
+        
+        # Transpose the array to bring the specified axes to the front
+        x_transposed = mx.transpose(x_array, perm)
+        
+        # Now we can extract the diagonal from the first two dimensions
+        # Use mx.greater_equal for comparison
+        if mx.greater_equal(mx.array(offset), mx.array(0)).item():
+            for i in range(diag_len):
+                # Get the slice for the current diagonal element
+                slices = [i, i + offset] + [slice(None)] * (ndim - 2)
+                
+                # Get the diagonal element
+                diag_element = x_transposed[tuple(slices)]
+                
+                # Ensure diag_element is not int64
+                if diag_element.dtype == mx.int64:
+                    diag_element = diag_element.astype(mx.int32)
+                
+                # Set the result
+                result_slices = [slice(None)] * (ndim - 2) + [i]
+                # Use direct assignment for updating
+                result_copy = mx.array(result)
+                # Use add instead of direct assignment
+                result_copy = result_copy.at[tuple(result_slices)].add(diag_element)
+                result = result_copy
+        else:
+            for i in range(diag_len):
+                # Get the slice for the current diagonal element
+                slices = [i - offset, i] + [slice(None)] * (ndim - 2)
+                
+                # Get the diagonal element
+                diag_element = x_transposed[tuple(slices)]
+                
+                # Ensure diag_element is not int64
+                if diag_element.dtype == mx.int64:
+                    diag_element = diag_element.astype(mx.int32)
+                
+                # Set the result
+                result_slices = [slice(None)] * (ndim - 2) + [i]
+                # Use direct assignment for updating
+                result_copy = mx.array(result)
+                # Use add instead of direct assignment
+                result_copy = result_copy.at[tuple(result_slices)].add(diag_element)
+                result = result_copy
         
     return result

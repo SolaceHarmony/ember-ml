@@ -1,119 +1,153 @@
 """NumPy tensor utility operations."""
 
+from typing import Any, Optional, Sequence, Tuple, Union
+
 import numpy as np
-from typing import Union, Optional, Sequence, Any, List, Tuple
 
 from ember_ml.backend.numpy.tensor.dtype import NumpyDType
+from ember_ml.backend.numpy.types import TensorLike, DType
 
-# Type aliases
-Shape = Union[int, Sequence[int]]
-DType = Any
+DTypeHandler = NumpyDType()
 
-def _convert_input(x: Any) -> np.ndarray:
-    """Convert input to NumPy array."""
-    if isinstance(x, np.ndarray):
-        return x
-    # Handle EmberTensor objects
-    if isinstance(x, object) and getattr(x.__class__, '__name__', '') == 'EmberTensor':
-        # For EmberTensor, extract the underlying NumPy array
-        return getattr(x, '_tensor')
-    # Convert other types to NumPy array
-    try:
-        return np.array(x)
-    except:
-        raise ValueError(f"Cannot convert {type(x)} to NumPy array")
-
-def _validate_dtype(dtype_cls: NumpyDType, dtype: Optional[DType]) -> Optional[Any]:
+def _convert_input(x: TensorLike) -> Any:
     """
-    Validate and convert dtype to NumPy format.
+    Convert input to NumPy array.
+    
+    Handles various input types:
+    - NumPy arrays (returned as-is)
+    - EmberTensor objects (extract underlying data)
+    - Python scalars (int, float, bool)
+    - Python sequences (list, tuple)
+    
+    Special handling for:
+    - 0D tensors (scalars)
+    - 1D tensors (vectors)
+    - 2D tensors (matrices)
+    - Higher dimensional tensors
     
     Args:
-        dtype_cls: NumpyDType instance for conversions
-        dtype: Input dtype to validate
+        x: Input data to convert
         
     Returns:
-        Validated NumPy dtype or None
+        NumPy array
+        
+    Raises:
+        ValueError: If the input cannot be converted to a NumPy array
     """
-    if dtype is None:
-        return None
+    # Already a NumPy array
+    if isinstance(x, np.ndarray):
+        return x
+        
+    # Handle EmberTensor objects
+    if (hasattr(x, '__class__') and
+        hasattr(x.__class__, '__name__') and
+        x.__class__.__name__ == 'EmberTensor'):
+        from ember_ml.nn.tensor.common.ember_tensor import EmberTensor
+        if isinstance(x, EmberTensor):
+            # Extract the underlying tensor data
+            if hasattr(x, '_tensor') and isinstance(x._tensor, np.ndarray):
+                return np.array(x._tensor)
+            else:
+                ValueError(f"EmberTensor does not have a '_tensor' attribute: {x}")
+        else:
+            raise ValueError(f"Unknown type: {type(x)}")
     
-    # Handle string dtypes
-    if isinstance(dtype, str):
-        return dtype_cls.from_dtype_str(dtype)
+    # Handle Python scalars (0D tensors)
+    if isinstance(x, (int, float, bool)):
+        try:
+            return np.array(x)
+        except Exception as e:
+            raise ValueError(f"Cannot convert scalar {type(x)} to NumPy array: {e}")
+    
+    # Handle Python sequences (potential 1D or higher tensors)
+    if isinstance(x, (list, tuple)):
+        try:
+            # Check if it's a nested sequence (2D or higher)
+            if x and isinstance(x[0], (list, tuple)):
+                # Handle potential jagged arrays by ensuring consistent dimensions
+                shapes = [len(item) for item in x if isinstance(item, (list, tuple))]
+                if len(set(shapes)) > 1:
+                    # Jagged array - warn but proceed
+                    import warnings
+                    warnings.warn(f"Converting jagged array with inconsistent shapes: {shapes}")
+            return np.array(x)
+        except Exception as e:
+            raise ValueError(f"Cannot convert sequence {type(x)} to NumPy array: {e}")
+    
+    # Handle NumPy scalar types
+    if np.isscalar(x):
+        return np.array(x)
         
-    # Handle EmberDType objects
-    if hasattr(dtype, 'name'):
-        return dtype_cls.from_dtype_str(str(dtype.name))
-        
-    # If it's already a NumPy dtype, return as is
-    if isinstance(dtype, np.dtype) or dtype in [np.float32, np.float64, np.int32, np.int64, 
-                                               np.bool_, np.int8, np.int16, np.uint8, 
-                                               np.uint16, np.uint32, np.uint64, np.float16]:
-        return dtype
-        
-    raise ValueError(f"Invalid dtype: {dtype}")
+    # For any other type, reject it
+    raise ValueError(f"Cannot convert {type(x)} to NumPy array. Only int, float, bool, list, tuple, numpy scalar types, and numpy.ndarray are supported.")
 
-def convert_to_tensor(tensor_obj, data: Any, dtype: Optional[DType] = None, device: Optional[str] = None) -> np.ndarray:
+
+
+def convert_to_numpy_tensor(data: TensorLike, dtype: Optional[DType] = None, device: Optional[str] = None) -> np.ndarray:
     """
-    Convert data to a NumPy array.
+    Convert input to NumPy array.
+    
+    Handles various input types with special attention to dimensionality:
+    - 0D tensors (scalars)
+    - 1D tensors (vectors)
+    - 2D tensors (matrices)
+    - Higher dimensional tensors
     
     Args:
-        tensor_obj: NumpyTensor instance
-        data: The data to convert
+        data: Input data
         dtype: Optional data type
         device: Ignored for NumPy backend
         
     Returns:
         NumPy array
     """
-    # If it's already a NumPy array, return it or cast it
-    if isinstance(data, np.ndarray):
-        if dtype is not None:
-            # Convert dtype if needed
-            numpy_dtype = _validate_dtype(tensor_obj._dtype_cls, dtype)
-            if numpy_dtype is not None:
-                return data.astype(numpy_dtype)
-        return data
-    
-    # Convert to NumPy array
     tensor = _convert_input(data)
-    
     if dtype is not None:
-        numpy_dtype = _validate_dtype(tensor_obj._dtype_cls, dtype)
+        numpy_dtype = DTypeHandler.validate_dtype(dtype)
         if numpy_dtype is not None:
             tensor = tensor.astype(numpy_dtype)
     
-    # device parameter is ignored for NumPy backend
+    # Ensure proper dimensionality
+    # If data is a scalar but we need a 0-dim tensor, reshape accordingly
+    if isinstance(data, (int, float, bool)) and tensor.ndim > 0:
+        tensor = np.reshape(tensor, ())
+        
     return tensor
 
-def to_numpy(tensor_obj, tensor: Any) -> np.ndarray:
+def to_numpy(data: TensorLike) -> Any:
     """
-    Convert a tensor to a NumPy array.
+    Convert a NumPy array to a NumPy array.
+    
+    IMPORTANT: This function is provided ONLY for visualization/plotting libraries
+    that specifically require NumPy arrays. It should NOT be used for general tensor
+    conversions or operations. Ember ML has a zero backend design where EmberTensor
+    relies entirely on the selected backend for representation.
     
     Args:
-        tensor_obj: NumpyTensor instance
-        tensor: The tensor to convert
+        data: Input NumPy array
         
     Returns:
         NumPy array
     """
-    if isinstance(tensor, np.ndarray):
-        return tensor
-    # For non-array types, convert to NumPy array
-    return tensor_obj.convert_to_tensor(tensor)
+    # For NumPy, this is a no-op since we're already using NumPy arrays
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    tensor_data = Tensor.convert_to_tensor(data)
+    return tensor_data
 
-def item(tensor_obj, tensor: Any) -> Union[int, float, bool]:
+def item(data: TensorLike) -> Union[int, float, bool]:
     """
-    Get the value of a scalar tensor.
+    Extract the scalar value from a tensor.
     
     Args:
-        tensor_obj: NumpyTensor instance
-        tensor: The tensor to get the value from
+        data: Input tensor containing a single element
         
     Returns:
-        The scalar value
+        Standard Python scalar (int, float, or bool)
     """
-    tensor_array = tensor_obj.convert_to_tensor(tensor)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    tensor_array = Tensor.convert_to_tensor(data)
     
     # Get the raw value
     raw_value = tensor_array.item()
@@ -137,116 +171,133 @@ def item(tensor_obj, tensor: Any) -> Union[int, float, bool]:
         # If all else fails, return False
         return False
 
-def shape(tensor_obj, tensor: Any) -> Tuple[int, ...]:
+def shape(data: TensorLike) -> Tuple[int, ...]:
     """
     Get the shape of a tensor.
     
     Args:
-        tensor_obj: NumpyTensor instance
-        tensor: The tensor to get the shape of
+        data: Input array
         
     Returns:
-        The shape of the tensor
+        Shape of the array
     """
-    return tensor_obj.convert_to_tensor(tensor).shape
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    return Tensor.convert_to_tensor(data).shape
 
-def dtype(tensor_obj, tensor: Any) -> Any:
+def dtype(data: TensorLike) -> Any:
     """
     Get the data type of a tensor.
     
     Args:
-        tensor_obj: NumpyTensor instance
-        tensor: The tensor to get the data type of
+        data: Input array
         
     Returns:
-        The data type of the tensor
+        Data type of the array
     """
-    return tensor_obj.convert_to_tensor(tensor).dtype
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    return Tensor.convert_to_tensor(data).dtype
 
-def copy(tensor_obj, tensor: Any) -> np.ndarray:
+def copy(data: TensorLike) -> np.ndarray:
     """
-    Create a copy of a tensor.
+    Create a copy of a NumPy array.
     
     Args:
-        tensor_obj: NumpyTensor instance
-        tensor: The tensor to copy
+        data: Input array
         
     Returns:
-        Copy of the tensor
+        Copy of the array
     """
-    tensor_np = tensor_obj.convert_to_tensor(tensor)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    tensor_np = Tensor.convert_to_tensor(data)
     return tensor_np.copy()
 
-def var(tensor_obj, tensor: Any, axis: Optional[Union[int, Sequence[int]]] = None, keepdims: bool = False) -> np.ndarray:
+def var(data: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None, keepdims: bool = False) -> np.ndarray:
     """
-    Compute the variance of a tensor along specified axes.
+    Compute the variance of a tensor.
     
     Args:
-        tensor_obj: NumpyTensor instance
-        tensor: Input tensor
+        data: Input array
         axis: Axis or axes along which to compute the variance
-        keepdims: Whether to keep the reduced dimensions
+        keepdims: Whether to keep the dimensions or not
         
     Returns:
-        Variance of the tensor
+        Variance of the array
     """
-    tensor_np = tensor_obj.convert_to_tensor(tensor)
-    return np.var(tensor_np, axis=axis, keepdims=keepdims)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    tensor_array = Tensor.convert_to_tensor(data)
+    return np.var(tensor_array, axis=axis, keepdims=keepdims)
 
-def sort(tensor_obj, tensor: Any, axis: int = -1, descending: bool = False) -> np.ndarray:
+def sort(data: TensorLike, axis: int = -1, descending: bool = False) -> np.ndarray:
     """
-    Sort a tensor along a specified axis.
+    Sort a tensor along the given axis.
     
     Args:
-        tensor_obj: NumpyTensor instance
-        tensor: Input tensor
+        data: Input array
         axis: Axis along which to sort
         descending: Whether to sort in descending order
         
     Returns:
-        Sorted tensor
+        Sorted array
     """
-    tensor_np = tensor_obj.convert_to_tensor(tensor)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    tensor_array = Tensor.convert_to_tensor(data)
     
     # Sort the tensor
+    sorted_array = np.sort(tensor_array, axis=axis)
+    
     if descending:
-        return -np.sort(-tensor_np, axis=axis)
-    else:
-        return np.sort(tensor_np, axis=axis)
+        # Create a list of slice objects for each dimension
+        slices = [slice(None)] * tensor_array.ndim
+        # Reverse the array along the specified axis
+        slices[axis] = slice(None, None, -1)
+        sorted_array = sorted_array[tuple(slices)]
+    
+    return sorted_array
 
-def argsort(tensor_obj, tensor: Any, axis: int = -1, descending: bool = False) -> np.ndarray:
+def argsort(data: TensorLike, axis: int = -1, descending: bool = False) -> np.ndarray:
     """
-    Return the indices that would sort a tensor along a specified axis.
+    Return the indices that would sort a tensor along the given axis.
     
     Args:
-        tensor_obj: NumpyTensor instance
-        tensor: Input tensor
+        data: Input array
         axis: Axis along which to sort
         descending: Whether to sort in descending order
         
     Returns:
-        Indices that would sort the tensor
+        Indices that would sort the array
     """
-    tensor_np = tensor_obj.convert_to_tensor(tensor)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    tensor_array = Tensor.convert_to_tensor(data)
     
-    # Get the indices that would sort the tensor
     if descending:
-        return np.argsort(-tensor_np, axis=axis)
+        # For descending order, we need to negate the array, get the argsort, and then use those indices
+        indices = np.argsort(-tensor_array, axis=axis)
+        return indices
     else:
-        return np.argsort(tensor_np, axis=axis)
+        return np.argsort(tensor_array, axis=axis)
 
-def maximum(tensor_obj, x: Any, y: Any) -> np.ndarray:
+def maximum(data1: TensorLike, data2: TensorLike) -> np.ndarray:
     """
-    Element-wise maximum of two tensors.
+    Element-wise maximum of two arrays.
     
     Args:
-        tensor_obj: NumpyTensor instance
-        x: First input tensor
-        y: Second input tensor
+        data1: First input array
+        data2: Second input array
         
     Returns:
         Element-wise maximum
     """
-    x_np = tensor_obj.convert_to_tensor(x)
-    y_np = tensor_obj.convert_to_tensor(y)
-    return np.maximum(x_np, y_np)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    data1_array = Tensor.convert_to_tensor(data1)
+    data2_array = Tensor.convert_to_tensor(data2)
+    return np.maximum(data1_array, data2_array)
+
+# Alias for backward compatibility
+convert_to_tensor = convert_to_numpy_tensor
