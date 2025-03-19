@@ -1,7 +1,7 @@
 import pytest
 from ember_ml import ops
 from ember_ml.backend import set_backend, get_backend
-from ember_ml.nn.modules import AutoNCP
+from ember_ml.nn.wirings import AutoNCP  # Import from wirings, not modules
 import ember_ml.nn.tensor as tensor
 
 @pytest.fixture(params=['numpy', 'torch', 'mlx'])
