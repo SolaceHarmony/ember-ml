@@ -5,9 +5,9 @@ from typing import Union, Optional, Sequence, Any, List, Tuple
 
 from ember_ml.backend.numpy.tensor.dtype import NumpyDType
 from ember_ml.backend.numpy.types import Shape, TensorLike, DType
-from ember_ml.backend.numpy.tensor.ops.utility import _create_new_tensor # Import the helper
 
-# DTypeHandler instance removed, logic moved to helper/local
+# Create single instances to reuse throughout the module
+DTypeHandler = NumpyDType()
 
 def random_normal(shape: Shape, mean: float = 0.0, stddev: float = 1.0,
                  dtype: Optional[DType] = None, device: Optional[str] = None) -> np.ndarray:
@@ -24,10 +24,15 @@ def random_normal(shape: Shape, mean: float = 0.0, stddev: float = 1.0,
     Returns:
         NumPy array with random normal values
     """
-    # Use the helper function, passing np.random.normal and its specific args
-    # Note: np.random.normal expects 'size' instead of 'shape'
-    return _create_new_tensor(np.random.normal, dtype=dtype, device=device, size=shape, loc=mean, scale=stddev)
-
+    # Convert shape to a sequence if it's an int
+    if isinstance(shape, int):
+        shape = (shape,)
+    
+    # Validate dtype
+    numpy_dtype = DTypeHandler.validate_dtype(dtype)
+    
+    # Use NumPy's normal function
+    return np.random.normal(loc=mean, scale=stddev, size=shape).astype(numpy_dtype) if numpy_dtype is not None else np.random.normal(loc=mean, scale=stddev, size=shape)
 
 def random_uniform(shape: Shape, minval: float = 0.0, maxval: float = 1.0,
                   dtype: Optional[DType] = None, device: Optional[str] = None) -> np.ndarray:
@@ -44,28 +49,21 @@ def random_uniform(shape: Shape, minval: float = 0.0, maxval: float = 1.0,
     Returns:
         NumPy array with random uniform values
     """
-    # Check if dtype is an integer type
-    is_integer_dtype = False
-    if dtype is not None:
-        # Convert to NumPy dtype if it's not already
-        numpy_dtype = NumpyDType().validate_dtype(dtype)
-        if numpy_dtype is not None:
-            # Check if it's an integer dtype
-            is_integer_dtype = np.issubdtype(numpy_dtype, np.integer)
+    # Convert shape to a sequence if it's an int
+    if isinstance(shape, int):
+        shape = (shape,)
     
-    if is_integer_dtype:
-        # For integer types, use np.random.randint
-        # np.random.randint is inclusive of low but exclusive of high, so we need to add 1 to high
-        high = int(maxval) + 1 if maxval == int(maxval) else int(maxval + 1)
-        low = int(minval)
-        
-        # Use np.random.randint with the validated dtype
-        return _create_new_tensor(np.random.randint, dtype=dtype, device=device, 
-                                 low=low, high=high, size=shape)
-    else:
-        # For float types, use np.random.uniform
-        return _create_new_tensor(np.random.uniform, dtype=dtype, device=device, 
-                                 size=shape, low=minval, high=maxval)
+    # Validate dtype
+    numpy_dtype = DTypeHandler.validate_dtype(dtype)
+    
+    # Use NumPy's uniform function
+    tensor = np.random.uniform(low=minval, high=maxval, size=shape)
+    
+    # Cast to the specified dtype if needed
+    if numpy_dtype is not None:
+        tensor = tensor.astype(numpy_dtype)
+    
+    return tensor
 
 def random_binomial(shape: Shape, p: float = 0.5,
                    dtype: Optional[DType] = None, device: Optional[str] = None) -> np.ndarray:
@@ -81,19 +79,21 @@ def random_binomial(shape: Shape, p: float = 0.5,
     Returns:
         NumPy array with random binomial values
     """
-
-    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
-    # Convert to NumPy array if needed
-    Tensor = NumpyTensor()
-
-    # np.random.binomial specific args: n, p, size
-    # Need to handle 'p' conversion separately if it might not be a scalar
-    p_native = Tensor.convert_to_tensor(p) # Ensure p is usable by numpy
-
-    # Use the helper, passing np.random.binomial and its specific args
-    # Let helper handle dtype resolution (defaults likely to int)
-    # Note: np.random.binomial expects 'size' instead of 'shape'
-    return _create_new_tensor(np.random.binomial, dtype=dtype, device=device, size=shape, n=1, p=p_native)
+    # Convert shape to a sequence if it's an int
+    if isinstance(shape, int):
+        shape = (shape,)
+    
+    # Validate dtype
+    numpy_dtype = DTypeHandler.validate_dtype(dtype)
+    
+    # Use NumPy's binomial function
+    result = np.random.binomial(n=1, p=p, size=shape)
+    
+    # Convert to the specified dtype if needed
+    if numpy_dtype is not None:
+        result = result.astype(numpy_dtype)
+    
+    return result
 
 def random_exponential(shape: Shape, scale: float = 1.0,
                       dtype: Optional[DType] = None, device: Optional[str] = None) -> np.ndarray:
@@ -109,10 +109,19 @@ def random_exponential(shape: Shape, scale: float = 1.0,
     Returns:
         NumPy array with random values from an exponential distribution
     """
-    # Use the helper function, passing np.random.exponential and its specific args
-    # Let helper handle dtype resolution (defaults likely to float)
-    # Note: np.random.exponential expects 'size' instead of 'shape'
-    return _create_new_tensor(np.random.exponential, dtype=dtype, device=device, size=shape, scale=scale)
+    # Convert shape to sequence if it's an int
+    if isinstance(shape, int):
+        shape = (shape,)
+    
+    # Generate exponential random values
+    result = np.random.exponential(scale=scale, size=shape)
+    
+    # Validate dtype
+    numpy_dtype = DTypeHandler.validate_dtype(dtype)
+    if numpy_dtype is not None:
+        result = result.astype(numpy_dtype)
+    
+    return result
 
 def random_gamma(shape: Shape, alpha: float = 1.0, beta: float = 1.0,
                 dtype: Optional[DType] = None, device: Optional[str] = None) -> np.ndarray:
@@ -129,13 +138,22 @@ def random_gamma(shape: Shape, alpha: float = 1.0, beta: float = 1.0,
     Returns:
         NumPy array with random values from a gamma distribution
     """
+    # Convert shape to sequence if it's an int
+    if isinstance(shape, int):
+        shape = (shape,)
+    
     if alpha <= 0:
         raise ValueError("Alpha parameter must be positive")
-    # Use the helper function, passing np.random.gamma and its specific args
-    # Let helper handle dtype resolution (defaults likely to float)
-    # Note: np.random.gamma uses 'shape' for the alpha parameter, and 'size' for the output shape.
-    # We need to map our 'shape' argument to numpy's 'size' argument.
-    return _create_new_tensor(np.random.gamma, dtype=dtype, device=device, shape_param=alpha, scale=beta, size=shape)
+    
+    # Generate gamma random values
+    result = np.random.gamma(shape=alpha, scale=beta, size=shape)
+    
+    # Validate dtype
+    numpy_dtype = DTypeHandler.validate_dtype(dtype)
+    if numpy_dtype is not None:
+        result = result.astype(numpy_dtype)
+    
+    return result
 
 def random_poisson(shape: Shape, lam: float = 1.0,
                   dtype: Optional[DType] = None, device: Optional[str] = None) -> np.ndarray:
@@ -151,10 +169,19 @@ def random_poisson(shape: Shape, lam: float = 1.0,
     Returns:
         NumPy array with random values from a Poisson distribution
     """
-    # Use the helper function, passing np.random.poisson and its specific args
-    # Let helper handle dtype resolution (defaults likely to int)
-    # Note: np.random.poisson expects 'size' instead of 'shape'
-    return _create_new_tensor(np.random.poisson, dtype=dtype, device=device, size=shape, lam=lam)
+    # Convert shape to sequence if it's an int
+    if isinstance(shape, int):
+        shape = (shape,)
+    
+    # Generate poisson random values
+    result = np.random.poisson(lam=lam, size=shape)
+    
+    # Validate dtype
+    numpy_dtype = DTypeHandler.validate_dtype(dtype)
+    if numpy_dtype is not None and numpy_dtype != np.int32:
+        result = result.astype(numpy_dtype)
+    
+    return result
 
 def random_categorical(data: TensorLike, num_samples: int,
                       dtype: Optional[DType] = None, device: Optional[str] = None) -> np.ndarray:
@@ -183,12 +210,12 @@ def random_categorical(data: TensorLike, num_samples: int,
     probs = np.divide(exp_logits, sum_exp_logits)
     
     # Sample from the categorical distribution
-    result = np.zeros((logits_tensor.shape[0], num_samples), dtype=np.int32)
+    result = np.zeros((logits_tensor.shape[0], num_samples), dtype=np.int64)
     for i in range(logits_tensor.shape[0]):
         result[i] = np.random.choice(logits_tensor.shape[1], size=num_samples, p=probs[i])
     
     # Validate dtype
-    numpy_dtype = NumpyDType().validate_dtype(dtype)
+    numpy_dtype = DTypeHandler.validate_dtype(dtype)
     if numpy_dtype is not None:
         result = result.astype(numpy_dtype)
     
@@ -230,40 +257,11 @@ def random_permutation(data: Union[int, TensorLike], dtype: Optional[DType] = No
         result = arr[indices]
     
     # Validate dtype
-    numpy_dtype = NumpyDType().validate_dtype(dtype)
+    numpy_dtype = DTypeHandler.validate_dtype(dtype)
     if numpy_dtype is not None:
         result = result.astype(numpy_dtype)
     
     return result
-
-def random_shuffle(data: TensorLike) -> np.ndarray:
-    """
-    Randomly shuffle a NumPy array along the first dimension.
-    Similar to shuffle but specifically for shuffling indices.
-    
-    Args:
-        data: Input array
-    
-    Returns:
-        Shuffled NumPy array
-    """
-    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
-    Tensor = NumpyTensor()
-    
-    data_tensor = Tensor.convert_to_tensor(data)
-    
-    # Get the shape of the tensor
-    shape = data_tensor.shape
-    
-    # If the tensor is empty or has only one element, return it as is
-    if shape[0] <= 1:
-        return data_tensor
-    
-    # Generate random indices
-    indices = np.random.permutation(shape[0])
-    
-    # Gather along the first dimension
-    return data_tensor[indices]
 
 def shuffle(data: TensorLike) -> np.ndarray:
     """

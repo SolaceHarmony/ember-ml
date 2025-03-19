@@ -16,9 +16,6 @@ The project focuses on several key areas:
 All user documentation has been organized into the following directories:
 
 - **[docs/api](docs/api/)**: API reference documentation for all modules
-  - **[docs/api/tensor.md](docs/api/tensor.md)**: Documentation for the tensor module
-  - **[docs/api/tensor_architecture.md](docs/api/tensor_architecture.md)**: Detailed explanation of the tensor operations architecture
-- **[docs/architecture](docs/architecture/)**: Documentation for system architecture
 - **[docs/tutorials](docs/tutorials/)**: Step-by-step guides for common tasks
 - **[docs/examples](docs/examples/)**: Example code and usage patterns
 - **[docs/plans](docs/plans/)**: Development plans and roadmaps
@@ -45,8 +42,6 @@ The project implements backend-agnostic tensor operations that can use different
 - NumPy (for CPU computation)
 - Future support for additional backends
 
-The tensor operations follow a function-first design pattern, where each operation is implemented as a standalone function that can be called directly or through a method on a tensor class. For more details, see the [Tensor Operations Architecture](docs/api/tensor_architecture.md) document.
-
 ### Feature Extraction
 
 The project includes tools for extracting features from BigQuery tables, including:
@@ -60,7 +55,7 @@ The project includes tools for extracting features from BigQuery tables, includi
 2. Install the required packages: `pip install -r requirements.txt`
 3. Choose your backend:
    ```python
-   from ember_ml.ops import set_backend
+   from ember_ml.backend import set_backend
    
    # Use MLX (optimized for Apple Silicon)
    set_backend('mlx')
@@ -77,7 +72,7 @@ The project includes tools for extracting features from BigQuery tables, includi
 
 ```python
 import ember_ml
-from ember_ml.nn.tensor import EmberTensor
+from ember_ml import ops
 
 # Create a liquid neural network
 model = ember_ml.models.LiquidNeuralNetwork(
@@ -87,7 +82,10 @@ model = ember_ml.models.LiquidNeuralNetwork(
 )
 
 # Create input tensor
-x = EmberTensor.random_normal(shape=(100, 10))
+x = ops.random.normal(shape=(100, 10))
 
 # Forward pass
 output = model(x)
+```
+
+=======

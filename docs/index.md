@@ -5,20 +5,9 @@ Welcome to the Ember ML documentation. Ember ML is a hardware-optimized neural n
 ## Documentation Sections
 
 - [API Reference](api/index.md): Detailed API documentation for all modules
-  - [Frontend Usage Guide](api/frontend_usage_guide.md): Comprehensive guide on using the Ember ML frontend
-  - [Tensor Architecture](api/tensor_architecture.md): Detailed explanation of the tensor operations architecture
-- [Architecture](architecture/index.md): System architecture and design principles
-  - [Ember ML Architecture](architecture/ember_ml_architecture.md): Comprehensive overview of the Ember ML architecture
-  - [Function-First Design](architecture/function_first_design.md): Detailed explanation of the function-first design pattern
 - [Tutorials](tutorials/index.md): Step-by-step guides for common tasks
 - [Examples](examples/index.md): Code examples and use cases
-
-## Other Key Documents
-
-- [Initializers Guide](initializers_guide.md): Guide to weight initializers.
-- [Neuron Model vs Role](neuron_model_vs_role.md): Comparison of neuron models and roles.
-- [Testing Parameter Access](test_parameter_access.md): Testing parameter access.
-- [Testing Backends](TESTING_BACKENDS.md): Guide to testing different backends.
+- [Plans](plans/): Development plans and roadmaps
 
 ## Quick Start
 
@@ -31,30 +20,34 @@ pip install ember-ml
 ### Basic Usage
 
 ```python
-import ember_ml
-from ember_ml.nn.tensor import EmberTensor
+import ember_ml as eh
 from ember_ml import ops
 
-# Set the backend
-ember_ml.backend.set_backend('mlx')  # or 'torch' or 'numpy'
+# Set the backend (optional, auto-selects by default)
+eh.set_backend('torch')  # or 'numpy', 'mlx'
 
-# Create a tensor
-tensor = EmberTensor([[1, 2, 3], [4, 5, 6]])
+# Create a liquid neural network
+model = eh.models.LiquidNeuralNetwork(
+    input_size=10,
+    hidden_size=32,
+    output_size=1
+)
 
-# Perform operations
-result = ops.matmul(tensor, EmberTensor([[1], [2], [3]]))
-print(result)  # EmberTensor([[14], [32]])
+# Create input tensor
+x = ops.random.normal(shape=(100, 10))
+
+# Forward pass
+output = model(x)
 ```
 
-For more detailed instructions, see the [Getting Started](tutorials/getting_started.md) guide and the [Frontend Usage Guide](api/frontend_usage_guide.md).
+For more detailed instructions, see the [Getting Started](tutorials/getting_started.md) guide.
 
 ## Key Features
 
-- **Hardware-Optimized Neural Networks**: Implementation of cutting-edge neural network architectures optimized for different hardware platforms
-- **Multi-Backend Support**: Backend-agnostic tensor operations that work with PyTorch, MLX, NumPy, and other computational backends
-- **Function-First Design**: Efficient memory usage through separation of functions from class implementations
-- **Liquid Neural Networks**: Design and implementation of liquid neural networks and other advanced architectures
-- **Neural Circuit Policies**: Biologically-inspired neural architectures with custom wiring configurations
+- **Backend Abstraction**: Automatically selects the optimal computational backend (MLX, PyTorch, or NumPy)
+- **Neural Network Architectures**: Implementation of cutting-edge neural network architectures like LTC, NCP, and more
+- **Feature Extraction**: Tools for extracting features from large datasets
+- **Hardware Optimization**: Optimized for different hardware platforms (CUDA, Apple Metal, etc.)
 
 ## Core Components
 
@@ -66,8 +59,6 @@ The project implements various cutting-edge neural network architectures:
 - Neural Circuit Policies (NCP): Biologically-inspired neural architectures
 - Stride-Aware Continuous-time Fully Connected (CfC) networks
 - Specialized attention mechanisms and temporal processing units
-
-For more details, see the [Architecture Documentation](architecture/architecture.md).
 
 ### Multi-Backend Support
 
