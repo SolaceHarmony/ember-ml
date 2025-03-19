@@ -2,39 +2,76 @@
 
 import mlx.core as mx
 import numpy
-from typing import Union, Optional, Sequence, Any, Literal, List, TYPE_CHECKING
+from typing import Union, Optional, Sequence, Any, Literal, List, TYPE_CHECKING, Tuple
 from ember_ml.backend.mlx.tensor.dtype import MLXDType
 
 # Conditionally import backend types for type checking only
+import mlx.core
+
+# Basic type aliases
+type Numeric = Union[int, float]
+
+
+
+# Type definitions for MLX dtypes
+type DTypeStr = str
+type DTypeClass = Union[mlx.core.Dtype, str, None]
+
+# Type alias for dtype arguments that maintains compatibility
+# with both MLX's dtype system and tensor.py's DType
+type DType = Any  # Using Any for maximum compatibility
+
+# MLX array types
+type MLXArray = mlx.core.array
+type ArrayLike = Union[MLXArray, Numeric, List[Any], Tuple[Any, ...]]
+
+type TensorTypes = Any
+# Conditional imports
 if TYPE_CHECKING:
-    # These imports are only used for type checking and not at runtime
-    import mlx.core
+    import numpy as np
+    from ember_ml.nn.tensor.common.ember_tensor import EmberTensor
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+    
+    type TensorTypes = Union[
+        np.ndarray,
+        MLXArray,
+        MLXTensor,
+        EmberTensor
+    ]
 
-AllTensorLike = Optional[Union[
-    'numpy.ndarray' if TYPE_CHECKING else Any,
-    'mlx.core.array' if TYPE_CHECKING else Any,
-    Any]]
-
-AllDType = Optional[Union[
-    'mlx.core.Dtype' if TYPE_CHECKING else Any,
-    'numpy.dtype' if TYPE_CHECKING else Any,
-    Any]]
-DType = Optional[Union[str, 
-    AllDType,
-    Any]]  # Any covers backend-specific dtype objects
-
-AllTensorLike = Optional[Union[
-    'numpy.ndarray' if TYPE_CHECKING else Any,
-    'mlx.core.array' if TYPE_CHECKING else Any,
-    Any]]
-
-TensorLike = Optional[Union[
-    int, float, bool, list, tuple, 
-    AllTensorLike
+# Main type definitions
+type TensorLike = Optional[Union[
+    Numeric,
+    bool,
+    List[Any],
+    Tuple[Any, ...],
+    TensorTypes
 ]]
-# Shape definitions
-Shape = Sequence[int]
-ShapeLike = Union[int, Shape]
+
+# Shape types
+type Shape = Sequence[int]
+type ShapeType = Union[int, Tuple[int, ...], List[int]]
+type ShapeLike = Union[int, List[int], Tuple[int, ...], Shape]
+
+# Dimension types
+type DimSize = Union[int, MLXArray]
+type Axis = Optional[Union[int, Sequence[int]]]
+
+# Scalar types
+type ScalarLike = Optional[Union[
+    Numeric,
+    bool,
+    MLXArray,
+    TensorTypes
+]]
+
+# Device type
+type Device = Optional[str]
+
+# Index types
+type IndexType = Union[int, Sequence[int], MLXArray]
+type Indices = Union[Sequence[int], MLXArray]
+
 
 
 class MLXTensor:

@@ -49,7 +49,22 @@ def _convert_input(x: TensorLike) -> Any:
         hasattr(x.__class__, '__name__') and 
         x.__class__.__name__ == 'MLXTensor'):
         return mx.array(x)
-            
+
+    # Handle EmberTensor objects
+    if (hasattr(x, '__class__') and 
+        hasattr(x.__class__, '__name__') and 
+        x.__class__.__name__ == 'EmberTensor'):
+        from ember_ml.nn.tensor.common.ember_tensor import EmberTensor
+        if isinstance(x, EmberTensor):
+            # Extract the underlying tensor data
+            # Assuming EmberTensor has an attribute `_tensor` that holds the actual tensor
+            if hasattr(x, '_tensor') and isinstance(x._tensor, mx.array):
+                return mx.array(x._tensor)
+            else:
+                ValueError(f"EmberTensor does not have a '_tensor' attribute: {x}")
+        else:
+            raise ValueError(f"Unknown type: {type(x)}")
+    
     # Check for NumPy arrays by type name rather than direct import
     # NumPy is allowed as an input tensor because many frameworks use NumPy
     if (hasattr(x, '__class__') and 

@@ -7,7 +7,7 @@ from ember_ml import ops
 tensor.set_seed(812)
 
 # Import the custom modules
-from ember_ml.nn import wirings, tensor
+from ember_ml.nn import modules, wirings,tensor
 import matplotlib.pyplot as plt
 from ember_ml.nn.modules.rnn import StrideAwareWiredCfCCell, StrideAwareCfC
 
@@ -18,7 +18,7 @@ def input_data():
 
 @pytest.fixture
 def wiring():
-    return wirings.AutoNCP(8, 4)  # Reduced for faster testing
+    return modules.AutoNCP(8, 4)  # Reduced for faster testing
 
 @pytest.fixture
 def stride_cell(wiring):
@@ -28,6 +28,11 @@ def stride_cell(wiring):
 def stride_rnn_regular(wiring):
     cell = StrideAwareWiredCfCCell(wiring=wiring, stride_length=2, time_scale_factor=1.0)
     return StrideAwareCfC(units_or_cell=cell, mixed_memory=False)
+
+@pytest.fixture
+def stride_rnn_mixed(wiring):
+    cell = StrideAwareWiredCfCCell(wiring=wiring, stride_length=2, time_scale_factor=1.0)
+    return StrideAwareCfC(units_or_cell=cell, mixed_memory=True)
     
 @pytest.fixture
 def stride_rnn_mixed(wiring):

@@ -5,9 +5,12 @@ This module provides a common implementation of the tensor interface that works
 with any backend (NumPy, PyTorch, MLX) using the backend abstraction layer.
 """
 
-from typing import Any, Optional, List, Union, Tuple, Sequence, Callable, Iterator
 
-from ember_ml.nn.tensor.common.dtypes import EmberDType as DType
+from typing import Any, Optional, List, Union, Tuple, Sequence, Callable, Iterator,TYPE_CHECKING
+TensorLike = Any
+DType = Any
+if TYPE_CHECKING:
+    from ember_ml.nn.tensor.types import TensorLike, DType
 from ember_ml.nn.tensor.interfaces import TensorInterface
 from ember_ml.nn.tensor.common import (
     _convert_to_backend_tensor, to_numpy, item, shape, dtype, zeros, ones, zeros_like, ones_like,
@@ -26,10 +29,10 @@ class EmberTensor(TensorInterface):
     This implementation delegates all operations to the current backend through
     the backend abstraction layer, ensuring backend purity and compatibility.
     """
-    
+
     def __repr__(self) -> str:
         """Return a string representation of the tensor."""
-        return self.__str__()
+        return f"EmberTensor({to_numpy(self._tensor)})"
     
     def __str__(self) -> str:
         """Return a string representation of the tensor.
@@ -93,16 +96,8 @@ class EmberTensor(TensorInterface):
         # Get the backend-specific dtype directly from the tensor
         backend_dtype = get_dtype(self._tensor)
         # Store our processed dtype or convert from backend dtype
-        if processed_dtype is not None:
-            self._dtype = processed_dtype
-        else:
-            # Convert backend-specific dtype to EmberDType if needed
-            if isinstance(backend_dtype, DType):
-                self._dtype = backend_dtype
-            else:
-                # Extract the name and create an EmberDType
-                dtype_name = str(backend_dtype).split('.')[-1]
-                self._dtype = DType(dtype_name)
+        self._dtype = processed_dtype
+
 
     def to_backend_tensor(self) -> Any:
         """Get the underlying backend tensor."""
@@ -261,8 +256,7 @@ class EmberTensor(TensorInterface):
         Returns:
             Tensor of ones with the same shape as x
         """
-        if isinstance(x, EmberTensor):
-            x = x.to_backend_tensor()
+        x = x.to_backend_tensor()
         tensor = ones_like(x, dtype=dtype)
         return tensor
     
@@ -279,7 +273,9 @@ class EmberTensor(TensorInterface):
         Returns:
             Identity matrix of shape (n, m)
         """
+
         tensor = eye(n, m, dtype=dtype)
+        tensor = tensor.to_backend_tensor()
         return tensor
     
     def arange(self, start: int, stop: Optional[int] = None, step: int = 1, dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
@@ -719,8 +715,6 @@ class EmberTensor(TensorInterface):
             updates = updates.to_backend_tensor()
         result = tensor_scatter_nd_update(tensor, indices, updates)
         return result
-    
-    # Removed duplicate scatter method
     
     def maximum(self, x1: Any, x2: Any) -> Any:
         """

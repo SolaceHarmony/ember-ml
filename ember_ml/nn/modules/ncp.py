@@ -5,10 +5,11 @@ This module provides the NCP class, which implements a neural circuit policy
 using a wiring configuration.
 """
 
-import numpy as np
-from typing import Optional, Tuple, Dict, Any, Union, List
+from typing import Optional, Tuple, Dict, Any, Union
 
 from ember_ml import ops
+from ember_ml.ops import linearalg
+from ember_ml.nn import tensor
 from ember_ml.nn.modules.base_module import BaseModule as Module, Parameter
 from ember_ml.nn.wirings.wiring import Wiring
 
@@ -55,9 +56,9 @@ class NCP(Module):
         self.dtype = dtype
         
         # Get masks from wiring
-        self.input_mask = ops.convert_to_tensor(self.wiring.get_input_mask())
-        self.recurrent_mask = ops.convert_to_tensor(self.wiring.get_recurrent_mask())
-        self.output_mask = ops.convert_to_tensor(self.wiring.get_output_mask())
+        self.input_mask = tensor.convert_to_tensor(self.wiring.get_input_mask())
+        self.recurrent_mask = tensor.convert_to_tensor(self.wiring.get_recurrent_mask())
+        self.output_mask = tensor.convert_to_tensor(self.wiring.get_output_mask())
         
         # Initialize weights
         self._kernel = Parameter(
@@ -110,24 +111,24 @@ class NCP(Module):
             # Glorot uniform initialization
             fan_in = shape[0] if len(shape) >= 1 else 1
             fan_out = shape[1] if len(shape) >= 2 else 1
-            limit = np.sqrt(6 / (fan_in + fan_out))
-            return ops.random_uniform(shape, -limit, limit, dtype=self.dtype)
+            limit = ops.sqrt(ops.divide(6, (fan_in + fan_out)))
+            return tensor.random_uniform(shape, -limit, limit, dtype=self.dtype)
         elif initializer == "orthogonal":
             # Orthogonal initialization
             if len(shape) < 2:
                 raise ValueError("Orthogonal initialization requires at least 2 dimensions")
             # Generate a random matrix
-            a = ops.random_normal(shape, dtype=self.dtype)
+            a = tensor.random_normal(shape, dtype=self.dtype)
             # Compute the QR factorization
-            q, r = np.linalg.qr(ops.to_numpy(a))
+            q, r = linearalg.qr(tensor.to_numpy(a))
             # Make Q uniform according to https://arxiv.org/pdf/1312.6120.pdf
-            d = np.diag(r)
-            ph = np.sign(d)
-            q *= ph
+            d = tensor.diag(r)
+            ph = tensor.sign(d)
+            q = ops.multiply(ph,q)
             return ops.convert_to_tensor(q)
         elif initializer == "zeros":
             # Zeros initialization
-            return ops.zeros(shape, dtype=self.dtype)
+            return tensor.zeros(shape, dtype=self.dtype)
         else:
             raise ValueError(f"Unknown initializer: {initializer}")
     
@@ -183,7 +184,7 @@ class NCP(Module):
         """
         Reset the state of the NCP module.
         """
-        self.state = ops.zeros((1, self.wiring.units))
+        self.state = tensor.zeros((1, self.wiring.units))
     
     def get_config(self) -> Dict[str, Any]:
         """
@@ -200,7 +201,8 @@ class NCP(Module):
             "kernel_initializer": self.kernel_initializer,
             "recurrent_initializer": self.recurrent_initializer,
             "bias_initializer": self.bias_initializer,
-            "dtype": self.dtype
+            "dtype": self.dtype,
+            "state": self.state
         }
         return config
     
@@ -230,4 +232,5 @@ class NCP(Module):
         wiring = wiring_class.from_config(wiring_config)
         
         # Create the NCP module
+        config['state'] = tensor.zeros((1, wiring.units))
         return cls(wiring=wiring, **config)

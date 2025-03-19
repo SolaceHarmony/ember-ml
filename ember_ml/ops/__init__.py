@@ -5,22 +5,21 @@ This module provides operations that abstract machine learning library
 scalar operations. Tensor operations ONLY EXIST in ember_ml.nn.tensor and backend.*.tensor.*. The only exception is tensor compatibility with arithmetic.
 """
 
-import os
-import importlib
-from typing import Optional, Dict, Any, Type
+from typing import Type
 
 # Import interfaces
-from ember_ml.ops.interfaces import MathOps, DeviceOps, ComparisonOps, SolverOps, IOOps, LossOps, VectorOps
+#from ember_ml.ops import MathOps, DeviceOps, ComparisonOps
+#from ember_ml.ops import IOOps, LossOps, VectorOps
+#from ember_ml.ops.linearalg import LinearAlgOps
 
 # Import specific operations from interfaces
-from ember_ml.ops.interfaces.math_ops import *
-from ember_ml.ops.interfaces.device_ops import *
-from ember_ml.ops.interfaces.comparison_ops import *
-from ember_ml.ops.interfaces.solver_ops import *
-from ember_ml.ops.interfaces.io_ops import *
-from ember_ml.ops.interfaces.loss_ops import *
-from ember_ml.ops.interfaces.vector_ops import *
-
+from ember_ml.ops.math_ops import *
+from ember_ml.ops.device_ops import *
+from ember_ml.ops.comparison_ops import *
+from ember_ml.ops.io_ops import *
+from ember_ml.ops.loss_ops import *
+from ember_ml.ops.vector_ops import *
+from ember_ml.ops.feature_ops import *
 
 # Use backend directly
 from ember_ml.backend import get_backend, set_backend, get_backend_module
@@ -70,10 +69,10 @@ def _get_ops_instance(ops_class: Type):
             class_name = f"{class_name_prefix}MathOps"
         elif ops_class == DeviceOps:
             class_name = f"{class_name_prefix}DeviceOps"
+        elif ops_class == FeatureOps:
+            class_name = f"{class_name_prefix}FeatureOps"
         elif ops_class == ComparisonOps:
             class_name = f"{class_name_prefix}ComparisonOps"
-        elif ops_class == SolverOps:
-            class_name = f"{class_name_prefix}SolverOps"
         elif ops_class == IOOps:
             class_name = f"{class_name_prefix}IOOps"
         elif ops_class == LossOps:
@@ -102,9 +101,9 @@ def comparison_ops() -> ComparisonOps:
     """Get comparison operations."""
     return _get_ops_instance(ComparisonOps)
 
-def solver_ops() -> SolverOps:
-    """Get solver operations."""
-    return _get_ops_instance(SolverOps)
+def feature_ops() -> FeatureOps:
+    """Get feature operations."""
+    return _get_ops_instance(FeatureOps)
 
 def io_ops() -> IOOps:
     """Get I/O operations."""
@@ -216,7 +215,6 @@ euclidean_distance = lambda *args, **kwargs: vector_ops().euclidean_distance(*ar
 cosine_similarity = lambda *args, **kwargs: vector_ops().cosine_similarity(*args, **kwargs)
 exponential_decay = lambda *args, **kwargs: vector_ops().exponential_decay(*args, **kwargs)
 gaussian = lambda *args, **kwargs: vector_ops().gaussian(*args, **kwargs)
-
 # Export all functions and classes
 __all__ = [
     # Classes
@@ -237,6 +235,7 @@ __all__ = [
     'io_ops',
     'loss_ops',
     'vector_ops',
+    'linearalg_ops',
     'get_activation',
     'gradient',
     
@@ -277,6 +276,7 @@ __all__ = [
     'gradient',
     'cumsum',
     'eigh',
+    'eigh',
     
     # Device operations
     'to_device',
@@ -284,6 +284,13 @@ __all__ = [
     'get_available_devices',
     'memory_usage',
     'memory_info',
+    
+    # Feature operations
+    'pca',
+    'transform',
+    'inverse_transform',
+    'standardize',
+    'normalize',
     
     # Comparison operations
     'equal',
@@ -323,30 +330,6 @@ __all__ = [
     'euclidean_distance',
     'cosine_similarity',
     'exponential_decay',
-    'gaussian',
-    
-    # Solver operations
-    'solve',
-    'inv',
-    'det',
-    'norm',
-    'qr',
-    'svd',
-    'cholesky',
-    'lstsq',
-    'eig',
-    'eigvals',
+    'gaussian'
     
 ]
-
-# Solver operations
-solve = lambda *args, **kwargs: solver_ops().solve(*args, **kwargs)
-inv = lambda *args, **kwargs: solver_ops().inv(*args, **kwargs)
-det = lambda *args, **kwargs: solver_ops().det(*args, **kwargs)
-norm = lambda *args, **kwargs: solver_ops().norm(*args, **kwargs)
-qr = lambda *args, **kwargs: solver_ops().qr(*args, **kwargs)
-svd = lambda *args, **kwargs: solver_ops().svd(*args, **kwargs)
-cholesky = lambda *args, **kwargs: solver_ops().cholesky(*args, **kwargs)
-lstsq = lambda *args, **kwargs: solver_ops().lstsq(*args, **kwargs)
-eig = lambda *args, **kwargs: solver_ops().eig(*args, **kwargs)
-eigvals = lambda *args, **kwargs: solver_ops().eigvals(*args, **kwargs)

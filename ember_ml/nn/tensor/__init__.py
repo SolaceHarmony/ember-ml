@@ -54,9 +54,11 @@ def array(data, dtype=None, device=None, requires_grad=False):
     """
     return EmberTensor(data, dtype=dtype, device=device, requires_grad=requires_grad)
 
-def convert_to_tensor(data, dtype=None, device=None, requires_grad=False):
+from typing import Any
+
+def convert_to_tensor(data: Any, dtype=None, device=None, requires_grad=False):
     """
-    Convert any tensor or array-like object to an EmberTensor.
+    Create a tensor from data.
     
     Args:
         data: Input data (array, list, scalar, or tensor)
@@ -68,7 +70,7 @@ def convert_to_tensor(data, dtype=None, device=None, requires_grad=False):
         EmberTensor
     """
     # If already an EmberTensor, return it directly (reference passing)
-    if isinstance(data, EmberTensor):
+    if type(EmberTensor) == type(data):
         return data
     
     # Convert to backend tensor first using the internal function

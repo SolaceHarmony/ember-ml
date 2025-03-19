@@ -31,7 +31,7 @@ type DType = Any  # Using Any for maximum compatibility
 type MLXArray = mlx.core.array
 type ArrayLike = Union[MLXArray, Numeric, List[Any], Tuple[Any, ...]]
 
-
+type TensorTypes = Any
 # Conditional imports
 if TYPE_CHECKING:
     import numpy as np
@@ -44,8 +44,6 @@ if TYPE_CHECKING:
         MLXTensor,
         EmberTensor
     ]
-else:
-    type TensorTypes = Any
 
 # Main type definitions
 type TensorLike = Optional[Union[
