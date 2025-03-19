@@ -2,11 +2,12 @@ from ember_ml import ops
 from ember_ml.nn import tensor
 import matplotlib.pyplot as plt
 import numpy as np
-
+ 
 # Set backend to torch
 ops.set_backend('torch')
 
 # Create an EmberTensor
+
 tensor = tensor.ones((10,))
 print('Type:', type(tensor))
 
