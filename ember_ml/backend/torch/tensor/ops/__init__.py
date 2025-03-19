@@ -14,7 +14,7 @@ from ember_ml.backend.torch.tensor.ops.manipulation import (
     reshape, transpose, concatenate, stack, split, expand_dims, squeeze, tile, pad
 )
 from ember_ml.backend.torch.tensor.ops.indexing import (
-    slice_tensor, slice_update, gather, tensor_scatter_nd_update
+    slice_tensor, slice_update, gather, tensor_scatter_nd_update, scatter
 )
 from ember_ml.backend.torch.tensor.ops.utility import (
     convert_to_tensor, to_numpy, item, shape, dtype, copy, var, sort, argsort, maximum
@@ -56,6 +56,7 @@ __all__ = [
     'slice_update',
     'gather',
     'tensor_scatter_nd_update',
+    'scatter',
     
     # Utility operations
     'convert_to_tensor',

@@ -8,6 +8,7 @@ import pytest
 import numpy as np
 
 from ember_ml import ops
+from ember_ml.nn import tensor
 from ember_ml.nn.wirings import NCPWiring, FullyConnectedWiring, RandomWiring
 from ember_ml.nn.modules import NCP, AutoNCP
 
@@ -71,7 +72,7 @@ def test_ncp_forward():
     )
     
     # Create input data
-    inputs = ops.convert_to_tensor(np.random.randn(10, 15))
+    inputs = tensor.convert_to_tensor(np.random.randn(10, 15))
     
     # Forward pass
     outputs = model(inputs)
@@ -101,7 +102,7 @@ def test_ncp_reset_state():
     )
     
     # Create input data
-    inputs = ops.convert_to_tensor(np.random.randn(10, 15))
+    inputs = tensor.convert_to_tensor(np.random.randn(10, 15))
     
     # Forward pass
     outputs1 = model(inputs)
@@ -190,7 +191,7 @@ def test_auto_ncp_forward():
     )
     
     # Create input data
-    inputs = ops.convert_to_tensor(np.random.randn(10, 20))
+    inputs = tensor.convert_to_tensor(np.random.randn(10, 20))
     
     # Forward pass
     outputs = model(inputs)

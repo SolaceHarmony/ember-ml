@@ -6,8 +6,8 @@ This script demonstrates using the EmberTensor backend for basic tensor operatio
 
 from ember_ml import ops
 from ember_ml.backend import set_backend, get_backend
-from ember_ml.ops.tensor import EmberTensor
-
+from ember_ml.nn.tensor import EmberTensor
+from ember_ml.nn import tensor
 # Save the current backend
 original_backend = get_backend()
 
@@ -21,7 +21,7 @@ print(f"Current backend: {current_backend}")
 
 # Create a tensor
 print("\nCreating a tensor...")
-tensor = ops.convert_to_tensor([1, 2, 3])
+tensor = tensor.convert_to_tensor([1, 2, 3])
 print(f"Tensor: {tensor}")
 print(f"Type: {type(tensor)}")
 print(f"Shape: {tensor.shape}")
@@ -40,7 +40,7 @@ print(f"Shape: {ones_tensor.shape}")
 
 # Reshape a tensor
 print("\nReshaping a tensor...")
-tensor = ops.convert_to_tensor([1, 2, 3, 4, 5, 6])
+tensor = tensor.convert_to_tensor([1, 2, 3, 4, 5, 6])
 reshaped = ops.reshape(tensor, (2, 3))
 print(f"Original tensor: {tensor}")
 print(f"Reshaped tensor: {reshaped}")
@@ -48,7 +48,7 @@ print(f"Shape: {reshaped.shape}")
 
 # Expand dimensions of a tensor
 print("\nExpanding dimensions of a tensor...")
-tensor = ops.convert_to_tensor([1, 2, 3])
+tensor = tensor.convert_to_tensor([1, 2, 3])
 expanded = ops.expand_dims(tensor, 0)
 print(f"Original tensor: {tensor}")
 print(f"Expanded tensor: {expanded}")

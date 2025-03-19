@@ -46,7 +46,7 @@ Always use the ops abstraction layer for tensor operations:
 from ember_ml import ops
 
 def process_data(data):
-    tensor = ops.convert_to_tensor(data)
+    tensor = tensor.convert_to_tensor(data)
     return ops.sin(tensor)
 ```
 
@@ -71,8 +71,8 @@ Use ops.cast() with appropriate dtype instead of Python's built-in type conversi
 from ember_ml import ops
 
 def normalize(x):
-    x_tensor = ops.convert_to_tensor(x)
-    return ops.divide(x_tensor, ops.convert_to_tensor(255.0))
+    x_tensor = tensor.convert_to_tensor(x)
+    return ops.divide(x_tensor, tensor.convert_to_tensor(255.0))
 
 # ❌ INCORRECT
 def normalize(x):

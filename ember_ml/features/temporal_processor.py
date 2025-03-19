@@ -6,9 +6,9 @@ This module provides a class for processing data into multi-stride temporal repr
 
 from typing import Dict, List, Optional, Any
 from ember_ml import ops
-from ember_ml.ops.tensor import EmberTensor
+from ember_ml.nn.tensor import EmberTensor
 from ember_ml.features import fit, transform
-
+from ember_ml.nn import tensor
 class TemporalStrideProcessor:
     """
     Processes data into multi-stride temporal representations.
@@ -87,9 +87,9 @@ class TemporalStrideProcessor:
         num_windows_tensor = ops.floor_divide(
             ops.add(
                 ops.subtract(num_samples, self.window_size),
-                ops.convert_to_tensor(1)
+                tensor.convert_to_tensor(1)
             ),
-            ops.convert_to_tensor(stride)
+            tensor.convert_to_tensor(stride)
         )
         # Convert to int and add 1 for range
         num_windows_int = ops.cast(num_windows_tensor, ops.int32).numpy()
@@ -97,7 +97,7 @@ class TemporalStrideProcessor:
         
         for i in range(num_windows):
             # Calculate start and end indices
-            start_idx = ops.multiply(ops.convert_to_tensor(i), ops.convert_to_tensor(stride)).numpy()
+            start_idx = ops.multiply(tensor.convert_to_tensor(i), tensor.convert_to_tensor(stride)).numpy()
             end_idx = ops.add(start_idx, self.window_size).numpy()
             
             # Use data.numpy() only for slicing, then convert back to EmberTensor
@@ -152,21 +152,21 @@ class TemporalStrideProcessor:
                 # Use half the flattened dimension, but cap at 32 components
                 flat_dim = flat_windows_np.shape[1]
                 half_dim = ops.floor_divide(
-                    ops.convert_to_tensor(flat_dim),
-                    ops.convert_to_tensor(2)
+                    tensor.convert_to_tensor(flat_dim),
+                    tensor.convert_to_tensor(2)
                 ).numpy()
                 n_components = min(half_dim, 32)
                 
                 # Ensure we don't try to extract more components than samples
                 batch_size_minus_one = ops.subtract(
-                    ops.convert_to_tensor(batch_size),
-                    ops.convert_to_tensor(1)
+                    tensor.convert_to_tensor(batch_size),
+                    tensor.convert_to_tensor(1)
                 ).numpy()
                 n_components = min(n_components, batch_size_minus_one)
             else:
                 batch_size_minus_one = ops.subtract(
-                    ops.convert_to_tensor(batch_size),
-                    ops.convert_to_tensor(1)
+                    tensor.convert_to_tensor(batch_size),
+                    tensor.convert_to_tensor(1)
                 ).numpy()
                 n_components = min(
                     self.pca_components,
@@ -209,7 +209,7 @@ class TemporalStrideProcessor:
         """
         if stride in self.pca_models:
             variance_ratio = self.pca_models[stride]["explained_variance_ratio"]
-            return EmberTensor(ops.sum(ops.convert_to_tensor(variance_ratio)))
+            return EmberTensor(ops.sum(tensor.convert_to_tensor(variance_ratio)))
         return None
     
     def get_feature_importance(self, stride: int) -> Optional[EmberTensor]:
@@ -224,7 +224,7 @@ class TemporalStrideProcessor:
         """
         if stride in self.pca_models:
             # Calculate feature importance as the sum of absolute component weights
-            components = ops.convert_to_tensor(self.pca_models[stride]["components"])
+            components = tensor.convert_to_tensor(self.pca_models[stride]["components"])
             abs_components = ops.abs(components)
             importance = ops.sum(abs_components, axis=0)
             return EmberTensor(importance)

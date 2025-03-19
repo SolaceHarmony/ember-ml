@@ -10,7 +10,7 @@ from typing import Optional, Union, Tuple, Any, Dict, List
 from ember_ml import ops
 from ember_ml.nn.modules import Module
 from ember_ml.nn.container.interfaces import ContainerInterfaces
-
+from ember_ml.nn import tensor
 class Dropout(Module, ContainerInterfaces):
     """
     Applies Dropout to the input.
@@ -43,7 +43,7 @@ class Dropout(Module, ContainerInterfaces):
             Output tensor with dropout applied (if training is True)
         """
         # Ensure x is a tensor
-        x = ops.convert_to_tensor(x)
+        x = tensor.convert_to_tensor(x)
         
         # If not in training mode or rate is 0, return input unchanged
         if not self.training or self.rate == 0.0:
@@ -55,11 +55,11 @@ class Dropout(Module, ContainerInterfaces):
             
         mask = ops.greater_equal(
             ops.random_uniform(ops.shape(x)),
-            ops.convert_to_tensor(self.rate)
+            tensor.convert_to_tensor(self.rate)
         )
         
         # Apply mask and scale
-        scale = ops.convert_to_tensor(1.0 / (1.0 - self.rate))
+        scale = tensor.convert_to_tensor(1.0 / (1.0 - self.rate))
         return ops.multiply(ops.multiply(x, ops.cast(mask, ops.dtype(x))), scale)
     
     def add(self, layer: Any) -> None:

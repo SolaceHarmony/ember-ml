@@ -2,18 +2,22 @@
 
 import torch
 from typing import Union, Optional, Sequence, Any, List, Tuple
+from torch import Size
 
 from ember_ml.backend.torch.tensor.dtype import TorchDType
+from ember_ml.backend.torch.tensor.ops.utility import convert_to_tensor
 
 # Type aliases
-Shape = Union[int, Sequence[int]]
+Shape = Sequence[int]
+TensorLike = Any
+DType = Any
 
-def random_normal(tensor_obj, shape, mean=0.0, stddev=1.0, dtype=None, device=None):
+def random_normal(shape: Shape, mean: float = 0.0, stddev: float = 1.0, 
+                  dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
     """
     Create a tensor with random values from a normal distribution.
     
     Args:
-        tensor_obj: TorchTensor instance
         shape: The shape of the tensor
         mean: The mean of the normal distribution
         stddev: The standard deviation of the normal distribution
@@ -39,12 +43,12 @@ def random_normal(tensor_obj, shape, mean=0.0, stddev=1.0, dtype=None, device=No
     
     return tensor
 
-def random_uniform(tensor_obj, shape, minval=0.0, maxval=1.0, dtype=None, device=None):
+def random_uniform(shape: Shape, minval: float = 0.0, maxval: float = 1.0,
+                   dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
     """
     Create a torch array with random values from a uniform distribution.
     
     Args:
-        tensor_obj: TorchTensor instance
         shape: Shape of the array
         minval: Minimum value
         maxval: Maximum value
@@ -62,11 +66,9 @@ def random_uniform(tensor_obj, shape, minval=0.0, maxval=1.0, dtype=None, device
         shape_list = [shape]
     
     # Handle string dtype values
-    if isinstance(dtype, str):
-        dtype = TorchDType().from_dtype_str(dtype)
-    # Handle EmberDtype objects
-    elif dtype is not None and hasattr(dtype, 'name'):
-        dtype = TorchDType().from_dtype_str(dtype.name)
+    torch_dtype = None
+    if dtype is not None:
+        torch_dtype = TorchDType().from_dtype_str(dtype)
     
     # Generate random values between 0 and 1
     rand_tensor = torch.rand(shape_list, device=device)
@@ -80,17 +82,17 @@ def random_uniform(tensor_obj, shape, minval=0.0, maxval=1.0, dtype=None, device
     result = torch.add(torch.mul(rand_tensor, range_diff), min_tensor)
     
     # Cast to the specified dtype if needed
-    if dtype is not None:
-        result = result.to(dtype)
+    if torch_dtype is not None:
+        result = result.to(torch_dtype)
         
     return result
 
-def random_binomial(tensor_obj, shape, p=0.5, dtype=None, device=None):
+def random_binomial(shape: Shape, p: float = 0.5,
+                    dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
     """
     Create a tensor with random values from a binomial distribution.
     
     Args:
-        tensor_obj: TorchTensor instance
         shape: Shape of the tensor
         p: Probability of success
         dtype: Optional data type
@@ -100,8 +102,9 @@ def random_binomial(tensor_obj, shape, p=0.5, dtype=None, device=None):
         Tensor with random values from a binomial distribution
     """
     # Handle string dtype values
-    if isinstance(dtype, str):
-        dtype = TorchDType().from_dtype_str(dtype)
+    torch_dtype = None
+    if dtype is not None:
+        torch_dtype = TorchDType().from_dtype_str(dtype)
     
     # Convert shape to tuple if it's an integer
     if isinstance(shape, int):
@@ -115,17 +118,17 @@ def random_binomial(tensor_obj, shape, p=0.5, dtype=None, device=None):
     result = torch.bernoulli(torch.full(shape, p, device=device))
     
     # Convert to the specified data type
-    if dtype is not None:
-        result = result.to(dtype)
+    if torch_dtype is not None:
+        result = result.to(torch_dtype)
     
     return result
 
-def random_gamma(tensor_obj, shape, alpha=1.0, beta=1.0, dtype=None, device=None):
+def random_gamma(shape: Shape, alpha: float = 1.0, beta: float = 1.0,
+                 dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
     """
     Generate random values from a gamma distribution.
     
     Args:
-        tensor_obj: TorchTensor instance
         shape: Shape of the output tensor
         alpha: Shape parameter
         beta: Scale parameter
@@ -136,8 +139,9 @@ def random_gamma(tensor_obj, shape, alpha=1.0, beta=1.0, dtype=None, device=None
         PyTorch tensor with random values from a gamma distribution
     """
     # Handle string dtype values
-    if isinstance(dtype, str):
-        dtype = TorchDType().from_dtype_str(dtype)
+    torch_dtype = None
+    if dtype is not None:
+        torch_dtype = TorchDType().from_dtype_str(dtype)
     
     # Convert shape to tuple if it's an integer
     if isinstance(shape, int):
@@ -157,12 +161,11 @@ def random_gamma(tensor_obj, shape, alpha=1.0, beta=1.0, dtype=None, device=None
     
     # Sample from the distribution
     # Convert shape to Size object for PyTorch
-    from torch import Size
     result = gamma_dist.sample(Size(shape))
     
     # Convert to the specified data type
-    if dtype is not None:
-        result = result.to(dtype)
+    if torch_dtype is not None:
+        result = result.to(torch_dtype)
     
     # Move to the specified device
     if device is not None:
@@ -170,12 +173,12 @@ def random_gamma(tensor_obj, shape, alpha=1.0, beta=1.0, dtype=None, device=None
     
     return result
 
-def random_exponential(tensor_obj, shape, scale=1.0, dtype=None, device=None):
+def random_exponential(shape: Shape, scale: float = 1.0,
+                       dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
     """
     Generate random values from an exponential distribution.
     
     Args:
-        tensor_obj: TorchTensor instance
         shape: Shape of the output tensor
         scale: Scale parameter
         dtype: Optional data type
@@ -185,8 +188,9 @@ def random_exponential(tensor_obj, shape, scale=1.0, dtype=None, device=None):
         PyTorch tensor with random values from an exponential distribution
     """
     # Handle string dtype values
-    if isinstance(dtype, str):
-        dtype = TorchDType().from_dtype_str(dtype)
+    torch_dtype = None
+    if dtype is not None:
+        torch_dtype = TorchDType().from_dtype_str(dtype)
     
     # Convert shape to tuple if it's an integer
     if isinstance(shape, int):
@@ -211,17 +215,17 @@ def random_exponential(tensor_obj, shape, scale=1.0, dtype=None, device=None):
     result = torch.negative(scaled_result)
     
     # Convert to the specified data type
-    if dtype is not None:
-        result = result.to(dtype)
+    if torch_dtype is not None:
+        result = result.to(torch_dtype)
     
     return result
 
-def random_poisson(tensor_obj, shape, lam=1.0, dtype=None, device=None):
+def random_poisson(shape: Shape, lam: float = 1.0,
+                   dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
     """
     Generate random values from a Poisson distribution.
     
     Args:
-        tensor_obj: TorchTensor instance
         shape: Shape of the output tensor
         lam: Rate parameter
         dtype: Optional data type
@@ -231,8 +235,9 @@ def random_poisson(tensor_obj, shape, lam=1.0, dtype=None, device=None):
         PyTorch tensor with random values from a Poisson distribution
     """
     # Handle string dtype values
-    if isinstance(dtype, str):
-        dtype = TorchDType().from_dtype_str(dtype)
+    torch_dtype = None
+    if dtype is not None:
+        torch_dtype = TorchDType().from_dtype_str(dtype)
     
     # Convert shape to tuple if it's an integer
     if isinstance(shape, int):
@@ -249,18 +254,18 @@ def random_poisson(tensor_obj, shape, lam=1.0, dtype=None, device=None):
     result = torch.poisson(rate_tensor)
     
     # Convert to the specified data type
-    if dtype is not None:
-        result = result.to(dtype)
+    if torch_dtype is not None:
+        result = result.to(torch_dtype)
     
     return result
 
-def random_categorical(tensor_obj, logits, num_samples, dtype=None, device=None):
+def random_categorical(data: TensorLike, num_samples: int,
+                       dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
     """
     Draw samples from a categorical distribution.
     
     Args:
-        tensor_obj: TorchTensor instance
-        logits: 2D tensor with unnormalized log probabilities
+        data: 2D tensor with unnormalized log probabilities
         num_samples: Number of samples to draw
         dtype: Optional data type
         device: Optional device to place the tensor on
@@ -269,11 +274,12 @@ def random_categorical(tensor_obj, logits, num_samples, dtype=None, device=None)
         Tensor with random categorical values
     """
     # Handle string dtype values
-    if isinstance(dtype, str):
-        dtype = TorchDType().from_dtype_str(dtype)
+    torch_dtype = None
+    if dtype is not None:
+        torch_dtype = TorchDType().from_dtype_str(dtype)
     
     # Convert to PyTorch tensor if needed
-    logits_tensor = tensor_obj.convert_to_tensor(logits)
+    logits_tensor = convert_to_tensor(data)
     
     if device is None:
         from ember_ml.backend.torch.config import DEFAULT_DEVICE
@@ -289,19 +295,19 @@ def random_categorical(tensor_obj, logits, num_samples, dtype=None, device=None)
     samples = torch.multinomial(probs, num_samples, replacement=True)
     
     # Convert to the specified data type
-    if dtype is not None:
-        samples = samples.to(dtype)
+    if torch_dtype is not None:
+        samples = samples.to(torch_dtype)
     
     return samples
 
-def random_permutation(tensor_obj, x, dtype=None, device=None):
+def random_permutation(data: Union[int, TensorLike],
+                       dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
     """
     Generate a random permutation.
     
     Args:
-        tensor_obj: TorchTensor instance
-        x: If an integer, randomly permute integers from 0 to x-1.
-           If a tensor, randomly permute along the first axis.
+        data: If an integer, randomly permute integers from 0 to data-1.
+              If a tensor, randomly permute along the first axis.
         dtype: Optional data type
         device: Optional device to place the tensor on
         
@@ -312,78 +318,75 @@ def random_permutation(tensor_obj, x, dtype=None, device=None):
         from ember_ml.backend.torch.config import DEFAULT_DEVICE
         device = DEFAULT_DEVICE
     
-    if isinstance(x, int):
+    torch_dtype = None
+    if dtype is not None:
+        torch_dtype = TorchDType().from_dtype_str(dtype)
+    
+    if isinstance(data, int):
         # Generate random permutation using PyTorch's randperm function
-        perm = torch.randperm(x, device=device)
+        perm = torch.randperm(data, device=device)
         
         # Convert to the specified data type
-        if dtype is not None:
-            if isinstance(dtype, str):
-                dtype = TorchDType().from_dtype_str(dtype)
-            perm = perm.to(dtype)
+        if torch_dtype is not None:
+            perm = perm.to(torch_dtype)
         
         return perm
     else:
-        # If x is a tensor, permute along the first axis
-        x_tensor = tensor_obj.convert_to_tensor(x)
+        # If data is a tensor, permute along the first axis
+        tensor = convert_to_tensor(data)
         
         # Get the shape of the tensor
-        shape = x_tensor.shape
+        shape = tensor.shape
         
         # If the tensor is empty or has only one element, return it as is
         if shape[0] <= 1:
-            return x_tensor
+            return tensor
         
         # Generate random indices
-        indices = torch.randperm(shape[0], device=x_tensor.device)
+        indices = torch.randperm(shape[0], device=tensor.device)
         
         # Gather along the first dimension
-        return x_tensor[indices]
+        return tensor[indices]
 
-def shuffle(tensor_obj, x):
+def shuffle(data: TensorLike) -> torch.Tensor:
     """
     Randomly shuffle a tensor along the first dimension.
     
     Args:
-        tensor_obj: TorchTensor instance
-        x: Input tensor
+        data: Input tensor
         
     Returns:
         Shuffled tensor
     """
-    x_tensor = tensor_obj.convert_to_tensor(x)
+    tensor = convert_to_tensor(data)
     
     # Get the shape of the tensor
-    shape = x_tensor.shape
+    shape = tensor.shape
     
     # If the tensor is empty or has only one element, return it as is
     if shape[0] <= 1:
-        return x_tensor
+        return tensor
     
     # Generate random indices
-    indices = torch.randperm(shape[0], device=x_tensor.device)
+    indices = torch.randperm(shape[0], device=tensor.device)
     
     # Gather along the first dimension
-    return x_tensor[indices]
+    return tensor[indices]
 
-def set_seed(tensor_obj, seed):
+def set_seed(seed: int) -> None:
     """
     Set the random seed for reproducibility.
     
     Args:
-        tensor_obj: TorchTensor instance
         seed: Random seed
     """
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
 
-def get_seed(tensor_obj):
+def get_seed() -> Optional[int]:
     """
     Get the current random seed.
-    
-    Args:
-        tensor_obj: TorchTensor instance
     
     Returns:
         Current random seed or None if not set

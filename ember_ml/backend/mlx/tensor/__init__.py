@@ -17,7 +17,7 @@ from ember_ml.backend.mlx.tensor.ops import (
     reshape, transpose, concatenate, stack, split, expand_dims, squeeze, tile, pad,
     
     # Indexing operations
-    slice, slice_update, gather, tensor_scatter_nd_update,
+    slice_tensor,slice_update, gather, tensor_scatter_nd_update,
     
     # Utility operations
     convert_to_mlx_tensor, to_numpy, item, shape, dtype, copy, var, sort, argsort, maximum,
@@ -59,7 +59,7 @@ __all__ = [
     'pad',
     
     # Indexing operations
-    'slice',
+    'slice_tensor',
     'slice_update',
     'gather',
     'tensor_scatter_nd_update',

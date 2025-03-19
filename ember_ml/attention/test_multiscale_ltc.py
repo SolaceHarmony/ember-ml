@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import ember_ml as nl
 from ember_ml import ops
+from ember_ml.nn import tensor
 from ember_ml.attention.multiscale_ltc import (
     TemporalStrideProcessor,
     build_multiscale_ltc_model,
@@ -129,13 +130,13 @@ def test_end_to_end():
     test_perspectives = processor.process_batch(X_test)
     
     # Convert to tensors
-    train_inputs = tuple(ops.convert_to_tensor(data, dtype='float32') for data in train_perspectives.values())
-    val_inputs = tuple(ops.convert_to_tensor(data, dtype='float32') for data in val_perspectives.values())
-    test_inputs = tuple(ops.convert_to_tensor(data, dtype='float32') for data in test_perspectives.values())
+    train_inputs = tuple(tensor.convert_to_tensor(data, dtype='float32') for data in train_perspectives.values())
+    val_inputs = tuple(tensor.convert_to_tensor(data, dtype='float32') for data in val_perspectives.values())
+    test_inputs = tuple(tensor.convert_to_tensor(data, dtype='float32') for data in test_perspectives.values())
     
-    train_y = ops.convert_to_tensor(y_train, dtype='float32')
-    val_y = ops.convert_to_tensor(y_val, dtype='float32')
-    test_y = ops.convert_to_tensor(y_test, dtype='float32')
+    train_y = tensor.convert_to_tensor(y_train, dtype='float32')
+    val_y = tensor.convert_to_tensor(y_val, dtype='float32')
+    test_y = tensor.convert_to_tensor(y_test, dtype='float32')
     
     # Build the model
     input_dims = {s: train_perspectives[s].shape[1] for s in train_perspectives.keys()}

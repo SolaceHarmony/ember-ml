@@ -8,6 +8,7 @@ using a wiring configuration.
 from typing import Optional, Dict, Any
 
 from ember_ml import ops
+from ember_ml.nn import tensor
 from ember_ml.nn.tensor import EmberTensor, zeros, convert_to_tensor, cast, expand_dims, tensor_scatter_nd_update, maximum, int32
 from ember_ml.nn.wirings.wiring import Wiring
 
@@ -76,11 +77,11 @@ class NCP(Wiring):
             target_indices = indices[:ops.cast(connections_per_input, int32)]
             # Set the mask values to 1.0 at these indices
             for idx in target_indices:
-                mask_idx = ops.convert_to_tensor([i, idx], dtype=int32)
+                mask_idx = tensor.convert_to_tensor([i, idx], dtype=int32)
                 mask = ops.tensor_scatter_nd_update(
                     mask, 
                     ops.expand_dims(mask_idx, 0), 
-                    ops.convert_to_tensor([1.0])
+                    tensor.convert_to_tensor([1.0])
                 )
         
         return EmberTensor(mask)
@@ -109,11 +110,11 @@ class NCP(Wiring):
             target_indices = indices[:ops.cast(connections_per_unit, int32)]
             # Set the mask values to 1.0 at these indices
             for idx in target_indices:
-                mask_idx = ops.convert_to_tensor([i, idx], dtype=int32)
+                mask_idx = tensor.convert_to_tensor([i, idx], dtype=int32)
                 mask = ops.tensor_scatter_nd_update(
                     mask, 
                     ops.expand_dims(mask_idx, 0), 
-                    ops.convert_to_tensor([1.0])
+                    tensor.convert_to_tensor([1.0])
                 )
         
         return EmberTensor(mask)
@@ -142,11 +143,11 @@ class NCP(Wiring):
             source_indices = indices[:ops.cast(connections_per_output, int32)]
             # Set the mask values to 1.0 at these indices
             for idx in source_indices:
-                mask_idx = ops.convert_to_tensor([idx, i], dtype=int32)
+                mask_idx = tensor.convert_to_tensor([idx, i], dtype=int32)
                 mask = ops.tensor_scatter_nd_update(
                     mask, 
                     ops.expand_dims(mask_idx, 0), 
-                    ops.convert_to_tensor([1.0])
+                    tensor.convert_to_tensor([1.0])
                 )
         
         return EmberTensor(mask)

@@ -51,7 +51,7 @@ def train_step(model: nn.Sequential, x: EmberTensor, y: EmberTensor, learning_ra
     
     # Update parameters (not implemented yet)
     # for param in model.parameters():
-    #     param.data = ops.subtract(param.data, ops.multiply(ops.convert_to_tensor(learning_rate), param.grad))
+    #     param.data = ops.subtract(param.data, ops.multiply(tensor.convert_to_tensor(learning_rate), param.grad))
     
     return loss
 

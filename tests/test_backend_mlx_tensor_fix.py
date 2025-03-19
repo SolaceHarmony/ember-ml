@@ -4,7 +4,7 @@ Test script to verify the MLX backend fixes.
 
 import sys
 import os
-
+from ember_ml.nn import tensor
 # Add the project root to the Python path
 sys.path.insert(0, os.path.abspath('.'))
 
@@ -22,7 +22,7 @@ try:
     
     # Test the var function
     print("\nTesting var function...")
-    tensor = ops.convert_to_tensor([1, 2, 3, 4, 5])
+    tensor = tensor.convert_to_tensor([1, 2, 3, 4, 5])
     variance = ops.var(tensor)
     print(f"Variance of [1, 2, 3, 4, 5] = {variance}")
     

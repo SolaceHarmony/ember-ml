@@ -65,7 +65,7 @@ import numpy as np
 x_np = np.random.randn(3, 4)
 
 # Convert to a tensor
-x = ops.convert_to_tensor(x_np)
+x = tensor.convert_to_tensor(x_np)
 
 # Perform operations
 y = ops.relu(x)

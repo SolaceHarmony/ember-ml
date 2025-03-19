@@ -730,14 +730,14 @@ def train_liquid_network(
         Dictionary of training history
     """
     # Convert inputs to tensors
-    features = ops.convert_to_tensor(features, dtype=ops.float32)
-    targets = ops.convert_to_tensor(targets, dtype=ops.float32)
+    features = tensor.convert_to_tensor(features, dtype=ops.float32)
+    targets = tensor.convert_to_tensor(targets, dtype=ops.float32)
     
     # Convert validation data if provided
     if validation_data is not None:
         val_features, val_targets = validation_data
-        val_features = ops.convert_to_tensor(val_features, dtype=ops.float32)
-        val_targets = ops.convert_to_tensor(val_targets, dtype=ops.float32)
+        val_features = tensor.convert_to_tensor(val_features, dtype=ops.float32)
+        val_targets = tensor.convert_to_tensor(val_targets, dtype=ops.float32)
         validation_data = (val_features, val_targets)
     
     # Create optimizer

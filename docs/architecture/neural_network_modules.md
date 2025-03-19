@@ -106,9 +106,9 @@ class NCP(Module):
         # ... other initialization
         
         # Get masks from wiring
-        self.input_mask = ops.convert_to_tensor(self.wiring.get_input_mask())
-        self.recurrent_mask = ops.convert_to_tensor(self.wiring.get_recurrent_mask())
-        self.output_mask = ops.convert_to_tensor(self.wiring.get_output_mask())
+        self.input_mask = tensor.convert_to_tensor(self.wiring.get_input_mask())
+        self.recurrent_mask = tensor.convert_to_tensor(self.wiring.get_recurrent_mask())
+        self.output_mask = tensor.convert_to_tensor(self.wiring.get_output_mask())
         
         # Initialize weights
         self._kernel = Parameter(...)
