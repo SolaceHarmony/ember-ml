@@ -12,9 +12,8 @@ import os
 sys.path.append(os.path.abspath('.'))
 
 # Import NumPy tensor operations directly
-from ember_ml.backend.numpy.tensor_ops import (
-    zeros, ones, eye, reshape, transpose, stack, concatenate
-)
+from ember_ml.backend.numpy.tensor.ops.creation import zeros, ones, eye
+from ember_ml.backend.numpy.tensor.ops.manipulation import reshape, transpose, stack, concatenate
 
 def test_zeros():
     """Test zeros function."""

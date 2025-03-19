@@ -8,6 +8,7 @@ which help maintain the variance of activations and gradients across layers.
 from typing import Tuple, Optional, Union, Any
 
 from ember_ml import ops
+from ember_ml.nn import tensor
 
 def glorot_uniform(shape: Tuple[int, ...], dtype: Optional[Any] = None, device: Optional[str] = None):
     """
@@ -30,8 +31,7 @@ def glorot_uniform(shape: Tuple[int, ...], dtype: Optional[Any] = None, device: 
     
     limit = ops.sqrt(ops.divide(6.0, ops.add(fan_in, fan_out)))
     
-    return ops.random_uniform(shape, -limit, limit, dtype=dtype, device=device)
-
+    return tensor.random_uniform(shape, -limit, limit, dtype=dtype, device=device)
 def glorot_normal(shape: Tuple[int, ...], dtype: Optional[Any] = None, device: Optional[str] = None):
     """
     Glorot normal initializer, also called Xavier normal initializer.
@@ -53,6 +53,7 @@ def glorot_normal(shape: Tuple[int, ...], dtype: Optional[Any] = None, device: O
     
     stddev = ops.sqrt(ops.divide(2.0, ops.add(fan_in, fan_out)))
     
+    return tensor.random_normal(shape, 0.0, stddev, dtype=dtype, device=device)
     return ops.random_normal(shape, 0.0, stddev, dtype=dtype, device=device)
 
 def orthogonal(shape: Tuple[int, ...], gain: float = 1.0, dtype: Optional[Any] = None, device: Optional[str] = None):
@@ -77,7 +78,7 @@ def orthogonal(shape: Tuple[int, ...], gain: float = 1.0, dtype: Optional[Any] =
     rows, cols = shape[0], shape[1]
     
     # Generate a random matrix
-    a = ops.random_normal((rows, cols), 0.0, 1.0, dtype=dtype, device=device)
+    a = tensor.random_normal((rows, cols), 0.0, 1.0, dtype=dtype, device=device)
     
     # Use a simplified approach for orthogonalization
     # This is not a true orthogonal matrix, but it's a reasonable approximation
