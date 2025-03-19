@@ -11,13 +11,13 @@ Usage:
     python run_purification_tests_v2.py
 """
 
-import unittest
 import pandas as pd
-import numpy as np
 import time
 import logging
 import argparse
-from typing import Dict, List, Optional, Tuple, Any, Union
+import pytest
+from ember_ml import ops
+from ember_ml.nn import tensor
 
 # Set up logging
 logging.basicConfig(
@@ -38,28 +38,26 @@ OriginalProcessor = TerabyteTemporalStrideProcessor
 PurifiedExtractor = TerabyteFeatureExtractor
 PurifiedProcessor = TerabyteTemporalStrideProcessor
 
-# Import backend utilities
-from ember_ml.utils import backend_utils
-
+# No backend utilities import needed
 
 def run_tests():
     """Run the unit tests for the purified implementation."""
     logger.info("Running unit tests for purified implementation...")
-    from tests.test_terabyte_feature_extractor_purified_v2 import TestTerabyteFeatureExtractorPurifiedV2
     
-    # Create a test suite with the test case
-    test_suite = unittest.TestLoader().loadTestsFromTestCase(TestTerabyteFeatureExtractorPurifiedV2)
+    # Use pytest to run the tests
+    test_module = "tests.test_terabyte_feature_extractor_purified_v2"
+    args = ["-xvs", test_module]
     
-    # Run the tests
-    test_result = unittest.TextTestRunner(verbosity=2).run(test_suite)
+    # Run the tests using pytest
+    result = pytest.main(args)
     
-    # Check if all tests passed
-    if test_result.wasSuccessful():
+    # Check if all tests passed (pytest.ExitCode.OK == 0)
+    if result == 0:
         logger.info("All tests passed!")
+        return True
     else:
         logger.error("Some tests failed!")
-    
-    return test_result.wasSuccessful()
+        return False
 
 
 def demonstrate_usage():
@@ -67,14 +65,26 @@ def demonstrate_usage():
     logger.info("Demonstrating usage of original and purified implementations...")
     
     # Print backend information
-    backend_utils.print_backend_info()
+    logger.info(f"Using backend: {ops.get_backend()}")
     
-    # Create sample data
-    np.random.seed(42)  # For reproducibility
+    # Create sample data using ops
+    tensor.set_seed(42)  # For reproducibility
+    
+    # Generate random data using ops
+    random_normal1 = tensor.random_normal(shape=(1000,))
+    random_normal2 = tensor.random_normal(shape=(1000,))
+    
+    # Generate categorical data
+    random_indices = tensor.cast(tensor.random_uniform(shape=(1000,), minval=0, maxval=3), tensor.int32)
+    categories = ['A', 'B', 'C']
+    # Use tensor directly as an iterable
+    categorical_data = [categories[int(i)] for i in random_indices]
+    
+    # Create DataFrame using tensors directly as iterables
     sample_data = pd.DataFrame({
-        'numeric_col1': np.random.randn(1000),
-        'numeric_col2': np.random.randn(1000),
-        'categorical_col': np.random.choice(['A', 'B', 'C'], size=1000),
+        'numeric_col1': [float(x) for x in random_normal1],
+        'numeric_col2': [float(x) for x in random_normal2],
+        'categorical_col': categorical_data,
         'datetime_col': pd.date_range(start='2023-01-01', periods=1000, freq='H')
     })
     
@@ -121,7 +131,7 @@ def demonstrate_usage():
     logger.info("\nDemonstrating TerabyteTemporalStrideProcessor:")
     
     # Create sample data for temporal stride processing
-    data = np.random.randn(100, 5)
+    data = [[float(x) for x in row] for row in tensor.random_normal(shape=(100, 5))]
     
     # Create original processor
     original_processor = OriginalProcessor(
@@ -155,13 +165,14 @@ def demonstrate_usage():
     
     # Process data with purified implementation
     start_time = time.time()
-    purified_result = purified_processor.process_batch(backend_utils.convert_to_tensor_safe(data))
+    purified_result = purified_processor.process_batch(tensor.convert_to_tensor(data))
     purified_time = time.time() - start_time
     logger.info(f"Purified implementation took {purified_time:.4f} seconds")
     logger.info(f"Purified result strides: {list(purified_result.keys())}")
     for stride, result in purified_result.items():
-        result_np = backend_utils.tensor_to_numpy_safe(result)
-        logger.info(f"  Stride {stride} shape: {result_np.shape}")
+        # Get shape directly from the tensor
+        shape = tuple(result.shape)
+        logger.info(f"  Stride {stride} shape: {shape}")
     
     # Compare performance
     speedup = original_time / purified_time
@@ -179,11 +190,23 @@ def benchmark_performance(size=10000, iterations=5):
     logger.info(f"Benchmarking performance with dataset size {size} and {iterations} iterations...")
     
     # Create a larger dataset for benchmarking
-    np.random.seed(42)  # For reproducibility
+    tensor.set_seed(42)  # For reproducibility
+    
+    # Generate random data using ops
+    random_normal1 = tensor.random_normal(shape=(size,))
+    random_normal2 = tensor.random_normal(shape=(size,))
+    
+    # Generate categorical data
+    random_indices = tensor.cast(tensor.random_uniform(shape=(size,), minval=0, maxval=3), tensor.int32)
+    categories = ['A', 'B', 'C']
+    # Use tensor directly as an iterable
+    categorical_data = [categories[int(i)] for i in random_indices]
+    
+    # Create DataFrame using tensors directly as iterables
     benchmark_data = pd.DataFrame({
-        'numeric_col1': np.random.randn(size),
-        'numeric_col2': np.random.randn(size),
-        'categorical_col': np.random.choice(['A', 'B', 'C'], size=size),
+        'numeric_col1': [float(x) for x in random_normal1],
+        'numeric_col2': [float(x) for x in random_normal2],
+        'categorical_col': categorical_data,
         'datetime_col': pd.date_range(start='2023-01-01', periods=size, freq='H')
     })
     
@@ -235,7 +258,7 @@ def benchmark_performance(size=10000, iterations=5):
     logger.info("\nBenchmarking temporal stride processing:")
     
     # Create data for temporal stride processing
-    stride_data = np.random.randn(size // 10, 10)  # Smaller data for PCA
+    stride_data = [[float(x) for x in row] for row in tensor.random_normal(shape=(size // 10, 10))]  # Smaller data for PCA
     
     # Original implementation
     original_processor = OriginalProcessor(
@@ -272,7 +295,7 @@ def benchmark_performance(size=10000, iterations=5):
     for i in range(iterations):
         purified_processor.pca_models = {}  # Reset PCA models
         start_time = time.time()
-        purified_processor.process_batch(backend_utils.convert_to_tensor_safe(stride_data))
+        purified_processor.process_batch(tensor.convert_to_tensor(stride_data))
         purified_times.append(time.time() - start_time)
     
     purified_avg_time = sum(purified_times) / len(purified_times)
@@ -329,7 +352,7 @@ def benchmark_performance(size=10000, iterations=5):
                 for i in range(iterations):
                     purified_processor.pca_models = {}  # Reset PCA models
                     start_time = time.time()
-                    purified_processor.process_batch(backend_utils.convert_to_tensor_safe(stride_data))
+                    purified_processor.process_batch(tensor.convert_to_tensor(stride_data))
                     purified_times.append(time.time() - start_time)
                 
                 purified_avg_time = sum(purified_times) / len(purified_times)

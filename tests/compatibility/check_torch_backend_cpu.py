@@ -1,13 +1,15 @@
 from ember_ml import ops
 import matplotlib.pyplot as plt
 import numpy as np
+from ember_ml.nn import tensor
+import matplotlib.pyplot as plt
 
 # Set backend to torch
 ops.set_backend('torch')
 
 # Create an EmberTensor
-tensor = ops.ones((10,))
-print('Type:', type(tensor))
+Tensor = tensor.ones((10,))
+print('Type:', type(Tensor))
 
 # Try to convert to CPU and then to NumPy
 try:

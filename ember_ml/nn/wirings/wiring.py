@@ -5,9 +5,10 @@ This module provides the base Wiring class that defines the interface
 for all wiring configurations.
 """
 
-from typing import Optional, Tuple, Dict, Any, Union
+from typing import Optional, Tuple, Dict, Any
 from ember_ml import ops
-from ember_ml.ops.tensor import EmberTensor
+from ember_ml.nn.tensor import EmberTensor, int32, convert_to_tensor
+from ember_ml.nn.tensor.common import zeros, copy
 
 class Wiring:
     """
@@ -43,12 +44,12 @@ class Wiring:
         self.seed = seed
         
         # Initialize masks
-        self._input_mask = None
-        self._recurrent_mask = None
-        self._output_mask = None
+        self._input_mask: Optional[EmberTensor] = None
+        self._recurrent_mask: Optional[EmberTensor] = None
+        self._output_mask: Optional[EmberTensor] = None
         
         # Initialize adjacency matrices
-        self.adjacency_matrix = ops.zeros([units, units], dtype='int32')
+        self.adjacency_matrix = zeros([units, units], dtype=int32)
         self.sensory_adjacency_matrix = None
         
     def build(self, input_dim=None) -> Tuple[EmberTensor, EmberTensor, EmberTensor]:
@@ -78,7 +79,7 @@ class Wiring:
             input_dim: Input dimension
         """
         self.input_dim = input_dim
-        self.sensory_adjacency_matrix = ops.zeros([input_dim, self.units], dtype='int32')
+        self.sensory_adjacency_matrix = zeros([input_dim, self.units], dtype=int32)
     
     def is_built(self):
         """
@@ -89,7 +90,7 @@ class Wiring:
         """
         return self.input_dim is not None
     
-    def get_input_mask(self) -> EmberTensor:
+    def get_input_mask(self) -> Optional[EmberTensor]:
         """
         Get the input mask.
         
@@ -102,8 +103,8 @@ class Wiring:
         if self._input_mask is None:
             self._input_mask, self._recurrent_mask, self._output_mask = self.build()
         
-        return ops.convert_to_tensor(self._input_mask) if not isinstance(self._input_mask, EmberTensor) else self._input_mask
-    def get_recurrent_mask(self) -> EmberTensor:
+        return convert_to_tensor(self._input_mask) if not isinstance(self._input_mask, EmberTensor) else self._input_mask
+    def get_recurrent_mask(self) -> Optional[EmberTensor]:
         """
         Get the recurrent mask.
         
@@ -116,12 +117,10 @@ class Wiring:
         if self._recurrent_mask is None:
             self._input_mask, self._recurrent_mask, self._output_mask = self.build()
         
-        # If the mask is an EmberTensor, return its data property
-        if hasattr(self._recurrent_mask, 'data'):
-            return self._recurrent_mask.data
+        # Return the mask directly
         return self._recurrent_mask
     
-    def get_output_mask(self) -> EmberTensor:
+    def get_output_mask(self) -> Optional[EmberTensor]:
         """
         Get the output mask.
         
@@ -134,9 +133,7 @@ class Wiring:
         if self._output_mask is None:
             self._input_mask, self._recurrent_mask, self._output_mask = self.build()
         
-        # If the mask is an EmberTensor, return its data property
-        if hasattr(self._output_mask, 'data'):
-            return self._output_mask.data
+        # Return the mask directly
         return self._output_mask
     
     def get_config(self) -> Dict[str, Any]:
@@ -165,7 +162,7 @@ class Wiring:
         Returns:
             Adjacency matrix
         """
-        return ops.copy(self.adjacency_matrix)
+        return copy(self.adjacency_matrix)
     
     def sensory_erev_initializer(self, shape=None, dtype=None):
         """
@@ -179,7 +176,7 @@ class Wiring:
             Sensory adjacency matrix
         """
         if self.sensory_adjacency_matrix is not None:
-            return ops.copy(self.sensory_adjacency_matrix)
+            return copy(self.sensory_adjacency_matrix)
         return None
     
     @property

@@ -17,6 +17,14 @@ All user documentation has been organized into the following directories:
 
 - **[docs/api](docs/api/)**: API reference documentation for all modules
 - **[docs/tutorials](docs/tutorials/)**: Step-by-step guides for common tasks
+- **[docs/feature_extraction](docs/feature_extraction/)**: Documentation for feature extraction components
+- **[docs/architecture](docs/architecture/)**: Documentation for system architecture
+- **[docs/testing](docs/testing/)**: Documentation for testing procedures
+- **[docs/notebook](docs/notebook/)**: Documentation for notebook usage
+- **[docs/api](docs/api/)**: API reference documentation
+  - **[docs/api/tensor.md](docs/api/tensor.md)**: Documentation for the tensor module
+  - **[docs/api/tensor_architecture.md](docs/api/tensor_architecture.md)**: Detailed explanation of the tensor operations architecture
+- **[docs/tutorials](docs/tutorials/)**: Tutorials for using the library
 - **[docs/examples](docs/examples/)**: Example code and usage patterns
 - **[docs/plans](docs/plans/)**: Development plans and roadmaps
 
@@ -41,6 +49,8 @@ The project implements backend-agnostic tensor operations that can use different
 - PyTorch (for CUDA and other GPU platforms)
 - NumPy (for CPU computation)
 - Future support for additional backends
+
+The tensor operations follow a function-first design pattern, where each operation is implemented as a standalone function that can be called directly or through a method on a tensor class. For more details, see the [Tensor Operations Architecture](docs/api/tensor_architecture.md) document.
 
 ### Feature Extraction
 
@@ -72,7 +82,7 @@ The project includes tools for extracting features from BigQuery tables, includi
 
 ```python
 import ember_ml
-from ember_ml import ops
+from ember_ml.nn.tensor import EmberTensor
 
 # Create a liquid neural network
 model = ember_ml.models.LiquidNeuralNetwork(
@@ -82,10 +92,7 @@ model = ember_ml.models.LiquidNeuralNetwork(
 )
 
 # Create input tensor
-x = ops.random.normal(shape=(100, 10))
+x = EmberTensor.random_normal(shape=(100, 10))
 
 # Forward pass
 output = model(x)
-```
-
-=======

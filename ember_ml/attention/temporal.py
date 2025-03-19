@@ -4,13 +4,15 @@ Temporal attention mechanisms for sequence processing and time-based patterns.
 
 from typing import Optional, Tuple, Dict, Any
 import math
-from ember_ml import ops, nn
-from ember_ml.ops.tensor import EmberTensor
-from ember_ml.nn.container import Dropout, Linear
+from ember_ml import ops
+from ember_ml.nn.tensor import EmberTensor, zeros, arange, maximum, shape, concatenate
+from ember_ml.nn.modules import Module
+from ember_ml.nn.container import Dropout, Linear, Sequential
+from ember_ml.nn.modules import Module
 from ember_ml.ops import sigmoid
 from .base import BaseAttention
 
-class PositionalEncoding(nn.Module):
+class PositionalEncoding(Module):
     """Positional encoding for temporal information."""
     
     def __init__(self,
@@ -29,10 +31,10 @@ class PositionalEncoding(nn.Module):
         self.dropout = Dropout(rate=dropout)
         
         # Create positional encoding matrix
-        pe = ops.zeros(max_len, hidden_size)
-        position = ops.arange(0, max_len).unsqueeze(1).float()
+        pe = zeros(max_len, hidden_size)
+        position = arange(0, max_len).unsqueeze(1).float()
         div_term = ops.exp(
-            ops.arange(0, hidden_size, 2).float() *
+            arange(0, hidden_size, 2).float() *
             -(math.log(10000.0) / hidden_size)
         )
         
@@ -56,18 +58,18 @@ class PositionalEncoding(nn.Module):
         Returns:
             Encoded tensor [batch, seq_len, hidden_size]
         """
-        seq_len = x.size(1) # obtain through shape
+        seq_len = shape(x,(1,)) # obtain through shape
         seq_len = x.shape[1] # obtain through shape
         if times is not None:
             # Scale positional encoding by time differences
-            time_scale = times / times.max()  # Normalize to [0, 1]
+            time_scale = times / maximum(times)  # Normalize to [0, 1]
             time_scale = time_scale.unsqueeze(-1)
             pe = self.pe[:, :seq_len] * time_scale
         else:
             pe = self.pe[:, :seq_len]
             
         # Expand positional encoding to match batch size
-        pe = pe.expand(x.size(0), -1, -1)
+        pe = pe.expand(shape(x,shape(0)), -1, -1)
         return self.dropout(x + pe)
 
 class TemporalAttention(BaseAttention):
@@ -117,12 +119,12 @@ class TemporalAttention(BaseAttention):
             )
         
         # Time-aware attention components
-        self.time_gate = nn.Sequential(
-            nn.container.Linear(hidden_size + 1, hidden_size),
-            nn.container.Sigmoid()
+        self.time_gate = Sequential(
+            Linear(hidden_size + 1, hidden_size),
+            Sigmoid()
         )
         
-        self.dropout = nn.Dropout(dropout)
+        self.dropout = Dropout(dropout)
         self._attention_weights = None
         
     def forward(
@@ -144,7 +146,7 @@ class TemporalAttention(BaseAttention):
         Returns:
             Attention output [batch, query_len, hidden_size]
         """
-        batch_size, query_len, _ = query.size()
+        batch_size, query_len, _ = query.tolist().size()
         key_len = key.size(1)
         
         # Add temporal embeddings if enabled
@@ -179,7 +181,7 @@ class TemporalAttention(BaseAttention):
             query_expanded = query.unsqueeze(2).expand(-1, -1, key_len, -1)
             
             # Concatenate along feature dimension
-            time_features = torch.cat([
+            time_features = concatenate([
                 query_expanded,
                 time_diffs
             ], dim=-1)

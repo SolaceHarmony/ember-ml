@@ -6,7 +6,7 @@ and precise fraction-based computations.
 from typing import Optional, Tuple, Dict, Any
 from ember_ml import ops
 from .base import BaseNeuron, BaseChain
-
+from ember_ml.nn import tensor
 class BlockySigmoid:
     """Quantized sigmoid implementation with discrete steps."""
     
@@ -68,7 +68,7 @@ def blocky_sin(freq: float = 1.0,
             x_stair.append(x_val)
             y_stair.append(y_val)
             
-    return ops.convert_to_tensor(x_stair), ops.convert_to_tensor(y_stair)
+    return tensor.convert_to_tensor(x_stair), tensor.convert_to_tensor(y_stair)
 
 class BlockyRoadNeuron(BaseNeuron):
     """

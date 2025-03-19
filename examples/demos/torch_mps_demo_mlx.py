@@ -11,8 +11,8 @@ import platform
 from typing import List, Optional, Dict
 
 from ember_ml import ops
-from ember_ml.backend import set_backend
-
+from ember_ml.ops import set_backend
+from ember_ml.nn import Module, Sequential, tensor
 set_backend('mlx')
 
 def benchmark_matrix_multiply(
@@ -63,9 +63,9 @@ def benchmark_matrix_multiply(
             print(f"  Final result sample: {ops.item(result[0, 0]):.4f}, {ops.item(result[0, 1]):.4f}, ...")
         
         # Calculate average time using ops functions
-        time_diff = ops.subtract(ops.convert_to_tensor(end_time),
-                                ops.convert_to_tensor(start_time))
-        avg_time = ops.divide(time_diff, ops.convert_to_tensor(10.0))  # 10 iterations
+        time_diff = ops.subtract(tensor.convert_to_tensor(end_time),
+                                tensor.convert_to_tensor(start_time))
+        avg_time = ops.divide(time_diff, tensor.convert_to_tensor(10.0))  # 10 iterations
         
         print(f"  Matrix size {size}x{size}: {avg_time.item():.8f} seconds")
 
