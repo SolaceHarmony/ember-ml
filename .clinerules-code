@@ -388,7 +388,7 @@ def process_tensor(x):
     # Converting to numpy array and back
     np_array = np.array(x)
     result = np.sin(np_array)
-    return ops.convert_to_tensor(result)
+    return tensor.convert_to_tensor(result)
 ```
 
 ✅ **CORRECT**:

@@ -267,7 +267,7 @@ if backend.name == 'torch':
     # Use PyTorch-specific features
     x_torch = x_torch.cuda()
     # Convert back to ember_ml tensor
-    x = ops.convert_to_tensor(x_torch.cpu().numpy())
+    x = tensor.convert_to_tensor(x_torch.cpu().numpy())
 ```
 
 ## Relationship with Other Modules

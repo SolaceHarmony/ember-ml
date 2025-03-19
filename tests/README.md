@@ -163,17 +163,17 @@ def any_backend(request):
 @pytest.fixture
 def sample_tensor_1d():
     """Create a 1D sample tensor."""
-    return ops.convert_to_tensor([1.0, 2.0, 3.0, 4.0, 5.0])
+    return tensor.convert_to_tensor([1.0, 2.0, 3.0, 4.0, 5.0])
 
 @pytest.fixture
 def sample_tensor_2d():
     """Create a 2D sample tensor."""
-    return ops.convert_to_tensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]])
+    return tensor.convert_to_tensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]])
 
 @pytest.fixture
 def sample_tensor_3d():
     """Create a 3D sample tensor."""
-    return ops.convert_to_tensor([
+    return tensor.convert_to_tensor([
         [[1.0, 2.0], [3.0, 4.0]],
         [[5.0, 6.0], [7.0, 8.0]],
         [[9.0, 10.0], [11.0, 12.0]]

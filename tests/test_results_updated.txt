@@ -121,7 +121,7 @@ backend1 = 'mlx', backend2 = 'torch'
             ops.set_ops(backend2)
     
             # Convert the tensor to the second backend
->           x2 = ops.convert_to_tensor(ops.to_numpy(x1))
+>           x2 = tensor.convert_to_tensor(ops.to_numpy(x1))
 
 test_backend.py:140: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 

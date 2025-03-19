@@ -4,6 +4,7 @@ Base geometric neural implementations for non-Euclidean manifolds.
 
 from typing import Optional, Union, Dict, Any
 from ember_ml import ops
+from ember_ml.nn import tensor
 from .base import BaseNeuron
 
 def normalize_sphere(vec):
@@ -104,4 +105,4 @@ class GeometricNeuron(BaseNeuron):
         """Load neuron state and parameters."""
         super().load_state(state_dict)
         self.dim = state_dict['dim']
-        self.manifold_state = ops.convert_to_tensor(state_dict['manifold_state'])
+        self.manifold_state = tensor.convert_to_tensor(state_dict['manifold_state'])

@@ -8,6 +8,7 @@ which extends the CfC cell with support for custom wiring.
 from typing import Optional, List, Dict, Any, Union, Tuple
 
 from ember_ml import ops
+from ember_ml.nn import tensor
 from ember_ml.nn.tensor import float32
 from ember_ml.nn.modules import Module, Parameter
 from ember_ml.nn.wirings import Wiring, NCPWiring, AutoNCP
@@ -81,9 +82,9 @@ class WiredCfCCell(ModuleWiredCell):
         self.input_mask, self.recurrent_mask, self.output_mask = self.wiring.build()
         
         # Convert masks to tensors
-        self.input_mask = ops.convert_to_tensor(self.input_mask, dtype=float32)
-        self.recurrent_mask = ops.convert_to_tensor(self.recurrent_mask, dtype=float32)
-        self.output_mask = ops.convert_to_tensor(self.output_mask, dtype=float32)
+        self.input_mask = tensor.convert_to_tensor(self.input_mask, dtype=float32)
+        self.recurrent_mask = tensor.convert_to_tensor(self.recurrent_mask, dtype=float32)
+        self.output_mask = tensor.convert_to_tensor(self.output_mask, dtype=float32)
         
         # Create kernel parameters first
         # Input weights

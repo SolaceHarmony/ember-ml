@@ -8,7 +8,8 @@ import pytest
 import os
 import sys
 import logging
-from ember_ml.nn.tensor import convert_to_tensor, set_seed
+from ember_ml.nn import tensor
+from ember_ml.nn.tensor import set_seed
 
 # Add parent directory to path to import ember_ml
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -127,19 +128,19 @@ def any_backend(request):
 @pytest.fixture
 def sample_tensor_1d():
     """Create a 1D sample tensor."""
-    return ops.convert_to_tensor([1.0, 2.0, 3.0, 4.0, 5.0])
+    return tensor.convert_to_tensor([1.0, 2.0, 3.0, 4.0, 5.0])
 
 
 @pytest.fixture
 def sample_tensor_2d():
     """Create a 2D sample tensor."""
-    return ops.convert_to_tensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]])
+    return tensor.convert_to_tensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]])
 
 
 @pytest.fixture
 def sample_tensor_3d():
     """Create a 3D sample tensor."""
-    return ops.convert_to_tensor([
+    return tensor.convert_to_tensor([
         [[1.0, 2.0], [3.0, 4.0]],
         [[5.0, 6.0], [7.0, 8.0]],
         [[9.0, 10.0], [11.0, 12.0]]

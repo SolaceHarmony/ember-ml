@@ -502,7 +502,7 @@ from ember_ml import ops
 
 def process_data(data):
     # Convert input to tensor
-    tensor = ops.convert_to_tensor(data)
+    tensor = tensor.convert_to_tensor(data)
     
     # Apply operation (will use the appropriate backend)
     return ops.sin(tensor)

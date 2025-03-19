@@ -1,40 +1,98 @@
 """
 PyTorch backend for ember_ml.
 
-This module provides PyTorch implementations of the backend operations
-required by ember_ml.
+This module provides PyTorch implementations of tensor operations.
 """
 
-# Import all components from their respective modules
+# Define the list of symbols to export
+__all__ = [
+    # Configuration variables
+    'DEFAULT_DEVICE',
+    'DEFAULT_DTYPE',
+    
+    # Ops classes
+    'TorchMathOps',
+    'TorchComparisonOps',
+    'TorchDeviceOps',
+    'TorchIOOps',
+    'TorchLinearAlgOps',
+    
+    # Math operations
+    'add', 'subtract', 'multiply', 'divide', 'matmul', 'dot',
+    'mean', 'sum', 'max', 'min', 'exp', 'log', 'log10', 'log2',
+    'pow', 'sqrt', 'square', 'abs', 'sign', 'sin', 'cos', 'tan',
+    'sinh', 'cosh', 'tanh', 'sigmoid', 'relu', 'softmax', 'clip',
+    'var', 'pi', 'power',
+    
+    # Comparison operations
+    'equal', 'not_equal', 'less', 'less_equal', 'greater', 'greater_equal',
+    'logical_and', 'logical_or', 'logical_not', 'logical_xor',
+    
+    # Device operations
+    'to_device', 'get_device', 'get_available_devices', 'memory_usage',
+    'memory_info', 'synchronize', 'set_default_device', 'get_default_device',
+    'is_available',
+    
+    # Linear Algebra operations
+    'solve', 'inv', 'svd', 'eig', 'eigvals', 'det', 'norm', 'qr',
+    'cholesky', 'lstsq', 'diag', 'diagonal',
+    
+    # I/O operations
+    'save', 'load'
+]
+
+# Import configuration variables
 from ember_ml.backend.torch.config import (
-    __version__,
-    has_gpu,
-    has_mps,
-    DEFAULT_DTYPE,
-    DEFAULT_DEVICE
+    DEFAULT_DEVICE,
+    DEFAULT_DTYPE
 )
 
 # Import tensor classes
 from ember_ml.backend.torch.tensor import TorchDType, TorchTensor
 
-# Import ops classes
+# Import all ops classes
 from ember_ml.backend.torch.math_ops import TorchMathOps
 from ember_ml.backend.torch.comparison_ops import TorchComparisonOps
 from ember_ml.backend.torch.device_ops import TorchDeviceOps
-from ember_ml.backend.torch.solver_ops import TorchSolverOps
 from ember_ml.backend.torch.io_ops import TorchIOOps
+from ember_ml.backend.torch.linearalg import TorchLinearAlgOps
 
-# Tensor operations are now methods of the TorchTensor class
-# We no longer import them from tensor_ops
-
-# Import math operations
+# Import specific functions from math_ops
 from ember_ml.backend.torch.math_ops import (
-    add, subtract, multiply, divide, matmul, dot, mean, sum, max, min,
-    exp, log, log10, log2, pow, sqrt, square, abs, sign, sin, cos, tan,
-    sinh, cosh, tanh, sigmoid, relu, softmax, clip, var, pi
+    add,
+    subtract,
+    multiply,
+    divide,
+    matmul,
+    dot,
+    mean,
+    sum,
+    max,
+    min,
+    exp,
+    log,
+    log10,
+    log2,
+    pow,
+    sqrt,
+    square,
+    abs,
+    sign,
+    sin,
+    cos,
+    tan,
+    sinh,
+    cosh,
+    tanh,
+    sigmoid,
+    relu,
+    softmax,
+    clip,
+    var,
+    pi
 )
 
-# Import comparison operations
+# Import specific functions from comparison_ops
 from ember_ml.backend.torch.comparison_ops import (
     equal,
     not_equal,
@@ -48,7 +106,7 @@ from ember_ml.backend.torch.comparison_ops import (
     logical_xor
 )
 
-# Import device operations
+# Import specific functions from device_ops
 from ember_ml.backend.torch.device_ops import (
     to_device,
     get_device,
@@ -61,11 +119,23 @@ from ember_ml.backend.torch.device_ops import (
     is_available
 )
 
-# DType operations are now methods of the TorchDType class
-from ember_ml.backend.torch.solver_ops import (
-    solve
+# Import specific functions from linearalg
+from ember_ml.backend.torch.linearalg import (
+    solve,
+    inv,
+    svd,
+    eig,
+    eigvals,
+    det,
+    norm,
+    qr,
+    cholesky,
+    lstsq,
+    diag,
+    diagonal
 )
 
+# Import specific functions from io_ops
 from ember_ml.backend.torch.io_ops import (
     save,
     load

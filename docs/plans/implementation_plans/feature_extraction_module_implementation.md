@@ -173,10 +173,10 @@ class TerabyteFeatureExtractorModule(BaseFeatureExtractorModule):
                 numerical_features.append(col)
         
         # Store feature information
-        self.feature_names = ops.convert_to_tensor(df.columns.tolist())
-        self.categorical_features = ops.convert_to_tensor(categorical_features)
-        self.numerical_features = ops.convert_to_tensor(numerical_features)
-        self.target_column = ops.convert_to_tensor(target_column) if target_column else None
+        self.feature_names = tensor.convert_to_tensor(df.columns.tolist())
+        self.categorical_features = tensor.convert_to_tensor(categorical_features)
+        self.numerical_features = tensor.convert_to_tensor(numerical_features)
+        self.target_column = tensor.convert_to_tensor(target_column) if target_column else None
         
         # Fit preprocessing components
         if len(numerical_features) > 0:
@@ -254,7 +254,7 @@ class TerabyteFeatureExtractorModule(BaseFeatureExtractorModule):
             df_features = pd.DataFrame()
         
         # Convert to tensor
-        features = ops.convert_to_tensor(df_features.values, dtype=ops.float32)
+        features = tensor.convert_to_tensor(df_features.values, dtype=ops.float32)
         
         return features
     
@@ -426,7 +426,7 @@ class TemporalStrideProcessorModule(BaseFeatureExtractorModule):
             pca_data = self.pca_models[stride].transform(flattened_data)
             
             # Store result
-            result[stride] = ops.convert_to_tensor(pca_data, dtype=ops.float32)
+            result[stride] = tensor.convert_to_tensor(pca_data, dtype=ops.float32)
         
         return result
     
@@ -487,7 +487,7 @@ class TemporalStrideProcessorModule(BaseFeatureExtractorModule):
         # Combine results
         for stride in self.stride_perspectives:
             if result[stride]:
-                result[stride] = ops.convert_to_tensor(
+                result[stride] = tensor.convert_to_tensor(
                     np.vstack(result[stride]),
                     dtype=ops.float32
                 )

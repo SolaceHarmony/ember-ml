@@ -4,17 +4,17 @@ Test for the ops.negative function.
 
 import pytest
 from ember_ml import ops
-
+from ember_ml.nn import tensor
 
 def test_negative_function():
     """Test that the negative function works correctly."""
     # Test with scalar
-    x = ops.convert_to_tensor(5)
+    x = tensor.convert_to_tensor(5)
     result = ops.negative(x)
     assert ops.to_numpy(result) == -5
     
     # Test with 1D tensor
-    x = ops.convert_to_tensor([1, 2, 3])
+    x = tensor.convert_to_tensor([1, 2, 3])
     result = ops.negative(x)
     expected = [-1, -2, -3]
     result_np = ops.to_numpy(result)
@@ -22,7 +22,7 @@ def test_negative_function():
         assert result_np[i] == expected[i]
     
     # Test with 2D tensor
-    x = ops.convert_to_tensor([[1, 2], [3, 4]])
+    x = tensor.convert_to_tensor([[1, 2], [3, 4]])
     result = ops.negative(x)
     expected = [[-1, -2], [-3, -4]]
     result_np = ops.to_numpy(result)

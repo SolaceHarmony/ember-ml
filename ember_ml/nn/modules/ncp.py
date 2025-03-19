@@ -122,10 +122,10 @@ class NCP(Module):
             # Compute the QR factorization
             q, r = linearalg.qr(tensor.to_numpy(a))
             # Make Q uniform according to https://arxiv.org/pdf/1312.6120.pdf
-            d = tensor.diag(r)
+            d = linearalg.diag(r)
             ph = tensor.sign(d)
             q = ops.multiply(ph,q)
-            return ops.convert_to_tensor(q)
+            return tensor.convert_to_tensor(q)
         elif initializer == "zeros":
             # Zeros initialization
             return tensor.zeros(shape, dtype=self.dtype)

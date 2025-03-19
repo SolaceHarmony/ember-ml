@@ -11,7 +11,7 @@ from ember_ml.backend.torch.tensor.tensor import TorchTensor
 
 # Create a tensor instance for convert_to_tensor
 _tensor_ops = TorchTensor()
-convert_to_tensor = _tensor_ops.convert_to_tensor
+convert_to_tensor = _tensor_tensor.convert_to_tensor
 
 
 def pca(

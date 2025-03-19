@@ -69,7 +69,7 @@ numeric_features = [col for col in df_engineered.columns
                    if pd.api.types.is_numeric_dtype(df_engineered[col].dtype)]
 
 # Convert to tensor
-features_tensor = ops.convert_to_tensor(df_engineered[numeric_features].values)
+features_tensor = tensor.convert_to_tensor(df_engineered[numeric_features].values)
 print(f"Features tensor shape: {features_tensor.shape}")
 ```
 
