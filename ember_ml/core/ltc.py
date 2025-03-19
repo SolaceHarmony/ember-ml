@@ -5,7 +5,7 @@ Liquid Time Constant (LTC) neuron implementations, including both Euclidean and 
 from typing import Optional, Union, List, Dict, Any
 from ember_ml import ops
 from ember_ml.core.base import BaseNeuron, BaseChain
-from ember_ml.nn.tensor import random_uniform
+from ember_ml.nn import tensor
 
 class LTCNeuron(BaseNeuron):
     """Standard Euclidean LTC neuron implementation."""
@@ -123,7 +123,7 @@ class LTCChain(BaseChain):
             dt=dt
         )
         # Initialize weights for chain connections using ops instead of numpy
-        self.weights = random_uniform(
+        self.weights = tensor.random_uniform(
             shape=(num_neurons,),
             minval=0.5,
             maxval=1.5
@@ -140,11 +140,11 @@ class LTCChain(BaseChain):
             Updated states of all neurons
         """
         # Create zeros tensor using ops instead of numpy
-        states = ops.zeros(self.num_neurons)
+        states = tensor.zeros(self.num_neurons)
         
         # Update first neuron with external input
         states_0 = self.neurons[0].update(input_signals[0])
-        states = ops.tensor_scatter_update(states, [0], [states_0])
+        states = tensor.tensor_scatter_nd_update(states, [[0]], [states_0])
         
         # Update subsequent neurons using chain connections
         for i in range(1, self.num_neurons):
@@ -153,10 +153,10 @@ class LTCChain(BaseChain):
             prev_idx = ops.subtract(i, 1)
             chain_input = ops.multiply(self.weights[prev_idx], states[prev_idx])
             states_i = self.neurons[i].update(chain_input)
-            states = ops.tensor_scatter_update(states, [i], [states_i])
-            
+            states = tensor.tensor_scatter_nd_update(states, [[i]], [states_i])
+        
         # Store chain state history
-        self.state_history.append(ops.copy(states))
+        self.state_history.append(tensor.copy(states))
         
         return states
         
@@ -164,14 +164,14 @@ class LTCChain(BaseChain):
         """Save chain state and parameters."""
         state_dict = super().save_state()
         # Convert weights tensor to list for serialization
-        state_dict['weights'] = ops.to_numpy(self.weights).tolist()
+        state_dict['weights'] = tensor.to_numpy(self.weights).tolist()
         return state_dict
         
     def load_state(self, state_dict: Dict[str, Any]) -> None:
         """Load chain state and parameters."""
         super().load_state(state_dict)
         # Convert list back to tensor
-        self.weights = ops.convert_to_tensor(state_dict['weights'])
+        self.weights = tensor.convert_to_tensor(state_dict['weights'])
 
 def create_ltc_chain(num_neurons: int,
                     base_tau: float = 1.0,

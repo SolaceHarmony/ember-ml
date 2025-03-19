@@ -8,7 +8,6 @@ implemented by all backend tensor implementations.
 from abc import ABC, abstractmethod
 from typing import Any, Optional, List, Union, Tuple, Sequence, Callable, Iterator
 
-
 class TensorInterface(ABC):
     """Abstract interface for tensor operations."""
 
@@ -58,7 +57,7 @@ class TensorInterface(ABC):
         pass
     
     @abstractmethod
-    def __getitem__(self, key) -> 'TensorInterface':
+    def __getitem__(self, key) -> Any:
         """
         Get values at specified indices.
         
@@ -122,7 +121,7 @@ class TensorInterface(ABC):
         pass
 
     @abstractmethod
-    def detach(self) -> 'TensorInterface':
+    def detach(self) -> Any:
         """Create a new tensor detached from the computation graph."""
         pass
 
@@ -132,7 +131,7 @@ class TensorInterface(ABC):
         pass
     
     @abstractmethod
-    def zeros(self, shape: Union[int, Sequence[int]], dtype: Optional[Any] = None, device: Optional[str] = None) -> 'TensorInterface':
+    def zeros(self, shape: Union[int, Sequence[int]], dtype: Optional[Any] = None, device: Optional[str] = None) -> Any:
         """
         Create a tensor of zeros.
         
@@ -147,7 +146,7 @@ class TensorInterface(ABC):
         pass
     
     @abstractmethod
-    def ones(self, shape: Union[int, Sequence[int]], dtype: Optional[Any] = None, device: Optional[str] = None) -> 'TensorInterface':
+    def ones(self, shape: Union[int, Sequence[int]], dtype: Optional[Any] = None, device: Optional[str] = None) -> Any:
         """
         Create a tensor of ones.
         
@@ -162,7 +161,7 @@ class TensorInterface(ABC):
         pass
     
     @abstractmethod
-    def zeros_like(self, x: Any, dtype: Optional[Any] = None, device: Optional[str] = None) -> 'TensorInterface':
+    def zeros_like(self, x: Any, dtype: Optional[Any] = None, device: Optional[str] = None) -> Any:
         """
         Create a tensor of zeros with the same shape as the input.
         
@@ -177,7 +176,7 @@ class TensorInterface(ABC):
         pass
     
     @abstractmethod
-    def ones_like(self, x: Any, dtype: Optional[Any] = None, device: Optional[str] = None) -> 'TensorInterface':
+    def ones_like(self, x: Any, dtype: Optional[Any] = None, device: Optional[str] = None) -> Any:
         """
         Create a tensor of ones with the same shape as the input.
         
@@ -192,7 +191,7 @@ class TensorInterface(ABC):
         pass
     
     @abstractmethod
-    def eye(self, n: int, m: Optional[int] = None, dtype: Optional[Any] = None, device: Optional[str] = None) -> 'TensorInterface':
+    def eye(self, n: int, m: Optional[int] = None, dtype: Optional[Any] = None, device: Optional[str] = None) -> Any:
         """
         Create an identity matrix.
         
@@ -208,7 +207,7 @@ class TensorInterface(ABC):
         pass
     
     @abstractmethod
-    def arange(self, start: int, stop: Optional[int] = None, step: int = 1, dtype: Optional[Any] = None, device: Optional[str] = None) -> 'TensorInterface':
+    def arange(self, start: int, stop: Optional[int] = None, step: int = 1, dtype: Optional[Any] = None, device: Optional[str] = None) -> Any:
         """
         Create a tensor with evenly spaced values within a given interval.
         
@@ -225,7 +224,7 @@ class TensorInterface(ABC):
         pass
     
     @abstractmethod
-    def linspace(self, start: float, stop: float, num: int, dtype: Optional[Any] = None, device: Optional[str] = None) -> 'TensorInterface':
+    def linspace(self, start: float, stop: float, num: int, dtype: Optional[Any] = None, device: Optional[str] = None) -> Any:
         """
         Create a tensor with evenly spaced values within a given interval.
         
@@ -242,7 +241,7 @@ class TensorInterface(ABC):
         pass
     
     @abstractmethod
-    def full(self, shape: Union[int, Sequence[int]], fill_value: Union[float, int], dtype: Optional[Any] = None, device: Optional[str] = None) -> 'TensorInterface':
+    def full(self, shape: Union[int, Sequence[int]], fill_value: Union[float, int], dtype: Optional[Any] = None, device: Optional[str] = None) -> Any:
         """
         Create a tensor filled with a scalar value.
         
@@ -258,7 +257,7 @@ class TensorInterface(ABC):
         pass
     
     @abstractmethod
-    def full_like(self, x: Any, fill_value: Union[float, int], dtype: Optional[Any] = None, device: Optional[str] = None) -> 'TensorInterface':
+    def full_like(self, x: Any, fill_value: Union[float, int], dtype: Optional[Any] = None, device: Optional[str] = None) -> Any:
         """
         Create a tensor filled with a scalar value with the same shape as the input.
         
@@ -274,7 +273,7 @@ class TensorInterface(ABC):
         pass
     
     @abstractmethod
-    def reshape(self, x: Any, shape: Union[int, Sequence[int]]) -> 'TensorInterface':
+    def reshape(self, x: Any, shape: Union[int, Sequence[int]]) -> Any:
         """
         Reshape a tensor to a new shape.
         
@@ -288,7 +287,7 @@ class TensorInterface(ABC):
         pass
     
     @abstractmethod
-    def transpose(self, x: Any, axes: Optional[Sequence[int]] = None) -> 'TensorInterface':
+    def transpose(self, x: Any, axes: Optional[Sequence[int]] = None) -> Any:
         """
         Permute the dimensions of a tensor.
         
@@ -302,7 +301,7 @@ class TensorInterface(ABC):
         pass
     
     @abstractmethod
-    def concatenate(self, tensors: Sequence[Any], axis: int = 0) -> 'TensorInterface':
+    def concatenate(self, tensors: Sequence[Any], axis: int = 0) -> Any:
         """
         Concatenate tensors along a specified axis.
         
@@ -316,7 +315,7 @@ class TensorInterface(ABC):
         pass
     
     @abstractmethod
-    def stack(self, tensors: Sequence[Any], axis: int = 0) -> 'TensorInterface':
+    def stack(self, tensors: Sequence[Any], axis: int = 0) -> Any:
         """
         Stack tensors along a new axis.
         
@@ -330,7 +329,7 @@ class TensorInterface(ABC):
         pass
     
     @abstractmethod
-    def split(self, x: Any, num_or_size_splits: Union[int, Sequence[int]], axis: int = 0) -> List['TensorInterface']:
+    def split(self, x: Any, num_or_size_splits: Union[int, Sequence[int]], axis: int = 0) -> List[Any]:
         """
         Split a tensor into sub-tensors.
         
@@ -345,7 +344,7 @@ class TensorInterface(ABC):
         pass
     
     @abstractmethod
-    def expand_dims(self, x: Any, axis: Union[int, Sequence[int]]) -> 'TensorInterface':
+    def expand_dims(self, x: Any, axis: Union[int, Sequence[int]]) -> Any:
         """
         Insert new axes into a tensor's shape.
         
@@ -359,7 +358,7 @@ class TensorInterface(ABC):
         pass
     
     @abstractmethod
-    def squeeze(self, x: Any, axis: Optional[Union[int, Sequence[int]]] = None) -> 'TensorInterface':
+    def squeeze(self, x: Any, axis: Optional[Union[int, Sequence[int]]] = None) -> Any:
         """
         Remove single-dimensional entries from a tensor's shape.
         
@@ -373,7 +372,7 @@ class TensorInterface(ABC):
         pass
     
     @abstractmethod
-    def tile(self, x: Any, reps: Sequence[int]) -> 'TensorInterface':
+    def tile(self, x: Any, reps: Sequence[int]) -> Any:
         """
         Construct a tensor by tiling a given tensor.
         
@@ -387,7 +386,7 @@ class TensorInterface(ABC):
         pass
     
     @abstractmethod
-    def gather(self, x: Any, indices: Any, axis: int = 0) -> 'TensorInterface':
+    def gather(self, x: Any, indices: Any, axis: int = 0) -> Any:
         """
         Gather slices from a tensor along an axis.
         
@@ -402,7 +401,7 @@ class TensorInterface(ABC):
         pass
     
     @abstractmethod
-    def convert_to_tensor(self, x: Any, dtype: Optional[Any] = None, device: Optional[str] = None) -> 'TensorInterface':
+    def convert_to_tensor(self, x: Any, dtype: Optional[Any] = None, device: Optional[str] = None) -> Any:
         """
         Convert input to a tensor.
         
@@ -417,7 +416,7 @@ class TensorInterface(ABC):
         pass
     
     @abstractmethod
-    def cast(self, x: Any, dtype: Union[Any, str, Callable[[], Any]]) -> 'TensorInterface':
+    def cast(self, x: Any, dtype: Union[Any, str, Callable[[], Any]]) -> Any:
         """
         Cast a tensor to a different data type.
         
@@ -431,7 +430,7 @@ class TensorInterface(ABC):
         pass
     
     @abstractmethod
-    def copy(self, x: Any) -> 'TensorInterface':
+    def copy(self, x: Any) -> Any:
         """
         Create a copy of a tensor.
         
@@ -444,7 +443,7 @@ class TensorInterface(ABC):
         pass
     
     @abstractmethod
-    def var(self, x: Any, axis: Optional[Union[int, Sequence[int]]] = None, keepdims: bool = False) -> 'TensorInterface':
+    def var(self, x: Any, axis: Optional[Union[int, Sequence[int]]] = None, keepdims: bool = False) -> Any:
         """
         Compute the variance of a tensor along specified axes.
         
@@ -459,7 +458,7 @@ class TensorInterface(ABC):
         pass
     
     @abstractmethod
-    def sort(self, x: Any, axis: int = -1, descending: bool = False) -> 'TensorInterface':
+    def sort(self, x: Any, axis: int = -1, descending: bool = False) -> Any:
         """
         Sort a tensor along a specified axis.
         
@@ -474,7 +473,7 @@ class TensorInterface(ABC):
         pass
     
     @abstractmethod
-    def argsort(self, x: Any, axis: int = -1, descending: bool = False) -> 'TensorInterface':
+    def argsort(self, x: Any, axis: int = -1, descending: bool = False) -> Any:
         """
         Return the indices that would sort a tensor along a specified axis.
         
@@ -489,7 +488,7 @@ class TensorInterface(ABC):
         pass
     
     @abstractmethod
-    def slice(self, x: Any, starts: Sequence[int], sizes: Sequence[int]) -> 'TensorInterface':
+    def slice(self, x: Any, starts: Sequence[int], sizes: Sequence[int]) -> Any:
         """
         Extract a slice from a tensor.
         
@@ -504,7 +503,7 @@ class TensorInterface(ABC):
         pass
     
     @abstractmethod
-    def slice_update(self, x: Any, slices: Union[List, Tuple], updates: Any) -> 'TensorInterface':
+    def slice_update(self, x: Any, slices: Union[List, Tuple], updates: Any) -> Any:
         """
         Update a tensor at specific indices.
         
@@ -519,7 +518,7 @@ class TensorInterface(ABC):
         pass
     
     @abstractmethod
-    def pad(self, x: Any, paddings: Sequence[Sequence[int]], constant_values: Union[int, float] = 0) -> 'TensorInterface':
+    def pad(self, x: Any, paddings: Sequence[Sequence[int]], constant_values: Union[int, float] = 0) -> Any:
         """
         Pad a tensor with a constant value.
         
@@ -535,7 +534,7 @@ class TensorInterface(ABC):
         pass
 
     @abstractmethod
-    def tensor_scatter_nd_update(self, tensor: Any, indices: Any, updates: Any) -> 'TensorInterface':
+    def tensor_scatter_nd_update(self, tensor: Any, indices: Any, updates: Any) -> Any:
         """
         Updates values of a tensor at specified indices.
 
@@ -551,7 +550,7 @@ class TensorInterface(ABC):
         
     @abstractmethod
     def scatter(self, data: Any, indices: Any, dim_size: Optional[Any] = None,
-                aggr: str = 'sum', axis: int = 0) -> 'TensorInterface':
+                aggr: str = 'sum', axis: int = 0) -> Any:
         """
         Scatter data according to indices into a new tensor.
         
@@ -568,7 +567,7 @@ class TensorInterface(ABC):
         pass
     
     @abstractmethod
-    def maximum(self, x1: Any, x2: Any) -> 'TensorInterface':
+    def maximum(self, x1: Any, x2: Any) -> Any:
         """
         Element-wise maximum of two tensors.
         
@@ -583,7 +582,7 @@ class TensorInterface(ABC):
     
     @abstractmethod
     def random_normal(self, shape: Union[int, Sequence[int]], mean: float = 0.0, stddev: float = 1.0,
-                     dtype: Optional[Any] = None, device: Optional[str] = None) -> 'TensorInterface':
+                     dtype: Optional[Any] = None, device: Optional[str] = None) -> Any:
         """
         Create a tensor with random values from a normal distribution.
         
@@ -601,7 +600,7 @@ class TensorInterface(ABC):
     
     @abstractmethod
     def random_uniform(self, shape: Union[int, Sequence[int]], minval: float = 0.0, maxval: float = 1.0,
-                      dtype: Optional[Any] = None, device: Optional[str] = None) -> 'TensorInterface':
+                      dtype: Optional[Any] = None, device: Optional[str] = None) -> Any:
         """
         Create a tensor with random values from a uniform distribution.
         
@@ -619,7 +618,7 @@ class TensorInterface(ABC):
     
     @abstractmethod
     def random_binomial(self, shape: Union[int, Sequence[int]], p: float = 0.5,
-                       dtype: Optional[Any] = None, device: Optional[str] = None) -> 'TensorInterface':
+                       dtype: Optional[Any] = None, device: Optional[str] = None) -> Any:
         """
         Create a tensor with random values from a binomial distribution.
         
@@ -636,7 +635,7 @@ class TensorInterface(ABC):
     
     @abstractmethod
     def random_gamma(self, shape: Union[int, Sequence[int]], alpha: float = 1.0, beta: float = 1.0,
-                    dtype: Optional[Any] = None, device: Optional[str] = None) -> 'TensorInterface':
+                    dtype: Optional[Any] = None, device: Optional[str] = None) -> Any:
         """
         Generate random values from a gamma distribution.
         
@@ -654,7 +653,7 @@ class TensorInterface(ABC):
     
     @abstractmethod
     def random_exponential(self, shape: Union[int, Sequence[int]], scale: float = 1.0,
-                          dtype: Optional[Any] = None, device: Optional[str] = None) -> 'TensorInterface':
+                          dtype: Optional[Any] = None, device: Optional[str] = None) -> Any:
         """
         Generate random values from an exponential distribution.
         
@@ -671,7 +670,7 @@ class TensorInterface(ABC):
     
     @abstractmethod
     def random_poisson(self, shape: Union[int, Sequence[int]], lam: float = 1.0,
-                      dtype: Optional[Any] = None, device: Optional[str] = None) -> 'TensorInterface':
+                      dtype: Optional[Any] = None, device: Optional[str] = None) -> Any:
         """
         Generate random values from a Poisson distribution.
         
@@ -688,7 +687,7 @@ class TensorInterface(ABC):
     
     @abstractmethod
     def random_categorical(self, logits: Any, num_samples: int,
-                          dtype: Optional[Any] = None, device: Optional[str] = None) -> 'TensorInterface':
+                          dtype: Optional[Any] = None, device: Optional[str] = None) -> Any:
         """
         Draw samples from a categorical distribution.
         
@@ -704,7 +703,7 @@ class TensorInterface(ABC):
         pass
     
     @abstractmethod
-    def random_permutation(self, x: Union[int, Any], dtype: Optional[Any] = None, device: Optional[str] = None) -> 'TensorInterface':
+    def random_permutation(self, x: Union[int, Any], dtype: Optional[Any] = None, device: Optional[str] = None) -> Any:
         """
         Randomly permute a sequence or return a permuted range.
         
@@ -719,8 +718,9 @@ class TensorInterface(ABC):
         """
         pass
     
+
     @abstractmethod
-    def shuffle(self, x: Any) -> 'TensorInterface':
+    def shuffle(self, x: Any) -> Any:
         """
         Randomly shuffle a tensor along the first dimension.
         
@@ -773,7 +773,7 @@ class TensorInterface(ABC):
         pass
     
     @abstractmethod
-    def __iter__(self) -> Iterator['TensorInterface']:
+    def __iter__(self) -> Iterator[Any]:
         """
         Make the tensor iterable.
         

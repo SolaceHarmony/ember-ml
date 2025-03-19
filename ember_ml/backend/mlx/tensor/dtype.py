@@ -7,11 +7,8 @@ This module provides MLX implementations of data type operations.
 import mlx.core as mx
 from typing import Union, Any, Optional
 
-
-
 class MLXDType:
     """MLX implementation of data type operations."""
-
 
     @property
     def float16(self):

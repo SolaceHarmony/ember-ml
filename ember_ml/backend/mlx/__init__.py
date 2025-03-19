@@ -17,9 +17,8 @@ __all__ = [
     'MLXSolverOps',
     'MLXIOOps',
     
-    # Tensor classes
-    'MLXDType',
-    'MLXTensor',
+    # Linear Algebra class
+    'MLXLinearAlgOps',
     
     # Math operations
     'add', 'subtract', 'multiply', 'divide', 'matmul', 'dot',
@@ -39,7 +38,7 @@ __all__ = [
     'memory_info', 'synchronize', 'set_default_device', 'get_default_device',
     'is_available',
     
-    # Solver operations
+    # Linear Algebra operations
     'solve', 'inv', 'svd', 'eig', 'eigvals', 'det', 'norm', 'qr',
     'cholesky', 'lstsq',
     
@@ -60,7 +59,7 @@ from ember_ml.backend.mlx.tensor import MLXDType, MLXTensor
 from ember_ml.backend.mlx.math_ops import MLXMathOps
 from ember_ml.backend.mlx.comparison_ops import MLXComparisonOps
 from ember_ml.backend.mlx.device_ops import MLXDeviceOps
-from ember_ml.backend.mlx.solver_ops import MLXSolverOps
+from ember_ml.backend.mlx.linearalg import MLXLinearAlgOps
 from ember_ml.backend.mlx.io_ops import MLXIOOps
 
 # Import specific functions from math_ops
@@ -136,21 +135,6 @@ from ember_ml.backend.mlx.device_ops import (
     get_default_device,
     is_available
 )
-
-# Import specific functions from solver_ops
-from ember_ml.backend.mlx.solver_ops import (
-    solve,
-    inv,
-    svd,
-    eig,
-    eigvals,
-    det,
-    norm,
-    qr,
-    cholesky,
-    lstsq
-)
-
 # Import specific functions from io_ops
 from ember_ml.backend.mlx.io_ops import (
     save,

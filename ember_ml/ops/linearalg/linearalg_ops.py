@@ -1,5 +1,5 @@
 """
-Solver operations interface.
+Linear Algebra operations interface.
 
 This module defines the abstract interface for solver operations.
 """
@@ -7,7 +7,7 @@ This module defines the abstract interface for solver operations.
 from abc import ABC, abstractmethod
 from typing import Any, Optional, Tuple, Union
 
-class SolverOps(ABC):
+class LinearAlgOps(ABC):
     """Abstract interface for solver operations."""
     
     @abstractmethod
@@ -150,3 +150,50 @@ class SolverOps(ABC):
             Eigenvalues of the matrix
         """
         pass
+    
+    @abstractmethod
+    def diag(self, x: Any, k: int = 0):
+        """
+        Extract a diagonal or construct a diagonal matrix.
+        
+        Args:
+            x: Input array. If x is 2-D, return the k-th diagonal.
+               If x is 1-D, return a 2-D array with x on the k-th diagonal.
+            k: Diagonal offset. Use k>0 for diagonals above the main diagonal,
+               and k<0 for diagonals below the main diagonal.
+               
+        Returns:
+            The extracted diagonal or constructed diagonal matrix.
+        """
+        pass
+    
+    @abstractmethod
+    def diagonal(self, x: Any, offset: int = 0, axis1: int = 0, axis2: int = 1) -> Any:
+        """
+        Return specified diagonals of an array.
+        
+        Args:
+            x: Input array
+            offset: Offset of the diagonal from the main diagonal
+            axis1: First axis of the 2-D sub-arrays from which the diagonals should be taken
+            axis2: Second axis of the 2-D sub-arrays from which the diagonals should be taken
+            
+        Returns:
+            Array of diagonals
+        """
+        pass
+    
+    @abstractmethod
+    def eigvals(self, a: Any) -> Any:
+        """
+        Compute the eigenvalues of a square matrix.
+        
+        Args:
+            a: Input square matrix
+            
+        Returns:
+            Eigenvalues of the matrix
+        """
+        pass
+    
+    
