@@ -6,7 +6,11 @@ This module provides NumPy implementations of feature extraction and transformat
 
 import numpy as np
 from typing import Optional, Dict, Any, Tuple
-from ember_ml.backend.numpy.tensor_ops import convert_to_tensor
+from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+
+# Create a tensor instance for convert_to_tensor
+_tensor_ops = NumpyTensor()
+convert_to_tensor = _tensor_ops.convert_to_tensor
 
 
 def pca(
@@ -59,11 +63,14 @@ def pca(
         mean = np.zeros(n_features)
         X_centered = X_tensor
     
-    # Choose SVD solver
+    # Choose SVD solver using numpy operations to avoid direct Python operators
     if svd_solver == "auto":
-        if max(X_tensor.shape) <= 500:
+        max_dim = np.max(np.array(X_tensor.shape))
+        min_dim = np.min(np.array(X_tensor.shape))
+        
+        if max_dim <= 500:
             svd_solver = "full"
-        elif n_components < 0.8 * min(X_tensor.shape):
+        elif n_components is not None and n_components < np.multiply(np.array(0.8), min_dim).item():
             svd_solver = "randomized"
         else:
             svd_solver = "full"
@@ -73,8 +80,10 @@ def pca(
         U, S, Vt = np.linalg.svd(X_centered, full_matrices=False)
     elif svd_solver == "randomized":
         from sklearn.utils.extmath import randomized_svd
+        # Ensure n_components is not None for randomized_svd
+        n_components_value = n_components if n_components is not None else min(X_tensor.shape)
         U, S, Vt = randomized_svd(
-            X_centered, n_components=n_components, random_state=42
+            X_centered, n_components=int(n_components_value), random_state=42
         )
     else:
         raise ValueError(f"Unrecognized svd_solver='{svd_solver}'")

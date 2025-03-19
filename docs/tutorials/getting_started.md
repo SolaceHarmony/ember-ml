@@ -29,7 +29,7 @@ x = ops.ones((3, 3))
 print(x)
 
 # Create a tensor with specific values
-y = ops.convert_to_tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+y = tensor.convert_to_tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
 print(y)
 ```
 

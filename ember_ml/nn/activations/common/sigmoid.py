@@ -6,11 +6,8 @@ using the ops abstraction layer.
 """
 
 from ember_ml import ops
-from ember_ml.ops.tensor import EmberTensor
+from ember_ml.nn.tensor import EmberTensor
 from ember_ml.nn.activations.interfaces.activation import ActivationInterface
-
-# Type aliases
-Tensor = EmberTensor
 
 
 class Sigmoid(ActivationInterface):
@@ -27,7 +24,7 @@ class Sigmoid(ActivationInterface):
         """Initialize Sigmoid activation function."""
         pass
         
-    def __call__(self, x: Tensor) -> Tensor:
+    def __call__(self, x: EmberTensor) -> EmberTensor:
         """
         Apply sigmoid activation function.
         
@@ -39,7 +36,7 @@ class Sigmoid(ActivationInterface):
         """
         return ops.sigmoid(x)
         
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: EmberTensor) -> EmberTensor:
         """
         Forward pass of sigmoid activation.
         

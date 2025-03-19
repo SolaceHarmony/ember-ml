@@ -7,7 +7,7 @@ This module provides a class for creating features based on detected column type
 import pandas as pd
 from typing import Dict, List, Any
 from ember_ml import ops
-
+from ember_ml.nn import tensor
 class GenericFeatureEngineer:
     """
     Creates features based on detected column types.
@@ -94,23 +94,23 @@ class GenericFeatureEngineer:
         
         # Create cyclical features using sine and cosine transformations
         # Hour of day (0-23)
-        two_pi = ops.multiply(ops.convert_to_tensor(2.0), ops.pi)
+        two_pi = ops.multiply(tensor.convert_to_tensor(2.0), ops.pi)
         
         # Hour of day (0-23)
-        df[f'{col}_sin_hour'] = ops.sin(ops.multiply(two_pi, ops.divide(ops.convert_to_tensor(df[col].dt.hour), ops.convert_to_tensor(23.0))))
-        df[f'{col}_cos_hour'] = ops.cos(ops.multiply(two_pi, ops.divide(ops.convert_to_tensor(df[col].dt.hour), ops.convert_to_tensor(23.0))))
+        df[f'{col}_sin_hour'] = ops.sin(ops.multiply(two_pi, ops.divide(tensor.convert_to_tensor(df[col].dt.hour), tensor.convert_to_tensor(23.0))))
+        df[f'{col}_cos_hour'] = ops.cos(ops.multiply(two_pi, ops.divide(tensor.convert_to_tensor(df[col].dt.hour), tensor.convert_to_tensor(23.0))))
         
         # Day of week (0-6)
-        df[f'{col}_sin_dayofweek'] = ops.sin(ops.multiply(two_pi, ops.divide(ops.convert_to_tensor(df[col].dt.dayofweek), ops.convert_to_tensor(6.0))))
-        df[f'{col}_cos_dayofweek'] = ops.cos(ops.multiply(two_pi, ops.divide(ops.convert_to_tensor(df[col].dt.dayofweek), ops.convert_to_tensor(6.0))))
+        df[f'{col}_sin_dayofweek'] = ops.sin(ops.multiply(two_pi, ops.divide(tensor.convert_to_tensor(df[col].dt.dayofweek), tensor.convert_to_tensor(6.0))))
+        df[f'{col}_cos_dayofweek'] = ops.cos(ops.multiply(two_pi, ops.divide(tensor.convert_to_tensor(df[col].dt.dayofweek), tensor.convert_to_tensor(6.0))))
         
         # Day of month (1-31)
-        df[f'{col}_sin_day'] = ops.sin(ops.multiply(two_pi, ops.divide(ops.subtract(ops.convert_to_tensor(df[col].dt.day), ops.convert_to_tensor(1)), ops.convert_to_tensor(30.0))))
-        df[f'{col}_cos_day'] = ops.cos(ops.multiply(two_pi, ops.divide(ops.subtract(ops.convert_to_tensor(df[col].dt.day), ops.convert_to_tensor(1)), ops.convert_to_tensor(30.0))))
+        df[f'{col}_sin_day'] = ops.sin(ops.multiply(two_pi, ops.divide(ops.subtract(tensor.convert_to_tensor(df[col].dt.day), tensor.convert_to_tensor(1)), tensor.convert_to_tensor(30.0))))
+        df[f'{col}_cos_day'] = ops.cos(ops.multiply(two_pi, ops.divide(ops.subtract(tensor.convert_to_tensor(df[col].dt.day), tensor.convert_to_tensor(1)), tensor.convert_to_tensor(30.0))))
         
         # Month (1-12)
-        df[f'{col}_sin_month'] = ops.sin(ops.multiply(two_pi, ops.divide(ops.subtract(ops.convert_to_tensor(df[col].dt.month), ops.convert_to_tensor(1)), ops.convert_to_tensor(11.0))))
-        df[f'{col}_cos_month'] = ops.cos(ops.multiply(two_pi, ops.divide(ops.subtract(ops.convert_to_tensor(df[col].dt.month), ops.convert_to_tensor(1)), ops.convert_to_tensor(11.0))))
+        df[f'{col}_sin_month'] = ops.sin(ops.multiply(two_pi, ops.divide(ops.subtract(tensor.convert_to_tensor(df[col].dt.month), tensor.convert_to_tensor(1)), tensor.convert_to_tensor(11.0))))
+        df[f'{col}_cos_month'] = ops.cos(ops.multiply(two_pi, ops.divide(ops.subtract(tensor.convert_to_tensor(df[col].dt.month), tensor.convert_to_tensor(1)), tensor.convert_to_tensor(11.0))))
         
         print(f"Created cyclical features for datetime column '{col}'")
         return df

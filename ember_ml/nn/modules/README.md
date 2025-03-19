@@ -139,10 +139,10 @@ for epoch in range(epochs):
         
         # Forward pass
         model.reset_state()
-        y_pred = model(ops.convert_to_tensor(X_batch))
+        y_pred = model(tensor.convert_to_tensor(X_batch))
         
         # Compute loss
-        loss = ops.mean(ops.square(y_pred - ops.convert_to_tensor(y_batch)))
+        loss = ops.mean(ops.square(y_pred - tensor.convert_to_tensor(y_batch)))
         
         # Compute gradients
         params = list(model.parameters())
@@ -150,7 +150,7 @@ for epoch in range(epochs):
         
         # Update parameters
         for param, grad in zip(params, grads):
-            param.data = ops.subtract(param.data, ops.multiply(ops.convert_to_tensor(learning_rate), grad))
+            param.data = ops.subtract(param.data, ops.multiply(tensor.convert_to_tensor(learning_rate), grad))
         
         epoch_loss += ops.to_numpy(loss)
     
@@ -161,7 +161,7 @@ for epoch in range(epochs):
 
 # Evaluate the model
 model.reset_state()
-y_pred = ops.to_numpy(model(ops.convert_to_tensor(X_test)))
+y_pred = ops.to_numpy(model(tensor.convert_to_tensor(X_test)))
 test_loss = np.mean(np.square(y_pred - y_test))
 print(f"Test Loss: {test_loss:.6f}")
 ```

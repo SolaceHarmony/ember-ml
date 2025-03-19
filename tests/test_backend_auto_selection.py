@@ -7,7 +7,13 @@ This script tests the auto-selection of backends based on available hardware.
 import os
 import platform
 import pytest
-from ember_ml.backend import auto_select_backend, get_backend, set_backend, get_device, set_device
+from ember_ml.ops import (
+    get_backend,
+    set_backend,
+    get_device
+)
+from ember_ml.backend import auto_select_backend, set_device
+from ember_ml.nn import tensor
 
 @pytest.fixture
 def original_backend_and_device():
@@ -15,7 +21,7 @@ def original_backend_and_device():
     original_backend = get_backend()
     # Create a dummy tensor to get the device
     import ember_ml as nl
-    dummy = nl.zeros((1, 1))
+    dummy = tensor.zeros((1, 1))
     original_device = get_device(dummy)
     
     # Clean up device name (remove ':0' suffix if present)
@@ -25,7 +31,7 @@ def original_backend_and_device():
     yield original_backend, original_device
     
     # Restore the original backend and device
-    set_backend(original_backend)
+    set_backend(original_backend or 'mlx')
     if original_device:
         set_device(original_device)
 
@@ -104,15 +110,15 @@ class TestBackendAutoSelection:
         
         # Create a tensor with the new backend
         import ember_ml as nl
-        tensor = nl.zeros((2, 2))
+        Tensor = tensor.zeros((2, 2))
         
         # Verify the tensor has the correct type
         if backend_name == 'numpy':
-            assert 'numpy.ndarray' in str(type(tensor))
+            assert 'numpy.ndarray' in str(type(Tensor))
         elif backend_name == 'torch':
-            assert 'torch.Tensor' in str(type(tensor))
+            assert 'torch.Tensor' in str(type(Tensor))
         elif backend_name == 'mlx':
-            assert 'mlx.core.array' in str(type(tensor))
+            assert 'mlx.core.array' in str(type(Tensor))
     
     def test_set_and_get_device(self, original_backend_and_device):
         """Test setting and getting the device."""
@@ -128,7 +134,7 @@ class TestBackendAutoSelection:
         set_device('cpu')
         # Create a dummy tensor to get the device
         import ember_ml as nl
-        dummy = nl.zeros((1, 1))
+        dummy = tensor.zeros((1, 1))
         
         # Get the device and clean it up (remove ':0' suffix if present)
         device = get_device(dummy)

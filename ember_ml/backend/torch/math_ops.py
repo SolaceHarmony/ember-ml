@@ -5,13 +5,14 @@ This module provides PyTorch implementations of math operations.
 """
 
 import torch
-from typing import Optional, Union, List, Tuple
+from typing import Union, Optional, Tuple
 
 # Import from tensor_ops
-from ember_ml.backend.torch.tensor_ops import convert_to_tensor, ArrayLike
+from ember_ml.backend.torch.tensor import TorchTensor
 
+convert_to_tensor = TorchTensor().convert_to_tensor
 
-def add(x: ArrayLike, y: ArrayLike) -> torch.Tensor:
+def add(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     """
     Add two tensors element-wise.
     
@@ -25,7 +26,7 @@ def add(x: ArrayLike, y: ArrayLike) -> torch.Tensor:
     return torch.add(convert_to_tensor(x), convert_to_tensor(y))
 
 
-def subtract(x: ArrayLike, y: ArrayLike) -> torch.Tensor:
+def subtract(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     """
     Subtract two tensors element-wise.
     
@@ -39,7 +40,7 @@ def subtract(x: ArrayLike, y: ArrayLike) -> torch.Tensor:
     return torch.subtract(convert_to_tensor(x), convert_to_tensor(y))
 
 
-def multiply(x: ArrayLike, y: ArrayLike) -> torch.Tensor:
+def multiply(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     """
     Multiply two tensors element-wise.
     
@@ -60,7 +61,7 @@ def multiply(x: ArrayLike, y: ArrayLike) -> torch.Tensor:
     return torch.mul(x_tensor, y_tensor)
 
 
-def divide(x: ArrayLike, y: ArrayLike) -> torch.Tensor:
+def divide(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     """
     Divide two tensors element-wise.
     
@@ -81,7 +82,7 @@ def divide(x: ArrayLike, y: ArrayLike) -> torch.Tensor:
     return torch.div(x_tensor, y_tensor)
 
 
-def matmul(x: ArrayLike, y: ArrayLike) -> torch.Tensor:
+def matmul(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     """
     Compute the matrix product of two tensors.
     
@@ -95,7 +96,7 @@ def matmul(x: ArrayLike, y: ArrayLike) -> torch.Tensor:
     return torch.matmul(convert_to_tensor(x), convert_to_tensor(y))
 
 
-def dot(x: ArrayLike, y: ArrayLike) -> torch.Tensor:
+def dot(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     """
     Compute the dot product of two tensors.
     
@@ -111,7 +112,7 @@ def dot(x: ArrayLike, y: ArrayLike) -> torch.Tensor:
     return torch.matmul(x_tensor.flatten(), y_tensor.flatten())
 
 
-def mean(x: ArrayLike, axis: Optional[Union[int, List[int], Tuple[int, ...]]] = None, keepdims: bool = False) -> torch.Tensor:
+def mean(x: torch.Tensor, axis: Optional[Union[int, Tuple[int, ...]]] = None, keepdims: bool = False) -> torch.Tensor:
     """
     Compute the mean of a tensor along specified axes.
     
@@ -143,7 +144,7 @@ def mean(x: ArrayLike, axis: Optional[Union[int, List[int], Tuple[int, ...]]] = 
     return torch.mean(x_tensor, dim=axis, keepdim=keepdims)
 
 
-def var(x: ArrayLike, axis: Optional[Union[int, List[int], Tuple[int, ...]]] = None, keepdims: bool = False) -> torch.Tensor:
+def var(x: torch.Tensor, axis: Optional[Union[int, Tuple[int, ...]]] = None, keepdims: bool = False) -> torch.Tensor:
     """
     Compute the variance of a tensor along specified axes.
     
@@ -171,7 +172,7 @@ def var(x: ArrayLike, axis: Optional[Union[int, List[int], Tuple[int, ...]]] = N
     return torch.var(x_tensor, dim=axis, keepdim=keepdims)
 
 
-def sum(x: ArrayLike, axis: Optional[Union[int, List[int], Tuple[int, ...]]] = None, keepdims: bool = False) -> torch.Tensor:
+def sum(x: torch.Tensor, axis: Optional[Union[int, Tuple[int, ...]]] = None, keepdims: bool = False) -> torch.Tensor:
     """
     Compute the sum of a tensor along specified axes.
     
@@ -199,7 +200,7 @@ def sum(x: ArrayLike, axis: Optional[Union[int, List[int], Tuple[int, ...]]] = N
     return torch.sum(x_tensor, dim=axis, keepdim=keepdims)
 
 
-def exp(x: ArrayLike) -> torch.Tensor:
+def exp(x: torch.Tensor) -> torch.Tensor:
     """
     Compute the exponential of a tensor element-wise.
     
@@ -212,7 +213,7 @@ def exp(x: ArrayLike) -> torch.Tensor:
     return torch.exp(convert_to_tensor(x))
 
 
-def log(x: ArrayLike) -> torch.Tensor:
+def log(x: torch.Tensor) -> torch.Tensor:
     """
     Compute the natural logarithm of a tensor element-wise.
     
@@ -225,7 +226,7 @@ def log(x: ArrayLike) -> torch.Tensor:
     return torch.log(convert_to_tensor(x))
 
 
-def pow(x: ArrayLike, y: ArrayLike) -> torch.Tensor:
+def pow(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     """
     Compute x raised to the power of y element-wise.
     
@@ -246,7 +247,7 @@ def pow(x: ArrayLike, y: ArrayLike) -> torch.Tensor:
     return torch.pow(x_tensor, y_tensor)
 
 
-def sqrt(x: ArrayLike) -> torch.Tensor:
+def sqrt(x: torch.Tensor) -> torch.Tensor:
     """
     Compute the square root of a tensor element-wise.
     
@@ -259,7 +260,7 @@ def sqrt(x: ArrayLike) -> torch.Tensor:
     return torch.sqrt(convert_to_tensor(x))
 
 
-def sigmoid(x: ArrayLike) -> torch.Tensor:
+def sigmoid(x: torch.Tensor) -> torch.Tensor:
     """
     Compute the sigmoid of a tensor element-wise.
     
@@ -272,7 +273,7 @@ def sigmoid(x: ArrayLike) -> torch.Tensor:
     return torch.sigmoid(convert_to_tensor(x))
 
 
-def softplus(x: ArrayLike, beta: float = 1.0, threshold: float = 20.0) -> torch.Tensor:
+def softplus(x: torch.Tensor, beta: float = 1.0, threshold: float = 20.0) -> torch.Tensor:
     """
     Compute the softplus of a tensor element-wise.
     
@@ -293,7 +294,7 @@ def softplus(x: ArrayLike, beta: float = 1.0, threshold: float = 20.0) -> torch.
     return torch.nn.functional.softplus(x_tensor, beta=beta, threshold=threshold)
 
 
-def tanh(x: ArrayLike) -> torch.Tensor:
+def tanh(x: torch.Tensor) -> torch.Tensor:
     """
     Compute the hyperbolic tangent of a tensor element-wise.
     
@@ -306,7 +307,7 @@ def tanh(x: ArrayLike) -> torch.Tensor:
     return torch.tanh(convert_to_tensor(x))
 
 
-def relu(x: ArrayLike) -> torch.Tensor:
+def relu(x: torch.Tensor) -> torch.Tensor:
     """
     Compute the rectified linear unit of a tensor element-wise.
     
@@ -319,7 +320,7 @@ def relu(x: ArrayLike) -> torch.Tensor:
     return torch.relu(convert_to_tensor(x))
 
 
-def softmax(x: ArrayLike, axis: int = -1) -> torch.Tensor:
+def softmax(x: torch.Tensor, axis: int = -1) -> torch.Tensor:
     """
     Compute the softmax of a tensor along a specified axis.
     
@@ -354,7 +355,7 @@ def softmax(x: ArrayLike, axis: int = -1) -> torch.Tensor:
     return torch.div(exp_x, sum_exp_x)
 
 
-def max(x: ArrayLike, axis: Optional[int] = None, keepdims: bool = False) -> torch.Tensor:
+def max(x: torch.Tensor, axis: Optional[int] = None, keepdims: bool = False) -> torch.Tensor:
     """
     Compute the maximum of a tensor along the specified axis.
     
@@ -372,7 +373,7 @@ def max(x: ArrayLike, axis: Optional[int] = None, keepdims: bool = False) -> tor
     return torch.max(x_tensor, dim=axis, keepdim=keepdims)[0]
 
 
-def min(x: ArrayLike, axis: Optional[int] = None, keepdims: bool = False) -> torch.Tensor:
+def min(x: torch.Tensor, axis: Optional[int] = None, keepdims: bool = False) -> torch.Tensor:
     """
     Compute the minimum of a tensor along the specified axis.
     
@@ -389,7 +390,7 @@ def min(x: ArrayLike, axis: Optional[int] = None, keepdims: bool = False) -> tor
         return torch.min(x_tensor)
     return torch.min(x_tensor, dim=axis, keepdim=keepdims)[0]
 
-def abs(x: ArrayLike) -> torch.Tensor:
+def abs(x: torch.Tensor) -> torch.Tensor:
     """
     Compute the absolute value of a tensor.
     
@@ -403,7 +404,7 @@ def abs(x: ArrayLike) -> torch.Tensor:
     return torch.abs(x_tensor)
 
 
-def negative(x: ArrayLike) -> torch.Tensor:
+def negative(x: torch.Tensor) -> torch.Tensor:
     """
     Compute the negative of a tensor element-wise.
     
@@ -417,7 +418,7 @@ def negative(x: ArrayLike) -> torch.Tensor:
     return torch.negative(x_tensor)
 
 
-def sign(x: ArrayLike) -> torch.Tensor:
+def sign(x: torch.Tensor) -> torch.Tensor:
     """
     Compute the sign of a tensor.
     
@@ -431,7 +432,7 @@ def sign(x: ArrayLike) -> torch.Tensor:
     return torch.sign(x_tensor)
 
 
-def sin(x: ArrayLike) -> torch.Tensor:
+def sin(x: torch.Tensor) -> torch.Tensor:
     """
     Compute the sine of a tensor.
     
@@ -445,7 +446,7 @@ def sin(x: ArrayLike) -> torch.Tensor:
     return torch.sin(x_tensor)
 
 
-def cos(x: ArrayLike) -> torch.Tensor:
+def cos(x: torch.Tensor) -> torch.Tensor:
     """
     Compute the cosine of a tensor.
     
@@ -459,7 +460,7 @@ def cos(x: ArrayLike) -> torch.Tensor:
     return torch.cos(x_tensor)
 
 
-def tan(x: ArrayLike) -> torch.Tensor:
+def tan(x: torch.Tensor) -> torch.Tensor:
     """
     Compute the tangent of a tensor.
     
@@ -473,7 +474,7 @@ def tan(x: ArrayLike) -> torch.Tensor:
     return torch.tan(x_tensor)
 
 
-def sinh(x: ArrayLike) -> torch.Tensor:
+def sinh(x: torch.Tensor) -> torch.Tensor:
     """
     Compute the hyperbolic sine of a tensor.
     
@@ -487,7 +488,7 @@ def sinh(x: ArrayLike) -> torch.Tensor:
     return torch.sinh(x_tensor)
 
 
-def cosh(x: ArrayLike) -> torch.Tensor:
+def cosh(x: torch.Tensor) -> torch.Tensor:
     """
     Compute the hyperbolic cosine of a tensor.
     
@@ -501,7 +502,7 @@ def cosh(x: ArrayLike) -> torch.Tensor:
     return torch.cosh(x_tensor)
 
 
-def log10(x: ArrayLike) -> torch.Tensor:
+def log10(x: torch.Tensor) -> torch.Tensor:
     """
     Compute the base-10 logarithm of a tensor.
     
@@ -515,7 +516,7 @@ def log10(x: ArrayLike) -> torch.Tensor:
     return torch.log10(x_tensor)
 
 
-def log2(x: ArrayLike) -> torch.Tensor:
+def log2(x: torch.Tensor) -> torch.Tensor:
     """
     Compute the base-2 logarithm of a tensor.
     
@@ -529,7 +530,7 @@ def log2(x: ArrayLike) -> torch.Tensor:
     return torch.log2(x_tensor)
 
 
-def square(x: ArrayLike) -> torch.Tensor:
+def square(x: torch.Tensor) -> torch.Tensor:
     """
     Compute the square of a tensor.
     
@@ -543,7 +544,7 @@ def square(x: ArrayLike) -> torch.Tensor:
     return torch.square(x_tensor)
 
 
-def clip(x: ArrayLike, min_val: Optional[float] = None, max_val: Optional[float] = None) -> torch.Tensor:
+def clip(x: torch.Tensor, min_val: Optional[float] = None, max_val: Optional[float] = None) -> torch.Tensor:
     """
     Clip the values of a tensor to the specified range.
     
@@ -559,7 +560,7 @@ def clip(x: ArrayLike, min_val: Optional[float] = None, max_val: Optional[float]
     return torch.clamp(x_tensor, min=min_val, max=max_val)
 
 
-def mod(x: ArrayLike, y: ArrayLike) -> torch.Tensor:
+def mod(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     """
     Compute the remainder of division of x by y element-wise.
     
@@ -581,7 +582,7 @@ def mod(x: ArrayLike, y: ArrayLike) -> torch.Tensor:
     return torch.remainder(x_tensor, y_tensor)
 
 
-def floor_divide(x: ArrayLike, y: ArrayLike) -> torch.Tensor:
+def floor_divide(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     """
     Element-wise integer division.
     
@@ -604,7 +605,7 @@ def floor_divide(x: ArrayLike, y: ArrayLike) -> torch.Tensor:
     return torch.floor_divide(x_tensor, y_tensor)
 
 
-def sort(x: ArrayLike, axis: int = -1) -> torch.Tensor:
+def sort(x: torch.Tensor, axis: int = -1) -> torch.Tensor:
     """
     Sort a PyTorch tensor along a specified axis.
     
@@ -621,8 +622,10 @@ def sort(x: ArrayLike, axis: int = -1) -> torch.Tensor:
 
 from typing import Literal
 
-def gradient(f: ArrayLike, *varargs, axis: Optional[Union[int, List[int], Tuple[int, ...]]] = None,
-            edge_order: Literal[1, 2] = 1) -> Union[torch.Tensor, List[torch.Tensor]]:
+
+
+def gradient(f: torch.Tensor, *varargs, axis: Optional[Union[int, Tuple[int, ...]]] = None,
+            edge_order: Literal[1, 2] = 1) -> Union[torch.Tensor, list[torch.Tensor]]:
     """
     Return the gradient of an N-dimensional tensor.
     
@@ -644,25 +647,174 @@ def gradient(f: ArrayLike, *varargs, axis: Optional[Union[int, List[int], Tuple[
     """
     f_tensor = convert_to_tensor(f)
     
-    # Convert to NumPy array for calculation
-    f_numpy = f_tensor.detach().cpu().numpy()
-    
     # Process spacing arguments
-    spacing_args = []
+    spacings = []
     for arg in varargs:
         if isinstance(arg, torch.Tensor):
-            spacing_args.append(arg.detach().cpu().numpy())
+            spacings.append(arg)
         else:
-            spacing_args.append(arg)
+            spacings.append(torch.tensor(arg, device=f_tensor.device))
     
-    # Calculate gradient using NumPy's gradient function
-    result_numpy = np.gradient(f_numpy, *spacing_args, axis=axis, edge_order=edge_order)
+    # Default spacing is 1.0
+    if not spacings:
+        # Create a list of spacing tensors without using Python multiplication
+        dim_count = f_tensor.dim()
+        spacings = []
+        for _ in range(dim_count):
+            spacings.append(torch.tensor(1.0, device=f_tensor.device))
     
-    # Convert back to PyTorch tensor
-    if isinstance(result_numpy, np.ndarray):
-        return torch.from_numpy(result_numpy).to(f_tensor.device)
+    # If axis is None, compute gradient for all dimensions
+    if axis is None:
+        # Create a list of axes without using Python range
+        dim_count = f_tensor.dim()
+        axes = []
+        for i in range(dim_count):
+            axes.append(i)
+    elif isinstance(axis, (list, tuple)):
+        # Convert to list without using list() constructor
+        axes = []
+        for ax in axis:
+            axes.append(ax)
     else:
-        return [torch.from_numpy(arr).to(f_tensor.device) for arr in result_numpy]
+        # Create a single-element list without using list brackets
+        axes = []
+        axes.append(axis)
+    
+    results = []
+    for i, ax in enumerate(axes):
+        # Get spacing for this axis
+        spacing = spacings[i] if i < len(spacings) else torch.tensor(1.0, device=f_tensor.device)
+        
+        # Create slices for forward and backward differences
+        ndim = f_tensor.dim()
+        # Create lists without using Python multiplication
+        slice_prev = []
+        slice_next = []
+        slice_result = []
+        for _ in range(ndim):
+            slice_prev.append(slice(None))
+            slice_next.append(slice(None))
+            slice_result.append(slice(None))
+        
+        # Compute gradient along this axis
+        if edge_order == 1:
+            # First-order accurate differences at the boundaries
+            # Forward difference at the beginning
+            slice_prev[ax] = slice(0, 1)
+            slice_next[ax] = slice(1, 2)
+            slice_result[ax] = slice(0, 1)
+            forward_diff = torch.div(
+                torch.subtract(f_tensor[tuple(slice_next)], f_tensor[tuple(slice_prev)]),
+                spacing
+            )
+            
+            # Central difference in the interior
+            slice_prev[ax] = slice(0, -2)
+            slice_next[ax] = slice(2, None)
+            slice_result[ax] = slice(1, -1)
+            central_diff = torch.div(
+                torch.subtract(f_tensor[tuple(slice_next)], f_tensor[tuple(slice_prev)]),
+                torch.multiply(torch.tensor(2.0, device=f_tensor.device), spacing)
+            )
+            
+            # Backward difference at the end
+            slice_prev[ax] = slice(-2, -1)
+            slice_next[ax] = slice(-1, None)
+            slice_result[ax] = slice(-1, None)
+            backward_diff = torch.div(
+                torch.subtract(f_tensor[tuple(slice_next)], f_tensor[tuple(slice_prev)]),
+                spacing
+            )
+            
+            # Combine the differences
+            result = torch.zeros_like(f_tensor)
+            result[tuple(slice_result)] = forward_diff
+            slice_result[ax] = slice(1, -1)
+            result[tuple(slice_result)] = central_diff
+            slice_result[ax] = slice(-1, None)
+            result[tuple(slice_result)] = backward_diff
+            
+        elif edge_order == 2:
+            # Second-order accurate differences at the boundaries
+            # Forward difference at the beginning
+            if f_tensor.shape[ax] > 2:
+                # Define all slices needed without using Python multiplication
+                slice_prev = []
+                slice_mid = []
+                slice_next = []
+                slice_result = []
+                for _ in range(ndim):
+                    slice_prev.append(slice(None))
+                    slice_mid.append(slice(None))
+                    slice_next.append(slice(None))
+                    slice_result.append(slice(None))
+                
+                # Forward difference at the beginning
+                slice_prev[ax] = slice(0, 1)
+                slice_mid[ax] = slice(1, 2)
+                slice_next[ax] = slice(2, 3)
+                slice_result[ax] = slice(0, 1)
+                
+                # Calculate: (-3 * prev + 4 * mid - next) / (2 * spacing)
+                neg_three = torch.tensor(-3.0, device=f_tensor.device)
+                four = torch.tensor(4.0, device=f_tensor.device)
+                neg_one = torch.tensor(-1.0, device=f_tensor.device)
+                two = torch.tensor(2.0, device=f_tensor.device)
+                
+                term1 = torch.multiply(neg_three, f_tensor[tuple(slice_prev)])
+                term2 = torch.multiply(four, f_tensor[tuple(slice_mid)])
+                term3 = torch.multiply(neg_one, f_tensor[tuple(slice_next)])
+                
+                sum_terms = torch.add(torch.add(term1, term2), term3)
+                forward_diff = torch.div(sum_terms, torch.multiply(two, spacing))
+                
+                # Central difference in the interior
+                slice_prev[ax] = slice(0, -2)
+                slice_next[ax] = slice(2, None)
+                slice_result[ax] = slice(1, -1)
+                
+                # Calculate: (next - prev) / (2 * spacing)
+                diff_terms = torch.subtract(f_tensor[tuple(slice_next)], f_tensor[tuple(slice_prev)])
+                central_diff = torch.div(diff_terms, torch.multiply(two, spacing))
+                
+                # Backward difference at the end
+                slice_prev[ax] = slice(-3, -2)
+                slice_mid[ax] = slice(-2, -1)
+                slice_next[ax] = slice(-1, None)
+                slice_result[ax] = slice(-1, None)
+                
+                # Calculate: (prev - 4 * mid + 3 * next) / (2 * spacing)
+                three = torch.tensor(3.0, device=f_tensor.device)
+                
+                term1 = f_tensor[tuple(slice_prev)]
+                term2 = torch.multiply(neg_one, torch.multiply(four, f_tensor[tuple(slice_mid)]))
+                term3 = torch.multiply(three, f_tensor[tuple(slice_next)])
+                
+                sum_terms = torch.add(torch.add(term1, term2), term3)
+                backward_diff = torch.div(sum_terms, torch.multiply(two, spacing))
+                
+                # Combine the differences
+                result = torch.zeros_like(f_tensor)
+                result[tuple(slice_result)] = forward_diff
+                slice_result[ax] = slice(1, -1)
+                result[tuple(slice_result)] = central_diff
+                slice_result[ax] = slice(-1, None)
+                result[tuple(slice_result)] = backward_diff
+            else:
+                # Fall back to first-order for small tensors
+                # Use PyTorch's gradient function with spacing as a list
+                spacing_list = [spacing]
+                result = torch.gradient(f_tensor, spacing=spacing_list, dim=ax)[0]
+        else:
+            raise ValueError("edge_order must be 1 or 2")
+        
+        results.append(result)
+    
+    # Return a single tensor if only one axis, otherwise a list
+    if len(results) == 1:
+        return results[0]
+    else:
+        return results
 
 
 # Define the pi constant using Chudnovsky algorithm
@@ -924,7 +1076,7 @@ class TorchMathOps:
             raise ValueError("edge_order must be 1 or 2")
         return gradient(f, *varargs, axis=axis, edge_order=edge_order)
     
-    def cumsum(self, x: ArrayLike, axis: Optional[int] = None) -> torch.Tensor:
+    def cumsum(self, x: torch.Tensor, axis: Optional[int] = None) -> torch.Tensor:
         """
         Compute the cumulative sum of a tensor along a specified axis.
         
@@ -938,7 +1090,7 @@ class TorchMathOps:
         x_tensor = convert_to_tensor(x)
         return torch.cumsum(x_tensor, dim=axis)
     
-    def eigh(self, a: ArrayLike) -> Tuple[torch.Tensor, torch.Tensor]:
+    def eigh(self, a: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Compute the eigenvalues and eigenvectors of a Hermitian or symmetric matrix.
         

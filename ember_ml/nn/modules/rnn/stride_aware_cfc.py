@@ -8,6 +8,7 @@ which are specialized recurrent neural network components for multi-timescale pr
 from typing import Union, Optional
 
 from ember_ml import ops
+from ember_ml.nn import tensor
 from ember_ml.nn.modules import Module, Parameter
 from ember_ml.nn.wirings import Wiring
 from ember_ml.initializers import glorot_uniform, orthogonal, BinomialInitializer
@@ -23,8 +24,8 @@ def lecun_tanh(x):
     Returns:
         Activated tensor
     """
-    scale_factor = ops.convert_to_tensor(0.66666667)  # More precise 2/3
-    amplitude = ops.convert_to_tensor(1.7159)
+    scale_factor = tensor.convert_to_tensor(0.66666667)  # More precise 2/3
+    amplitude = tensor.convert_to_tensor(1.7159)
     return ops.multiply(amplitude, ops.tanh(ops.multiply(scale_factor, x)))
 
 
@@ -635,7 +636,7 @@ def visualize_stride_temporal_dynamics(time_steps=100, stride_lengths=[1, 3, 5],
     # Process sequence through each stride-specific cell
     for t_idx in range(time_steps):
         x_t = input_sequence[t_idx:t_idx+1]
-        x_t = ops.convert_to_tensor(x_t)
+        x_t = tensor.convert_to_tensor(x_t)
 
         for stride, cell in stride_cells.items():
             # Only process input at stride-specific intervals

@@ -68,6 +68,10 @@ def run_tests():
     # Import the test module
     from tests.test_terabyte_feature_extractor_purified import TestTerabyteFeatureExtractorPurified
     
+    # Ensure the test class inherits from TestCase
+    if not issubclass(TestTerabyteFeatureExtractorPurified, unittest.TestCase):
+        raise TypeError("Test class must inherit from unittest.TestCase")
+    
     # Create a test suite
     suite = unittest.TestLoader().loadTestsFromTestCase(TestTerabyteFeatureExtractorPurified)
     

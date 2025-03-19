@@ -8,11 +8,8 @@ using the ops abstraction layer.
 from typing import Any, Optional, Union, List, Tuple
 
 from ember_ml import ops
-from ember_ml.ops.tensor import EmberTensor
+from ember_ml.nn.tensor import EmberTensor
 from ember_ml.nn.activations.interfaces.activation import ActivationInterface
-
-# Type aliases
-Tensor = EmberTensor
 
 
 class Tanh(ActivationInterface):
@@ -29,7 +26,7 @@ class Tanh(ActivationInterface):
         """Initialize Tanh activation function."""
         pass
         
-    def __call__(self, x: Tensor) -> Tensor:
+    def __call__(self, x: EmberTensor) -> EmberTensor:
         """
         Apply tanh activation function.
         
@@ -41,7 +38,7 @@ class Tanh(ActivationInterface):
         """
         return ops.tanh(x)
         
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: EmberTensor) -> EmberTensor:
         """
         Forward pass of tanh activation.
         

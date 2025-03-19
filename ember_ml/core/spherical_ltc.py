@@ -5,6 +5,7 @@ Spherical variant of LTC neurons operating on unit sphere manifold.
 from typing import Optional, Union, Dict, Any, Tuple
 from dataclasses import dataclass
 from ember_ml import ops
+from ember_ml.nn import tensor
 from .geometric import GeometricNeuron, normalize_sphere
 from .base import BaseChain
 
@@ -35,14 +36,14 @@ def log_map_sphere(p, q):
     angle = ops.arccos(dot_prod)
     
     if ops.less(angle, 1e-12):
-        return ops.zeros_like(p)
+        return tensor.zeros_like(p)
         
     # Compute direction in tangent space
     perp = ops.subtract(q_n, ops.multiply(dot_prod, p_n))
     perp_norm = ops.norm(perp)
     
     if ops.less(perp_norm, 1e-12):
-        return ops.zeros_like(p)
+        return tensor.zeros_like(p)
         
     return ops.multiply(ops.divide(perp, perp_norm), angle)
 
@@ -97,9 +98,9 @@ class SphericalLTCNeuron(GeometricNeuron):
         # Set dim before calling super().__init__
         self.dim = dim
         self.gleak = gleak
-        self.baseline = ops.zeros(dim)
+        self.baseline = tensor.zeros(dim)
         # Use tensor_scatter_update to set the last element to 1.0 (North pole as rest state)
-        self.baseline = ops.tensor_scatter_update(
+        self.baseline = tensor.tensor_scatter_nd_update(
             self.baseline, 
             [ops.subtract(dim, 1)], 
             [1.0]
@@ -110,7 +111,7 @@ class SphericalLTCNeuron(GeometricNeuron):
         
     def _initialize_manifold_state(self):
         """Initialize state as random point on sphere."""
-        state = ops.random_normal(shape=(self.dim,))
+        state = tensor.random_normal(shape=(self.dim,))
         return normalize_sphere(state)
         
     def _manifold_update(self, 
@@ -148,7 +149,7 @@ class SphericalLTCNeuron(GeometricNeuron):
         state_dict = super().save_state()
         state_dict.update({
             'gleak': self.gleak,
-            'baseline': ops.to_numpy(self.baseline).tolist()
+            'baseline': tensor.to_numpy(self.baseline).tolist()
         })
         return state_dict
         
@@ -156,14 +157,14 @@ class SphericalLTCNeuron(GeometricNeuron):
         """Load neuron state and parameters."""
         super().load_state(state_dict)
         self.gleak = state_dict['gleak']
-        self.baseline = ops.convert_to_tensor(state_dict['baseline'])
+        self.baseline = tensor.convert_to_tensor(state_dict['baseline'])
 
 class SphericalLTCChain(BaseChain):
     """Chain of LTC neurons operating on unit sphere."""
     
     def __init__(self,
                  num_neurons: int,
-                 base_tau_or_config=None,
+                 base_tau_or_config: Optional[Union[float, SphericalLTCConfig]] = None,
                  dt: float = 0.01,
                  gleak: float = 0.5,
                  dim: int = 3):
@@ -186,17 +187,22 @@ class SphericalLTCChain(BaseChain):
             dt = config.dt
             gleak = config.gleak
         else:
-            base_tau = base_tau_or_config
+            base_tau = 1.0 if base_tau_or_config is None else float(base_tau_or_config)
         
+        # Create a neuron factory class
+        class SphericalLTCFactory(SphericalLTCNeuron):
+            def __new__(cls, neuron_id, tau, dt):
+                return SphericalLTCNeuron(
+                    neuron_id=neuron_id,
+                    tau=tau,
+                    dt=dt,
+                    gleak=gleak,
+                    dim=dim
+                )
+
         super().__init__(
             num_neurons=num_neurons,
-            neuron_class=lambda neuron_id, tau, dt: SphericalLTCNeuron(
-                neuron_id=neuron_id,
-                tau=tau,
-                dt=dt,
-                gleak=gleak,
-                dim=dim
-            ),
+            neuron_class=SphericalLTCFactory,
             base_tau=base_tau,
             dt=dt
         )
@@ -212,19 +218,19 @@ class SphericalLTCChain(BaseChain):
             Tuple of (states tensor, metadata dict)
         """
         # Get batch size from input shape
-        batch_size = ops.shape(input_batch)[0]
+        batch_size = tensor.shape(input_batch)[0]
         
         # Process each batch element
         all_states = []
         for i in range(batch_size):
             # Extract single batch element using slice
-            input_i = ops.slice(input_batch, [i, 0], [1, self.dim])
+            input_i = tensor.slice(input_batch, [i, 0], [1, self.dim])
             # Update chain with this input
             states = self.update(input_i)
             all_states.append(states)
             
         # Stack all states
-        states_tensor = ops.stack(all_states)
+        states_tensor = tensor.stack(all_states)
         
         # Return states and empty metadata
         return states_tensor, {}
@@ -249,18 +255,18 @@ class SphericalLTCChain(BaseChain):
             Dictionary mapping neuron indices to forgetting times
         """
         # Get tensor dimensions
-        shape = ops.shape(states)
+        shape = tensor.shape(states)
         batch_size = shape[0]
         num_steps = shape[1]
         num_neurons = shape[2]
         
         # Use first batch element for analysis
-        states_0 = ops.slice(states, [0, 0, 0, 0], [1, num_steps, num_neurons, self.dim])
-        states_0 = ops.squeeze(states_0, axis=0)
+        states_0 = tensor.slice(states, [0, 0, 0, 0], [1, num_steps, num_neurons, self.dim])
+        states_0 = tensor.squeeze(states_0, axis=0)
         
         # Compute x-axis projections (first component)
-        x_proj = ops.slice(states_0, [0, 0, 0], [num_steps, num_neurons, 1])
-        x_proj = ops.squeeze(x_proj, axis=2)
+        x_proj = tensor.slice(states_0, [0, 0, 0], [num_steps, num_neurons, 1])
+        x_proj = tensor.squeeze(x_proj, axis=2)
         
         # Find pattern end index (assuming pattern is in first half)
         pattern_end = ops.floor_divide(num_steps, 2)
@@ -270,18 +276,18 @@ class SphericalLTCChain(BaseChain):
         
         for i in range(num_neurons):
             # Get neuron trace
-            trace = ops.slice(x_proj, [0, i], [num_steps, 1])
-            trace = ops.squeeze(trace, axis=1)
+            trace = tensor.slice(x_proj, [0, i], [num_steps, 1])
+            trace = tensor.squeeze(trace, axis=1)
             
             # Get pattern end value
-            pattern_value = ops.slice(trace, [ops.subtract(pattern_end, 1)], [1])
-            pattern_value = ops.squeeze(pattern_value)
+            pattern_value = tensor.slice(trace, [ops.subtract(pattern_end, 1)], [1])
+            pattern_value = tensor.squeeze(pattern_value)
             
             # Find when trace drops below threshold
             found_forgetting = False
-            for t in range(ops.to_numpy(pattern_end), ops.to_numpy(num_steps)):
-                trace_t = ops.slice(trace, [t], [1])
-                trace_t = ops.squeeze(trace_t)
+            for t in range(tensor.to_numpy(pattern_end), tensor.to_numpy(num_steps)):
+                trace_t = tensor.slice(trace, [t], [1])
+                trace_t = tensor.squeeze(trace_t)
                 
                 if ops.greater(ops.abs(ops.subtract(trace_t, pattern_value)), threshold):
                     forgetting_times[i] = ops.multiply(ops.subtract(t, pattern_end), self.dt)
@@ -305,22 +311,22 @@ class SphericalLTCChain(BaseChain):
             Updated states of all neurons [num_neurons x dim]
         """
         # Create zeros tensor for states
-        states = ops.zeros((self.num_neurons, self.dim))
+        states = tensor.zeros((self.num_neurons, self.dim))
         
         # Update first neuron with external input
-        states_0 = self.neurons[0].update(ops.slice(input_signals, [0, 0], [1, self.dim]))
-        states = ops.tensor_scatter_update(states, [0], [states_0])
+        states_0 = self.neurons[0].update(tensor.slice(input_signals, [0, 0], [1, self.dim]))
+        states = tensor.tensor_scatter_nd_update(states, [0], [states_0])
         
         # Update subsequent neurons using chain connections
         for i in range(1, self.num_neurons):
             # Each neuron receives state of previous neuron as input
             prev_idx = ops.subtract(i, 1)
-            prev_state = ops.slice(states, [prev_idx, 0], [1, self.dim])
+            prev_state = tensor.slice(states, [prev_idx, 0], [1, self.dim])
             states_i = self.neurons[i].update(prev_state)
-            states = ops.tensor_scatter_update(states, [i], [states_i])
+            states = tensor.tensor_scatter_nd_update(states, [i], [states_i])
             
         # Store chain state history
-        self.state_history.append(ops.copy(states))
+        self.state_history.append(tensor.copy(states))
         
         return states
 

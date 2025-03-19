@@ -7,17 +7,14 @@ This module defines the abstract interfaces for activation functions used in neu
 from abc import ABC, abstractmethod
 from typing import Any, Optional, Union, List, Tuple
 
-from ember_ml.ops.tensor import EmberTensor
-
-# Type aliases
-Tensor = EmberTensor
+from ember_ml.nn.tensor import EmberTensor
 
 
 class ActivationInterface(ABC):
     """Abstract interface for activation functions used in neural networks."""
     
     @abstractmethod
-    def __call__(self, x: Tensor) -> Tensor:
+    def __call__(self, x: EmberTensor) -> EmberTensor:
         """
         Apply the activation function.
         
@@ -30,7 +27,7 @@ class ActivationInterface(ABC):
         pass
     
     @abstractmethod
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: EmberTensor) -> EmberTensor:
         """
         Forward pass of the activation function.
         
