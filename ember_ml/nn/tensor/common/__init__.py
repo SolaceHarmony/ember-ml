@@ -55,13 +55,47 @@ tile = lambda *args, **kwargs: _get_tensor_ops().tile(*args, **kwargs)
 gather = lambda *args, **kwargs: _get_tensor_ops().gather(*args, **kwargs)
 scatter = lambda *args, **kwargs: _get_tensor_ops().scatter(*args, **kwargs)
 tensor_scatter_nd_update = lambda *args, **kwargs: _get_tensor_ops().tensor_scatter_nd_update(*args, **kwargs)
-slice = lambda *args, **kwargs: _get_tensor_ops().slice(*args, **kwargs)
+# Define slice as a function that handles both callable and non-callable backend slices
+def slice(data, starts, sizes):
+    """
+    Extract a slice from a tensor.
+    
+    Args:
+        data: Input tensor
+        starts: Starting indices for each dimension
+        sizes: Size of the slice in each dimension
+        
+    Returns:
+        Sliced tensor
+    """
+    backend_slice = _get_tensor_ops().slice
+    # Check if backend_slice is callable
+    if callable(backend_slice):
+        return backend_slice(data, starts, sizes)
+    # If not callable, it's a property accessor function that takes the data as an argument
+    return backend_slice(data, starts, sizes)
 slice_update = lambda *args, **kwargs: _get_tensor_ops().slice_update(*args, **kwargs)
 
 # Rename the current function to indicate it's internal
 _convert_to_backend_tensor = lambda *args, **kwargs: _get_tensor_ops().convert_to_tensor(*args, **kwargs)
 shape = lambda *args, **kwargs: _get_tensor_ops().shape(*args, **kwargs)
-dtype = lambda *args, **kwargs: _get_tensor_ops().dtype(*args, **kwargs)
+# Define dtype as a function that handles both callable and non-callable backend dtypes
+def dtype(data):
+    """
+    Get the data type of a tensor.
+    
+    Args:
+        data: Input tensor
+        
+    Returns:
+        Data type of the tensor
+    """
+    backend_dtype = _get_tensor_ops().dtype
+    # Check if backend_dtype is callable
+    if callable(backend_dtype):
+        return backend_dtype(data)
+    # If not callable, it's a property accessor function that takes the data as an argument
+    return backend_dtype(data)
 cast = lambda *args, **kwargs: _get_tensor_ops().cast(*args, **kwargs)
 copy = lambda *args, **kwargs: _get_tensor_ops().copy(*args, **kwargs)
 var = lambda *args, **kwargs: _get_tensor_ops().var(*args, **kwargs)

@@ -66,7 +66,9 @@ class WiredCfCCell(ModuleWiredCell):
         
         # Store additional parameters
         self.time_scale_factor = time_scale_factor
+        self.activation_name = activation  # Store the activation name
         self.recurrent_activation = recurrent_activation
+        self.use_bias = use_bias  # Store the use_bias flag
         self.kernel_initializer = kernel_initializer
         self.recurrent_initializer = recurrent_initializer
         self.bias_initializer = bias_initializer
@@ -89,29 +91,29 @@ class WiredCfCCell(ModuleWiredCell):
         # Create kernel parameters first
         # Input weights
         if self.kernel_initializer == "glorot_uniform":
-            kernel_data = glorot_uniform((self.units, self.units * 4))
+            kernel_data = glorot_uniform((self.state_size, self.state_size * 4))
         else:
-            kernel_data = ops.zeros((self.units, self.units * 4))
+            kernel_data = tensor.zeros((self.state_size, self.state_size * 4))
         self.kernel = Parameter(kernel_data)
         
         # Recurrent weights
         if self.recurrent_initializer == "orthogonal":
-            recurrent_data = orthogonal((self.units, self.units * 4))
+            recurrent_data = orthogonal((self.state_size, self.state_size * 4))
         else:
-            recurrent_data = ops.zeros((self.units, self.units * 4))
+            recurrent_data = tensor.zeros((self.state_size, self.state_size * 4))
         self.recurrent_kernel = Parameter(recurrent_data)
         
         # Bias
         if self.use_bias:
-            self.bias = Parameter(ops.zeros((self.units * 4,)))
+            self.bias = Parameter(tensor.zeros((self.state_size * 4,)))
         
         # Time-scale parameter (learnable)
-        self.time_scale = Parameter(ops.ones((self.units,)) * self.time_scale_factor)
+        self.time_scale = Parameter(tensor.ones((self.state_size,)) * self.time_scale_factor)
         
         # Apply masks to weights
         # Create expanded masks by concatenating the mask 4 times along the last axis
-        self.kernel_mask = ops.concatenate([self.input_mask] * 4, axis=-1)
-        self.recurrent_kernel_mask = ops.concatenate([self.recurrent_mask] * 4, axis=-1)
+        self.kernel_mask = tensor.concatenate([self.input_mask] * 4, axis=-1)
+        self.recurrent_kernel_mask = tensor.concatenate([self.recurrent_mask] * 4, axis=-1)
     
     def forward(self, input, hx, timespans=None):
         """
@@ -127,8 +129,8 @@ class WiredCfCCell(ModuleWiredCell):
         """
         # Initialize states if not provided
         if hx is None:
-            h_prev = ops.zeros((ops.shape(input)[0], self.units))
-            t_prev = ops.zeros((ops.shape(input)[0], self.units))
+            h_prev = tensor.zeros((ops.shape(input)[0], self.state_size))
+            t_prev = tensor.zeros((ops.shape(input)[0], self.state_size))
         else:
             h_prev, t_prev = hx
         
@@ -136,17 +138,17 @@ class WiredCfCCell(ModuleWiredCell):
         ts = 1.0 if timespans is None else timespans
         
         # Apply wiring constraints
-        masked_kernel = ops.multiply(self.kernel, self.kernel_mask)
-        masked_recurrent_kernel = ops.multiply(self.recurrent_kernel, self.recurrent_kernel_mask)
+        masked_kernel = ops.multiply(self.kernel.data, self.kernel_mask)
+        masked_recurrent_kernel = ops.multiply(self.recurrent_kernel.data, self.recurrent_kernel_mask)
         
         # Compute gates with wiring constraints
         z = ops.matmul(input, masked_kernel)
         z = ops.add(z, ops.matmul(h_prev, masked_recurrent_kernel))
         if self.use_bias:
-            z = ops.add(z, self.bias)
+            z = ops.add(z, self.bias.data)
         
         # Split into gates
-        z_chunks = ops.split(z, 4, axis=-1)
+        z_chunks = tensor.split(z, 4, axis=-1)
         z_i, z_f, z_o, z_c = z_chunks
         
         # Apply activations
@@ -168,14 +170,14 @@ class WiredCfCCell(ModuleWiredCell):
         
         # Apply time scaling
         # Compute time decay factor
-        decay = ops.exp(ops.divide(-ts, self.time_scale))
+        decay = ops.exp(ops.divide(-ts, self.time_scale.data))
         
         # Update time state
         t = ops.add(ops.multiply(f, t_prev), ops.multiply(i, c))
         
         # Apply time decay to hidden state
         decay_term = ops.multiply(decay, h_prev)
-        time_term = ops.multiply(ops.subtract(ops.ones_like(decay), decay), t)
+        time_term = ops.multiply(ops.subtract(tensor.ones_like(decay), decay), t)
         
         if self.activation_name == "tanh":
             h = ops.multiply(o, ops.tanh(ops.add(decay_term, time_term)))
@@ -185,5 +187,8 @@ class WiredCfCCell(ModuleWiredCell):
         
         # Apply output mask
         output = ops.multiply(h, self.output_mask)
+        
+        # Extract only the motor neurons (first output_dim neurons)
+        output = output[:, :self.wiring.output_dim]
         
         return output, [h, t]

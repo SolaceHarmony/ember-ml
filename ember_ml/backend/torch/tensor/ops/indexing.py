@@ -2,6 +2,8 @@
 
 import torch
 from typing import Union, Optional, Sequence, Any, List, Tuple, Literal
+# Import the built-in slice function with a different name
+from builtins import slice as py_slice
 
 # Import utility functions
 from ember_ml.backend.torch.tensor.ops.utility import convert_to_tensor
@@ -29,15 +31,18 @@ def slice_tensor(data: TensorLike, starts: Sequence[int], sizes: Sequence[int]) 
     for i, (start, size) in enumerate(zip(starts, sizes)):
         # Convert to tensor to avoid precision-reducing casts
         start_tensor = torch.tensor(start, dtype=torch.long)
-        
         if size == -1:
             # -1 means "all remaining elements in this dimension"
-            slice_objects.append(slice(start_tensor.item(), None))
+            # Use Python's built-in slice function, not our slice_tensor function
+            slice_obj = py_slice(start_tensor.item(), None)
+            slice_objects.append(slice_obj)
         else:
             # Convert size to tensor to avoid precision-reducing casts
             size_tensor = torch.tensor(size, dtype=torch.long)
             end_tensor = torch.add(start_tensor, size_tensor)
-            slice_objects.append(slice(start_tensor.item(), end_tensor.item()))
+            # Use Python's built-in slice function, not our slice_tensor function
+            slice_obj = py_slice(start_tensor.item(), end_tensor.item())
+            slice_objects.append(slice_obj)
     
     # Extract the slice
     return tensor_torch[tuple(slice_objects)]

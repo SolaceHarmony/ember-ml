@@ -216,6 +216,8 @@ def dtype(data: TensorLike) -> Any:
     """
     from ember_ml.backend.mlx.tensor.tensor import MLXTensor
     Tensor = MLXTensor()
+    # Return the dtype property directly to maintain backward compatibility
+    # with code that accesses the property directly
     return Tensor.convert_to_tensor(data).dtype
 
 def copy(data: TensorLike) -> mx.array:
