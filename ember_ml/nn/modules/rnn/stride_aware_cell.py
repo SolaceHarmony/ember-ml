@@ -10,6 +10,7 @@ from typing import Optional, List, Dict, Any, Union, Tuple
 
 import numpy as np
 from ember_ml import ops
+from ember_ml.nn import tensor
 from ember_ml.nn.modules import Module, Parameter
 from ember_ml.initializers import glorot_uniform
 
@@ -63,12 +64,12 @@ class StrideAwareCell(Module):
         
         # Bias terms
         if self.use_bias:
-            self.input_bias = Parameter(ops.zeros((self.hidden_size,)))
-            self.hidden_bias = Parameter(ops.zeros((self.hidden_size,)))
-            self.output_bias = Parameter(ops.zeros((self.hidden_size,)))
+            self.input_bias = Parameter(tensor.zeros((self.hidden_size,)))
+            self.hidden_bias = Parameter(tensor.zeros((self.hidden_size,)))
+            self.output_bias = Parameter(tensor.zeros((self.hidden_size,)))
         
         # Time constant
-        self.tau = Parameter(ops.ones((self.hidden_size,)))
+        self.tau = Parameter(tensor.ones((self.hidden_size,)))
     
     @property
     def state_size(self):
@@ -98,7 +99,7 @@ class StrideAwareCell(Module):
         # Initialize state if None
         if state is None:
             batch_size = ops.shape(inputs)[0]
-            state = ops.zeros((batch_size, self.hidden_size))
+            state = tensor.zeros((batch_size, self.hidden_size))
         
         # Compute input contribution
         input_signal = ops.matmul(inputs, self.input_kernel.data)
@@ -147,4 +148,4 @@ class StrideAwareCell(Module):
         Returns:
             Initial state
         """
-        return ops.zeros((batch_size, self.hidden_size))
+        return tensor.zeros((batch_size, self.hidden_size))

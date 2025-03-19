@@ -86,7 +86,7 @@ class NCP(Module):
             self._bias = None
         
         # Initialize state
-        self.state = ops.zeros((1, self.wiring.units))
+        self.state = tensor.zeros((1, self.wiring.units))
     
     @property
     def kernel(self):
@@ -123,7 +123,7 @@ class NCP(Module):
             q, r = linearalg.qr(tensor.to_numpy(a))
             # Make Q uniform according to https://arxiv.org/pdf/1312.6120.pdf
             d = linearalg.diag(r)
-            ph = tensor.sign(d)
+            ph = ops.sign(d)
             q = ops.multiply(ph,q)
             return tensor.convert_to_tensor(q)
         elif initializer == "zeros":

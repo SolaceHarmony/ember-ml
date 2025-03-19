@@ -16,15 +16,10 @@ The project focuses on several key areas:
 All user documentation has been organized into the following directories:
 
 - **[docs/api](docs/api/)**: API reference documentation for all modules
-- **[docs/tutorials](docs/tutorials/)**: Step-by-step guides for common tasks
-- **[docs/feature_extraction](docs/feature_extraction/)**: Documentation for feature extraction components
-- **[docs/architecture](docs/architecture/)**: Documentation for system architecture
-- **[docs/testing](docs/testing/)**: Documentation for testing procedures
-- **[docs/notebook](docs/notebook/)**: Documentation for notebook usage
-- **[docs/api](docs/api/)**: API reference documentation
   - **[docs/api/tensor.md](docs/api/tensor.md)**: Documentation for the tensor module
   - **[docs/api/tensor_architecture.md](docs/api/tensor_architecture.md)**: Detailed explanation of the tensor operations architecture
-- **[docs/tutorials](docs/tutorials/)**: Tutorials for using the library
+- **[docs/architecture](docs/architecture/)**: Documentation for system architecture
+- **[docs/tutorials](docs/tutorials/)**: Step-by-step guides for common tasks
 - **[docs/examples](docs/examples/)**: Example code and usage patterns
 - **[docs/plans](docs/plans/)**: Development plans and roadmaps
 

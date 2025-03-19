@@ -1,5 +1,6 @@
 import numpy as np
 from ember_ml import ops
+from ember_ml.nn import tensor
 from ember_ml.nn.modules.rnn import StrideAwareCell
 
 # Create a cell
@@ -23,14 +24,14 @@ print(f"- tau: {cell.tau}")
 
 # Create input
 batch_size = 2
-inputs = ops.random_normal((batch_size, 10))
+inputs = tensor.random_normal((batch_size, 10))
 
 # Initialize state
-state = ops.zeros((batch_size, 20))
+state = tensor.zeros((batch_size, 20))
 
 # Forward pass
 output, new_state = cell(inputs, state)
 
-print(f"\nInput shape: {ops.shape(inputs)}")
-print(f"Output shape: {ops.shape(output)}")
-print(f"State shape: {ops.shape(new_state)}")
+print(f"\nInput shape: {tensor.shape(inputs)}")
+print(f"Output shape: {tensor.shape(output)}")
+print(f"State shape: {tensor.shape(new_state)}")

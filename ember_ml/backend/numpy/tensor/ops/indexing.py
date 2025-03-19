@@ -84,13 +84,18 @@ def slice_update(tensor: TensorLike, slices: TensorLike, updates: Optional[Tenso
     
     # If updates is None, return slice of tensor
     if updates is None:
-        # Create a list of slice objects for each dimension
-        slice_objects = []
-        for i, start in enumerate(slices_array):
-            slice_objects.append(slice(start, start + 1))
-        
-        # Extract the slice
-        return tensor_array[tuple(slice_objects)]
+        # Handle scalar indices (0-d arrays)
+        if slices_array.ndim == 0:
+            # For scalar indices, just return the element at that index
+            return tensor_array[int(slices_array)]
+        else:
+            # Create a list of slice objects for each dimension
+            slice_objects = []
+            for i, start in enumerate(slices_array):
+                slice_objects.append(slice(start, start + 1))
+            
+            # Extract the slice
+            return tensor_array[tuple(slice_objects)]
     
     # Convert updates to NumPy array
     updates_array = Tensor.convert_to_tensor(updates)
