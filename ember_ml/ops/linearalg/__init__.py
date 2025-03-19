@@ -7,8 +7,7 @@ This module dynamically aliases functions from the active backend
 
 import importlib
 import sys
-import os
-from typing import List, Optional, Callable, Any
+from typing import Optional
 
 # Import backend control functions
 from ember_ml.backend import get_backend, get_backend_module
@@ -25,7 +24,6 @@ def get_linearalg_module():
     # This function is not used in this module but can be used for testing purposes
     # or to ensure that the backend module is imported correctly.
     # Reload the backend module to ensure the latest version is use
-    backend_name = get_backend()
     module_name = get_backend_module().__name__ + '.linearalg'
     module = importlib.import_module(module_name)
     return module
