@@ -3,6 +3,8 @@
 from typing import Any, List, Literal, Optional, Sequence, Union
 
 import numpy as np
+# Import the built-in slice function with a different name
+from builtins import slice as py_slice
 
 from ember_ml.backend.numpy.types import (
     TensorLike, Shape
@@ -20,11 +22,13 @@ def slice_tensor(tensor: TensorLike, starts: Shape, sizes: Shape) -> np.ndarray:
     for i, (start, size) in enumerate(zip(starts, sizes)):
         if size == -1:
             # -1 means "all remaining elements in this dimension"
-            slice_objects.append(slice(start, None))
+            slice_objects.append(py_slice(start, None))
         else:
             # Use np.add instead of + operator
             end = np.add(start, size)
-            slice_objects.append(slice(start, end))
+            # Use Python's built-in slice function, not our slice_tensor function
+            slice_obj = py_slice(start, end)
+            slice_objects.append(slice_obj)
     
     # Extract the slice
     return tensor_array[tuple(slice_objects)]

@@ -197,6 +197,8 @@ def dtype(data: TensorLike) -> Any:
     """
     from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
     Tensor = NumpyTensor()
+    # Return the dtype property directly to maintain backward compatibility
+    # with code that accesses the property directly
     return Tensor.convert_to_tensor(data).dtype
 
 def copy(data: TensorLike) -> np.ndarray:
