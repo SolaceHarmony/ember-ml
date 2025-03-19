@@ -1,4 +1,6 @@
 from ember_ml import ops
+import matplotlib.pyplot as plt
+import numpy as np
 from ember_ml.nn import tensor
 import matplotlib.pyplot as plt
 

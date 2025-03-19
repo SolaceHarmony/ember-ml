@@ -2,22 +2,30 @@
 
 This section contains examples demonstrating how to use Ember ML for various tasks.
 
-## Basic Examples
+## Available Examples
 
-- [Basic Tensor Operations](basic_tensor_operations.md)
-- [Feature Extraction](feature_extraction.md)
-- [Backend Selection](backend_selection.md)
+The following examples are available in the [examples directory](../../examples/):
 
-## Advanced Examples
+- **Neural Network Examples**:
+  - [LTC Example](../../examples/ltc_example.py): Liquid Time Constant neurons
+  - [NCP Example](../../examples/ncp_example.py): Neural Circuit Policies
+  - [CFC Example](../../examples/cfc_example.py): Continuous-time Fully Connected networks
+  - [LSTM Example](../../examples/lstm_example.py): Long Short-Term Memory networks
+  - [GRU Example](../../examples/gru_example.py): Gated Recurrent Units
+  - [RNN Example](../../examples/rnn_example.py): Recurrent Neural Networks
 
-- [Large-Scale Data Processing](large_scale_data_processing.md)
-- [Custom Models](custom_models.md)
-- [GPU Acceleration](gpu_acceleration.md)
+- **Backend Examples**:
+  - [Backend Auto Selection Demo](../../examples/backend_auto_selection_demo.py): Automatic backend selection
+  - [MLX Examples](../../examples/mlx/): Examples using the MLX backend
 
-## Real-World Use Cases
+- **Feature Extraction**:
+  - [Purified Feature Extractor Demo](../../examples/purified_feature_extractor_demo.py): Feature extraction
 
-- [Time Series Analysis](time_series_analysis.md)
-- [Image Processing](image_processing.md)
-- [Natural Language Processing](nlp.md)
+## Example Subdirectories
 
-Note: These examples are currently being developed and will be available soon. In the meantime, you can find working examples in the [examples directory](https://github.com/your-org/ember-ml/tree/main/examples) of the GitHub repository.
+- [demos/](../../examples/demos/): Demonstration scripts
+- [ltc/](../../examples/ltc/): Liquid Time Constant examples
+- [mlx/](../../examples/mlx/): MLX backend examples
+- [rbm/](../../examples/rbm/): Restricted Boltzmann Machine examples
+
+For more information, see the [examples README](../../examples/README.md).

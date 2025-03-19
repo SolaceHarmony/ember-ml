@@ -1,5 +1,11 @@
 # Ember ML Documentation
 
+Welcome to the Ember ML documentation. Ember ML is a hardware-optimized neural network library that supports multiple backends (PyTorch, MLX, NumPy) to run efficiently on different hardware platforms (CUDA, Apple Metal, and other platforms).
+
+## Documentation Sections
+
+- [API Reference](api/index.md): Detailed API documentation for all modules
+=======
 Welcome to the Ember ML documentation. Ember ML is a library for hardware-optimized neural networks with multiple backend support (PyTorch, MLX, NumPy), focusing on performance, scalability, and ease of use.
 
 ## Documentation Sections
@@ -15,8 +21,7 @@ Welcome to the Ember ML documentation. Ember ML is a library for hardware-optimi
   - [Tensor Architecture](api/tensor_architecture.md): Detailed explanation of the tensor operations architecture
 - [Tutorials](tutorials/index.md): Step-by-step guides for common tasks
 - [Examples](examples/index.md): Code examples and use cases
-- [Troubleshooting](troubleshooting/index.md): Solutions for common issues
-- [Development](development/index.md): Guidelines for contributors
+- [Plans](plans/): Development plans and roadmaps
 
 ## Quick Start
 
@@ -33,6 +38,22 @@ import ember_ml
 from ember_ml.nn.tensor import EmberTensor
 from ember_ml import ops
 
+# Set the backend (optional, auto-selects by default)
+eh.set_backend('torch')  # or 'numpy', 'mlx'
+
+# Create a liquid neural network
+model = eh.models.LiquidNeuralNetwork(
+    input_size=10,
+    hidden_size=32,
+    output_size=1
+)
+
+# Create input tensor
+x = ops.random.normal(shape=(100, 10))
+
+# Forward pass
+output = model(x)
+=======
 # Set the backend
 ember_ml.backend.set_backend('mlx')  # or 'torch' or 'numpy'
 
@@ -48,16 +69,28 @@ For more detailed instructions, see the [Getting Started](tutorials/getting_star
 
 ## Key Features
 
+- **Backend Abstraction**: Automatically selects the optimal computational backend (MLX, PyTorch, or NumPy)
+- **Neural Network Architectures**: Implementation of cutting-edge neural network architectures like LTC, NCP, and more
+- **Feature Extraction**: Tools for extracting features from large datasets
+- **Hardware Optimization**: Optimized for different hardware platforms (CUDA, Apple Metal, etc.)
+=======
 - **Hardware-Optimized Neural Networks**: Implementation of cutting-edge neural network architectures optimized for different hardware platforms
 - **Multi-Backend Support**: Backend-agnostic tensor operations that work with PyTorch, MLX, NumPy, and other computational backends
 - **Function-First Design**: Efficient memory usage through separation of functions from class implementations
 - **Liquid Neural Networks**: Design and implementation of liquid neural networks and other advanced architectures
 - **Neural Circuit Policies**: Biologically-inspired neural architectures with custom wiring configurations
 
-## Architecture Overview
+## Core Components
 
-Ember ML is designed with a modular architecture that separates concerns and promotes reusability:
+### Neural Network Architectures
 
+The project implements various cutting-edge neural network architectures:
+
+- Liquid Neural Networks (LNN): Dynamic networks with adaptive connectivity
+- Neural Circuit Policies (NCP): Biologically-inspired neural architectures
+- Stride-Aware Continuous-time Fully Connected (CfC) networks
+- Specialized attention mechanisms and temporal processing units
+=======
 - **Tensor Operations Framework**: Backend-agnostic tensor operations with a function-first design pattern
 - **Neural Network Framework**: Modular neural network components with a focus on advanced architectures
 - **Backend Abstraction**: Unified API across different computational backends
@@ -65,27 +98,34 @@ Ember ML is designed with a modular architecture that separates concerns and pro
 
 For more details, see the [Architecture Documentation](architecture/ember_ml_architecture.md).
 
-## Use Cases
+### Multi-Backend Support
 
-Ember ML is particularly well-suited for:
+The project implements backend-agnostic tensor operations that can use different computational backends:
 
+- MLX (optimized for Apple Silicon)
+- PyTorch (for CUDA and other GPU platforms)
+- NumPy (for CPU computation)
+- Future support for additional backends
 - **Hardware-Optimized Neural Networks**: Running neural networks efficiently on different hardware platforms
 - **Advanced Neural Architectures**: Implementing cutting-edge neural network architectures
 - **Multi-Backend Deployment**: Deploying models across different computational backends
 - **Memory-Constrained Environments**: Running models in environments with limited memory
 
+### Feature Extraction
+
+The project includes tools for extracting features from large datasets, including:
+
+- `TerabyteFeatureExtractor`: Extracts features from large datasets
+- `TemporalStrideProcessor`: Processes temporal data with variable strides
+
 ## Getting Help
 
 If you encounter any issues or have questions:
 
-1. Check the [Troubleshooting](troubleshooting/index.md) guide
-2. Search for similar issues in the [GitHub repository](https://github.com/your-org/ember-ml/issues)
-3. Ask a question in the [Discussion forum](https://github.com/your-org/ember-ml/discussions)
-
-## Contributing
-
-We welcome contributions to Ember ML! See the [Development Guide](development/index.md) for information on how to contribute.
+1. Check the tutorials and examples in this documentation
+2. Search for similar issues in the GitHub repository
+3. Ask a question in the Discussion forum
 
 ## License
 
-Ember ML is released under the [MIT License](https://opensource.org/licenses/MIT).
+Ember ML is released under the MIT License.

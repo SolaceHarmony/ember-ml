@@ -2,20 +2,16 @@
 
 This section contains step-by-step tutorials for using Ember ML.
 
-## Getting Started
+## Available Tutorials
 
-- [Installation and Setup](getting_started.md)
-- [Basic Usage](basic_usage.md)
-- [Working with Tensors](working_with_tensors.md)
+- [Getting Started](getting_started.md): Installation and basic usage
+- [Feature Extraction Basics](feature_extraction_basics.md): Introduction to feature extraction
 
-## Feature Extraction
+## Coming Soon
 
-- [Feature Extraction Basics](feature_extraction_basics.md)
-- [Working with Large Datasets](large_datasets.md)
+- Working with Tensors
+- Backend Selection
+- Custom Models
+- Working with Large Datasets
 
-## Advanced Topics
-
-- [Custom Models](custom_models.md)
-- [Backend Selection](backend_selection.md)
-
-Note: These tutorials are currently being developed and will be available soon.
+Note: Additional tutorials are being developed and will be available soon. In the meantime, check the [examples directory](../../examples/) for working code examples.

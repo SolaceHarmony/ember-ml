@@ -32,7 +32,8 @@ def random_normal(shape: Shape, mean: float = 0.0, stddev: float = 1.0,
     numpy_dtype = DTypeHandler.validate_dtype(dtype)
     
     # Use NumPy's normal function
-    return np.random.normal(loc=mean, scale=stddev, size=shape, dtype=numpy_dtype)
+    return np.random.normal(loc=mean, scale=stddev, size=shape).astype(numpy_dtype) if numpy_dtype is not None else np.random.normal(loc=mean, scale=stddev, size=shape)
+
 
 def random_uniform(shape: Shape, minval: float = 0.0, maxval: float = 1.0,
                   dtype: Optional[DType] = None, device: Optional[str] = None) -> np.ndarray:
