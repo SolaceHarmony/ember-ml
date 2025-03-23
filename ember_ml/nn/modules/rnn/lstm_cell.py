@@ -48,14 +48,14 @@ class LSTMCell(Module):
     def _initialize_weights(self):
         """Initialize the weights for the cell."""
         # Input weights
-        self.input_kernel = Parameter(ops.zeros((self.input_size, self.hidden_size * 4)))
+        self.input_kernel = Parameter(tensor.zeros((self.input_size, self.hidden_size * 4)))
         
         # Recurrent weights
-        self.recurrent_kernel = Parameter(ops.zeros((self.hidden_size, self.hidden_size * 4)))
+        self.recurrent_kernel = Parameter(tensor.zeros((self.hidden_size, self.hidden_size * 4)))
         
         # Bias
         if self.use_bias:
-            self.bias = Parameter(ops.zeros((self.hidden_size * 4,)))
+            self.bias = Parameter(tensor.zeros((self.hidden_size * 4,)))
         
         # Initialize weights
         self.input_kernel.data = ops.glorot_uniform((self.input_size, self.hidden_size * 4))
@@ -63,7 +63,7 @@ class LSTMCell(Module):
         
         if self.use_bias:
             # Initialize forget gate bias to 1.0 for better gradient flow
-            bias_data = ops.zeros((self.hidden_size * 4,))
+            bias_data = tensor.zeros((self.hidden_size * 4,))
             forget_gate_bias = bias_data[self.hidden_size:self.hidden_size*2]
             forget_gate_bias = ops.ones_like(forget_gate_bias)
             bias_data = ops.tensor_scatter_nd_update(
@@ -86,8 +86,8 @@ class LSTMCell(Module):
         """
         # Initialize states if not provided
         if states is None:
-            h_prev = ops.zeros((ops.shape(inputs)[0], self.hidden_size))
-            c_prev = ops.zeros((ops.shape(inputs)[0], self.hidden_size))
+            h_prev = tensor.zeros((ops.shape(inputs)[0], self.hidden_size))
+            c_prev = tensor.zeros((ops.shape(inputs)[0], self.hidden_size))
         else:
             h_prev, c_prev = states
         
@@ -125,6 +125,6 @@ class LSTMCell(Module):
         Returns:
             Tuple of (hidden_state, cell_state)
         """
-        h = ops.zeros((batch_size, self.hidden_size))
-        c = ops.zeros((batch_size, self.hidden_size))
+        h = tensor.zeros((batch_size, self.hidden_size))
+        c = tensor.zeros((batch_size, self.hidden_size))
         return [h, c]

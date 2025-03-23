@@ -101,41 +101,41 @@ class StrideAwareWiredCfCCell(Module):
         input_dim = self.wiring.input_dim
         
         # Input weights
-        self.kernel = Parameter(ops.zeros((input_dim, self.backbone_units)))
+        self.kernel = Parameter(tensor.zeros((input_dim, self.backbone_units)))
         self.kernel.data = glorot_uniform((input_dim, self.backbone_units))
         
         # Recurrent weights
-        self.recurrent_kernel = Parameter(ops.zeros((self.units, self.backbone_units)))
+        self.recurrent_kernel = Parameter(tensor.zeros((self.units, self.backbone_units)))
         self.recurrent_kernel.data = orthogonal((self.units, self.backbone_units))
         
         # Backbone weights (multiple layers)
         self.backbone_kernels = []
         self.backbone_biases = []
         for i in range(self.backbone_layers):
-            backbone_kernel = Parameter(ops.zeros((self.backbone_units, self.backbone_units)))
+            backbone_kernel = Parameter(tensor.zeros((self.backbone_units, self.backbone_units)))
             backbone_kernel.data = glorot_uniform((self.backbone_units, self.backbone_units))
             self.backbone_kernels.append(backbone_kernel)
             
-            backbone_bias = Parameter(ops.zeros((self.backbone_units,)))
+            backbone_bias = Parameter(tensor.zeros((self.backbone_units,)))
             self.backbone_biases.append(backbone_bias)
         
         # Output projection
-        self.backbone_out = Parameter(ops.zeros((self.backbone_units, self.units)))
+        self.backbone_out = Parameter(tensor.zeros((self.backbone_units, self.units)))
         self.backbone_out.data = glorot_uniform((self.backbone_units, self.units))
         
         # Time gate weights
-        self.time_kernel = Parameter(ops.zeros((1, self.units)))
+        self.time_kernel = Parameter(tensor.zeros((1, self.units)))
         
         # Biases
-        self.bias = Parameter(ops.zeros((self.backbone_units,)))
-        self.recurrent_bias = Parameter(ops.zeros((self.units,)))
+        self.bias = Parameter(tensor.zeros((self.backbone_units,)))
+        self.recurrent_bias = Parameter(tensor.zeros((self.units,)))
         
         # Gate weights (for default and pure modes)
         if self.mode != "no_gate":
-            self.gate_kernel = Parameter(ops.zeros((input_dim, self.units)))
+            self.gate_kernel = Parameter(tensor.zeros((input_dim, self.units)))
             self.gate_kernel.data = glorot_uniform((input_dim, self.units))
             
-            self.gate_recurrent_kernel = Parameter(ops.zeros((self.units, self.units)))
+            self.gate_recurrent_kernel = Parameter(tensor.zeros((self.units, self.units)))
             self.gate_recurrent_kernel.data = orthogonal((self.units, self.units))
             
             self.gate_bias = Parameter(ops.ones((self.units,)))  # Initialize with ones for open gates
@@ -178,7 +178,7 @@ class StrideAwareWiredCfCCell(Module):
         """
         # Initialize states if not provided
         if states is None:
-            h_prev = ops.zeros((ops.shape(inputs)[0], self.units))
+            h_prev = tensor.zeros((ops.shape(inputs)[0], self.units))
         else:
             h_prev = states[0]
         
@@ -458,7 +458,7 @@ class StrideAwareCfC(Module):
         
         # Initialize state if not provided
         if initial_state is None:
-            state = [ops.zeros((batch_size, self.cell.units))]
+            state = [tensor.zeros((batch_size, self.cell.units))]
         else:
             state = initial_state
         
@@ -628,10 +628,10 @@ def visualize_stride_temporal_dynamics(time_steps=100, stride_lengths=[1, 3, 5],
         stride_cells[stride] = cell
     
     # Initialize states for each cell
-    states = {stride: [ops.zeros((1, units))] for stride in stride_lengths}
+    states = {stride: [tensor.zeros((1, units))] for stride in stride_lengths}
 
     # Track state evolution for each stride
-    state_evolution = {stride: ops.zeros((time_steps, units)) for stride in stride_lengths}
+    state_evolution = {stride: tensor.zeros((time_steps, units)) for stride in stride_lengths}
 
     # Process sequence through each stride-specific cell
     for t_idx in range(time_steps):

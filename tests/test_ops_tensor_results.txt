@@ -58,7 +58,7 @@ backend = 'mlx'
         x_ref = ops.ones(shape)
     
         # Test zeros_like
->       x = ops.zeros_like(x_ref)
+>       x = tensor.zeros_like(x_ref)
 
 test_ops_tensor.py:107: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
@@ -101,7 +101,7 @@ backend = 'mlx'
         """Test ones_like operation."""
         # Create a tensor to use as reference
         shape = (3, 4)
-        x_ref = ops.zeros(shape)
+        x_ref = tensor.zeros(shape)
     
         # Test ones_like
 >       x = ops.ones_like(x_ref)

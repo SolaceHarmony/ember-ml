@@ -21,17 +21,32 @@ if TYPE_CHECKING:
     from ember_ml.backend.mlx.tensor.tensor import MLXTensor
     from ember_ml.nn.tensor.common.ember_tensor import EmberTensor
 
+    type TensorTypes = Union[
+        np.ndarray,
+        'mlx.core.array',
+        MLXTensor,
+        EmberTensor,
+        TorchTensor,
+        NumpyTensor
+    ]
+
+# Basic type aliases
+type Numeric = Union[int, float]
 
 # Standard type aliases for general tensor-like inputs
 # This covers all possible input types that can be converted to a tensor
 type TensorLike = Optional[Union[
-    int, float, bool, list, tuple, EmberTensor,
+    Numeric,
+    bool,
+    List[Any],
+    Tuple[Any, ...],
+    EmberTensor,
     'np.ndarray',
-    'torch.Tensor',
     'mlx.core.array',
     'NumpyTensor',
     'TorchTensor',
-    'MLXTensor'
+    'MLXTensor',
+    'torch.Tensor'
 ]]
 
 # Dimension-specific tensor types
@@ -46,3 +61,13 @@ type ShapeLike = Union[int, Tuple[int, ...], List[int]]
 # Dtype definitions
 type DType = Optional[Union[str, EmberDType, Any]]  # Any covers backend-specific dtype objects
 type Device = Optional[str]
+
+# Dimension types
+type Axis = Optional[Union[int, Sequence[int]]]
+
+# Scalar types
+type ScalarLike = Optional[Union[
+    Numeric,
+    bool,
+    TensorTypes
+]]

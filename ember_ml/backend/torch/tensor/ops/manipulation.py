@@ -4,7 +4,7 @@ import torch
 import torch.nn.functional as F
 from typing import Union, Optional, Sequence, Any, List, Tuple
 
-from ember_ml.backend.torch.tensor.ops.utility import convert_to_tensor
+# Import TorchTensor directly in each function where it's needed
 
 # Type aliases
 Shape = Sequence[int]
@@ -21,7 +21,10 @@ def reshape(data: TensorLike, shape: Shape) -> torch.Tensor:
     Returns:
         Reshaped tensor
     """
-    tensor = convert_to_tensor(data)
+    # Convert to PyTorch tensor
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    tensor = tensor_ops.convert_to_tensor(data)
     return tensor.reshape(shape)
 
 def transpose(data: TensorLike, axes: Optional[List[int]] = None) -> torch.Tensor:
@@ -35,7 +38,10 @@ def transpose(data: TensorLike, axes: Optional[List[int]] = None) -> torch.Tenso
     Returns:
         Transposed tensor
     """
-    tensor = convert_to_tensor(data)
+    # Convert to PyTorch tensor
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    tensor = tensor_ops.convert_to_tensor(data)
     
     if axes is None:
         return tensor.t()
@@ -53,7 +59,9 @@ def concatenate(data: List[TensorLike], axis: int = 0) -> torch.Tensor:
         Concatenated tensor
     """
     # Convert to PyTorch tensors
-    torch_tensors = [convert_to_tensor(t) for t in data]
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    torch_tensors = [tensor_ops.convert_to_tensor(t) for t in data]
     return torch.cat(torch_tensors, dim=axis)
 
 def stack(data: List[TensorLike], axis: int = 0) -> torch.Tensor:
@@ -68,7 +76,9 @@ def stack(data: List[TensorLike], axis: int = 0) -> torch.Tensor:
         Stacked tensor
     """
     # Convert to PyTorch tensors
-    torch_tensors = [convert_to_tensor(t) for t in data]
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    torch_tensors = [tensor_ops.convert_to_tensor(t) for t in data]
     return torch.stack(torch_tensors, dim=axis)
 
 def split(data: TensorLike, num_or_size_splits: Union[int, List[int]], axis: int = 0) -> List[torch.Tensor]:
@@ -83,7 +93,10 @@ def split(data: TensorLike, num_or_size_splits: Union[int, List[int]], axis: int
     Returns:
         List of sub-tensors
     """
-    tensor = convert_to_tensor(data)
+    # Convert to PyTorch tensor
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    tensor = tensor_ops.convert_to_tensor(data)
     
     if isinstance(num_or_size_splits, int):
         # Get the size of the dimension we're splitting along
@@ -132,7 +145,10 @@ def expand_dims(data: TensorLike, axis: Union[int, List[int]]) -> torch.Tensor:
     Returns:
         Expanded tensor
     """
-    tensor = convert_to_tensor(data)
+    # Convert to PyTorch tensor
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    tensor = tensor_ops.convert_to_tensor(data)
     
     if isinstance(axis, int):
         return tensor.unsqueeze(axis)
@@ -154,7 +170,10 @@ def squeeze(data: TensorLike, axis: Optional[Union[int, List[int]]] = None) -> t
     Returns:
         Squeezed tensor
     """
-    tensor = convert_to_tensor(data)
+    # Convert to PyTorch tensor
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    tensor = tensor_ops.convert_to_tensor(data)
     
     if axis is None:
         return tensor.squeeze()
@@ -179,7 +198,10 @@ def tile(data: TensorLike, reps: List[int]) -> torch.Tensor:
     Returns:
         Tiled tensor
     """
-    tensor = convert_to_tensor(data)
+    # Convert to PyTorch tensor
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    tensor = tensor_ops.convert_to_tensor(data)
     return tensor.repeat(tuple(reps))
 
 def pad(data: TensorLike, paddings: List[List[int]], constant_values: int = 0) -> torch.Tensor:
@@ -195,7 +217,10 @@ def pad(data: TensorLike, paddings: List[List[int]], constant_values: int = 0) -
     Returns:
         Padded tensor
     """
-    tensor = convert_to_tensor(data)
+    # Convert to PyTorch tensor
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    tensor = tensor_ops.convert_to_tensor(data)
     
     # Convert paddings to the format expected by torch.nn.functional.pad
     # PyTorch expects (pad_left, pad_right, pad_top, pad_bottom, ...)

@@ -1,21 +1,22 @@
-"""NumPy linear algebra operations."""
+"""
+Numpy solver operations for ember_ml.
 
-from typing import Any, Optional, Union, Tuple
+This module provides NumPy implementations of solver operations.
+"""
 
 import numpy as np
 
-from ember_ml.backend.numpy.types import TensorLike
-from ember_ml.backend.numpy.linearalg.ops import (
-    solve, inv, det, norm, qr, svd, cholesky, lstsq, eig, eigvals, diag, diagonal
-)
+# Import from tensor_ops
+from ember_ml.backend.numpy.tensor import NumpyDType
+from typing import Literal, Union, Tuple, Optional
+from ember_ml.backend.numpy.types import TensorLike, Axis, OrdLike
+
+dtype_obj = NumpyDType()
+
 
 class NumpyLinearAlgOps:
     """NumPy linear algebra operations."""
-
-    def __init__(self):
-        """Initialize NumPy linear algebra operations."""
-        pass
-
+    
     def solve(self, a: TensorLike, b: TensorLike) -> np.ndarray:
         """
         Solve a linear system of equations Ax = b for x.
@@ -27,8 +28,10 @@ class NumpyLinearAlgOps:
         Returns:
             Solution to the system of equations
         """
-        return solve(a, b)
-    
+        from ember_ml.backend.numpy.linearalg.ops import solve as solve_func
+        return solve_func(a, b)
+
+
     def inv(self, a: TensorLike) -> np.ndarray:
         """
         Compute the inverse of a square matrix.
@@ -39,8 +42,24 @@ class NumpyLinearAlgOps:
         Returns:
             Inverse of the matrix
         """
-        return inv(a)
-    
+        from ember_ml.backend.numpy.linearalg.ops import inv as inv_func
+        return inv_func(a)
+
+    def svd(self, a: TensorLike, full_matrices: bool = True, compute_uv: bool = True) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray, np.ndarray]]:
+        """
+        Compute the singular value decomposition of a matrix.
+        
+        Args:
+            a: Input matrix
+            full_matrices: If True, return full U and Vh matrices
+            compute_uv: If True, compute U and Vh matrices
+            
+        Returns:
+            If compute_uv is True, returns (U, S, Vh), otherwise returns S
+        """
+        from ember_ml.backend.numpy.linearalg.ops import svd as svd_func
+        return svd_func(a, full_matrices=full_matrices, compute_uv=compute_uv)
+
     def det(self, a: TensorLike) -> np.ndarray:
         """
         Compute the determinant of a square matrix.
@@ -51,10 +70,11 @@ class NumpyLinearAlgOps:
         Returns:
             Determinant of the matrix
         """
-        return det(a)
+        from ember_ml.backend.numpy.linearalg.ops import det as det_func
+        return det_func(a)
     
-    def norm(self, x: TensorLike, ord: Optional[Union[int, str]] = None,
-             axis: Optional[Union[int, Tuple[int, ...]]] = None,
+    def norm(self, x: TensorLike, ord: OrdLike = None, 
+             axis: Axis = None,
              keepdims: bool = False) -> np.ndarray:
         """
         Compute the matrix or vector norm.
@@ -68,9 +88,10 @@ class NumpyLinearAlgOps:
         Returns:
             Norm of the matrix or vector
         """
-        return norm(x, ord=ord, axis=axis, keepdims=keepdims)
+        from ember_ml.backend.numpy.linearalg.ops import norm as norm_func
+        return norm_func(x, ord=ord, axis=axis, keepdims=keepdims)
     
-    def qr(self, a: TensorLike, mode: str = 'reduced') -> Tuple[np.ndarray, np.ndarray]:
+    def qr(self, a: TensorLike, mode: Literal["reduced", "complete", "r", "raw"] = "reduced") -> Tuple[np.ndarray, np.ndarray]:
         """
         Compute the QR decomposition of a matrix.
         
@@ -81,22 +102,10 @@ class NumpyLinearAlgOps:
         Returns:
             Tuple of (Q, R) matrices
         """
-        return qr(a, mode=mode)
+        from ember_ml.backend.numpy.linearalg.ops import qr as qr_func
+        return qr_func(a, mode=mode)
     
-    def svd(self, a: TensorLike, full_matrices: bool = True, compute_uv: bool = True) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray, np.ndarray]]:
-        """
-        Compute the singular value decomposition of a matrix.
-        
-        Args:
-            a: Input matrix
-            full_matrices: If True, return full U and Vh matrices
-            compute_uv: If True, compute U and Vh matrices
-            
-        Returns:
-            If compute_uv is True, returns (U, S, Vh), otherwise returns S
-        """
-        return svd(a, full_matrices=full_matrices, compute_uv=compute_uv)
-    
+
     def cholesky(self, a: TensorLike) -> np.ndarray:
         """
         Compute the Cholesky decomposition of a positive definite matrix.
@@ -107,7 +116,9 @@ class NumpyLinearAlgOps:
         Returns:
             Lower triangular matrix L such that L @ L.T = A
         """
-        return cholesky(a)
+        from ember_ml.backend.numpy.linearalg.ops import cholesky as cholesky_func
+        return cholesky_func(a)    
+    
     
     def lstsq(self, a: TensorLike, b: TensorLike, rcond: Optional[float] = None) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
@@ -121,19 +132,27 @@ class NumpyLinearAlgOps:
         Returns:
             Tuple of (solution, residuals, rank, singular values)
         """
-        return lstsq(a, b, rcond=rcond)
-    
+        from ember_ml.backend.numpy.linearalg.ops import lstsq as lstsq_func
+        return lstsq_func(a, b, rcond=rcond) 
+       
     def eig(self, a: TensorLike) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Compute the eigenvalues and eigenvectors of a square matrix.
+        Compute the eigenvalues and eigenvectors of a square matrix using power iteration.
         
         Args:
             a: Input square matrix
-            
+        
         Returns:
             Tuple of (eigenvalues, eigenvectors)
+        
+        Notes:
+            This is a simplified implementation using power iteration.
+            For large matrices or high precision requirements, consider using
+            a more sophisticated algorithm.
         """
-        return eig(a)
+        from ember_ml.backend.numpy.linearalg.ops import eig as eig_func
+        return eig_func(a)
+    
     
     def eigvals(self, a: TensorLike) -> np.ndarray:
         """
@@ -141,11 +160,50 @@ class NumpyLinearAlgOps:
         
         Args:
             a: Input square matrix
-            
+        
         Returns:
             Eigenvalues of the matrix
         """
-        return eigvals(a)
+        from ember_ml.backend.numpy.linearalg.ops import eigvals as eigvals_func
+        return eigvals_func(a)    
+    
+    def norm(self, x: TensorLike, ord=None, axis=None, keepdims=False):
+        """
+        Compute the matrix or vector norm.
+        
+        Args:
+            x: Input matrix or vector
+            ord: Order of the norm
+            axis: Axis along which to compute the norm
+            keepdim: Whether to keep the reduced dimensions
+        
+        Returns:
+            Norm of the matrix or vector
+        """
+        from ember_ml.backend.numpy.linearalg.ops import norm as norm_func
+        return norm_func(x, ord=ord, axis=axis, keepdims=keepdims)
+    
+
+    def lstsq(self, a: TensorLike, b: TensorLike, rcond=None) -> Tuple[np.ndarray, np.ndarray, np.ndarray,np.ndarray]:
+        """
+        Compute the least-squares solution to a linear matrix equation.
+        
+        Args:
+            a: Coefficient matrix
+            b: Dependent variable
+            rcond: Cutoff for small singular values
+        
+        Returns:
+            Tuple of (solution, residuals, rank, singular values)
+        
+        Notes:
+            This is a simplified implementation using SVD.
+            For large matrices or high precision requirements, consider using
+            a more sophisticated algorithm.
+        """        
+        from ember_ml.backend.numpy.linearalg.ops import lstsq as lstsq_func
+        return lstsq_func(a, b, rcond=rcond)
+    
     
     def diag(self, x: TensorLike, k: int = 0) -> np.ndarray:
         """
@@ -160,7 +218,8 @@ class NumpyLinearAlgOps:
         Returns:
             The extracted diagonal or constructed diagonal matrix.
         """
-        return diag(x, k)
+        from ember_ml.backend.numpy.linearalg.ops import diag as diag_func
+        return diag_func(x, k=k)
 
     def diagonal(self, x: TensorLike, offset: int = 0, axis1: int = 0, axis2: int = 1) -> np.ndarray:
         """
@@ -175,4 +234,5 @@ class NumpyLinearAlgOps:
         Returns:
             Array of diagonals
         """
-        return diagonal(x, offset, axis1, axis2)
+        from ember_ml.backend.numpy.linearalg.ops import diagonal as diagonal_func
+        return diagonal_func(x = x, offset = offset, axis1 = axis1, axis2=axis2)

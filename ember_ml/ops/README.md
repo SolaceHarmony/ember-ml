@@ -43,7 +43,7 @@ The `ops` module provides a consistent API across different backends, making it 
 from ember_ml import ops
 
 # NumPy-like API
-x = ops.zeros((3, 4))
+x = tensor.zeros((3, 4))
 y = ops.ones((3, 4))
 z = ops.add(x, y)
 
@@ -140,9 +140,9 @@ x = ops.random_normal((batch_size, input_size))
 
 # Create random weights and biases
 w1 = ops.random_normal((input_size, hidden_size))
-b1 = ops.zeros((hidden_size,))
+b1 = tensor.zeros((hidden_size,))
 w2 = ops.random_normal((hidden_size, output_size))
-b2 = ops.zeros((output_size,))
+b2 = tensor.zeros((output_size,))
 
 # Forward pass
 h = ops.relu(ops.add(ops.matmul(x, w1), b1))

@@ -10,7 +10,7 @@ from math import log
 
 from ember_ml import ops
 from ember_ml.nn import tensor
-
+from ember_ml.ops.linearalg import svd
 def _svd_flip(u, v):
     """Sign correction for SVD to ensure deterministic output.
     
@@ -80,7 +80,7 @@ def _infer_dimensions(explained_variance, n_samples):
     """
     # Implementation of Minka's MLE for dimensionality selection
     n_components = explained_variance.shape[0]
-    ll = ops.zeros((n_components,))
+    ll = tensor.zeros((n_components,))
     
     for i in range(n_components):
         if i < n_components - 1:
@@ -234,7 +234,7 @@ class PCA:
             Self
         """
         X_tensor = tensor.convert_to_tensor(X)
-        self.n_samples_, self.n_features_ = ops.shape(X_tensor)
+        self.n_samples_, self.n_features_ = tensor.shape(X_tensor)
         self.whiten_ = whiten
         
         # Choose SVD solver
@@ -254,12 +254,12 @@ class PCA:
             self.mean_ = ops.mean(X_tensor, axis=0)
             X_centered = ops.subtract(X_tensor, self.mean_)
         else:
-            self.mean_ = ops.zeros((self.n_features_,))
+            self.mean_ = tensor.zeros((self.n_features_,))
             X_centered = X_tensor
         
         # Perform SVD
         if svd_solver == "full":
-            U, S, V = ops.svd(X_centered)
+            U, S, V = svd(X_centered)
             # Explained variance
             explained_variance = ops.divide(ops.square(S), ops.subtract(self.n_samples_, 1))
             total_var = ops.sum(explained_variance)

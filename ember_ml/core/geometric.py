@@ -49,7 +49,7 @@ class GeometricNeuron(BaseNeuron):
         
     def _initialize_manifold_state(self):
         """Initialize state on the manifold. Override in subclasses."""
-        return ops.zeros(self.dim)
+        return tensor.zeros(self.dim)
         
     def _manifold_update(self, 
                         current_state,

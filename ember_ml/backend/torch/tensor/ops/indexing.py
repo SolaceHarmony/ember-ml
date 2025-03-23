@@ -1,18 +1,14 @@
 """PyTorch tensor indexing operations."""
 
 import torch
-from typing import Union, Optional, Sequence, Any, List, Tuple, Literal
-# Import the built-in slice function with a different name
+
+from typing import Sequence, Optional, Literal
 from builtins import slice as py_slice
+from ember_ml.backend.torch.types import (
+    TensorLike, Shape
+)
 
-# Import utility functions
-from ember_ml.backend.torch.tensor.ops.utility import convert_to_tensor
-
-# Type aliases
-Shape = Sequence[int]
-TensorLike = Any
-
-def slice_tensor(data: TensorLike, starts: Sequence[int], sizes: Sequence[int]) -> torch.Tensor:
+def slice_tensor(tensor: TensorLike, starts: Shape, sizes: Shape) -> torch.Tensor:
     """
     Extract a slice from a tensor.
     
@@ -24,7 +20,11 @@ def slice_tensor(data: TensorLike, starts: Sequence[int], sizes: Sequence[int]) 
     Returns:
         Sliced tensor
     """
-    tensor_torch = convert_to_tensor(data)
+    
+    # Convert input to Torch array
+    from ember_ml.backend.torch.tensor import TorchTensor
+    Tensor = TorchTensor()
+    tensor_array = Tensor.convert_to_tensor(tensor)
     
     # Create a list of slice objects for each dimension
     slice_objects = []
@@ -45,12 +45,12 @@ def slice_tensor(data: TensorLike, starts: Sequence[int], sizes: Sequence[int]) 
             slice_objects.append(slice_obj)
     
     # Extract the slice
-    return tensor_torch[tuple(slice_objects)]
+    return tensor_array[tuple(slice_objects)]
 
-# Alias for slice_tensor to match MLX naming
+# Alias for slice_tensor to match Torch naming
 slice = slice_tensor
 
-def slice_update(data: TensorLike, slices: Any, updates: Any) -> torch.Tensor:
+def slice_update(data: TensorLike, slices: TensorLike, updates: TensorLike) -> torch.Tensor:
     """
     Update a tensor at specific indices.
     
@@ -62,18 +62,21 @@ def slice_update(data: TensorLike, slices: Any, updates: Any) -> torch.Tensor:
     Returns:
         Updated tensor
     """
-    tensor_torch = convert_to_tensor(data)
-    updates_torch = convert_to_tensor(updates)
+    # Convert inputs to Torch arrays
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    tensor = tensor_ops.convert_to_tensor(data)
+    updates_tensor = tensor_ops.convert_to_tensor(updates)
     
     # Create a copy of the input tensor
-    result = tensor_torch.clone()
+    result = tensor.clone()
     
     # Update the tensor at the specified indices
-    result[slices] = updates_torch
+    result[slices] = updates_tensor
     
     return result
 
-def gather(data: TensorLike, indices: Any, axis: int = 0) -> torch.Tensor:
+def gather(tensor: TensorLike, indices: TensorLike, axis: int = 0) -> torch.Tensor:
     """
     Gather slices from a tensor along an axis.
     
@@ -85,15 +88,18 @@ def gather(data: TensorLike, indices: Any, axis: int = 0) -> torch.Tensor:
     Returns:
         Gathered tensor
     """
-    tensor_torch = convert_to_tensor(data)
-    indices_torch = convert_to_tensor(indices)
+    from ember_ml.backend.torch.tensor import TorchTensor
+    Tensor = TorchTensor()
+    tensor_array = Tensor.convert_to_tensor(tensor)
+    indices_array = Tensor.convert_to_tensor(indices)
     
     # Convert indices to long
-    indices_torch = indices_torch.long()
+    indices_array = indices_array.long()
     
-    return torch.index_select(tensor_torch, axis, indices_torch)
+    return torch.gather(tensor_array, axis, indices_array)
+    
 
-def tensor_scatter_nd_update(data: TensorLike, indices: Any, updates: Any) -> torch.Tensor:
+def tensor_scatter_nd_update(data: TensorLike, indices: TensorLike, updates: TensorLike) -> torch.Tensor:
     """
     Updates values of a tensor at specified indices.
     
@@ -106,9 +112,11 @@ def tensor_scatter_nd_update(data: TensorLike, indices: Any, updates: Any) -> to
         Updated tensor
     """
     # Create a copy of the tensor
-    tensor_torch = convert_to_tensor(data)
-    indices_torch = convert_to_tensor(indices)
-    updates_torch = convert_to_tensor(updates)
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    tensor_torch = tensor_ops.convert_to_tensor(data)
+    indices_torch = tensor_ops.convert_to_tensor(indices)
+    updates_torch = tensor_ops.convert_to_tensor(updates)
     
     # Ensure indices are integers
     indices_torch = indices_torch.long()
@@ -129,7 +137,7 @@ def tensor_scatter_nd_update(data: TensorLike, indices: Any, updates: Any) -> to
     
     return result
 
-def scatter(data: TensorLike, indices: Any, dim_size: Optional[int] = None,
+def scatter(data: TensorLike, indices: TensorLike, dim_size: Optional[int] = None,
             aggr: Literal["add", "max", "mean", "softmax", "min"] = "add", axis: int = 0) -> torch.Tensor:
     """
     Scatter values from data into a new tensor of size dim_size along the given axis.
@@ -144,8 +152,10 @@ def scatter(data: TensorLike, indices: Any, dim_size: Optional[int] = None,
     Returns:
         Tensor with scattered values
     """
-    tensor_torch = convert_to_tensor(data)
-    indices_torch = convert_to_tensor(indices).long()
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    tensor_torch = tensor_ops.convert_to_tensor(data)
+    indices_torch = tensor_ops.convert_to_tensor(indices).long()
     
     # Determine the output size
     if dim_size is None:
@@ -172,7 +182,7 @@ def scatter(data: TensorLike, indices: Any, dim_size: Optional[int] = None,
     else:
         raise ValueError(f"Unsupported aggregation method: {aggr}")
 
-def scatter_add(data: TensorLike, indices: Any, dim_size: Optional[int] = None, axis: int = 0) -> torch.Tensor:
+def scatter_add(data: TensorLike, indices: TensorLike, dim_size: Optional[int] = None, axis: int = 0) -> torch.Tensor:
     """
     Scatter-add operation: adds values from data at the indices in the output tensor.
     
@@ -185,8 +195,10 @@ def scatter_add(data: TensorLike, indices: Any, dim_size: Optional[int] = None, 
     Returns:
         Tensor with scattered values (added)
     """
-    tensor_torch = convert_to_tensor(data)
-    indices_torch = convert_to_tensor(indices).long()
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    tensor_torch = tensor_ops.convert_to_tensor(data)
+    indices_torch = tensor_ops.convert_to_tensor(indices).long()
     
     # Determine the output size
     if dim_size is None:
@@ -202,7 +214,7 @@ def scatter_add(data: TensorLike, indices: Any, dim_size: Optional[int] = None, 
     # Use torch.scatter_add_ for the operation
     return output.scatter_add_(axis, indices_torch, tensor_torch)
 
-def scatter_max(data: TensorLike, indices: Any, dim_size: Optional[int] = None, axis: int = 0) -> torch.Tensor:
+def scatter_max(data: TensorLike, indices: TensorLike, dim_size: Optional[int] = None, axis: int = 0) -> torch.Tensor:
     """
     Scatter-max operation: takes the maximum of values from data at the indices in the output tensor.
     
@@ -215,8 +227,10 @@ def scatter_max(data: TensorLike, indices: Any, dim_size: Optional[int] = None, 
     Returns:
         Tensor with scattered values (maximum)
     """
-    tensor_torch = convert_to_tensor(data)
-    indices_torch = convert_to_tensor(indices).long()
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    tensor_torch = tensor_ops.convert_to_tensor(data)
+    indices_torch = tensor_ops.convert_to_tensor(indices).long()
     
     # Determine the output size
     if dim_size is None:
@@ -237,7 +251,7 @@ def scatter_max(data: TensorLike, indices: Any, dim_size: Optional[int] = None, 
     
     return result
 
-def scatter_min(data: TensorLike, indices: Any, dim_size: Optional[int] = None, axis: int = 0) -> torch.Tensor:
+def scatter_min(data: TensorLike, indices: TensorLike, dim_size: Optional[int] = None, axis: int = 0) -> torch.Tensor:
     """
     Scatter-min operation: takes the minimum of values from data at the indices in the output tensor.
     
@@ -250,8 +264,10 @@ def scatter_min(data: TensorLike, indices: Any, dim_size: Optional[int] = None, 
     Returns:
         Tensor with scattered values (minimum)
     """
-    tensor_torch = convert_to_tensor(data)
-    indices_torch = convert_to_tensor(indices).long()
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    tensor_torch = tensor_ops.convert_to_tensor(data)
+    indices_torch = tensor_ops.convert_to_tensor(indices).long()
     
     # Determine the output size
     if dim_size is None:
@@ -272,7 +288,7 @@ def scatter_min(data: TensorLike, indices: Any, dim_size: Optional[int] = None, 
     
     return result
 
-def scatter_mean(data: TensorLike, indices: Any, dim_size: Optional[int] = None, axis: int = 0) -> torch.Tensor:
+def scatter_mean(data: TensorLike, indices: TensorLike, dim_size: Optional[int] = None, axis: int = 0) -> torch.Tensor:
     """
     Scatter-mean operation: computes the mean of values from data at the indices in the output tensor.
     
@@ -285,8 +301,10 @@ def scatter_mean(data: TensorLike, indices: Any, dim_size: Optional[int] = None,
     Returns:
         Tensor with scattered values (mean)
     """
-    tensor_torch = convert_to_tensor(data)
-    indices_torch = convert_to_tensor(indices).long()
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    tensor_torch = tensor_ops.convert_to_tensor(data)
+    indices_torch = tensor_ops.convert_to_tensor(indices).long()
     
     # Determine the output size
     if dim_size is None:
@@ -311,7 +329,7 @@ def scatter_mean(data: TensorLike, indices: Any, dim_size: Optional[int] = None,
     
     return mean_output
 
-def scatter_softmax(data: TensorLike, indices: Any, dim_size: Optional[int] = None, axis: int = 0) -> torch.Tensor:
+def scatter_softmax(data: TensorLike, indices: TensorLike, dim_size: Optional[int] = None, axis: int = 0) -> torch.Tensor:
     """
     Scatter-softmax operation: applies softmax to values from data at the indices in the output tensor.
     
@@ -324,8 +342,10 @@ def scatter_softmax(data: TensorLike, indices: Any, dim_size: Optional[int] = No
     Returns:
         Tensor with scattered values (softmax)
     """
-    tensor_torch = convert_to_tensor(data)
-    indices_torch = convert_to_tensor(indices).long()
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    tensor_torch = tensor_ops.convert_to_tensor(data)
+    indices_torch = tensor_ops.convert_to_tensor(indices).long()
     
     # Determine the output size
     if dim_size is None:

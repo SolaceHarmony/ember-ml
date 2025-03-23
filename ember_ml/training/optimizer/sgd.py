@@ -64,7 +64,7 @@ class SGD(Optimizer):
                 
                 # Initialize momentum buffer if needed
                 if 'momentum_buffer' not in state:
-                    state['momentum_buffer'] = ops.zeros_like(param.data)
+                    state['momentum_buffer'] = tensor.zeros_like(param.data)
                 
                 # Update momentum buffer
                 buf = state['momentum_buffer']

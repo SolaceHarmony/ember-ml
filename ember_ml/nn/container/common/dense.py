@@ -71,7 +71,7 @@ class Dense(Module, DenseInterface):
             ))
             
             if self.use_bias:
-                self.bias = Parameter(ops.zeros((self.units,)))
+                self.bias = Parameter(tensor.zeros((self.units,)))
             
             self.initialized = True
         

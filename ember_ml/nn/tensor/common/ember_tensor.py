@@ -10,7 +10,7 @@ from typing import Any, Optional, List, Union, Tuple, Sequence, Callable, Iterat
 TensorLike = Any
 DType = Any
 if TYPE_CHECKING:
-    from ember_ml.nn.tensor.types import TensorLike, DType
+    from ember_ml.nn.tensor.types import DType, TensorLike
 from ember_ml.nn.tensor.interfaces import TensorInterface
 from ember_ml.nn.tensor.common import (
     _convert_to_backend_tensor, to_numpy, item, shape, dtype, zeros, ones, zeros_like, ones_like,
@@ -103,19 +103,24 @@ class EmberTensor(TensorInterface):
         """Get the underlying backend tensor."""
         return self._tensor
 
-    def __array__(self) -> Any:
+    def __array__(self, dtype: Optional[DType] = None) -> Any:
         """Array interface.
-        
+
         This method is part of NumPy's array interface protocol, which allows
         NumPy to convert objects to NumPy arrays. We use the to_numpy function
         from the backend abstraction layer to ensure backend purity.
-        
+
+        Args:
+            dtype: The desired data type of the array.
+
         Returns:
             NumPy array representation of the tensor.
         """
         # Use to_numpy from the backend abstraction layer
         # This is a special case where we're allowed to use NumPy because
         # it's part of the NumPy array interface protocol
+        if dtype is not None:
+            return to_numpy(self._tensor).astype(dtype)
         return to_numpy(self._tensor)
     
     def __getitem__(self, key) -> Any:

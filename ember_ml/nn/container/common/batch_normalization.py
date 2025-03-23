@@ -95,10 +95,10 @@ class BatchNormalization(Module, BatchNormalizationInterface):
                 self.gamma = Parameter(ops.ones(param_shape))
             
             if self.center:
-                self.beta = Parameter(ops.zeros(param_shape))
+                self.beta = Parameter(tensor.zeros(param_shape))
             
             # Initialize moving statistics
-            self.moving_mean = ops.zeros(param_shape)
+            self.moving_mean = tensor.zeros(param_shape)
             self.moving_variance = ops.ones(param_shape)
             
             self.initialized = True

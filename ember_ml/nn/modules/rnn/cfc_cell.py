@@ -106,14 +106,14 @@ class CfCCell(ModuleCell):
     def _initialize_weights(self):
         """Initialize the weights for the cell."""
         # Input weights
-        self.kernel = Parameter(ops.zeros((self.units, self.units * 4)))
+        self.kernel = Parameter(tensor.zeros((self.units, self.units * 4)))
         
         # Recurrent weights
-        self.recurrent_kernel = Parameter(ops.zeros((self.units, self.units * 4)))
+        self.recurrent_kernel = Parameter(tensor.zeros((self.units, self.units * 4)))
         
         # Bias
         if self.use_bias:
-            self.bias = Parameter(ops.zeros((self.units * 4,)))
+            self.bias = Parameter(tensor.zeros((self.units * 4,)))
         
         # Time-scale parameter (learnable)
         self.time_scale = Parameter(ops.ones((self.units,)) * self.time_scale_factor)
@@ -126,7 +126,7 @@ class CfCCell(ModuleCell):
             self.recurrent_kernel.data = orthogonal((self.units, self.units * 4))
         
         if self.use_bias and self.bias_initializer == "zeros":
-            self.bias.data = ops.zeros((self.units * 4,))
+            self.bias.data = tensor.zeros((self.units * 4,))
     
     def forward(self, inputs, state=None, **kwargs):
         """
@@ -146,8 +146,8 @@ class CfCCell(ModuleCell):
         
         # Initialize states if not provided
         if state is None:
-            h_prev = ops.zeros((ops.shape(inputs)[0], self.units))
-            t_prev = ops.zeros((ops.shape(inputs)[0], self.units))
+            h_prev = tensor.zeros((ops.shape(inputs)[0], self.units))
+            t_prev = tensor.zeros((ops.shape(inputs)[0], self.units))
         else:
             h_prev, t_prev = state
         
@@ -210,6 +210,6 @@ class CfCCell(ModuleCell):
         Returns:
             Tuple of (hidden_state, time_state)
         """
-        h = ops.zeros((batch_size, self.units))
-        t = ops.zeros((batch_size, self.units))
+        h = tensor.zeros((batch_size, self.units))
+        t = tensor.zeros((batch_size, self.units))
         return [h, t]

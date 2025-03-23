@@ -20,7 +20,7 @@ from ember_ml.backend.torch.tensor.ops import (
     slice_tensor, slice_update, gather, tensor_scatter_nd_update,
     
     # Utility operations
-    convert_to_tensor, to_numpy, item, shape, dtype, copy, var, sort, argsort, maximum,
+    convert_to_torch_tensor, to_numpy, item, shape, dtype, copy, var, sort, argsort, maximum,
     
     # Random operations
     random_normal, random_uniform, random_binomial, random_gamma, random_exponential,
@@ -65,7 +65,7 @@ __all__ = [
     'tensor_scatter_nd_update',
     
     # Utility operations
-    'convert_to_tensor',
+    'convert_to_torch_tensor',
     'to_numpy',
     'item',
     'shape',

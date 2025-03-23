@@ -76,10 +76,10 @@ class Adam(Optimizer):
                 # Initialize state if needed
                 if len(state) == 0:
                     state['step'] = 0
-                    state['exp_avg'] = ops.zeros_like(param.data)
-                    state['exp_avg_sq'] = ops.zeros_like(param.data)
+                    state['exp_avg'] = tensor.zeros_like(param.data)
+                    state['exp_avg_sq'] = tensor.zeros_like(param.data)
                     if amsgrad:
-                        state['max_exp_avg_sq'] = ops.zeros_like(param.data)
+                        state['max_exp_avg_sq'] = tensor.zeros_like(param.data)
                 
                 # Update step count
                 state['step'] += 1

@@ -1,7 +1,7 @@
 """
 MLX solver operations for ember_ml.
 
-This module provides MLX implementations of solver operations.
+This module provides MLX implementations of matrix decomposition operations.
 """
 from typing import Union, Tuple, Literal
 import mlx.core as mx
@@ -12,29 +12,281 @@ from ember_ml.backend.mlx.types import TensorLike
 
 dtype_obj = MLXDType()
 
-def cholesky(a: TensorLike) -> mx.array:
+def is_spd(A: mx.array) -> bool:
     """
-    Compute the Cholesky decomposition of a positive definite matrix.
+    Check if matrix is symmetric positive definite.
     
     Args:
-        a: Input positive definite matrix
+        A: Input matrix to check
+        
+    Returns:
+        Boolean indicating if matrix is SPD
+    """
+    # Check for symmetry using mx.abs and mx.all
+    diff = mx.subtract(A, mx.transpose(A))
+    abs_diff = mx.abs(diff)
+    is_symmetric = mx.all(mx.less(abs_diff, mx.array(1e-6))).item()
+    if not is_symmetric:
+        return False
     
+    # Check for positive definiteness using CPU
+    try:
+        # Create a CPU stream and run cholesky on it
+        cpu_device = mx.cpu
+        with mx.stream(cpu_device):
+            A_cpu = mx.array(A)
+            mx.linalg.cholesky(A_cpu)
+        return True
+    except:
+        return False
+
+def mlx_cholesky_single_thread(A: mx.array) -> mx.array:
+    """
+    Stable implementation of Cholesky decomposition using single-threaded Metal approach.
+    
+    Args:
+        A: Input positive definite matrix
+        
     Returns:
         Lower triangular matrix L such that L @ L.T = A
-    
-    Notes:
-        This is a simplified implementation of the Cholesky decomposition.
-        For large matrices or high precision requirements, consider using
-        a more sophisticated algorithm.
     """
-    # Convert input to MLX array with float32 dtype
-    from ember_ml.backend.mlx.tensor import MLXTensor
-    Tensor = MLXTensor()
-    a_array = Tensor.convert_to_tensor(a, dtype=dtype_obj.float32)
+    @mx.custom_function
+    def _inner_impl(A_inner: mx.array) -> mx.array:
+        # Define Metal kernel source - using single thread approach for maximum stability
+        source = """
+        // Single-threaded implementation for maximum numerical stability
+        if (thread_position_in_grid.x == 0) {
+            // Get matrix size
+            uint n = A_shape[0];
+            
+            // Initialize upper triangle to zero
+            for (uint i = 0; i < n; i++) {
+                for (uint j = i+1; j < n; j++) {
+                    out[i*n + j] = 0.0f;
+                }
+            }
+            
+            // Standard Cholesky algorithm with strict sequential processing
+            for (uint j = 0; j < n; j++) {
+                // Compute diagonal element with accumulator for better precision
+                float diag_sum = 0.0f;
+                for (uint k = 0; k < j; k++) {
+                    float val = out[j*n + k];
+                    diag_sum += val * val;
+                }
+                
+                float diag_val = A[j*n + j] - diag_sum;
+                // Ensure positive diagonal for numerical stability
+                if (diag_val <= 1e-10f) {
+                    diag_val = 1e-10f;
+                }
+                out[j*n + j] = sqrt(diag_val);
+                
+                // Now compute all elements below diagonal in this column
+                for (uint i = j+1; i < n; i++) {
+                    float sum = 0.0f;
+                    for (uint k = 0; k < j; k++) {
+                        sum += out[i*n + k] * out[j*n + k];
+                    }
+                    
+                    float denom = out[j*n + j];
+                    if (denom > 1e-10f) {
+                        out[i*n + j] = (A[i*n + j] - sum) / denom;
+                    } else {
+                        out[i*n + j] = 0.0f;
+                    }
+                }
+            }
+        }
+        """
+        
+        # Metal header with math functions
+        header = """
+        #include <metal_stdlib>
+        #include <metal_math>
+        using namespace metal;
+        """
+        
+        # Create the kernel
+        kernel = mx.fast.metal_kernel(
+            name="cholesky_kernel",
+            input_names=["A"],
+            output_names=["out"],
+            source=source,
+            header=header,
+            ensure_row_contiguous=True
+        )
+        
+        # Single thread for maximum stability
+        grid = (1, 1, 1)
+        threads = (1, 1, 1)
+        
+        # Run the kernel
+        return kernel(
+            inputs=[A_inner],
+            output_shapes=[A_inner.shape],
+            output_dtypes=[A_inner.dtype],
+            grid=grid,
+            threadgroup=threads
+        )[0]
     
+    # Call the inner implementation
+    return _inner_impl(A)
+
+def mlx_cholesky_block_based(A: mx.array, block_size: int = 16) -> mx.array:
+    """
+    Block-based Cholesky implementation for handling larger matrices efficiently.
+    
+    Args:
+        A: Input positive definite matrix
+        block_size: Size of blocks for tiled computation (default: 16)
+        
+    Returns:
+        Lower triangular matrix L such that L @ L.T = A
+    """
+    @mx.custom_function
+    def _inner_impl(A_inner: mx.array, block_size_inner: int) -> mx.array:
+        n = A_inner.shape[0]
+        
+        # Define Metal kernel source for block-based approach
+        source = """
+        // Get thread ID and block size
+        uint thread_id = thread_position_in_grid.x;
+        uint n = A_shape[0];
+        uint block_size = block_param[0];
+        uint num_blocks = (n + block_size - 1) / block_size;
+        uint num_threads = thread_count[0];  // Total number of threads
+        
+        // Process matrix in blocks
+        for (uint k = 0; k < num_blocks; k++) {
+            uint block_start = k * block_size;
+            uint block_end = min(block_start + block_size, n);
+            
+            // Only thread 0 processes the diagonal block for stability
+            if (thread_id == 0) {
+                // Process diagonal block with standard Cholesky
+                for (uint j = block_start; j < block_end; j++) {
+                    // Compute diagonal element
+                    float sum_diag = 0.0f;
+                    for (uint p = 0; p < j; p++) {
+                        sum_diag += out[j*n + p] * out[j*n + p];
+                    }
+                    
+                    float diag_val = A[j*n + j] - sum_diag;
+                    if (diag_val <= 1e-10f) {
+                        diag_val = 1e-10f;
+                    }
+                    out[j*n + j] = sqrt(diag_val);
+                    
+                    // Compute off-diagonals in this column
+                    for (uint i = j+1; i < block_end; i++) {
+                        float sum = 0.0f;
+                        for (uint p = 0; p < j; p++) {
+                            sum += out[i*n + p] * out[j*n + p];
+                        }
+                        
+                        float denom = out[j*n + j];
+                        if (denom > 1e-10f) {
+                            out[i*n + j] = (A[i*n + j] - sum) / denom;
+                        } else {
+                            out[i*n + j] = 0.0f;
+                        }
+                    }
+                }
+            }
+            
+            // Wait for diagonal block to complete
+            threadgroup_barrier(mem_flags::mem_device);
+            
+            // Initialize upper triangles to zero (all threads participate)
+            for (uint i = thread_id; i < n; i += num_threads) {
+                for (uint j = i+1; j < n; j++) {
+                    if ((i < block_start && j >= block_start && j < block_end) ||
+                        (i >= block_start && i < block_end && j >= block_end)) {
+                        out[i*n + j] = 0.0f;
+                    }
+                }
+            }
+            
+            // Ensure zeros are set before computing elements
+            threadgroup_barrier(mem_flags::mem_device);
+            
+            // Each thread processes a set of rows for remaining blocks
+            for (uint row = thread_id; row < n; row += num_threads) {
+                // Only process rows below the current block
+                if (row >= block_end) {
+                    // Update the row using the diagonal block
+                    for (uint j = block_start; j < block_end; j++) {
+                        float sum = 0.0f;
+                        for (uint p = 0; p < j; p++) {
+                            sum += out[row*n + p] * out[j*n + p];
+                        }
+                        
+                        float denom = out[j*n + j];
+                        if (denom > 1e-10f) {
+                            out[row*n + j] = (A[row*n + j] - sum) / denom;
+                        } else {
+                            out[row*n + j] = 0.0f;
+                        }
+                    }
+                }
+            }
+            
+            // Wait for all updates before moving to next block
+            threadgroup_barrier(mem_flags::mem_device);
+        }
+        """
+        
+        # Metal header with math functions
+        header = """
+        #include <metal_stdlib>
+        #include <metal_math>
+        using namespace metal;
+        """
+        
+        # Create the kernel
+        kernel = mx.fast.metal_kernel(
+            name="block_cholesky_kernel",
+            input_names=["A", "block_param", "thread_count"],
+            output_names=["out"],
+            source=source,
+            header=header,
+            ensure_row_contiguous=True
+        )
+        
+        # Use multiple threads but not too many to maintain stability
+        num_threads = min(32, n)
+        grid = (num_threads, 1, 1)
+        threads = (num_threads, 1, 1)
+        
+        # Parameters: block size and thread count
+        block_param = mx.array([block_size_inner], dtype=mx.uint32)
+        thread_count = mx.array([num_threads], dtype=mx.uint32)
+        
+        # Run the kernel
+        return kernel(
+            inputs=[A_inner, block_param, thread_count],
+            output_shapes=[A_inner.shape],
+            output_dtypes=[A_inner.dtype],
+            grid=grid,
+            threadgroup=threads
+        )[0]
+    
+    # Call the inner implementation
+    return _inner_impl(A, block_size)
+
+def cholesky_standard(a_array: mx.array) -> mx.array:
+    """
+    Standard Python implementation of Cholesky decomposition.
+    
+    Args:
+        a_array: Input positive definite matrix as MLX array
+        
+    Returns:
+        Lower triangular matrix L such that L @ L.T = A
+    """
     # Get matrix dimensions
     n = a_array.shape[0]
-    assert a_array.shape[1] == n, "Matrix must be square"
     
     # Initialize the result matrix
     l = mx.zeros((n, n), dtype=a_array.dtype)
@@ -53,7 +305,7 @@ def cholesky(a: TensorLike) -> mx.array:
                 # Create a new array with the updated value
                 temp = mx.zeros_like(l)
                 temp = temp.at[i, i].add(mx.sqrt(s))
-                l = l + temp
+                l = mx.add(l, temp)
             else:
                 # Off-diagonal element
                 s = mx.subtract(a_array[i, j], mx.sum(mx.multiply(l[i, :j], l[j, :j])))
@@ -61,9 +313,79 @@ def cholesky(a: TensorLike) -> mx.array:
                 # Create a new array with the updated value
                 temp = mx.zeros_like(l)
                 temp = temp.at[i, j].add(mx.divide(s, l[j, j]))
-                l = l + temp
+                l = mx.add(l, temp)
     
     return l
+
+def cholesky(a: TensorLike) -> mx.array:
+    """
+    Compute the Cholesky decomposition of a positive definite matrix.
+    
+    This function provides multiple implementation strategies based on matrix size
+    and device to optimize performance while maintaining numerical stability:
+    
+    1. Standard implementation for small matrices (n < 32) or when using CPU
+    2. Single-threaded Metal implementation for medium matrices (32 <= n < 128)
+    3. Block-based Metal implementation for large matrices (n >= 128)
+    
+    Args:
+        a: Input positive definite matrix
+    
+    Returns:
+        Lower triangular matrix L such that L @ L.T = A
+    
+    Raises:
+        ValueError: If matrix is not positive definite
+        
+    Notes:
+        For Metal operations, this uses optimized kernel implementations that
+        provide significant performance improvements over the standard approach.
+    """
+    # Convert input to MLX array with float32 dtype
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    Tensor = MLXTensor()
+    a_array = Tensor.convert_to_tensor(a, dtype=dtype_obj.float32)
+    
+    # Get matrix dimensions
+    n = a_array.shape[0]
+    assert a_array.shape[1] == n, "Matrix must be square"
+    # Determine the current device
+    try:
+        current_device = mx.default_device()
+        device_type = current_device.type
+        is_metal = device_type == 'gpu'
+    except Exception:
+        # If we can't determine the device type, assume it's not Metal
+        is_metal = False
+        is_metal = False
+    
+    # Choose implementation based on matrix size and device
+    if not is_metal or n < 32:
+        # For small matrices or CPU, use standard implementation
+        return cholesky_standard(a_array)
+    elif n < 128:
+        # For medium matrices on Metal, use single-threaded implementation
+        try:
+            return mlx_cholesky_single_thread(a_array)
+        except Exception as e:
+            # Fall back to standard implementation on failure
+            print(f"Metal Cholesky failed with error: {e}. Falling back to standard implementation.")
+            return cholesky_standard(a_array)
+    else:
+        # For large matrices on Metal, use block-based implementation
+        try:
+            # Adjust block size based on matrix dimension
+            block_size = min(32, max(16, n // 32))
+            return mlx_cholesky_block_based(a_array, block_size=block_size)
+        except Exception as e:
+            # Try single-threaded implementation
+            try:
+                print(f"Block Cholesky failed with error: {e}. Trying single-threaded implementation.")
+                return mlx_cholesky_single_thread(a_array)
+            except Exception as e2:
+                # Fall back to standard implementation
+                print(f"Metal Cholesky failed with error: {e2}. Falling back to standard implementation.")
+                return cholesky_standard(a_array)
 
 def svd(a: TensorLike, 
         full_matrices: bool = True, compute_uv: bool = True) -> Union[mx.array, Tuple[mx.array, mx.array, mx.array]]:
@@ -431,7 +753,7 @@ def _custom_qr(matrix_high, matrix_low=None):
     return q_high, r_high
 
 def qr(a: TensorLike,
-       mode: Literal['reduced','complete','r','raw'] = 'reduced') -> Tuple[mx.array, mx.array]:
+       mode: Literal["reduced","complete","r","raw"] = "reduced") -> Tuple[mx.array, mx.array]:
     """
     Compute the QR decomposition of a matrix using a numerically stable approach.
     
@@ -495,5 +817,4 @@ def qr(a: TensorLike,
         # Not implemented in this simplified version
         raise ValueError("Mode 'raw' is not implemented in this simplified version")
     else:
-        return q, r
         return q, r

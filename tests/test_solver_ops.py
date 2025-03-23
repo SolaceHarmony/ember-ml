@@ -146,7 +146,7 @@ def test_svd():
     assert ops.allclose(vh_vh_transpose, identity_v)
     
     # Check that A = U * diag(S) * Vh
-    s_diag = ops.zeros((u.shape[1], vh.shape[0]))
+    s_diag = tensor.zeros((u.shape[1], vh.shape[0]))
     for i in range(len(s)):
         s_diag = ops.tensor_ops().tensor_scatter_nd_update(s_diag, [[i, i]], [s[i]])
     

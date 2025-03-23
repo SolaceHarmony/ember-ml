@@ -4,7 +4,6 @@ import torch
 from typing import Any, Optional, Union, Sequence, List, Tuple
 
 from ember_ml.backend.torch.tensor.dtype import TorchDType
-from ember_ml.backend.torch.tensor.ops.utility import convert_to_tensor
 
 # Type aliases
 Shape = Sequence[int]
@@ -70,7 +69,9 @@ def zeros_like(data: TensorLike, dtype: Optional[DType] = None, device: Optional
         torch_dtype = TorchDType().from_dtype_str(dtype)
     
     # Convert to PyTorch tensor first
-    tensor = convert_to_tensor(data)
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    tensor = tensor_ops.convert_to_tensor(data)
     return torch.zeros_like(tensor, dtype=torch_dtype, device=device)
 
 def ones_like(data: TensorLike, dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
@@ -90,7 +91,9 @@ def ones_like(data: TensorLike, dtype: Optional[DType] = None, device: Optional[
         torch_dtype = TorchDType().from_dtype_str(dtype)
     
     # Convert to PyTorch tensor first
-    tensor = convert_to_tensor(data)
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    tensor = tensor_ops.convert_to_tensor(data)
     return torch.ones_like(tensor, dtype=torch_dtype, device=device)
 
 def eye(n: int, m: Optional[int] = None, dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
@@ -152,7 +155,9 @@ def full_like(data: TensorLike, fill_value: Union[int, float, bool], dtype: Opti
     Returns:
         Tensor filled with the specified value with the same shape as data
     """
-    tensor_torch = convert_to_tensor(data)
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    tensor_torch = tensor_ops.convert_to_tensor(data)
     
     # Handle string dtype values
     torch_dtype = None

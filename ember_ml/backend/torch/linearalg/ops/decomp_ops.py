@@ -4,13 +4,11 @@ PyTorch decomposition operations for ember_ml.
 This module provides PyTorch implementations of matrix decomposition operations.
 """
 
-import torch
 from typing import Optional, Union, List, Tuple, Any, Literal
+import torch
+from ember_ml.backend.torch.tensor import TorchDType
+from ember_ml.backend.torch.types import TensorLike
 
-from ember_ml.backend.torch.tensor.ops.utility import convert_to_tensor
-
-# Type aliases
-TensorLike = Any
 
 
 def cholesky(a: TensorLike) -> torch.Tensor:
@@ -23,7 +21,10 @@ def cholesky(a: TensorLike) -> torch.Tensor:
     Returns:
         Lower triangular matrix L such that a = L * L.T
     """
-    tensor = convert_to_tensor(a)
+    # Convert input to PyTorch tensor
+    from ember_ml.backend.torch.tensor import TorchTensor
+    Tensor = TorchTensor()
+    tensor = Tensor.convert_to_tensor(a)
     return torch.linalg.cholesky(tensor)
 
 
@@ -39,7 +40,10 @@ def svd(a: TensorLike, full_matrices: bool = True, compute_uv: bool = True) -> U
     Returns:
         If compute_uv is True, returns (U, S, V), otherwise returns S
     """
-    tensor = convert_to_tensor(a)
+    # Convert input to PyTorch tensor
+    from ember_ml.backend.torch.tensor import TorchTensor
+    Tensor = TorchTensor()
+    tensor = Tensor.convert_to_tensor(a)
     
     if compute_uv:
         # PyTorch's svd returns (U, S, V) where V is already transposed

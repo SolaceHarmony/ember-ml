@@ -10,6 +10,7 @@ from typing import Optional, List, Dict, Any, Union, Tuple
 from ember_ml import ops
 from ember_ml.initializers import glorot_uniform, orthogonal
 from ember_ml.nn.modules import Module, Parameter
+from ember_ml.nn import tensor
 
 class RNNCell(Module):
     """
@@ -52,21 +53,21 @@ class RNNCell(Module):
     def _initialize_weights(self):
         """Initialize the weights for the cell."""
         # Input weights
-        self.input_kernel = Parameter(ops.zeros((self.input_size, self.hidden_size)))
+        self.input_kernel = Parameter(tensor.zeros((self.input_size, self.hidden_size)))
         
         # Recurrent weights
-        self.recurrent_kernel = Parameter(ops.zeros((self.hidden_size, self.hidden_size)))
+        self.recurrent_kernel = Parameter(tensor.zeros((self.hidden_size, self.hidden_size)))
         
         # Bias
         if self.use_bias:
-            self.bias = Parameter(ops.zeros((self.hidden_size,)))
+            self.bias = Parameter(tensor.zeros((self.hidden_size,)))
         
         # Initialize weights
         self.input_kernel.data = glorot_uniform((self.input_size, self.hidden_size))
         self.recurrent_kernel.data = orthogonal((self.hidden_size, self.hidden_size))
         
         if self.use_bias:
-            self.bias.data = ops.zeros((self.hidden_size,))
+            self.bias.data = tensor.zeros((self.hidden_size,))
     
     def forward(self, inputs, states=None):
         """
@@ -81,7 +82,7 @@ class RNNCell(Module):
         """
         # Initialize states if not provided
         if states is None:
-            h_prev = ops.zeros((ops.shape(inputs)[0], self.hidden_size))
+            h_prev = tensor.zeros((ops.shape(inputs)[0], self.hidden_size))
         else:
             h_prev = states[0]
         
@@ -118,5 +119,5 @@ class RNNCell(Module):
         Returns:
             Initial state
         """
-        h = ops.zeros((batch_size, self.hidden_size))
+        h = tensor.zeros((batch_size, self.hidden_size))
         return [h]

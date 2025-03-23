@@ -49,7 +49,7 @@ class Linear(Module, ContainerInterfaces):
         
         if bias:
             # Initialize bias to zeros
-            bias_data = ops.zeros(out_features, dtype=dtype, device=device)
+            bias_data = tensor.zeros(out_features, dtype=dtype, device=device)
             self.bias = Parameter(bias_data)
         else:
             self.bias = None

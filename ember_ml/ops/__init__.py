@@ -122,12 +122,14 @@ add = lambda *args, **kwargs: math_ops().add(*args, **kwargs)
 subtract = lambda *args, **kwargs: math_ops().subtract(*args, **kwargs)
 multiply = lambda *args, **kwargs: math_ops().multiply(*args, **kwargs)
 divide = lambda *args, **kwargs: math_ops().divide(*args, **kwargs)
+gather = lambda *args, **kwargs: math_ops().gather(*args, **kwargs)
 floor_divide = lambda *args, **kwargs: math_ops().floor_divide(*args, **kwargs)
 dot = lambda *args, **kwargs: math_ops().dot(*args, **kwargs)
 matmul = lambda *args, **kwargs: math_ops().matmul(*args, **kwargs)
 mean = lambda *args, **kwargs: math_ops().mean(*args, **kwargs)
 sum = lambda *args, **kwargs: math_ops().sum(*args, **kwargs)
 max = lambda *args, **kwargs: math_ops().max(*args, **kwargs)
+argmax = lambda *args, **kwargs: math_ops().argmax(*args, **kwargs)
 min = lambda *args, **kwargs: math_ops().min(*args, **kwargs)
 exp = lambda *args, **kwargs: math_ops().exp(*args, **kwargs)
 log = lambda *args, **kwargs: math_ops().log(*args, **kwargs)
@@ -248,9 +250,11 @@ __all__ = [
     'floor_divide',
     'dot',
     'matmul',
+    'gather',
     'mean',
     'sum',
     'max',
+    'argmax',
     'min',
     'exp',
     'log',

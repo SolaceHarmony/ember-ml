@@ -9,10 +9,7 @@ import mlx.core
 from typing import Optional, Dict, Any
 
 # Import from tensor_ops
-from ember_ml.backend.mlx.tensor import MLXTensor
 from ember_ml.backend.mlx.types import TensorLike
-
-Tensor = MLXTensor()
 
 def to_device(x: TensorLike, device: str) -> mx.array:
     """
@@ -25,7 +22,8 @@ def to_device(x: TensorLike, device: str) -> mx.array:
     Returns:
         MLX array (unchanged)
     """
-    # MLX automatically uses the most efficient device (Metal on Apple Silicon)
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    Tensor = MLXTensor()
     return Tensor.convert_to_tensor(x)
 
 def get_device(x: mx.array) -> str:

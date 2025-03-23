@@ -112,36 +112,3 @@ def linspace(start: Union[int, float], stop: Union[int, float], num: int,
     
     # Create evenly spaced sequence
     return mx.linspace(start, stop, num, dtype=mlx_dtype)
-
-def convert_to_tensor(data: Any, dtype: 'Optional[DType]' = None, device: Optional[str] = None) -> 'Optional[mx.array]':
-    """Convert input into an MLX array."""
-    # Special case for None
-    if data is None:
-        return None
-        
-    # Handle numpy arrays
-    if isinstance(data, np.ndarray):
-        # Convert to MLX array
-        tensor = mx.array(data.tolist())
-    # Handle Python sequences
-    elif isinstance(data, (list, tuple)):
-        # Convert to MLX array
-        tensor = mx.array(data)
-    # Handle Python scalars
-    elif isinstance(data, (int, float, bool)):
-        # Convert to MLX array
-        tensor = mx.array([data])
-    # Handle MLX arrays
-    elif isinstance(data, mx.array):
-        tensor = data
-    else:
-        raise TypeError(f"Cannot convert type {type(data)} to MLX array")
-    
-    # Cast to specified dtype if needed
-    if dtype is not None:
-        dtype_cls = MLXDType()
-        mlx_dtype = dtype_cls.from_dtype_str(dtype) if dtype else None
-        if mlx_dtype is not None:
-            tensor = tensor.astype(mlx_dtype)
-    
-    return tensor

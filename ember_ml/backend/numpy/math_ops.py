@@ -5,36 +5,25 @@ This module provides NumPy implementations of math operations.
 """
 
 import numpy as np
-from typing import Optional, Union, Sequence, List, Literal, Tuple
-from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+from typing import Optional, Union, List, Literal, Tuple
+from ember_ml.backend.numpy.types import TensorLike, ShapeLike
 
-# Create a tensor instance for convert_to_tensor
-_tensor_ops = NumpyTensor()
-convert_to_tensor = _tensor_ops.convert_to_tensor
+# We avoid creating global instances to prevent circular imports
+# Each function will create its own instances when needed
 
-# Type aliases
-ArrayLike = Union[np.ndarray, float, int, list, tuple]
-Shape = Union[int, Sequence[int]]
-DType = Union[np.dtype, str, None]
+def add(x: TensorLike, y: TensorLike) -> np.ndarray:
+    """Add two NumPy arrays element-wise."""
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.add(tensor_ops.convert_to_tensor(x), tensor_ops.convert_to_tensor(y))
 
+def gather(x: TensorLike, indices: TensorLike, axis: int = 0) -> np.ndarray:
+    """Gather slices from x along the specified axis according to indices."""
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.take(tensor_ops.convert_to_tensor(x), tensor_ops.convert_to_tensor(indices), axis=axis)
 
-def add(x: ArrayLike, y: ArrayLike) -> np.ndarray:
-    """
-    Add two NumPy arrays element-wise.
-
-    Args:
-        x: First array
-        y: Second array
-
-    Returns:
-        Element-wise sum
-    """
-    x_tensor = convert_to_tensor(x)
-    y_tensor = convert_to_tensor(y)
-    return np.add(x_tensor, y_tensor)
-
-
-def subtract(x: ArrayLike, y: ArrayLike) -> np.ndarray:
+def subtract(x: TensorLike, y: TensorLike) -> np.ndarray:
     """
     Subtract two NumPy arrays element-wise.
 
@@ -45,12 +34,12 @@ def subtract(x: ArrayLike, y: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise difference
     """
-    x_tensor = convert_to_tensor(x)
-    y_tensor = convert_to_tensor(y)
-    return np.subtract(x_tensor, y_tensor)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.subtract(tensor_ops.convert_to_tensor(x), tensor_ops.convert_to_tensor(y))
 
 
-def multiply(x: ArrayLike, y: ArrayLike) -> np.ndarray:
+def multiply(x: TensorLike, y: TensorLike) -> np.ndarray:
     """
     Multiply two NumPy arrays element-wise.
 
@@ -61,12 +50,12 @@ def multiply(x: ArrayLike, y: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise product
     """
-    x_tensor = convert_to_tensor(x)
-    y_tensor = convert_to_tensor(y)
-    return np.multiply(x_tensor, y_tensor)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.multiply(tensor_ops.convert_to_tensor(x), tensor_ops.convert_to_tensor(y))
 
 
-def divide(x: ArrayLike, y: ArrayLike) -> np.ndarray:
+def divide(x: TensorLike, y: TensorLike) -> np.ndarray:
     """
     Divide two NumPy arrays element-wise.
 
@@ -77,12 +66,12 @@ def divide(x: ArrayLike, y: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise quotient
     """
-    x_tensor = convert_to_tensor(x)
-    y_tensor = convert_to_tensor(y)
-    return np.divide(x_tensor, y_tensor)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.divide(tensor_ops.convert_to_tensor(x), tensor_ops.convert_to_tensor(y))
 
 
-def dot(x: ArrayLike, y: ArrayLike) -> np.ndarray:
+def dot(x: TensorLike, y: TensorLike) -> np.ndarray:
     """
     Compute the dot product of two NumPy arrays.
 
@@ -93,12 +82,12 @@ def dot(x: ArrayLike, y: ArrayLike) -> np.ndarray:
     Returns:
         Dot product
     """
-    x_tensor = convert_to_tensor(x)
-    y_tensor = convert_to_tensor(y)
-    return np.dot(x_tensor, y_tensor)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.dot(tensor_ops.convert_to_tensor(x), tensor_ops.convert_to_tensor(y))
 
 
-def matmul(x: ArrayLike, y: ArrayLike) -> np.ndarray:
+def matmul(x: TensorLike, y: TensorLike) -> np.ndarray:
     """
     Compute the matrix product of two NumPy arrays.
 
@@ -109,13 +98,13 @@ def matmul(x: ArrayLike, y: ArrayLike) -> np.ndarray:
     Returns:
         Matrix product
     """
-    x_tensor = convert_to_tensor(x)
-    y_tensor = convert_to_tensor(y)
-    return np.matmul(x_tensor, y_tensor)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.matmul(tensor_ops.convert_to_tensor(x), tensor_ops.convert_to_tensor(y))
 
 
-def mean(x: ArrayLike,
-          axis: Optional[Union[int, Sequence[int]]] = None,
+def mean(x: TensorLike,
+          axis: Optional[ShapeLike] = None,
           keepdims: bool = False) -> np.ndarray:
     """
     Compute the mean of a NumPy array along specified axes.
@@ -128,12 +117,13 @@ def mean(x: ArrayLike,
     Returns:
         Mean of the array
     """
-    x_tensor = convert_to_tensor(x)
-    return np.mean(x_tensor, axis=axis, keepdims=keepdims)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.mean(tensor_ops.convert_to_tensor(x), axis=axis, keepdims=keepdims)
 
 
-def sum(x: ArrayLike,
-         axis: Optional[Union[int, Sequence[int]]] = None,
+def sum(x: TensorLike,
+         axis: Optional[ShapeLike] = None,
          keepdims: bool = False) -> np.ndarray:
     """
     Compute the sum of a NumPy array along specified axes.
@@ -146,12 +136,13 @@ def sum(x: ArrayLike,
     Returns:
         Sum of the array
     """
-    x_tensor = convert_to_tensor(x)
-    return np.sum(x_tensor, axis=axis, keepdims=keepdims)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.sum(tensor_ops.convert_to_tensor(x), axis=axis, keepdims=keepdims)
 
 
-def var(x: ArrayLike,
-         axis: Optional[Union[int, Sequence[int]]] = None,
+def var(x: TensorLike,
+         axis: Optional[ShapeLike] = None,
          keepdims: bool = False) -> np.ndarray:
     """
     Compute the variance of a NumPy array along specified axes.
@@ -164,11 +155,12 @@ def var(x: ArrayLike,
     Returns:
         Variance of the array
     """
-    x_tensor = convert_to_tensor(x)
-    return np.var(x_tensor, axis=axis, keepdims=keepdims)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.var(tensor_ops.convert_to_tensor(x), axis=axis, keepdims=keepdims)
 
 
-def exp(x: ArrayLike) -> np.ndarray:
+def exp(x: TensorLike) -> np.ndarray:
     """
     Compute the exponential of a NumPy array element-wise.
 
@@ -178,11 +170,12 @@ def exp(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise exponential
     """
-    x_tensor = convert_to_tensor(x)
-    return np.exp(x_tensor)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.exp(tensor_ops.convert_to_tensor(x))
 
 
-def log(x: ArrayLike) -> np.ndarray:
+def log(x: TensorLike) -> np.ndarray:
     """
     Compute the natural logarithm of a NumPy array element-wise.
 
@@ -192,11 +185,12 @@ def log(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise logarithm
     """
-    x_tensor = convert_to_tensor(x)
-    return np.log(x_tensor)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.log(tensor_ops.convert_to_tensor(x))
 
 
-def log10(x: ArrayLike) -> np.ndarray:
+def log10(x: TensorLike) -> np.ndarray:
     """
     Compute the base-10 logarithm of a NumPy array element-wise.
 
@@ -206,11 +200,12 @@ def log10(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise base-10 logarithm
     """
-    x_tensor = convert_to_tensor(x)
-    return np.log10(x_tensor)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.log10(tensor_ops.convert_to_tensor(x))
 
 
-def log2(x: ArrayLike) -> np.ndarray:
+def log2(x: TensorLike) -> np.ndarray:
     """
     Compute the base-2 logarithm of a NumPy array element-wise.
 
@@ -220,11 +215,12 @@ def log2(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise base-2 logarithm
     """
-    x_tensor = convert_to_tensor(x)
-    return np.log2(x_tensor)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.log2(tensor_ops.convert_to_tensor(x))
 
 
-def pow(x: ArrayLike, y: ArrayLike) -> np.ndarray:
+def pow(x: TensorLike, y: TensorLike) -> np.ndarray:
     """
     Compute x raised to the power of y element-wise.
 
@@ -235,12 +231,12 @@ def pow(x: ArrayLike, y: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise power
     """
-    x_tensor = convert_to_tensor(x)
-    y_tensor = convert_to_tensor(y)
-    return np.power(x_tensor, y_tensor)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.power(tensor_ops.convert_to_tensor(x), tensor_ops.convert_to_tensor(y))
 
 
-def sqrt(x: ArrayLike) -> np.ndarray:
+def sqrt(x: TensorLike) -> np.ndarray:
     """
     Compute the square root of a NumPy array element-wise.
 
@@ -250,11 +246,12 @@ def sqrt(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise square root
     """
-    x_tensor = convert_to_tensor(x)
-    return np.sqrt(x_tensor)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.sqrt(tensor_ops.convert_to_tensor(x))
 
 
-def square(x: ArrayLike) -> np.ndarray:
+def square(x: TensorLike) -> np.ndarray:
     """
     Compute the square of a NumPy array element-wise.
 
@@ -264,10 +261,12 @@ def square(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise square
     """
-    x_tensor = convert_to_tensor(x)
-    return np.square(x_tensor)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.square(tensor_ops.convert_to_tensor(x))
 
-def abs(x: ArrayLike) -> np.ndarray:
+
+def abs(x: TensorLike) -> np.ndarray:
     """
     Compute the absolute value of a NumPy array element-wise.
 
@@ -277,11 +276,12 @@ def abs(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise absolute value
     """
-    x_tensor = convert_to_tensor(x)
-    return np.abs(x_tensor)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.abs(tensor_ops.convert_to_tensor(x))
 
 
-def negative(x: ArrayLike) -> np.ndarray:
+def negative(x: TensorLike) -> np.ndarray:
     """
     Compute the negative of a NumPy array element-wise.
 
@@ -291,11 +291,12 @@ def negative(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise negative
     """
-    x_tensor = convert_to_tensor(x)
-    return np.negative(x_tensor)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.negative(tensor_ops.convert_to_tensor(x))
 
 
-def sign(x: ArrayLike) -> np.ndarray:
+def sign(x: TensorLike) -> np.ndarray:
     """
     Compute the sign of a NumPy array element-wise.
 
@@ -305,11 +306,30 @@ def sign(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise sign
     """
-    x_tensor = convert_to_tensor(x)
-    return np.sign(x_tensor)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.sign(tensor_ops.convert_to_tensor(x))
 
 
-def sin(x: ArrayLike) -> np.ndarray:
+def argmax(x: TensorLike, axis: Optional[int] = None, keepdims: bool = False) -> np.ndarray:
+    """
+    Return the indices of the maximum values along the specified axis.
+    
+    Args:
+        x: Input array
+        axis: Axis along which to find maximum values. If None, the argmax of
+            the flattened array is returned.
+        keepdims: If True, the reduced axes are kept as dimensions with size one.
+            
+    Returns:
+        Indices of the maximum values along the specified axis.
+    """
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.argmax(tensor_ops.convert_to_tensor(x), axis=axis, keepdims=keepdims)
+
+
+def sin(x: TensorLike) -> np.ndarray:
     """
     Compute the sine of a NumPy array element-wise.
 
@@ -319,11 +339,12 @@ def sin(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise sine
     """
-    x_tensor = convert_to_tensor(x)
-    return np.sin(x_tensor)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.sin(tensor_ops.convert_to_tensor(x))
 
 
-def cos(x: ArrayLike) -> np.ndarray:
+def cos(x: TensorLike) -> np.ndarray:
     """
     Compute the cosine of a NumPy array element-wise.
 
@@ -333,11 +354,12 @@ def cos(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise cosine
     """
-    x_tensor = convert_to_tensor(x)
-    return np.cos(x_tensor)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.cos(tensor_ops.convert_to_tensor(x))
 
 
-def tan(x: ArrayLike) -> np.ndarray:
+def tan(x: TensorLike) -> np.ndarray:
     """
     Compute the tangent of a NumPy array element-wise.
 
@@ -347,11 +369,12 @@ def tan(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise tangent
     """
-    x_tensor = convert_to_tensor(x)
-    return np.tan(x_tensor)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.tan(tensor_ops.convert_to_tensor(x))
 
 
-def sinh(x: ArrayLike) -> np.ndarray:
+def sinh(x: TensorLike) -> np.ndarray:
     """
     Compute the hyperbolic sine of a NumPy array element-wise.
 
@@ -361,11 +384,12 @@ def sinh(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise hyperbolic sine
     """
-    x_tensor = convert_to_tensor(x)
-    return np.sinh(x_tensor)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.sinh(tensor_ops.convert_to_tensor(x))
 
 
-def cosh(x: ArrayLike) -> np.ndarray:
+def cosh(x: TensorLike) -> np.ndarray:
     """
     Compute the hyperbolic cosine of a NumPy array element-wise.
 
@@ -375,11 +399,12 @@ def cosh(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise hyperbolic cosine
     """
-    x_tensor = convert_to_tensor(x)
-    return np.cosh(x_tensor)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.cosh(tensor_ops.convert_to_tensor(x))
 
 
-def tanh(x: ArrayLike) -> np.ndarray:
+def tanh(x: TensorLike) -> np.ndarray:
     """
     Compute the hyperbolic tangent of a NumPy array element-wise.
 
@@ -389,11 +414,11 @@ def tanh(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise tanh
     """
-    x_tensor = convert_to_tensor(x)
-    return np.tanh(x_tensor)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    return np.tanh(NumpyTensor().convert_to_tensor(x))
 
 
-def sigmoid(x: ArrayLike) -> np.ndarray:
+def sigmoid(x: TensorLike) -> np.ndarray:
     """
     Compute the sigmoid of a NumPy array element-wise.
 
@@ -403,13 +428,14 @@ def sigmoid(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise sigmoid
     """
-    x_tensor = convert_to_tensor(x)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    x_tensor = tensor_ops.convert_to_tensor(x)
     x_safe = np.clip(x_tensor, -88.0, 88.0)  # Prevent overflow
-    denominator = np.add(1.0, np.exp(np.negative(x_safe)))
-    return np.divide(1.0, denominator)
+    return np.divide(1.0, np.add(1.0, np.exp(np.negative(x_safe))))
 
 
-def softplus(x: ArrayLike) -> np.ndarray:
+def softplus(x: TensorLike) -> np.ndarray:
     """
     Compute the softplus of a NumPy array element-wise.
     
@@ -421,12 +447,14 @@ def softplus(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise softplus
     """
-    x_tensor = convert_to_tensor(x)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    x_tensor = tensor_ops.convert_to_tensor(x)
     x_safe = np.clip(x_tensor, -88.0, 88.0)  # Prevent overflow
     return np.log(np.add(1.0, np.exp(x_safe)))
 
 
-def relu(x: ArrayLike) -> np.ndarray:
+def relu(x: TensorLike) -> np.ndarray:
     """
     Compute the rectified linear unit of a NumPy array element-wise.
 
@@ -436,11 +464,12 @@ def relu(x: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise ReLU
     """
-    x_tensor = convert_to_tensor(x)
-    return np.maximum(0, x_tensor)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.maximum(0, tensor_ops.convert_to_tensor(x))
 
 
-def mod(x: ArrayLike, y: ArrayLike) -> np.ndarray:
+def mod(x: TensorLike, y: TensorLike) -> np.ndarray:
     """
     Compute the remainder of division of x by y element-wise.
 
@@ -451,14 +480,16 @@ def mod(x: ArrayLike, y: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise remainder
     """
-    x_tensor = convert_to_tensor(x)
-    y_tensor = convert_to_tensor(y)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    x_tensor = tensor_ops.convert_to_tensor(x)
+    y_tensor = tensor_ops.convert_to_tensor(y)
     # Use divmod to get the remainder
     _, remainder = np.divmod(x_tensor, y_tensor)
     return remainder
 
 
-def floor_divide(x: ArrayLike, y: ArrayLike) -> np.ndarray:
+def floor_divide(x: TensorLike, y: TensorLike) -> np.ndarray:
     """
     Element-wise integer division.
     
@@ -471,12 +502,12 @@ def floor_divide(x: ArrayLike, y: ArrayLike) -> np.ndarray:
     Returns:
         Element-wise integer quotient (a // b)
     """
-    x_tensor = convert_to_tensor(x)
-    y_tensor = convert_to_tensor(y)
-    return np.floor_divide(x_tensor, y_tensor)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.floor_divide(tensor_ops.convert_to_tensor(x), tensor_ops.convert_to_tensor(y))
 
 
-def gradient(f: ArrayLike, *varargs, axis: Optional[Union[int, Sequence[int]]] = None,
+def gradient(f: TensorLike, *varargs, axis: Optional[ShapeLike] = None,
             edge_order: Literal[1, 2] = 1) -> Union[np.ndarray, List[np.ndarray]]:
     """
     Return the gradient of an N-dimensional array.
@@ -497,11 +528,12 @@ def gradient(f: ArrayLike, *varargs, axis: Optional[Union[int, Sequence[int]]] =
         A tensor or tuple of tensors corresponding to the derivatives of f with respect to each dimension.
         Each derivative has the same shape as f.
     """
-    f_tensor = convert_to_tensor(f)
-    return np.gradient(f_tensor, *varargs, axis=axis, edge_order=edge_order)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.gradient(tensor_ops.convert_to_tensor(f), *varargs, axis=axis, edge_order=edge_order)
 
 
-def softmax(x: ArrayLike, axis: int = -1) -> np.ndarray:
+def softmax(x: TensorLike, axis: int = -1) -> np.ndarray:
     """
     Compute the softmax of a NumPy array along a specified axis.
 
@@ -512,13 +544,15 @@ def softmax(x: ArrayLike, axis: int = -1) -> np.ndarray:
     Returns:
         Softmax of the array
     """
-    x_tensor = convert_to_tensor(x)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    x_tensor = tensor_ops.convert_to_tensor(x)
     x_max = np.max(x_tensor, axis=axis, keepdims=True)
     exp_x = np.exp(np.subtract(x_tensor, x_max))
     return np.divide(exp_x, np.sum(exp_x, axis=axis, keepdims=True))
 
 
-def clip(x: ArrayLike, min_val: Union[float, ArrayLike], max_val: Union[float, ArrayLike]) -> np.ndarray:
+def clip(x: TensorLike, min_val: Union[float, TensorLike], max_val: Union[float, TensorLike]) -> np.ndarray:
     """
     Clip the values of a NumPy array to a specified range.
 
@@ -530,14 +564,16 @@ def clip(x: ArrayLike, min_val: Union[float, ArrayLike], max_val: Union[float, A
     Returns:
         Clipped array
     """
-    x_tensor = convert_to_tensor(x)
-    min_val_tensor = convert_to_tensor(min_val)
-    max_val_tensor = convert_to_tensor(max_val)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    x_tensor = tensor_ops.convert_to_tensor(x)
+    min_val_tensor = tensor_ops.convert_to_tensor(min_val)
+    max_val_tensor = tensor_ops.convert_to_tensor(max_val)
     return np.clip(x_tensor, min_val_tensor, max_val_tensor)
 
 
-def max(x: ArrayLike,
-        axis: Optional[Union[int, Sequence[int]]] = None,
+def max(x: TensorLike,
+        axis: Optional[ShapeLike] = None,
         keepdims: bool = False) -> np.ndarray:
     """
     Compute the maximum of a NumPy array along specified axes.
@@ -550,12 +586,13 @@ def max(x: ArrayLike,
     Returns:
         Maximum of the array
     """
-    x_tensor = convert_to_tensor(x)
-    return np.max(x_tensor, axis=axis, keepdims=keepdims)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.max(tensor_ops.convert_to_tensor(x), axis=axis, keepdims=keepdims)
 
 
-def min(x: ArrayLike,
-        axis: Optional[Union[int, Sequence[int]]] = None,
+def min(x: TensorLike,
+        axis: Optional[ShapeLike] = None,
         keepdims: bool = False) -> np.ndarray:
     """
     Compute the minimum of a NumPy array along specified axes.
@@ -568,11 +605,11 @@ def min(x: ArrayLike,
     Returns:
         Minimum of the array
     """
-    x_tensor = convert_to_tensor(x)
-    return np.min(x_tensor, axis=axis, keepdims=keepdims)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    return np.min(NumpyTensor().convert_to_tensor(x), axis=axis, keepdims=keepdims)
 
 
-def cumsum(x: ArrayLike, axis: Optional[int] = None) -> np.ndarray:
+def cumsum(x: TensorLike, axis: Optional[int] = None) -> np.ndarray:
     """
     Compute the cumulative sum of a NumPy array along a specified axis.
 
@@ -583,11 +620,12 @@ def cumsum(x: ArrayLike, axis: Optional[int] = None) -> np.ndarray:
     Returns:
         Array with cumulative sums
     """
-    x_tensor = convert_to_tensor(x)
-    return np.cumsum(x_tensor, axis=axis)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.cumsum(tensor_ops.convert_to_tensor(x), axis=axis)
 
 
-def eigh(a: ArrayLike) -> Tuple[np.ndarray, np.ndarray]:
+def eigh(a: TensorLike) -> Tuple[np.ndarray, np.ndarray]:
     """
     Compute the eigenvalues and eigenvectors of a Hermitian or symmetric matrix.
 
@@ -597,11 +635,12 @@ def eigh(a: ArrayLike) -> Tuple[np.ndarray, np.ndarray]:
     Returns:
         Tuple of (eigenvalues, eigenvectors)
     """
-    a_tensor = convert_to_tensor(a)
-    return np.linalg.eigh(a_tensor)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.linalg.eigh(tensor_ops.convert_to_tensor(a))
 
 
-def sort(x: ArrayLike, axis: int = -1) -> np.ndarray:
+def sort(x: TensorLike, axis: int = -1) -> np.ndarray:
     """
     Sort a NumPy array along a specified axis.
 
@@ -612,8 +651,9 @@ def sort(x: ArrayLike, axis: int = -1) -> np.ndarray:
     Returns:
         Sorted array
     """
-    x_tensor = convert_to_tensor(x)
-    return np.sort(x_tensor, axis=axis)
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.sort(tensor_ops.convert_to_tensor(x), axis=axis)
 
 
 # Define the pi constant using Chudnovsky algorithm
@@ -633,6 +673,8 @@ def _calculate_pi_value(precision_digits=15):
     Returns:
         Value of pi with the specified precision
     """
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
     # Constants in the Chudnovsky algorithm
     C = np.array(640320.0)
     C3_OVER_24 = np.divide(np.power(C, 3), np.array(24.0))
@@ -640,8 +682,8 @@ def _calculate_pi_value(precision_digits=15):
 
     def binary_split(a, b):
         """Recursive binary split for the Chudnovsky algorithm."""
-        a_tensor = convert_to_tensor(a)
-        b_tensor = convert_to_tensor(b)
+        a_tensor = tensor_ops.convert_to_tensor(a)
+        b_tensor = tensor_ops.convert_to_tensor(b)
         diff = np.subtract(b_tensor, a_tensor)
 
         if np.array_equal(diff, np.array(1.0)):
@@ -686,7 +728,7 @@ def _calculate_pi_value(precision_digits=15):
         return Pab, Qab, Tab
 
     # Number of terms needed for the desired precision
-    precision_tensor = convert_to_tensor(precision_digits)
+    precision_tensor = tensor_ops.convert_to_tensor(precision_digits)
     terms_float = np.divide(precision_tensor, DIGITS_PER_TERM)
     terms_float = np.add(terms_float, np.array(1.0))
     terms = np.floor(terms_float)  # Convert to integer
@@ -715,7 +757,11 @@ power = pow
 class NumpyMathOps:
     """NumPy implementation of math operations."""
     
-    pi : np.ndarray = np.array([PI_CONSTANT], dtype=np.float32)
+    def gather(self, x, indices, axis=0):
+        """Gather slices from array according to indices."""
+        return gather(x, indices, axis)
+    
+    pi: np.ndarray = np.array([PI_CONSTANT], dtype=np.float32)
 
     def add(self, x, y):
         """Add two arrays element-wise."""
@@ -792,11 +838,15 @@ class NumpyMathOps:
     def negative(self, x):
         """Compute the negative of an array element-wise."""
         return negative(x)
-
+        
     def sign(self, x):
         """Compute the sign of an array element-wise."""
         return sign(x)
-
+    
+    def argmax(self, x, axis=None, keepdims=False):
+        """Return the indices of the maximum values along the specified axis."""
+        return argmax(x, axis=axis, keepdims=keepdims)
+    
     def sin(self, x):
         """Compute the sine of an array element-wise."""
         return sin(x)

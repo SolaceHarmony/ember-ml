@@ -11,6 +11,8 @@ import torch
 # Basic type aliases
 type Numeric = Union[int, float]
 
+
+
 # Type definitions for PyTorch dtypes
 type DTypeStr = str
 type DTypeClass = Union[torch.dtype, str, None]
@@ -120,7 +122,7 @@ class TorchTensor:
         Returns:
             PyTorch tensor
         """
-        from ember_ml.backend.torch.tensor.ops.utility import convert_to_tensor as convert_to_tensor_func
+        from ember_ml.backend.torch.tensor.ops.utility import convert_to_torch_tensor as convert_to_tensor_func
         return convert_to_tensor_func(data, dtype, device)
 
     def slice(self, data: TensorLike, starts: Sequence[int], sizes: Sequence[int]) -> torch.Tensor:
@@ -381,6 +383,8 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.creation import full as full_func
         return full_func(shape, fill_value, dtype, device)
 
+
+
     def cast(self, data: TensorLike, dtype: DType) -> torch.Tensor:
         """
         Cast a tensor to a new data type.
@@ -489,6 +493,7 @@ class TorchTensor:
         """
         from ember_ml.backend.torch.tensor.ops.manipulation import pad as pad_func
         return pad_func(data, paddings, constant_values)
+
 
     def to_numpy(self, data: Optional[TensorLike] = None) -> Optional[numpy.ndarray]:
         """

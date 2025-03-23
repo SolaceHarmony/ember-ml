@@ -9,6 +9,7 @@ from typing import Dict, List, Optional, Union, Any, Callable
 
 from ember_ml import ops
 from ember_ml.training.loss.base import Loss
+from ember_ml.nn import tensor
 
 class CrossEntropyLoss(Loss):
     """
@@ -90,7 +91,7 @@ class CrossEntropyLoss(Loss):
         """
         # Create mask for ignored indices
         mask = ops.not_equal(y_true, self.ignore_index)
-        y_true = ops.where(mask, y_true, ops.zeros_like(y_true))
+        y_true = ops.where(mask, y_true, tensor.zeros_like(y_true))
         
         # Compute log softmax
         log_softmax = ops.log_softmax(y_pred, axis=-1)
@@ -114,7 +115,7 @@ class CrossEntropyLoss(Loss):
         loss = ops.sum(loss, axis=-1)
         
         # Apply mask for ignored indices
-        loss = ops.where(mask, loss, ops.zeros_like(loss))
+        loss = ops.where(mask, loss, tensor.zeros_like(loss))
         
         # Apply reduction
         if self.reduction == 'mean':

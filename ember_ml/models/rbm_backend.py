@@ -76,8 +76,8 @@ class RBM:
             mean=0.0, 
             stddev=0.01 / ops.sqrt(tensor.convert_to_tensor(n_visible))
         )
-        self.visible_bias = ops.zeros(n_visible)
-        self.hidden_bias = ops.zeros(n_hidden)
+        self.visible_bias = tensor.zeros(n_visible)
+        self.hidden_bias = tensor.zeros(n_hidden)
         
         # Move to device if specified
         if device:
@@ -86,9 +86,9 @@ class RBM:
             self.hidden_bias = ops.to_device(self.hidden_bias, device)
         
         # Initialize momentum terms
-        self.weights_momentum = ops.zeros_like(self.weights)
-        self.visible_bias_momentum = ops.zeros_like(self.visible_bias)
-        self.hidden_bias_momentum = ops.zeros_like(self.hidden_bias)
+        self.weights_momentum = tensor.zeros_like(self.weights)
+        self.visible_bias_momentum = tensor.zeros_like(self.visible_bias)
+        self.hidden_bias_momentum = tensor.zeros_like(self.hidden_bias)
         
         # For tracking training progress
         self.training_errors = []

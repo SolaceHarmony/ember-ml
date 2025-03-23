@@ -62,7 +62,7 @@ class Optimizer:
         for group in self.param_groups:
             for param in group['params']:
                 if param.grad is not None:
-                    param.grad = ops.zeros_like(param.grad)
+                    param.grad = tensor.zeros_like(param.grad)
     
     def step(self):
         """

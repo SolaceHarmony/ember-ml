@@ -1,35 +1,51 @@
-"""NumPy type definitions for ember_ml."""
+"""
+Type definitions for NumPy tensor operations.
 
-from typing import Any, List, Optional, Sequence, Tuple, Union, TYPE_CHECKING
+This module provides standard type aliases for tensor operations in the Ember ML framework.
+These type aliases ensure consistent type annotations across the codebase and
+help with static type checking.
+"""
 
+from typing import (
+    Any, List, Optional, Sequence, Tuple, Union,
+    TYPE_CHECKING
+)
+import os
+from types import ModuleType
+import numpy
 import numpy as np
 
 # Basic type aliases
 type Numeric = Union[int, float]
 
-# Type definitions for NumPy dtypes
+# Type definitions for MLX dtypes
 type DTypeStr = str
-type DTypeClass = Union[np.dtype, str, None]
+type DTypeClass = Union[numpy.dtype, str, None]
 
 # Type alias for dtype arguments that maintains compatibility
-# with both NumPy's dtype system and tensor.py's DType
+# with both MLX's dtype system and tensor.py's DType
 type DType = Any  # Using Any for maximum compatibility
 
-# NumPy array types
-type NumpyArray = np.ndarray
+# MLX array types
+type NumpyArray = numpy.ndarray
+
 type ArrayLike = Union[NumpyArray, Numeric, List[Any], Tuple[Any, ...]]
 
 type TensorTypes = Any
 # Conditional imports
 if TYPE_CHECKING:
-    import numpy as np
     from ember_ml.nn.tensor.common.ember_tensor import EmberTensor
     from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
-    
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+    from ember_ml.backend.torch.tensor.tensor import TorchTensor
+
     type TensorTypes = Union[
         np.ndarray,
+        NumpyArray,
         NumpyTensor,
-        EmberTensor
+        EmberTensor,
+        MLXTensor,
+        TorchTensor
     ]
 
 # Main type definitions
@@ -58,9 +74,40 @@ type ScalarLike = Optional[Union[
     TensorTypes
 ]]
 
+# OrdLike
+type OrdLike = Optional[Union[int, str]]
+
 # Device type
 type Device = Optional[str]
 
 # Index types
 type IndexType = Union[int, Sequence[int], NumpyArray]
 type Indices = Union[Sequence[int], NumpyArray]
+
+# File paths
+type PathLike = Union[str, os.PathLike[str]]
+
+__all__ = [
+    'Numeric',
+    'TensorLike',
+    'Shape',
+    'ShapeType',
+    'ShapeLike',
+    'ScalarLike',
+    'NumpyArray',
+    'ArrayLike',
+    'Device',
+    'DType',
+    'DTypeStr',
+    'DTypeClass',
+    'DimSize',
+    'Axis',
+    'IndexType',
+    'Indices',
+    'PathLike',
+    'T',
+    'SupportsDType',
+    'SupportsItem',
+    'SupportsAsType',
+    'SupportsToList'
+]

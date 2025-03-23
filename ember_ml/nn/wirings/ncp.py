@@ -61,7 +61,7 @@ class NCP(Wiring):
             Input mask of shape (input_dim, units)
         """
         # Create a tensor of zeros
-        mask = ops.zeros((self.input_dim, self.units))
+        mask = tensor.zeros((self.input_dim, self.units))
         
         # Determine the number of connections per input
         connections_per_input = maximum(
@@ -94,7 +94,7 @@ class NCP(Wiring):
             Recurrent mask of shape (units, units)
         """
         # Create a tensor of zeros
-        mask = ops.zeros((self.units, self.units))
+        mask = tensor.zeros((self.units, self.units))
         
         # Determine the number of connections per unit
         connections_per_unit = maximum(
@@ -127,7 +127,7 @@ class NCP(Wiring):
             Output mask of shape (units, output_dim)
         """
         # Create a tensor of zeros
-        mask = ops.zeros((self.units, self.output_dim))
+        mask = tensor.zeros((self.units, self.output_dim))
         
         # Determine the number of connections per output
         connections_per_output = maximum(

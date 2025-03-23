@@ -26,7 +26,7 @@ def generate_synthetic_data(num_samples=1000, num_features=10, seed=42):
     
     # Generate features with different frequencies
     t = ops.linspace(0, 4 * ops.pi, num_samples)
-    X = ops.zeros((num_samples, num_features))
+    X = tensor.zeros((num_samples, num_features))
     
     for i in range(num_features):
         freq = 0.5 + i * 0.2  # Different frequency for each feature

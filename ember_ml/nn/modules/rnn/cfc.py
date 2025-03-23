@@ -69,14 +69,14 @@ class CfCCell(Module):
     def _initialize_weights(self):
         """Initialize the weights for the cell."""
         # Input weights
-        self.kernel = Parameter(ops.zeros((self.units, self.units * 4)))
+        self.kernel = Parameter(tensor.zeros((self.units, self.units * 4)))
         
         # Recurrent weights
-        self.recurrent_kernel = Parameter(ops.zeros((self.units, self.units * 4)))
+        self.recurrent_kernel = Parameter(tensor.zeros((self.units, self.units * 4)))
         
         # Bias
         if self.use_bias:
-            self.bias = Parameter(ops.zeros((self.units * 4,)))
+            self.bias = Parameter(tensor.zeros((self.units * 4,)))
         
         # Time-scale parameter (learnable)
         self.time_scale = Parameter(ops.ones((self.units,)) * self.time_scale_factor)
@@ -89,7 +89,7 @@ class CfCCell(Module):
             self.recurrent_kernel.data = ops.orthogonal((self.units, self.units * 4))
         
         if self.use_bias and self.bias_initializer == "zeros":
-            self.bias.data = ops.zeros((self.units * 4,))
+            self.bias.data = tensor.zeros((self.units * 4,))
     
     def forward(self, inputs, states=None):
         """
@@ -104,8 +104,8 @@ class CfCCell(Module):
         """
         # Initialize states if not provided
         if states is None:
-            h_prev = ops.zeros((ops.shape(inputs)[0], self.units))
-            t_prev = ops.zeros((ops.shape(inputs)[0], self.units))
+            h_prev = tensor.zeros((ops.shape(inputs)[0], self.units))
+            t_prev = tensor.zeros((ops.shape(inputs)[0], self.units))
         else:
             h_prev, t_prev = states
         
@@ -162,8 +162,8 @@ class CfCCell(Module):
         Returns:
             Tuple of (hidden_state, time_state)
         """
-        h = ops.zeros((batch_size, self.units))
-        t = ops.zeros((batch_size, self.units))
+        h = tensor.zeros((batch_size, self.units))
+        t = tensor.zeros((batch_size, self.units))
         return [h, t]
 
 class WiredCfCCell(CfCCell):
@@ -229,14 +229,14 @@ class WiredCfCCell(CfCCell):
         self.output_mask = tensor.convert_to_tensor(self.output_mask, dtype=ops.float32)
         
         # Input weights
-        self.kernel = Parameter(ops.zeros((self.units, self.units * 4)))
+        self.kernel = Parameter(tensor.zeros((self.units, self.units * 4)))
         
         # Recurrent weights
-        self.recurrent_kernel = Parameter(ops.zeros((self.units, self.units * 4)))
+        self.recurrent_kernel = Parameter(tensor.zeros((self.units, self.units * 4)))
         
         # Bias
         if self.use_bias:
-            self.bias = Parameter(ops.zeros((self.units * 4,)))
+            self.bias = Parameter(tensor.zeros((self.units * 4,)))
         
         # Time-scale parameter (learnable)
         self.time_scale = Parameter(ops.ones((self.units,)) * self.time_scale_factor)
@@ -249,7 +249,7 @@ class WiredCfCCell(CfCCell):
             self.recurrent_kernel.data = ops.orthogonal((self.units, self.units * 4))
         
         if self.use_bias and self.bias_initializer == "zeros":
-            self.bias.data = ops.zeros((self.units * 4,))
+            self.bias.data = tensor.zeros((self.units * 4,))
         
         # Apply masks to weights
         self.kernel_mask = ops.repeat(self.input_mask, 4, axis=-1)
@@ -268,8 +268,8 @@ class WiredCfCCell(CfCCell):
         """
         # Initialize states if not provided
         if states is None:
-            h_prev = ops.zeros((ops.shape(inputs)[0], self.units))
-            t_prev = ops.zeros((ops.shape(inputs)[0], self.units))
+            h_prev = tensor.zeros((ops.shape(inputs)[0], self.units))
+            t_prev = tensor.zeros((ops.shape(inputs)[0], self.units))
         else:
             h_prev, t_prev = states
         

@@ -5,12 +5,10 @@ This module provides backend implementations,
 including PyTorch, NumPy, and MLX.
 """
 
-import os
-import sys
-import platform
 import importlib
+import os
+import platform
 from pathlib import Path
-from typing import Optional, Tuple, Any
 
 # Import tensor classes from all backends
 from ember_ml.backend.torch.tensor import TorchDType, TorchTensor
@@ -34,41 +32,36 @@ _CURRENT_BACKEND_MODULE = None
 
 def _get_backend_from_file():
     """Get the backend from the .ember/backend file."""
-    if EMBER_BACKEND_FILE.exists():
-        try:
-            return EMBER_BACKEND_FILE.read_text().strip()
-        except:
-            return None
-    return None
+    try:
+        return EMBER_BACKEND_FILE.read_text().strip()
+    except Exception:
+        return None
 
 def _save_backend_to_file(backend):
     """Save the backend to the .ember/backend file."""
-    # Create the .ember directory if it doesn't exist
-    if not EMBER_CONFIG_DIR.exists():
-        EMBER_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-    
-    # Write the backend to the file
+    EMBER_BACKEND_FILE.parent.mkdir(parents=True, exist_ok=True)
     EMBER_BACKEND_FILE.write_text(backend)
+
+def _reload_ops_module():
+    """Reload the ops module to ensure it uses the new backend."""
+    try:
+        ops_module = importlib.import_module('ember_ml.ops')
+        if hasattr(ops_module, '_CURRENT_INSTANCES'):
+            setattr(ops_module, '_CURRENT_INSTANCES', {})
+        importlib.reload(ops_module)
+    except Exception as e:
+        print(f"Warning: Error updating ops module after backend switch: {e}")
 
 def get_backend():
     """Get the current backend."""
     global _CURRENT_BACKEND
+    if _CURRENT_BACKEND is not None:
+        return _CURRENT_BACKEND
 
-    if _CURRENT_BACKEND is None:
-        # Try to get the backend from the .ember/backend file
-        backend = _get_backend_from_file()
-        
-        # If not set in file, try environment variable
-        if backend is None:
-            backend = os.environ.get('EMBER_ML_BACKEND')
-        
-        # If still not set, use auto-detection
-        if backend is None:
-            backend, _ = auto_select_backend()
-
-        # Set the backend
-        set_backend(backend)
-
+    backend = _get_backend_from_file() or os.environ.get('EMBER_ML_BACKEND')
+    if backend is None:
+        backend, _ = auto_select_backend()
+    set_backend(backend)
     return _CURRENT_BACKEND
 
 def set_backend(backend: str):
@@ -91,20 +84,7 @@ def set_backend(backend: str):
     # Clear the current backend module
     _CURRENT_BACKEND_MODULE = None
     
-    # Clear the ops module's cache and reload it
-    try:
-        import importlib
-        ops_module = importlib.import_module('ember_ml.ops')
-        
-        # Clear the _CURRENT_INSTANCES cache if it exists
-        if hasattr(ops_module, '_CURRENT_INSTANCES'):
-            # Use setattr to avoid the Pylance error
-            setattr(ops_module, '_CURRENT_INSTANCES', {})
-        
-        # Reload the ops module to ensure it uses the new backend
-        importlib.reload(ops_module)
-    except Exception as e:
-        print(f"Warning: Error updating ops module after backend switch: {e}")
+    _reload_ops_module()
 
 def get_backend_module():
     """Get the current backend module."""
@@ -216,28 +196,36 @@ def set_device(device):
 def auto_select_backend():
     """Automatically select the best backend based on the available hardware."""
     # Check for PyTorch with CUDA
-    try:
-        import torch
-        if torch.cuda.is_available():
-            return 'torch', 'cuda'
-    except ImportError:
-        pass
+    def _check_torch_cuda():
+        try:
+            import torch
+            return torch.cuda.is_available()
+        except ImportError:
+            return False
 
     # Check for PyTorch with MPS (Apple Silicon)
-    try:
-        import torch
-        if hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
-            return 'torch', 'mps'
-    except ImportError:
-        pass
+    def _check_torch_mps():
+        try:
+            import torch
+            return hasattr(torch.backends, 'mps') and torch.backends.mps.is_available()
+        except ImportError:
+            return False
 
     # Check for PyTorch
-    try:
-        import torch
-        return 'torch', 'cpu'
-    except ImportError:
-        pass
+    def _check_torch():
+        try:
+            import torch
+            return True
+        except ImportError:
+            return False
 
+    if _check_torch_cuda():
+        return 'torch', 'cuda'
+    if _check_torch_mps():
+        return 'torch', 'mps'
+    if _check_torch():
+        return 'torch', 'cpu'
+    
     # Check for MLX (Apple Silicon)
     if platform.system() == 'Darwin' and platform.machine() == 'arm64':
         try:
@@ -245,6 +233,4 @@ def auto_select_backend():
             return 'mlx', None
         except ImportError:
             pass
-    
-    # Fallback to NumPy
-    return 'numpy', None
+

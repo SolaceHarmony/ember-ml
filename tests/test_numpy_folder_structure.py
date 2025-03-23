@@ -27,7 +27,7 @@ class TestNumPyFolderStructure:
         """Test tensor creation operations."""
         # Test zeros
         shape = (3, 4)
-        x = ops.zeros(shape)
+        x = tensor.zeros(shape)
         assert ops.shape(x) == shape
         assert np.allclose(ops.to_numpy(x), np.zeros(shape))
 
@@ -71,7 +71,7 @@ class TestNumPyFolderStructure:
         shape1 = (2, 3)
         shape2 = (2, 3)
         x1 = ops.ones(shape1)
-        x2 = ops.zeros(shape2)
+        x2 = tensor.zeros(shape2)
         y = ops.concatenate([x1, x2], axis=0)
         assert ops.shape(y) == (4, 3)
         assert np.allclose(ops.to_numpy(y), np.concatenate([np.ones(shape1), np.zeros(shape2)], axis=0))
@@ -191,7 +191,7 @@ class TestNumPyFolderStructure:
         assert np.all(ops.to_numpy(z))
 
         # Test not_equal
-        y = ops.zeros((3, 4))
+        y = tensor.zeros((3, 4))
         z = ops.not_equal(x, y)
         assert ops.shape(z) == (3, 4)
         assert np.all(ops.to_numpy(z))

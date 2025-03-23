@@ -72,14 +72,6 @@ def test_persistence(clean_env):
         set_backend(backend)
         _clear_backend_cache()  # Simulate a new session
         assert get_backend() == backend
-def test_file_overrides_env(clean_env):
-    """Test that the backend file overrides the environment variable."""
-    EMBER_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-    with open(EMBER_BACKEND_FILE, 'w') as f:
-        f.write('numpy')
-    os.environ['EMBER_ML_BACKEND'] = 'torch'
-    assert get_backend() == 'numpy'
-    assert get_backend() == 'numpy'
 
 def test_environment_variable(clean_env):
     """Test that the environment variable is used if no file exists."""

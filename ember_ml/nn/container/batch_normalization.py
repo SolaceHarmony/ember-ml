@@ -61,8 +61,8 @@ class BatchNormalization(Module):
         # Initialize parameters if not already done
         if not self.initialized:
             self.gamma = Parameter(ops.ones((input_shape[-1],)))
-            self.beta = Parameter(ops.zeros((input_shape[-1],)))
-            self.moving_mean = ops.zeros((input_shape[-1],))
+            self.beta = Parameter(tensor.zeros((input_shape[-1],)))
+            self.moving_mean = tensor.zeros((input_shape[-1],))
             self.moving_var = ops.ones((input_shape[-1],))
             self.initialized = True
         

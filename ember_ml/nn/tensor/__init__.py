@@ -34,10 +34,6 @@ from ember_ml.nn.tensor.common import (  # noqa
     random_categorical, random_permutation, shuffle, set_seed, get_seed
 )
 
-# Import internal functions for backward compatibility
-# These are marked with underscore to indicate they are internal
-from ember_ml.nn.tensor.common import _convert_to_backend_tensor  # noqa
-
 # Define array function as an alias for EmberTensor constructor
 def array(data, dtype=None, device=None, requires_grad=False):
     """
@@ -95,9 +91,6 @@ __all__ = [
     # Tensor constructor
     'array',
     'convert_to_tensor',
-    
-    # Internal functions (for backward compatibility)
-    '_convert_to_backend_tensor',
     
     # Tensor operations
     'zeros', 'ones', 'eye', 'arange', 'linspace',

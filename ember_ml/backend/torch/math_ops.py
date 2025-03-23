@@ -5,12 +5,34 @@ This module provides PyTorch implementations of math operations.
 """
 
 import torch
-from typing import Union, Optional, Tuple
+from typing import Union, Optional, Tuple, Any
 
 # Import from tensor_ops
 from ember_ml.backend.torch.tensor import TorchTensor
+from ember_ml.backend.torch.types import TensorLike
 
 convert_to_tensor = TorchTensor().convert_to_tensor
+
+def gather(x: TensorLike, indices: TensorLike, axis: int = 0) -> torch.Tensor:
+    """
+    Gather slices from x along the specified axis according to indices.
+    
+    Args:
+        x: The input tensor from which to gather values
+        indices: The indices of the values to extract
+        axis: The axis along which to index (default: 0)
+        
+    Returns:
+        Tensor of gathered values with the same type as x
+    """
+    x_tensor = convert_to_tensor(x)
+    indices_tensor = convert_to_tensor(indices)
+    
+    # Ensure indices are long type as required by PyTorch
+    if indices_tensor.dtype != torch.int64:
+        indices_tensor = indices_tensor.to(torch.int64)
+    
+    return torch.index_select(x_tensor, dim=axis, index=indices_tensor)
 
 def add(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     """
@@ -417,7 +439,6 @@ def negative(x: torch.Tensor) -> torch.Tensor:
     x_tensor = convert_to_tensor(x)
     return torch.negative(x_tensor)
 
-
 def sign(x: torch.Tensor) -> torch.Tensor:
     """
     Compute the sign of a tensor.
@@ -430,6 +451,34 @@ def sign(x: torch.Tensor) -> torch.Tensor:
     """
     x_tensor = convert_to_tensor(x)
     return torch.sign(x_tensor)
+
+
+def argmax(x: TensorLike, axis: Optional[int] = None, keepdims: bool = False) -> torch.Tensor:
+    """
+    Return the indices of the maximum values along the specified axis.
+    
+    Args:
+        x: Input tensor
+        axis: Axis along which to find maximum values. If None, the argmax of
+            the flattened array is returned.
+        keepdims: If True, the reduced axes are kept as dimensions with size one.
+            
+    Returns:
+        Indices of the maximum values along the specified axis.
+    """
+    x_tensor = convert_to_tensor(x)
+    
+    if axis is None:
+        # If axis is None, argmax of flattened array
+        return torch.argmax(x_tensor.flatten())
+    
+    # Convert to dim for PyTorch
+    dim = axis
+    
+    # Get indices
+    indices = torch.argmax(x_tensor, dim=dim, keepdim=keepdims)
+    
+    return indices
 
 
 def sin(x: torch.Tensor) -> torch.Tensor:
@@ -930,6 +979,10 @@ class TorchMathOps:
     # Reference the module-level pi
     pi = pi
     
+    def gather(self, x, indices, axis=0):
+        """Gather slices from tensor according to indices."""
+        return gather(x, indices, axis)
+    
     def add(self, x, y):
         """Add two tensors element-wise."""
         return add(x, y)
@@ -1005,10 +1058,13 @@ class TorchMathOps:
     def negative(self, x):
         """Compute the negative of a tensor element-wise."""
         return negative(x)
-    
     def sign(self, x):
         """Compute the sign of a tensor."""
         return sign(x)
+    
+    def argmax(self, x, axis=None, keepdims=False):
+        """Return the indices of the maximum values along the specified axis."""
+        return argmax(x, axis=axis, keepdims=keepdims)
     
     def sin(self, x):
         """Compute the sine of a tensor."""

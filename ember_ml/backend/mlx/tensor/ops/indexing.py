@@ -1,30 +1,87 @@
 """MLX tensor indexing operations."""
 
-from typing import Any, List, Literal, Optional, Sequence, Union, cast, Protocol, TypeVar, runtime_checkable
-
 import mlx.core as mx
-import numpy as np
 
+from typing import Union, Optional, Literal, TYPE_CHECKING
+from builtins import slice as py_slice
 from ember_ml.backend.mlx.types import (
-    TensorLike, Shape
+    TensorLike, Shape, ShapeLike
 )
 
 def slice_tensor(tensor: TensorLike, starts: Shape, sizes: Shape) -> mx.array:
-    """Extract a slice from a tensor."""
+    """
+    Extract a slice from a tensor.
+    
+    Args:
+        data: Input tensor
+        starts: Starting indices for each dimension
+        sizes: Size of the slice in each dimension. A value of -1 means "all remaining elements in this dimension"
+        
+    Returns:
+        Sliced tensor
+    """
+    
     # Convert input to MLX array
     from ember_ml.backend.mlx.tensor.tensor import MLXTensor
     Tensor = MLXTensor()
     tensor_array = Tensor.convert_to_tensor(tensor)
     
-    # Create axes as a list of integers
-    axes = list(range(len(starts)))
+    # Create a list of slice objects for each dimension
+    slice_objects = []
+    for i, (start, size) in enumerate(zip(starts, sizes)):
+        # Convert to tensor to avoid precision-reducing casts
+        start_tensor = mx.array(start, dtype=mx.int64)
+        if size == -1:
+            # -1 means "all remaining elements in this dimension"
+            # Use Python's built-in slice function, not our slice_tensor function
+            slice_obj = py_slice(start_tensor.item(), None)
+            slice_objects.append(slice_obj)
+        else:
+            # Convert size to tensor to avoid precision-reducing casts
+            size_tensor = mx.array(size, dtype=mx.int64)
+            end_tensor = mx.add(start_tensor, size_tensor)
+            # Use Python's built-in slice function, not our slice_tensor function
+            slice_obj = py_slice(start_tensor.item(), end_tensor.item())
+            slice_objects.append(slice_obj)
     
-    # Use MLX's slice function with proper types
-    return mx.slice(tensor_array, mx.array(starts), axes, sizes)
+    # Extract the slice
+    return tensor_array[tuple(slice_objects)]
+
+# Alias for slice_tensor to match MLX naming
+slice = slice_tensor
+
+def slice_update(data: TensorLike, slices: ShapeLike, updates: TensorLike) -> mx.array:
+    """
+    Update a tensor at specific indices.
+    
+    Args:
+        data: Input tensor to update
+        slices: List or tuple of slice objects or indices
+        updates: Values to insert at the specified indices
+        
+    Returns:
+        Updated tensor
+    """
+    # Convert inputs to MLX arrays
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    tensor_ops = MLXTensor()
+    data_tensor = tensor_ops.convert_to_tensor(data)
+    updates_tensor = tensor_ops.convert_to_tensor(updates)
+ 
+    return mx.slice_update(data_tensor, updates_tensor, slices)
 
 def gather(tensor: TensorLike, indices: TensorLike, axis: int = 0) -> mx.array:
-    """Gather slices from a tensor along an axis."""
-    # Convert inputs to MLX arrays
+    """
+    Gather slices from a tensor along an axis.
+    
+    Args:
+        data: Input tensor
+        indices: Indices of slices to gather
+        axis: Axis along which to gather
+        
+    Returns:
+        Gathered tensor
+    """
     from ember_ml.backend.mlx.tensor.tensor import MLXTensor
     Tensor = MLXTensor()
     tensor_array = Tensor.convert_to_tensor(tensor)
@@ -32,7 +89,7 @@ def gather(tensor: TensorLike, indices: TensorLike, axis: int = 0) -> mx.array:
     
     # Ensure indices are integers
     indices_int = indices_array.astype(mx.int32)
-    
+
     # Use take operation for gathering
     return mx.take(tensor_array, indices_int, axis=axis)
 
@@ -69,6 +126,7 @@ def slice_update(tensor: TensorLike, slices: TensorLike, updates: Optional[Tenso
     tensor_array = Tensor.convert_to_tensor(tensor)
     
     # Handle the case where slices is an integer (single index)
+    import numpy as np
     if isinstance(slices, (int, np.integer)):
         # Convert to a list with a single element
         indices_list = [int(slices)]

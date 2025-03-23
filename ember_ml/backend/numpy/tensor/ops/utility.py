@@ -37,29 +37,31 @@ def _convert_input(x: TensorLike) -> Any:
     # Already a NumPy array
     if isinstance(x, np.ndarray):
         return x
+
+    # Handle NumpyTensor objects - return underlying tensor
+    if (hasattr(x, '__class__') and
+        hasattr(x.__class__, '__name__') and
+        x.__class__.__name__ == 'NumpyTensor'):
+        return x._tensor
         
-    # Handle EmberTensor objects
+    # Handle EmberTensor objects - return underlying tensor
     if (hasattr(x, '__class__') and
         hasattr(x.__class__, '__name__') and
         x.__class__.__name__ == 'EmberTensor'):
-        from ember_ml.nn.tensor.common.ember_tensor import EmberTensor
-        if isinstance(x, EmberTensor):
-            # Extract the underlying tensor data
-            if hasattr(x, '_tensor') and isinstance(x._tensor, np.ndarray):
-                return np.array(x._tensor)
-            else:
-                ValueError(f"EmberTensor does not have a '_tensor' attribute: {x}")
+        if hasattr(x, '_tensor'):
+          return x._tensor
         else:
-            raise ValueError(f"Unknown type: {type(x)}")
-    
+            raise ValueError(f"EmberTensor does not have a '_tensor' attribute: {x}")
+
+
     # Handle Python scalars (0D tensors)
     if isinstance(x, (int, float, bool)):
         try:
             return np.array(x)
         except Exception as e:
             raise ValueError(f"Cannot convert scalar {type(x)} to NumPy array: {e}")
-    
-    # Handle Python sequences (potential 1D or higher tensors)
+
+    # Handle Python sequences (potential 1D or higher tensors) recursively
     if isinstance(x, (list, tuple)):
         try:
             # Check if it's a nested sequence (2D or higher)
@@ -70,16 +72,16 @@ def _convert_input(x: TensorLike) -> Any:
                     # Jagged array - warn but proceed
                     import warnings
                     warnings.warn(f"Converting jagged array with inconsistent shapes: {shapes}")
-            return np.array(x)
+            return np.array([_convert_input(item) for item in x])
         except Exception as e:
             raise ValueError(f"Cannot convert sequence {type(x)} to NumPy array: {e}")
-    
+
     # Handle NumPy scalar types
     if np.isscalar(x):
         return np.array(x)
-        
+
     # For any other type, reject it
-    raise ValueError(f"Cannot convert {type(x)} to NumPy array. Only int, float, bool, list, tuple, numpy scalar types, and numpy.ndarray are supported.")
+    raise ValueError(f"Cannot convert {type(x)} to NumPy array. Only int, float, bool, list, tuple, numpy scalar types, numpy.ndarray, and NumpyTensor are supported.")
 
 
 

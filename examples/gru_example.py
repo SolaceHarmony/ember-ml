@@ -18,8 +18,8 @@ def generate_sine_wave_data(num_samples=1000, seq_length=100, num_features=1):
     t = ops.linspace(0, 2 * ops.pi, seq_length)
     
     # Generate sine waves with random phase shifts
-    X = ops.zeros((num_samples, seq_length, num_features))
-    y = ops.zeros((num_samples, seq_length, num_features))
+    X = tensor.zeros((num_samples, seq_length, num_features))
+    y = tensor.zeros((num_samples, seq_length, num_features))
     
     for i in range(num_samples):
         # Random phase shift
@@ -38,7 +38,7 @@ def generate_sine_wave_data(num_samples=1000, seq_length=100, num_features=1):
             ops.stack([
                 ops.ones((seq_length,), dtype=ops.int32) * i,
                 ops.arange(seq_length),
-                ops.zeros((seq_length,), dtype=ops.int32)
+                tensor.zeros((seq_length,), dtype=ops.int32)
             ], axis=1),
             noisy_signal
         )
@@ -48,7 +48,7 @@ def generate_sine_wave_data(num_samples=1000, seq_length=100, num_features=1):
             ops.stack([
                 ops.ones((seq_length,), dtype=ops.int32) * i,
                 ops.arange(seq_length),
-                ops.zeros((seq_length,), dtype=ops.int32)
+                tensor.zeros((seq_length,), dtype=ops.int32)
             ], axis=1),
             signal
         )

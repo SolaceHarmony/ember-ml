@@ -55,7 +55,7 @@ class TensorOps(TensorOpsInterface):
         if dtype is None:
             dtype = ops.float32
         
-        one_hot_tensor = ops.zeros(shape, dtype=dtype)
+        one_hot_tensor = tensor.zeros(shape, dtype=dtype)
         
         # Create indices for scatter
         ndims = len(shape)

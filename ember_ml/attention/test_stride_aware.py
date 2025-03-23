@@ -7,6 +7,7 @@ for multi-timescale processing.
 
 import numpy as np
 from ember_ml import ops
+from ember_ml.nn import tensor
 from ember_ml.nn.modules.rnn import StrideAwareCell, StrideAware
 
 def test_stride_aware_cell():
@@ -26,7 +27,7 @@ def test_stride_aware_cell():
     inputs = ops.random_normal((batch_size, 10))
     
     # Initialize state
-    state = ops.zeros((batch_size, 20))
+    state = tensor.zeros((batch_size, 20))
     
     # Forward pass
     output, new_state = cell(inputs, state)

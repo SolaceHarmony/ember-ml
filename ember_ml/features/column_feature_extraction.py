@@ -8,9 +8,9 @@ import pandas as pd
 from typing import Dict, List, Optional, Tuple, Any, Union
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.impute import SimpleImputer
-from sklearn.decomposition import PCA
 from sklearn.pipeline import Pipeline
-from ember_ml.features import PCA, one_hot
+from ember_ml.features.common.pca_features import PCA
+from ember_ml.features import one_hot
 # Import ember_ml ops for backend-agnostic operations
 from ember_ml import ops
 from ember_ml.nn import tensor
@@ -356,7 +356,7 @@ class ColumnFeatureExtractor:
             # Time since epoch - use ops.cast instead of direct int64 cast
             timestamp_tensor = tensor.convert_to_tensor(df[column].astype('int64').to_numpy())
             divisor = tensor.convert_to_tensor(10**9)
-            result[f"{column}_timestamp"] = ops.cast(ops.floor_divide(timestamp_tensor, divisor), dtype=ops.int32)
+            result[f"{column}_timestamp"] = tensor.cast(ops.floor_divide(timestamp_tensor, divisor), dtype=tensor.int32)
         
         return pd.DataFrame(result, index=df.index)
     
@@ -572,22 +572,35 @@ class ColumnPCAFeatureExtractor(ColumnFeatureExtractor):
         
         # Calculate appropriate number of components
         if self.pca_components is None:
-            n_components = ops.cast(
+            n_components = tensor.cast(
                 ops.floor_divide(
                     tensor.convert_to_tensor(X.shape[1]),
                     tensor.convert_to_tensor(2)
                 ),
-                dtype=ops.int32
+                dtype=tensor.int32
             )
-            n_components = ops.minimum(n_components, tensor.convert_to_tensor(10))
-            n_components = ops.minimum(n_components, ops.subtract(tensor.convert_to_tensor(X.shape[0]), tensor.convert_to_tensor(1)))
-            n_components = int(n_components.numpy())  # Convert tensor to Python int
+            # Use tensor.minimum or construct minimum manually
+            # First approach: create a tensor array with both values and use ops.min
+            candidates1 = tensor.stack([n_components, tensor.convert_to_tensor(10)])
+            n_components = ops.min(candidates1, axis=0)
+            
+            # For the second calculation
+            one_tensor = tensor.convert_to_tensor(1)
+            samples_minus_one = ops.subtract(tensor.convert_to_tensor(X.shape[0]), one_tensor)
+            candidates2 = tensor.stack([n_components, samples_minus_one])
+            n_components = ops.min(candidates2, axis=0)
+            # Convert to tensor.int32 type first, then to Python scalar
+            n_components = tensor.cast(n_components, tensor.int32)
+            n_components = tensor.to_numpy(n_components).item()
         else:
             n_components = min(self.pca_components, X.shape[1], X.shape[0] - 1)
             
         # Fit PCA
-        pca = PCA(n_components=n_components)
-        pca.fit(X)
+        # Convert pandas DataFrame to NumPy array first, then to tensor before passing to PCA
+        X_numpy = X.to_numpy()
+        X_tensor = tensor.convert_to_tensor(X_numpy)
+        pca = PCA()
+        pca.fit(X_tensor, n_components=n_components)
         
         self.pca_models[group_type] = pca
     
@@ -603,9 +616,19 @@ class ColumnPCAFeatureExtractor(ColumnFeatureExtractor):
         Returns:
             DataFrame with PCA-transformed features
         """
-        transformed = pca_model.transform(df)
-        columns = [f"pca_{group_type}_{i+1}" for i in range(transformed.shape[1])]
-        return pd.DataFrame(transformed, index=df.index, columns=columns)
+        # Convert pandas DataFrame to NumPy array first, then to tensor
+        df_numpy = df.to_numpy()
+        df_tensor = tensor.convert_to_tensor(df_numpy)
+        transformed = pca_model.transform(df_tensor)
+        
+        # Use tensor functions to work with the transformed data
+        shape = tensor.shape(transformed)
+        n_components = shape[1]
+        
+        # Convert to numpy array using tensor.to_numpy for backend compatibility
+        transformed_np = tensor.to_numpy(transformed)
+        columns = [f"pca_{group_type}_{i+1}" for i in range(n_components)]
+        return pd.DataFrame(transformed_np, index=df.index, columns=columns)
 
 
 class TemporalColumnFeatureExtractor(ColumnFeatureExtractor):
@@ -646,7 +669,7 @@ class TemporalColumnFeatureExtractor(ColumnFeatureExtractor):
         
         self.window_size = window_size
         self.stride = stride
-        self.temporal_processors = {}
+        self.temporal_processors: Dict[str, Any] = {}
     
     def fit(self, df: pd.DataFrame, target_column: Optional[str] = None, 
             time_column: Optional[str] = None) -> 'TemporalColumnFeatureExtractor':
@@ -772,7 +795,7 @@ class TemporalColumnFeatureExtractor(ColumnFeatureExtractor):
         
         # Calculate standard deviation manually: std = sqrt(mean((x - mean(x))^2))
         # Expand means to match windows_array shape for broadcasting
-        expanded_means = ops.expand_dims(means, axis=1)
+        expanded_means = tensor.expand_dims(means, axis=1)
         # Calculate squared differences
         squared_diffs = ops.square(ops.subtract(windows_array, expanded_means))
         # Calculate variance
@@ -785,7 +808,7 @@ class TemporalColumnFeatureExtractor(ColumnFeatureExtractor):
         
         # Trend features - use ops for polyfit-like functionality
         # Create x values (0, 1, 2, ..., window_size-1)
-        x_values = ops.arange(0, window_size, dtype=ops.float32)
+        x_values = tensor.arange(0, window_size, dtype=tensor.float32)
         
         # Calculate slope for each window
         slopes = []
@@ -807,7 +830,7 @@ class TemporalColumnFeatureExtractor(ColumnFeatureExtractor):
             slope = ops.divide(numerator, denominator)
             slopes.append(slope)
         
-        result[f"{column}_window_slope"] = ops.stack(slopes)
+        result[f"{column}_window_slope"] = tensor.stack(slopes)
         
         # Create index for the result
         index = series.index[window_size-1::stride]

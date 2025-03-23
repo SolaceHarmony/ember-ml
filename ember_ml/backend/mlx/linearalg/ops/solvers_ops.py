@@ -15,8 +15,7 @@ from ember_ml.backend.mlx.tensor import MLXDType
 
 dtype_obj = MLXDType()
 
-def solve(a: TensorLike, 
-          b: TensorLike) -> mx.array:
+def solve(a: TensorLike, b: TensorLike) -> mx.array:
     """
     Solve a linear system of equations Ax = b for x using MLX backend.
     

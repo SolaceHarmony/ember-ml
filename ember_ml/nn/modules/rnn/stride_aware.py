@@ -11,6 +11,7 @@ import numpy as np
 from ember_ml import ops
 from ember_ml.nn.modules import Module
 from ember_ml.nn.modules.rnn.stride_aware_cell import StrideAwareCell
+from ember_ml.nn import tensor
 
 class StrideAware(Module):
     """
@@ -94,7 +95,7 @@ class StrideAware(Module):
         
         # Initialize state if not provided
         if initial_state is None:
-            state = ops.zeros((batch_size, self.hidden_size))
+            state = tensor.zeros((batch_size, self.hidden_size))
         else:
             state = initial_state
             
@@ -151,4 +152,4 @@ class StrideAware(Module):
         Returns:
             Initial state
         """
-        return ops.zeros((batch_size, self.hidden_size))
+        return tensor.zeros((batch_size, self.hidden_size))

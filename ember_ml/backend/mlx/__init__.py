@@ -38,10 +38,6 @@ __all__ = [
     'memory_info', 'synchronize', 'set_default_device', 'get_default_device',
     'is_available',
     
-    # Linear Algebra operations
-    'solve', 'inv', 'svd', 'eig', 'eigvals', 'det', 'norm', 'qr',
-    'cholesky', 'lstsq',
-    
     # I/O operations
     'save', 'load'
 ]
@@ -103,7 +99,6 @@ from ember_ml.backend.mlx.math_ops import (
     eigh
 )
 
-# Random operations are now methods of the MLXTensor class
 
 # Import specific functions from comparison_ops
 from ember_ml.backend.mlx.comparison_ops import (
@@ -144,4 +139,3 @@ from ember_ml.backend.mlx.io_ops import (
 # Set power function
 power = pow
 
-# No need to add to __all__ as it's already included in the list

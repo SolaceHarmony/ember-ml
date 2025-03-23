@@ -580,7 +580,7 @@ class MultiStrideLiquidNetworkModule(BaseLiquidNetworkModule):
                     cell_outputs.append(states[stride][0])
                 else:
                     # Initialize with zeros if no previous output
-                    cell_outputs.append(ops.zeros((ops.shape(x_t)[0], self.units_per_stride)))
+                    cell_outputs.append(tensor.zeros((ops.shape(x_t)[0], self.units_per_stride)))
             
             # Concatenate cell outputs
             combined_output = ops.concatenate(cell_outputs, axis=-1)

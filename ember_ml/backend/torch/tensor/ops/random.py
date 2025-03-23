@@ -5,7 +5,7 @@ from typing import Union, Optional, Sequence, Any, List, Tuple
 from torch import Size
 
 from ember_ml.backend.torch.tensor.dtype import TorchDType
-from ember_ml.backend.torch.tensor.ops.utility import convert_to_tensor
+
 
 # Type aliases
 Shape = Sequence[int]
@@ -279,7 +279,9 @@ def random_categorical(data: TensorLike, num_samples: int,
         torch_dtype = TorchDType().from_dtype_str(dtype)
     
     # Convert to PyTorch tensor if needed
-    logits_tensor = convert_to_tensor(data)
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    logits_tensor = tensor_ops.convert_to_tensor(data)
     
     if device is None:
         from ember_ml.backend.torch.config import DEFAULT_DEVICE
@@ -333,7 +335,9 @@ def random_permutation(data: Union[int, TensorLike],
         return perm
     else:
         # If data is a tensor, permute along the first axis
-        tensor = convert_to_tensor(data)
+        from ember_ml.backend.torch.tensor import TorchTensor
+        tensor_ops = TorchTensor()
+        tensor = tensor_ops.convert_to_tensor(data)
         
         # Get the shape of the tensor
         shape = tensor.shape
@@ -358,7 +362,9 @@ def shuffle(data: TensorLike) -> torch.Tensor:
     Returns:
         Shuffled tensor
     """
-    tensor = convert_to_tensor(data)
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    tensor = tensor_ops.convert_to_tensor(data)
     
     # Get the shape of the tensor
     shape = tensor.shape

@@ -17,14 +17,9 @@ def _convert_input(x: TensorLike) -> Any:
     - MLX arrays (returned as-is)
     - NumPy arrays (converted to MLX arrays)
     - MLXTensor objects (extract underlying data)
+    - EmberTensor objects (extract underlying data)
     - Python scalars (int, float, bool)
     - Python sequences (list, tuple)
-    
-    Special handling for:
-    - 0D tensors (scalars)
-    - 1D tensors (vectors)
-    - 2D tensors (matrices)
-    - Higher dimensional tensors
     
     Args:
         x: Input data to convert
@@ -36,69 +31,43 @@ def _convert_input(x: TensorLike) -> Any:
         ValueError: If the input cannot be converted to an MLX array
     """
     # Already an MLX array - check by type and module
-    # Use the correct module reference: mlx.core
-    if (isinstance(x, mx.array) or 
-        (hasattr(x, '__class__') and
-         hasattr(x.__class__, '__module__') and
-         x.__class__.__module__ == 'mlx.core' and
-         x.__class__.__name__ == 'array')):
+    if (hasattr(x, '__class__') and
+        hasattr(x.__class__, '__module__') and
+        x.__class__.__module__ == 'mlx.core' and
+        x.__class__.__name__ == 'array'):
         return x
         
     # Handle MLXTensor objects
-    if (hasattr(x, '__class__') and 
-        hasattr(x.__class__, '__name__') and 
+    if (hasattr(x, '__class__') and
+        hasattr(x.__class__, '__name__') and
         x.__class__.__name__ == 'MLXTensor'):
-        return mx.array(x)
+        return x._tensor
 
     # Handle EmberTensor objects
-    if (hasattr(x, '__class__') and 
-        hasattr(x.__class__, '__name__') and 
+    if (hasattr(x, '__class__') and
+        hasattr(x.__class__, '__name__') and
         x.__class__.__name__ == 'EmberTensor'):
-        from ember_ml.nn.tensor.common.ember_tensor import EmberTensor
-        if isinstance(x, EmberTensor):
-            # Extract the underlying tensor data
-            # Assuming EmberTensor has an attribute `_tensor` that holds the actual tensor
-            if hasattr(x, '_tensor') and isinstance(x._tensor, mx.array):
-                return mx.array(x._tensor)
-            else:
-                ValueError(f"EmberTensor does not have a '_tensor' attribute: {x}")
+        if hasattr(x, '_tensor'):
+          return x._tensor
         else:
-            raise ValueError(f"Unknown type: {type(x)}")
-    
+          raise ValueError(f"EmberTensor does not have a '_tensor' attribute: {x}")
+
     # Check for NumPy arrays by type name rather than direct import
-    # NumPy is allowed as an input tensor because many frameworks use NumPy
-    if (hasattr(x, '__class__') and 
-        x.__class__.__module__ == 'numpy' and 
+    if (hasattr(x, '__class__') and
+        x.__class__.__module__ == 'numpy' and
         x.__class__.__name__ == 'ndarray'):
         return mx.array(x)
         
     # Handle Python scalars (0D tensors)
     if isinstance(x, (int, float, bool)):
-        try:
-            return mx.array(x)
-        except Exception as e:
-            raise ValueError(f"Cannot convert scalar {type(x)} to MLX array: {e}")
+        return mx.array(x)
     
-    # Handle Python sequences (potential 1D or higher tensors)
+    # Handle Python sequences (potential 1D or higher tensors) recursively
     if isinstance(x, (list, tuple)):
-        try:
-            # Check if it's a nested sequence (2D or higher)
-            if x and isinstance(x[0], (list, tuple)):
-                # Handle potential jagged arrays by ensuring consistent dimensions
-                shapes = [len(item) for item in x if isinstance(item, (list, tuple))]
-                if len(set(shapes)) > 1:
-                    # Jagged array - warn but proceed
-                    import warnings
-                    warnings.warn(f"Converting jagged array with inconsistent shapes: {shapes}")
-            return mx.array(x)
-        except Exception as e:
-            raise ValueError(f"Cannot convert sequence {type(x)} to MLX array: {e}")
-    
+        return mx.array([_convert_input(item) for item in x])
+
     # For any other type, reject it
-    raise ValueError(f"Cannot convert {type(x)} to MLX array. Only int, float, bool, list, tuple, numpy.ndarray, and mlx.core.array are supported.")
-
-
-
+    raise ValueError(f"Cannot convert {type(x)} to MLX array. Only int, float, bool, list, tuple, numpy.ndarray, MLXTensor, and EmberTensor are supported.")
 def convert_to_mlx_tensor(data: TensorLike, dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
     """
     Convert input to MLX array.

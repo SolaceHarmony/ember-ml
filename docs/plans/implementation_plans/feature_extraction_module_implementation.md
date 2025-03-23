@@ -492,7 +492,7 @@ class TemporalStrideProcessorModule(BaseFeatureExtractorModule):
                     dtype=ops.float32
                 )
             else:
-                result[stride] = ops.zeros((0, self.pca_components), dtype=ops.float32)
+                result[stride] = tensor.zeros((0, self.pca_components), dtype=ops.float32)
         
         return result
 ```

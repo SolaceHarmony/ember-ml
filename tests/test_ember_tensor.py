@@ -9,7 +9,7 @@ import pytest
 
 from ember_ml import ops
 from ember_ml.nn.tensor import (
-    EmberTensor, float32, array, convert_to_tensor,
+    EmberTensor, EmberDType, float32, array, convert_to_tensor,
     zeros, ones, eye, arange, linspace, full
 )
 
@@ -43,8 +43,7 @@ class TestEmberTensor:
         tensor_obj = EmberTensor([0])  # Create a temporary tensor object
         tensor = tensor_obj.ones((2, 3), dtype=float32)
         # Use string comparison for backend purity
-        assert str(tensor.dtype) == 'float32'
-    
+        assert str(tensor.dtype).split('.')[-1] == 'float32'    
     def test_numpy_conversion(self):
         """Test converting an EmberTensor to a NumPy array."""
         # Create a tensor from a list

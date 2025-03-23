@@ -10,7 +10,7 @@ from typing import Optional, List, Dict, Any, Union, Tuple
 
 from ember_ml import ops
 from ember_ml.nn.modules import Module, Parameter
-
+from ember_ml.nn import tensor
 class GRUCell(Module):
     """
     Gated Recurrent Unit (GRU) cell.
@@ -49,23 +49,23 @@ class GRUCell(Module):
     def _initialize_weights(self):
         """Initialize the weights for the cell."""
         # Input weights
-        self.input_kernel = Parameter(ops.zeros((self.input_size, self.hidden_size * 3)))
+        self.input_kernel = Parameter(tensor.zeros((self.input_size, self.hidden_size * 3)))
         
         # Recurrent weights
-        self.recurrent_kernel = Parameter(ops.zeros((self.hidden_size, self.hidden_size * 3)))
+        self.recurrent_kernel = Parameter(tensor.zeros((self.hidden_size, self.hidden_size * 3)))
         
         # Bias
         if self.use_bias:
-            self.bias = Parameter(ops.zeros((self.hidden_size * 3,)))
-            self.recurrent_bias = Parameter(ops.zeros((self.hidden_size * 3,)))
+            self.bias = Parameter(tensor.zeros((self.hidden_size * 3,)))
+            self.recurrent_bias = Parameter(tensor.zeros((self.hidden_size * 3,)))
         
         # Initialize weights
         self.input_kernel.data = ops.glorot_uniform((self.input_size, self.hidden_size * 3))
         self.recurrent_kernel.data = ops.orthogonal((self.hidden_size, self.hidden_size * 3))
         
         if self.use_bias:
-            self.bias.data = ops.zeros((self.hidden_size * 3,))
-            self.recurrent_bias.data = ops.zeros((self.hidden_size * 3,))
+            self.bias.data = tensor.zeros((self.hidden_size * 3,))
+            self.recurrent_bias.data = tensor.zeros((self.hidden_size * 3,))
     
     def forward(self, inputs, states=None):
         """
@@ -80,7 +80,7 @@ class GRUCell(Module):
         """
         # Initialize states if not provided
         if states is None:
-            h_prev = ops.zeros((ops.shape(inputs)[0], self.hidden_size))
+            h_prev = tensor.zeros((ops.shape(inputs)[0], self.hidden_size))
         else:
             h_prev = states[0]
         
@@ -129,5 +129,5 @@ class GRUCell(Module):
         Returns:
             Initial state
         """
-        h = ops.zeros((batch_size, self.hidden_size))
+        h = tensor.zeros((batch_size, self.hidden_size))
         return [h]

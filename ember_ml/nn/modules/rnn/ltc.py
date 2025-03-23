@@ -13,6 +13,7 @@ from ember_ml.initializers.glorot import glorot_uniform, orthogonal
 from ember_ml.nn.modules import Module
 from ember_ml.nn.wirings import Wiring, FullyConnectedWiring as FullyConnected
 from ember_ml.nn.modules.rnn.ltc_cell import LTCCell
+from ember_ml.nn import tensor
 
 class LTC(Module):
     """
@@ -94,7 +95,7 @@ class LTC(Module):
                 # Input gate
                 self.input_kernel = glorot_uniform((input_size, state_size))
                 self.input_recurrent_kernel = orthogonal((state_size, state_size))
-                self.input_bias = ops.zeros((state_size,))
+                self.input_bias = tensor.zeros((state_size,))
                 
                 # Forget gate
                 self.forget_kernel = glorot_uniform((input_size, state_size))
@@ -104,12 +105,12 @@ class LTC(Module):
                 # Cell gate
                 self.cell_kernel = glorot_uniform((input_size, state_size))
                 self.cell_recurrent_kernel = orthogonal((state_size, state_size))
-                self.cell_bias = ops.zeros((state_size,))
+                self.cell_bias = tensor.zeros((state_size,))
                 
                 # Output gate
                 self.output_kernel = glorot_uniform((input_size, state_size))
                 self.output_recurrent_kernel = orthogonal((state_size, state_size))
-                self.output_bias = ops.zeros((state_size,))
+                self.output_bias = tensor.zeros((state_size,))
             
             def forward(self, inputs, states):
                 h_prev, c_prev = states
@@ -208,8 +209,8 @@ class LTC(Module):
         
         # Initialize states if not provided
         if initial_state is None:
-            h_state = ops.zeros((batch_size, self.state_size))
-            c_state = ops.zeros((batch_size, self.state_size)) if self.mixed_memory else None
+            h_state = tensor.zeros((batch_size, self.state_size))
+            c_state = tensor.zeros((batch_size, self.state_size)) if self.mixed_memory else None
         else:
             if self.mixed_memory and not isinstance(initial_state, (list, tuple)):
                 raise ValueError(
@@ -284,9 +285,9 @@ class LTC(Module):
         Returns:
             Initial state
         """
-        h_state = ops.zeros((batch_size, self.state_size))
+        h_state = tensor.zeros((batch_size, self.state_size))
         if self.mixed_memory:
-            c_state = ops.zeros((batch_size, self.state_size))
+            c_state = tensor.zeros((batch_size, self.state_size))
             return (h_state, c_state)
         else:
             return h_state

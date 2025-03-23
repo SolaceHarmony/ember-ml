@@ -73,8 +73,8 @@ class RBMModule(Module):
         
         # Initialize weights and biases as Parameters
         self.weights = Parameter(ops.random_normal((n_visible, n_hidden), scale=0.01))
-        self.visible_bias = Parameter(ops.zeros(n_visible))
-        self.hidden_bias = Parameter(ops.zeros(n_hidden))
+        self.visible_bias = Parameter(tensor.zeros(n_visible))
+        self.hidden_bias = Parameter(tensor.zeros(n_hidden))
         
     def forward(self, visible_states, **kwargs):
         # Forward pass (transform)

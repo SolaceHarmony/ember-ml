@@ -53,7 +53,7 @@ class TensorFeatures(TensorFeaturesInterface):
         if dtype is None:
             dtype = ops.float32
         
-        one_hot_tensor = ops.zeros(shape, dtype=dtype)
+        one_hot_tensor = tensor.zeros(shape, dtype=dtype)
         
         # Create a tensor of ones for updates
         updates = ops.ones([1], dtype=dtype)

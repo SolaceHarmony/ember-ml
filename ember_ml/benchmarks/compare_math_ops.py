@@ -15,6 +15,7 @@ import os
 
 from ember_ml.backend import set_backend, get_backend
 from ember_ml import ops
+from ember_ml.nn import tensor
 from ember_ml.utils import backend_utils
 
 # Shape for testing
@@ -117,7 +118,7 @@ def run_benchmarks_for_backend(backend_name: str) -> Dict:
     pow_time, pow_result = benchmark_function(ops.pow, NUM_RUNS, x, y)
     
     print(f"Benchmarking abs operation with {backend_name} backend...")
-    neg_x = ops.subtract(ops.zeros_like(x), x)  # Create negative values
+    neg_x = ops.subtract(tensor.zeros_like(x), x)  # Create negative values
     abs_time, abs_result = benchmark_function(ops.abs, NUM_RUNS, neg_x)
     
     # Reduction operations

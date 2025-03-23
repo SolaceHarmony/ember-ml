@@ -7,119 +7,126 @@ help with static type checking.
 """
 
 from typing import (
-    Any, List, Optional, Sequence, Tuple, Union,
+    Any, List, Optional, Sequence, Tuple, Union, Literal,
     TYPE_CHECKING
 )
 import os
-from types import ModuleType
+
 import torch
 
-# Basic type aliases
-type Numeric = Union[int, float]
+default_int = torch.int32
+default_float = torch.float32
+default_bool = torch.bool
 
-# Type definitions for PyTorch dtypes
-type DTypeStr = str
-type DTypeClass = Union[torch.dtype, str, None]
-
-# Type alias for dtype arguments that maintains compatibility
-# with both PyTorch's dtype system and tensor.py's DType
-type DType = Any  # Using Any for maximum compatibility
-
-# PyTorch tensor types
-type TorchTensor = torch.Tensor
-type ArrayLike = Union[torch.Tensor, Numeric, List[Any], Tuple[Any, ...]]
-
-type TensorTypes = Any
 # Conditional imports
-if TYPE_CHECKING:
-    import numpy as np
+if TYPE_CHECKING == True:
     from ember_ml.nn.tensor.common.ember_tensor import EmberTensor
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
     from ember_ml.backend.torch.tensor.tensor import TorchTensor
-    
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    import numpy
+    # Basic type aliases
+    type Numeric = Union[int, float]
+
+    # PyTorch tensor types
+    type TorchArray = torch.Tensor
+    type DTypeClass = torch.dtype
+    type ArrayLike = Union[TorchTensor, Numeric, List[Any], Tuple[Any, ...]]
+
+    type dtype_int32 = Union[DTypeClass.int32, Literal['int32'] ]
+    type dtype_int64 = Union[DTypeClass.int64, Literal['int64'] ]
+    type dtype_float32 = Union[DTypeClass.float32, Literal['float32'] ]
+    type dtype_float64 = Union[DTypeClass.float64, Literal['float64'] ]
+    type dtype_bool = Union[DTypeClass.bool, Literal['bool']]
+
+    type TensorTypes = Any
+    type DTypes = Any
     type TensorTypes = Union[
-        np.ndarray,
-        torch.Tensor,
+        TorchArray,
         TorchTensor,
-        EmberTensor
+        EmberTensor,
+        NumpyTensor
     ]
+    type DTypes = Union[
+        DTypeClass,
+        numpy.dtype,
+        dtype_int32,
+        dtype_int64,
+        dtype_float32,
+        dtype_float64,
+        numpy.dtype,
+        numpy.int32,
+        numpy.int64,
+        numpy.float32,
+        numpy.float64,
+        numpy.bool_,]
+else:
+    # Exported type definitions
+    DType = Any  # Using Any for maximum compatibility
+    DTypes = Any  # Using Any for maximum compatibility
+    TensorLike = Any  # Using Any for maximum compatibility
+    Shape = Any  # Using Any for maximum compatibility
+    Axis = Any  # Using Any for maximum compatibility
+    OrdLike = Any  # Using Any for maximum compatibility
+    TensorTypes = Any  # Using Any for maximum compatibility
 
-# Main type definitions
-type TensorLike = Optional[Union[
-    Numeric,
-    bool,
-    List[Any],
-    Tuple[Any, ...],
-    TensorTypes
-]]
+    # Main type definitions
+    type TensorLike = Optional[Union[
+        Numeric,
+        bool,
+        List[Any],
+        Tuple[Any, ...],
+        TensorTypes
+    ]]
 
-# Shape types
-type Shape = Sequence[int]
-type ShapeType = Union[int, Tuple[int, ...], List[int]]
-type ShapeLike = Union[int, List[int], Tuple[int, ...], Shape]
+    # Shape types
+    type Shape = Sequence[int]
+    type ShapeType = Union[int, Tuple[int, ...], List[int]]
+    type ShapeLike = Union[int, List[int], Tuple[int, ...], Shape]
 
-# Dimension types
-type DimSize = Union[int, torch.Tensor]
-type Axis = Optional[Union[int, Sequence[int]]]
+    # Dimension types
+    type DimSize = Union[int, torch.Tensor]
+    type Axis = Optional[Union[int, Sequence[int]]]
 
-# Scalar types
-type ScalarLike = Optional[Union[
-    Numeric,
-    bool,
-    torch.Tensor,
-    TensorTypes
-]]
+    # Scalar types
+    type ScalarLike = Optional[Union[
+        Numeric,
+        bool,
+        TorchArray,
+        TensorTypes
+    ]]
 
-# Device type
-type Device = Optional[str]
+    # OrdLike
+    type OrdLike = Optional[Union[int, str]]
 
-# Index types
-type IndexType = Union[int, Sequence[int], torch.Tensor]
-type Indices = Union[Sequence[int], torch.Tensor]
+    # Device type
+    type Device = Optional[str]
 
-# File paths
-type PathLike = Union[str, os.PathLike[str]]
+    # Index types
+    type IndexType = Union[int, Sequence[int], TorchArray]
+    type Indices = Union[Sequence[int], TorchArray]
 
-# Type variables for generic functions
-from typing import TypeVar
-T = TypeVar('T')
-
-# Protocol classes for type checking
-from typing import Protocol
-
-class SupportsDType(Protocol):
-    @property
-    def dtype(self) -> Any: ...
-
-class SupportsItem(Protocol):
-    def item(self) -> Union[int, float, bool]: ...
-
-class SupportsAsType(Protocol):
-    def astype(self, dtype: Any) -> Any: ...
-
-class SupportsToList(Protocol):
-    def tolist(self) -> List[Any]: ...
+    # File paths
+    type PathLike = Union[str, os.PathLike[str]]
 
 __all__ = [
     'Numeric',
     'TensorLike',
     'Shape',
-    'ShapeType',
+    'ShapeType', 
     'ShapeLike',
-    'ScalarLike',
-    'TorchTensor',
-    'ArrayLike',
-    'Device',
-    'DType',
     'DTypeStr',
     'DTypeClass',
+    'DType',
+    'TorchArray',
+    'ArrayLike', 
+    'TensorTypes',
     'DimSize',
     'Axis',
+    'ScalarLike',
+    'OrdLike',
+    'Device',
     'IndexType',
     'Indices',
-    'PathLike',
-    'T',
-    'SupportsDType',
-    'SupportsItem',
-    'SupportsAsType',
-    'SupportsToList'
+    'PathLike'
 ]

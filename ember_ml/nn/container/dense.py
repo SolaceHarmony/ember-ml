@@ -63,7 +63,7 @@ class Dense(Module):
                 minval=-ops.sqrt(6.0 / (input_dim + self.units)),
                 maxval=ops.sqrt(6.0 / (input_dim + self.units))
             ))
-            self.bias = Parameter(ops.zeros((self.units,)))
+            self.bias = Parameter(tensor.zeros((self.units,)))
             self.initialized = True
         
         # Reshape input if needed

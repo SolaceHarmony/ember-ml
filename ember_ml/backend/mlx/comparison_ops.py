@@ -8,10 +8,8 @@ import mlx.core as mx
 from typing import Any
 
 # Import from tensor_ops
-from ember_ml.backend.mlx.tensor import MLXTensor
 from ember_ml.backend.mlx.types import TensorLike
 
-Tensor = MLXTensor()
 
 def equal(x: TensorLike, y: TensorLike) -> mx.array:
     """
@@ -24,7 +22,9 @@ def equal(x: TensorLike, y: TensorLike) -> mx.array:
     Returns:
         Boolean array with True where elements are equal
     """
-    return mx.equal(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    Tensor = MLXTensor()
+    return mx.equal(MLXTensor().convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
 def not_equal(x: TensorLike, y: TensorLike) -> mx.array:
     """
@@ -37,6 +37,8 @@ def not_equal(x: TensorLike, y: TensorLike) -> mx.array:
     Returns:
         Boolean array with True where elements are not equal
     """
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    Tensor = MLXTensor()
     return mx.not_equal(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
 def less(x: TensorLike, y: TensorLike) -> mx.array:
@@ -50,6 +52,8 @@ def less(x: TensorLike, y: TensorLike) -> mx.array:
     Returns:
         Boolean array with True where elements of x are less than y
     """
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    Tensor = MLXTensor()
     return mx.less(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
 def less_equal(x: TensorLike, y: TensorLike) -> mx.array:
@@ -63,6 +67,8 @@ def less_equal(x: TensorLike, y: TensorLike) -> mx.array:
     Returns:
         Boolean array with True where elements of x are less than or equal to y
     """
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    Tensor = MLXTensor()
     return mx.less_equal(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
 def greater(x: TensorLike, y: TensorLike) -> mx.array:
@@ -76,6 +82,8 @@ def greater(x: TensorLike, y: TensorLike) -> mx.array:
     Returns:
         Boolean array with True where elements of x are greater than y
     """
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    Tensor = MLXTensor()
     return mx.greater(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
 def greater_equal(x: TensorLike, y: TensorLike) -> mx.array:
@@ -89,6 +97,8 @@ def greater_equal(x: TensorLike, y: TensorLike) -> mx.array:
     Returns:
         Boolean array with True where elements of x are greater than or equal to y
     """
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    Tensor = MLXTensor()
     return mx.greater_equal(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
 def logical_and(x: TensorLike, y: TensorLike) -> mx.array:
@@ -102,6 +112,8 @@ def logical_and(x: TensorLike, y: TensorLike) -> mx.array:
     Returns:
         Boolean array with True where both x and y are True
     """
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    Tensor = MLXTensor()
     return mx.logical_and(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
 def logical_or(x: TensorLike, y: TensorLike) -> mx.array:
@@ -115,6 +127,8 @@ def logical_or(x: TensorLike, y: TensorLike) -> mx.array:
     Returns:
         Boolean array with True where either x or y is True
     """
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    Tensor = MLXTensor()
     return mx.logical_or(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
 def logical_not(x: mx.array) -> mx.array:
@@ -127,6 +141,8 @@ def logical_not(x: mx.array) -> mx.array:
     Returns:
         Boolean array with True where x is False
     """
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    Tensor = MLXTensor()
     return mx.logical_not(Tensor.convert_to_tensor(x))
 
 def logical_xor(x: TensorLike, y: TensorLike) -> mx.array:
@@ -140,6 +156,8 @@ def logical_xor(x: TensorLike, y: TensorLike) -> mx.array:
     Returns:
         Boolean array with True where exactly one of x or y is True
     """
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    Tensor = MLXTensor()
     x_tensor = Tensor.convert_to_tensor(x)
     y_tensor = Tensor.convert_to_tensor(y)
     return mx.bitwise_xor(x_tensor, y_tensor)
@@ -158,6 +176,8 @@ def allclose(x: TensorLike, y: TensorLike, rtol: float = 1e-5, atol: float = 1e-
     Returns:
         Boolean indicating if all elements are close
     """
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    Tensor = MLXTensor()
     x_tensor = Tensor.convert_to_tensor(x)
     y_tensor = Tensor.convert_to_tensor(y)
     return mx.allclose(x_tensor, y_tensor, rtol=rtol, atol=atol)
@@ -176,6 +196,8 @@ def isclose(x: TensorLike, y: TensorLike, rtol: float = 1e-5, atol: float = 1e-8
     Returns:
         Boolean array with True where elements are close
     """
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    Tensor = MLXTensor()
     x_tensor = Tensor.convert_to_tensor(x)
     y_tensor = Tensor.convert_to_tensor(y)
     # Implement isclose using the formula: |x - y| <= atol + rtol * |y|
@@ -199,6 +221,8 @@ def all(x: mx.array, axis: Any = None, keepdims: bool = False) -> mx.array:
         If axis is specified, the result is a tensor with the specified
         axes reduced.
     """
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    Tensor = MLXTensor()
     x_tensor = Tensor.convert_to_tensor(x)
     return mx.all(x_tensor, axis=axis, keepdims=keepdims)
 
@@ -215,6 +239,8 @@ def where(condition: mx.array, x: TensorLike, y: TensorLike) -> mx.array:
     Returns:
         Array with values from x where condition is True, and values from y elsewhere
     """
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    Tensor = MLXTensor()
     condition_tensor = Tensor.convert_to_tensor(condition)
     x_tensor = Tensor.convert_to_tensor(x)
     y_tensor = Tensor.convert_to_tensor(y)

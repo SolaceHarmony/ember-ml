@@ -12,6 +12,21 @@ Shape = Union[int, Sequence[int]]
 
 class MathOps(ABC):
     """Abstract interface for mathematical operations."""
+
+    @abstractmethod
+    def gather(self, x: Any, indices: Any, axis: int = 0) -> Any:
+        """
+        Gather slices from x along the specified axis according to indices.
+        
+        Args:
+            x: The input tensor from which to gather values
+            indices: The indices of the values to extract
+            axis: The axis along which to index (default: 0)
+            
+        Returns:
+            Tensor of gathered values with the same type as x
+        """
+        pass
     
     @property
     @abstractmethod
@@ -312,6 +327,22 @@ class MathOps(ABC):
             
         Returns:
             Element-wise sign
+        """
+        pass
+        
+    @abstractmethod
+    def argmax(self, x: Any, axis: Optional[int] = None, keepdims: bool = False) -> Any:
+        """
+        Return the indices of the maximum values along the specified axis.
+        
+        Args:
+            x: Input tensor
+            axis: Axis along which to find maximum values. If None, the argmax of
+                the flattened array is returned.
+            keepdims: If True, the reduced axes are kept as dimensions with size one.
+            
+        Returns:
+            Indices of the maximum values along the specified axis.
         """
         pass
     

@@ -10,7 +10,6 @@ import mlx.core as mx
 from ember_ml.backend.mlx.tensor import MLXDType
 from ember_ml.backend.mlx.types import TensorLike
 
-import numpy as np
 dtype_obj = MLXDType()
 
 

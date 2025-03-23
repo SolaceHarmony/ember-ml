@@ -142,12 +142,12 @@ class LTCCell(Module):
         if self._input_mapping in ["affine", "linear"]:
             self.input_w = Parameter(ops.ones((self.sensory_size,)))
         if self._input_mapping == "affine":
-            self.input_b = Parameter(ops.zeros((self.sensory_size,)))
+            self.input_b = Parameter(tensor.zeros((self.sensory_size,)))
         
         if self._output_mapping in ["affine", "linear"]:
             self.output_w = Parameter(ops.ones((self.motor_size,)))
         if self._output_mapping == "affine":
-            self.output_b = Parameter(ops.zeros((self.motor_size,)))
+            self.output_b = Parameter(tensor.zeros((self.motor_size,)))
     
     def _sigmoid(self, v_pre, mu, sigma):
         """Compute sigmoid activation for synapses."""
@@ -259,4 +259,4 @@ class LTCCell(Module):
         Returns:
             Initial state
         """
-        return ops.zeros((batch_size, self.state_size))
+        return tensor.zeros((batch_size, self.state_size))

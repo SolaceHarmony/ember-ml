@@ -9,7 +9,9 @@ from ember_ml.backend.mlx.linearalg.ops import (
     det,
     cholesky,
     lstsq,
-    svd
+    svd,
+    diag,
+    diagonal
 )
 
 __all__ = [
@@ -23,5 +25,7 @@ __all__ = [
     "det",
     "cholesky",
     "lstsq",
-    "svd"
+    "svd",
+    "diag",
+    "diagonal"
 ]

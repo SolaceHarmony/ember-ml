@@ -10,6 +10,7 @@ from typing import Optional, List, Dict, Any, Union, Tuple
 from ember_ml import ops
 from ember_ml.nn.modules import Module
 from ember_ml.nn.modules.rnn.gru_cell import GRUCell
+from ember_ml.nn import tensor
 
 class GRU(Module):
     """
@@ -121,10 +122,10 @@ class GRU(Module):
             h_states = []
             
             for layer in range(self.num_layers):
-                h_states.append(ops.zeros((batch_size, self.hidden_size)))
+                h_states.append(tensor.zeros((batch_size, self.hidden_size)))
                 
                 if self.bidirectional:
-                    h_states.append(ops.zeros((batch_size, self.hidden_size)))
+                    h_states.append(tensor.zeros((batch_size, self.hidden_size)))
         else:
             # Unpack provided initial states
             h_states = initial_state
@@ -234,9 +235,9 @@ class GRU(Module):
         h_states = []
         
         for layer in range(self.num_layers):
-            h_states.append(ops.zeros((batch_size, self.hidden_size)))
+            h_states.append(tensor.zeros((batch_size, self.hidden_size)))
             
             if self.bidirectional:
-                h_states.append(ops.zeros((batch_size, self.hidden_size)))
+                h_states.append(tensor.zeros((batch_size, self.hidden_size)))
         
         return ops.stack(h_states)

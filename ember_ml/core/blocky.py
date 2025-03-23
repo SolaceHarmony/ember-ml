@@ -189,7 +189,7 @@ class BlockyRoadChain(BaseChain):
             Updated states [batch_size, num_neurons]
         """
         # Create zeros tensor using ops
-        states = ops.zeros(self.num_neurons)
+        states = tensor.zeros(self.num_neurons)
         
         # Update first neuron
         states_0 = self.neurons[0].update(input_signals[0])

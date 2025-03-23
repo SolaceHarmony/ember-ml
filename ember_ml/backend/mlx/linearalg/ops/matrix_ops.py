@@ -11,11 +11,12 @@ from typing import Union, Tuple, Optional, Literal
 from ember_ml.backend.mlx.types import TensorLike
 from ember_ml.backend.mlx.linearalg.ops.decomp_ops import svd
 from ember_ml.backend.mlx.tensor import MLXDType
+from ember_ml.backend.mlx.types import OrdLike
 
 dtype_obj = MLXDType()
 
 def norm(x: TensorLike, 
-         ord: Optional[Union[int, str]] = None, 
+         ord: OrdLike = None, 
          axis: Optional[Union[int, Tuple[int, ...]]] = None, 
          keepdim: bool = False) -> mx.array:
     """

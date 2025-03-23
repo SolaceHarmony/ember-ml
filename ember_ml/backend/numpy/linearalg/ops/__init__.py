@@ -34,6 +34,3 @@ __all__ = [
     'diag',
     'diagonal'
 ]
-"""NumPy linear algebra operations."""
-
-from ember_ml.backend.numpy.linearalg.ops.matrix_ops import diag, diagonal
