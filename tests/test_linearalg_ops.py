@@ -27,7 +27,7 @@ def test_qr_decomposition(backend):
     
     # Check that Q is orthogonal
     from ember_ml import ops
-    q_t = ops.transpose(q)
+    q_t = tensor.transpose(q)
     q_t_q = ops.matmul(q_t, q)
     identity = tensor.eye(q_t_q.shape[0])
     

@@ -7,107 +7,107 @@ help with static type checking.
 """
 
 from typing import (
-    Any, List, Optional, Sequence, Tuple, Union,
+    Any, List, Optional, Sequence, Tuple, Union, Literal,
     TYPE_CHECKING
 )
 import os
-from types import ModuleType
-import numpy
+
 import numpy as np
 
-# Basic type aliases
+
+# Basic type aliases that don't require imports
 type Numeric = Union[int, float]
-
-# Type definitions for MLX dtypes
-type DTypeStr = str
-type DTypeClass = Union[numpy.dtype, str, None]
-
-# Type alias for dtype arguments that maintains compatibility
-# with both MLX's dtype system and tensor.py's DType
-type DType = Any  # Using Any for maximum compatibility
-
-# MLX array types
-type NumpyArray = numpy.ndarray
-
-type ArrayLike = Union[NumpyArray, Numeric, List[Any], Tuple[Any, ...]]
-
-type TensorTypes = Any
-# Conditional imports
-if TYPE_CHECKING:
-    from ember_ml.nn.tensor.common.ember_tensor import EmberTensor
-    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
-    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
-    from ember_ml.backend.torch.tensor.tensor import TorchTensor
-
-    type TensorTypes = Union[
-        np.ndarray,
-        NumpyArray,
-        NumpyTensor,
-        EmberTensor,
-        MLXTensor,
-        TorchTensor
-    ]
-
-# Main type definitions
-type TensorLike = Optional[Union[
-    Numeric,
-    bool,
-    List[Any],
-    Tuple[Any, ...],
-    TensorTypes
-]]
-
-# Shape types
+type OrdLike = Optional[Union[int, str]]
+type Device = Optional[str]
+type PathLike = Union[str, os.PathLike[str]]
 type Shape = Sequence[int]
 type ShapeType = Union[int, Tuple[int, ...], List[int]]
 type ShapeLike = Union[int, List[int], Tuple[int, ...], Shape]
-
-# Dimension types
-type DimSize = Union[int, NumpyArray]
+type DimSize = Union[int, 'np.ndarray']
 type Axis = Optional[Union[int, Sequence[int]]]
+type IndexType = Union[int, Sequence[int], 'np.ndarray'] 
+type Indices = Union[Sequence[int], 'np.ndarray']
+# Numpy specific
+type NumpyArray = np.ndarray
+type DTypeClass = np.dtype
 
-# Scalar types
-type ScalarLike = Optional[Union[
-    Numeric,
-    bool,
-    NumpyArray,
-    TensorTypes
-]]
+# Precision related
+default_int = np.int32
+default_float = np.float32
+default_bool = np.bool_ if hasattr(np, 'bool_') else Any
 
-# OrdLike
-type OrdLike = Optional[Union[int, str]]
 
-# Device type
-type Device = Optional[str]
+# Runtime definitions (simplified)
+type TensorTypes = Any
+type ArrayLike = Any
+type TensorLike = Any
+type ScalarLike = Any
+type DTypes = Any
+type DType = Any
 
-# Index types
-type IndexType = Union[int, Sequence[int], NumpyArray]
-type Indices = Union[Sequence[int], NumpyArray]
+# Conditional type definitions
+if TYPE_CHECKING == True:
+    # These imports are for type checking only
+    # Must be done inside TYPE_CHECKING block to avoid circular imports
+    from typing import TypeVar
+    T = TypeVar('T')  # Used for generic type definitions
+    
+    # Define types that reference external modules
+    type TensorTypes = Union[
+        NumpyArray,
+        Any,  # NumpyTensor
+        Any,  # EmberTensor
+        Any,  # numpy.ndarray
+    ]
+    
+    type ArrayLike = Union[
+        Any,  # NumpyTensor
+        NumpyArray, 
+        Numeric, 
+        List[Any], 
+        Tuple[Any, ...]
+    ]
+    
+    type DTypes = Union[
+        np.dtype,
+        Any,  # numpy.dtype
+    ]
+    
+    type TensorLike = Optional[Union[
+        Numeric,
+        bool,
+        List[Any],
+        Tuple[Any, ...],
+        'TensorTypes'
+    ]]
+    
+    type ScalarLike = Optional[Union[
+        Numeric,
+        bool,
+        NumpyArray,
+        'TensorLike'
+    ]]
 
-# File paths
-type PathLike = Union[str, os.PathLike[str]]
 
 __all__ = [
     'Numeric',
     'TensorLike',
     'Shape',
-    'ShapeType',
+    'ShapeType', 
     'ShapeLike',
-    'ScalarLike',
-    'NumpyArray',
-    'ArrayLike',
-    'Device',
-    'DType',
-    'DTypeStr',
     'DTypeClass',
+    'DTypes',
+    'NumpyArray',
+    'ArrayLike', 
+    'TensorTypes',
     'DimSize',
     'Axis',
+    'ScalarLike',
+    'OrdLike',
+    'Device',
     'IndexType',
     'Indices',
-    'PathLike',
-    'T',
-    'SupportsDType',
-    'SupportsItem',
-    'SupportsAsType',
-    'SupportsToList'
+    'PathLike'
 ]
+
+

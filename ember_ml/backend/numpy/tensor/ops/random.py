@@ -80,6 +80,12 @@ def random_binomial(shape: Shape, p: float = 0.5,
     Returns:
         NumPy array with random binomial values
     """
+
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    # Convert to NumPy array if needed
+    Tensor = NumpyTensor()
+    p = Tensor.convert_to_tensor(p)
+
     # Convert shape to a sequence if it's an int
     if isinstance(shape, int):
         shape = (shape,)
@@ -87,9 +93,7 @@ def random_binomial(shape: Shape, p: float = 0.5,
     # Validate dtype
     numpy_dtype = DTypeHandler.validate_dtype(dtype)
     
-    # Use NumPy's binomial function
     result = np.random.binomial(n=1, p=p, size=shape)
-    
     # Convert to the specified dtype if needed
     if numpy_dtype is not None:
         result = result.astype(numpy_dtype)
@@ -211,7 +215,7 @@ def random_categorical(data: TensorLike, num_samples: int,
     probs = np.divide(exp_logits, sum_exp_logits)
     
     # Sample from the categorical distribution
-    result = np.zeros((logits_tensor.shape[0], num_samples), dtype=np.int64)
+    result = np.zeros((logits_tensor.shape[0], num_samples), dtype=np.int32)
     for i in range(logits_tensor.shape[0]):
         result[i] = np.random.choice(logits_tensor.shape[1], size=num_samples, p=probs[i])
     

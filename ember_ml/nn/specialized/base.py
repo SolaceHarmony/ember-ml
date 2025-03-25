@@ -22,7 +22,7 @@ class WeightedLTCNeuron:
         state (float): Current activation state of the neuron
         base_tau (float): Base time constant for state decay
         num_inputs (int): Number of input connections
-        weights (NDArray[np.float64]): Input weight vector
+        weights (NDArray[np.float32]): Input weight vector
     """
     
     def __init__(self, tau: float = 1.0, num_inputs: int = 3):
@@ -37,12 +37,12 @@ class WeightedLTCNeuron:
         self.base_tau: float = tau
         self.num_inputs: int = num_inputs
         # Initialize weights uniformly in [-0.5, 0.5]
-        self.weights: NDArray[np.float64] = np.random.uniform(
+        self.weights: NDArray[np.float32] = np.random.uniform(
             -0.5, 0.5, size=num_inputs
         )
     
     def update(self,
-              inputs: Union[List[float], NDArray[np.float64]],
+              inputs: Union[List[float], NDArray[np.float32]],
               dt: float = 0.1,
               tau_mod: float = 1.0,
               feedback: float = 0.0) -> float:
@@ -63,7 +63,7 @@ class WeightedLTCNeuron:
             dstate/dt = (-state/tau + weighted_input + feedback) * dt
         """
         # Ensure inputs are numpy array
-        input_array = np.array(inputs, dtype=np.float64)
+        input_array = np.array(inputs, dtype=np.float32)
         
         # Calculate effective time constant
         effective_tau = self.base_tau * tau_mod
@@ -83,16 +83,16 @@ class WeightedLTCNeuron:
         """Reset the neuron's state to zero."""
         self.state = 0.0
     
-    def get_weights(self) -> NDArray[np.float64]:
+    def get_weights(self) -> NDArray[np.float32]:
         """
         Get the current weight vector.
         
         Returns:
-            NDArray[np.float64]: Copy of the weight vector
+            NDArray[np.float32]: Copy of the weight vector
         """
         return self.weights.copy()
     
-    def set_weights(self, weights: Union[List[float], NDArray[np.float64]]) -> None:
+    def set_weights(self, weights: Union[List[float], NDArray[np.float32]]) -> None:
         """
         Set new weights for the neuron.
         
@@ -102,7 +102,7 @@ class WeightedLTCNeuron:
         Raises:
             ValueError: If weights length doesn't match num_inputs
         """
-        weights_array = np.array(weights, dtype=np.float64)
+        weights_array = np.array(weights, dtype=np.float32)
         if weights_array.shape != (self.num_inputs,):
             raise ValueError(
                 f"Weights must have shape ({self.num_inputs},), "

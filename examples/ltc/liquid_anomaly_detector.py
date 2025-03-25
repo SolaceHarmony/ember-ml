@@ -5,7 +5,7 @@ from datetime import datetime
 from sklearn.preprocessing import StandardScaler
 
 from ember_ml import ops
-from ember_ml.ops.tensor import EmberTensor
+from ember_ml.nn.tensor import EmberTensor
 from ember_ml.nn.wirings import AutoNCP
 from ember_ml.nn.modules.rnn import CfC
 from ember_ml.nn import Module

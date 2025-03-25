@@ -33,8 +33,8 @@ def norm(x: TensorLike,
     """
     # Convert input to torch array
     from ember_ml.backend.torch.tensor import TorchTensor
-    Tensor = TorchTensor()
-    x_array = Tensor.convert_to_tensor(x)
+    TensorInstance = TorchTensor()
+    x_array = TensorInstance.convert_to_tensor(x)
     
     # Default values
     if ord is None:
@@ -55,18 +55,21 @@ def norm(x: TensorLike,
         
         if ord == 'inf':
             # L-infinity norm (maximum absolute value)
-            result = torch.max(torch.abs(x_array), axis=axis)
+            if isinstance(axis, int):
+                result, _ = torch.max(torch.abs(x_array), dim=axis)
+            else:
+                raise ValueError("For L-infinity norm, axis must be an integer")
         elif ord == 1:
             # L1 norm (sum of absolute values)
-            result = torch.sum(torch.abs(x_array), axis=axis)
+            result = torch.sum(torch.abs(x_array), dim=axis)
         elif ord == 2:
             # L2 norm (Euclidean norm)
-            result = torch.sqrt(torch.sum(torch.square(x_array), axis=axis))
+            result = torch.sqrt(torch.sum(torch.square(x_array), dim=axis))
         else:
             # General Lp norm
             if isinstance(ord, (int, float)):
-                result = torch.power(
-                    torch.sum(torch.power(torch.abs(x_array), ord), axis=axis),
+                result = torch.pow(
+                    torch.sum(torch.abs(x_array).pow(ord), dim=axis),
                     torch.divide(torch.tensor(1.0), torch.tensor(ord))
                 )
             else:
@@ -89,16 +92,16 @@ def norm(x: TensorLike,
                 result = torch.sum(s_values)
         elif ord == 1:
             # Maximum absolute column sum
-            result = torch.max(torch.sum(torch.abs(x_array), axis=0))
+            result = torch.max(torch.sum(torch.abs(x_array), dim=0))
         elif ord == 'inf':
             # Maximum absolute row sum
-            result = torch.max(torch.sum(torch.abs(x_array), axis=1))
+            result = torch.max(torch.sum(torch.abs(x_array), dim=1))
         elif ord == -1:
             # Minimum absolute column sum
-            result = torch.min(torch.sum(torch.abs(x_array), axis=0))
+            result = torch.min(torch.sum(torch.abs(x_array), dim=0))
         elif ord == '-inf':
             # Minimum absolute row sum
-            result = torch.min(torch.sum(torch.abs(x_array), axis=1))
+            result = torch.min(torch.sum(torch.abs(x_array), dim=1))
         else:
             # For other matrix norms, use the singular values
             s_values = svd(x_array, compute_uv=False)
@@ -145,8 +148,8 @@ def det(a: TensorLike) -> torch.Tensor:
     """
     # Convert input to torch.Tensor array
     from ember_ml.backend.torch.tensor import TorchTensor
-    Tensor = TorchTensor()
-    a_array = Tensor.convert_to_tensor(a)
+    TensorInstance = TorchTensor()
+    a_array = TensorInstance.convert_to_tensor(a)
 
     
     # Get matrix dimensions
@@ -213,8 +216,8 @@ def diag(x: TensorLike, k: int = 0) -> torch.Tensor:
     """
     # Convert input to torch array
     from ember_ml.backend.torch.tensor import TorchTensor
-    Tensor = TorchTensor()
-    x_array = Tensor.convert_to_tensor(x)
+    TensorInstance = TorchTensor()
+    x_array = TensorInstance.convert_to_tensor(x)
     
     # Check if input is 1-D or 2-D
     if x_array.ndim == 1:
@@ -231,8 +234,8 @@ def diag(x: TensorLike, k: int = 0) -> torch.Tensor:
         if dtype == torch.int64:
             dtype = torch.int32
             
-        # Create a zero matrix
-        result = torch.zeros((m, m), dtype=dtype)
+        # Create a zero matrix with proper dtype
+        result = torch.zeros([int(m), int(m)], dtype=dtype)
         
         # Import the scatter function from indexing
         from ember_ml.backend.torch.tensor.ops.indexing import scatter_add
@@ -257,6 +260,8 @@ def diag(x: TensorLike, k: int = 0) -> torch.Tensor:
             result_copy[int(row.item()), int(col.item())] += x_array[i].item()            
             result = result_copy
                 
+        # No need for transposition here - the diag function has no concept of axes
+        # This is internal to the diagonal function implementation
         return result
     
     elif x_array.ndim == 2:
@@ -281,13 +286,13 @@ def diag(x: TensorLike, k: int = 0) -> torch.Tensor:
             dtype = torch.int32
             
         # Create an array to hold the diagonal
-        result = torch.zeros((diag_len,), dtype=dtype)
+        result = torch.zeros([int(diag_len)], dtype=dtype)
         
         # Extract the diagonal
         # Use torch.greater_equal for comparison
         is_non_negative = torch.greater_equal(torch.tensor(k), torch.tensor(0))
         
-        for i in range(diag_len):
+        for i in range(int(diag_len)):
             # Create a copy of the result
             result_copy = torch.tensor(result)
             
@@ -319,202 +324,58 @@ def diagonal(x: TensorLike, offset: int = 0, axis1: int = 0, axis2: int = 1) -> 
         axis2: Second axis of the 2-D sub-arrays from which the diagonals should be taken
         
     Returns:
-        Array of diagonals
+        Array of diagonals. For a 3D input array, the output contains the diagonal 
+        from each 2D slice, maintaining the structure of the non-diagonal dimensions.
     """
     # Convert input to Torch array
     from ember_ml.backend.torch.tensor import TorchTensor
-    Tensor = TorchTensor()
-    x_array = Tensor.convert_to_tensor(x)
+    TensorInstance = TorchTensor()
+    x_array = TensorInstance.convert_to_tensor(x)
     
-    # Check if input has at least 2 dimensions
+    # Initial validations
     if x_array.ndim < 2:
         raise ValueError("Input must have at least 2 dimensions")
-        
-    # Ensure axis1 and axis2 are different
-    # Use torch.equal for comparison
-    if torch.equal(torch.tensor(axis1), torch.tensor(axis2)):
+    if axis1 == axis2:
         raise ValueError("axis1 and axis2 must be different")
         
-    # Normalize axes
+    # Normalize negative axes
     ndim = x_array.ndim
     if axis1 < 0:
         axis1 += ndim
     if axis2 < 0:
         axis2 += ndim
         
-    # Ensure axes are valid
-    # Use torch.less, torch.greater_equal, torch.logical_or for comparisons
-    axis1_invalid = torch.logical_or(
-        torch.less(torch.tensor(axis1), torch.tensor(0)),
-        torch.greater_equal(torch.tensor(axis1), torch.tensor(ndim))
-    )
-    axis2_invalid = torch.logical_or(
-        torch.less(torch.tensor(axis2), torch.tensor(0)),
-        torch.greater_equal(torch.tensor(axis2), torch.tensor(ndim))
-    )
+    # Validate axes
+    if not (0 <= axis1 < ndim and 0 <= axis2 < ndim):
+        raise ValueError("axis1 and axis2 must be within dimensions")
     
-    if torch.logical_or(axis1_invalid, axis2_invalid).item():
-        raise ValueError("axis1 and axis2 must be within the dimensions of the input array")
-        
-    # Get the shape of the input array
+    # Get shape and calculate diagonal length
     shape = x_array.shape
+    diag_len = min(shape[axis1], shape[axis2] - offset if offset >= 0 else shape[axis1] + offset)
     
-    # Calculate the length of the diagonal
-    # Use torch.greater_equal, torch.maximum, torch.minimum, torch.subtract, torch.add for operations
-    is_non_negative = torch.greater_equal(torch.tensor(offset), torch.tensor(0))
+    # Create result shape preserving the order of non-diagonal axes
+    non_diag_axes = [shape[i] for i in range(ndim) if i not in (axis1, axis2)]
+    result_shape = [int(diag_len)] + non_diag_axes
     
-    # Calculate diagonal length for positive offset
-    diag_len_if_positive = torch.maximum(
-        torch.tensor(0),
-        torch.minimum(
-            torch.tensor(shape[axis1]),
-            torch.subtract(torch.tensor(shape[axis2]), torch.tensor(offset))
-        )
-    )
+    # Initialize result tensor with correct shape
+    result = torch.zeros(tuple(result_shape), dtype=x_array.dtype)
     
-    # Calculate diagonal length for negative offset
-    diag_len_if_negative = torch.maximum(
-        torch.tensor(0),
-        torch.minimum(
-            torch.add(torch.tensor(shape[axis1]), torch.tensor(offset)),
-            torch.tensor(shape[axis2])
-        )
-    )
-    
-    # Select the appropriate length based on offset sign
-    diag_len = torch.where(is_non_negative, diag_len_if_positive, diag_len_if_negative).item()
-        
-    # Use torch.equal for comparison
-    if torch.equal(torch.tensor(diag_len), torch.tensor(0)):
-        # Empty diagonal
-        return torch.tensor([], dtype=x_array.dtype)
-        
-    # Create an array to hold the diagonal
-    result_shape = list(shape)
-    result_shape.pop(max(axis1, axis2))
-    result_shape.pop(min(axis1, axis2))
-    result_shape.append(diag_len)
-    
-    # Ensure we use a compatible dtype (not int64)
-    dtype = x_array.dtype
-    if dtype == torch.int64:
-        dtype = torch.int32
-    
-    result = torch.zeros(tuple(result_shape), dtype=dtype)
-    
-    # Extract the diagonal
-    # This is a simplified implementation that works for common cases
-    # For a more general implementation, we would need to handle arbitrary axes
-    
-    # Handle the case where axis1 and axis2 are the first two dimensions
-    # Use torch.equal and torch.logical_or for comparisons
-    is_first_two_dims = torch.logical_or(
-        torch.logical_and(
-            torch.equal(torch.tensor(axis1), torch.tensor(0)),
-            torch.equal(torch.tensor(axis2), torch.tensor(1))
-        ),
-        torch.logical_and(
-            torch.equal(torch.tensor(axis1), torch.tensor(1)),
-            torch.equal(torch.tensor(axis2), torch.tensor(0))
-        )
-    )
-    
-    if is_first_two_dims.item():
-        # Transpose if needed
-        # Use torch.greater for comparison
-        if torch.greater(torch.tensor(axis1), torch.tensor(axis2)).item():
-            x_array = torch.transpose(x_array, (1, 0) + tuple(range(2, ndim)))
-            
-        # Extract the diagonal
-        # Use torch.greater_equal for comparison
-        if torch.greater_equal(torch.tensor(offset), torch.tensor(0)).item():
-            for i in range(diag_len):
-                # Get the slice for the current diagonal element
-                slices = [i, i + offset] + [slice(None)] * (ndim - 2)
-                
-                # Get the diagonal element
-                diag_element = x_array[tuple(slices)]
-                
-                # Ensure diag_element is not int64
-                if diag_element.dtype == torch.int64:
-                    diag_element = diag_element.astype(torch.int32)
-                
-                # Set the result
-                result_slices = [slice(None)] * (ndim - 2) + [i]
-                # Use direct assignment for updating
-                result_copy = torch.tensor(result)
-                # Use add instead of direct assignment
-                result_copy = result_copy.at[tuple(result_slices)].add(diag_element)
-                result = result_copy
+    # Calculate source indices for each diagonal element and assign to result
+    for i in range(diag_len):
+        # Build the index tuple for extraction
+        src_idx = [slice(None)] * x_array.ndim
+        if offset >= 0:
+            src_idx[axis1] = i
+            src_idx[axis2] = i + offset
         else:
-            for i in range(diag_len):
-                # Get the slice for the current diagonal element
-                slices = [i - offset, i] + [slice(None)] * (ndim - 2)
-                
-                # Get the diagonal element
-                diag_element = x_array[tuple(slices)]
-                
-                # Ensure diag_element is not int64
-                if diag_element.dtype == torch.int64:
-                    diag_element = diag_element.astype(torch.int32)
-                
-                # Set the result
-                result_slices = [slice(None)] * (ndim - 2) + [i]
-                # Use direct assignment for updating
-                result_copy = torch.tensor(result).copy()
-                # Use add instead of direct assignment
-                result_copy = result_copy.at[tuple(result_slices)].add(diag_element)
-                result = result_copy
-    else:
-        # For arbitrary axes, we need to permute the dimensions
-        # Create a permutation that brings axis1 and axis2 to the front
-        perm = list(range(ndim))
-        perm.remove(axis1)
-        perm.remove(axis2)
-        perm = [axis1, axis2] + perm
+            src_idx[axis1] = i - offset
+            src_idx[axis2] = i
         
-        # Transpose the array to bring the specified axes to the front
-        x_transposed = torch.transpose(x_array, perm)
+        # Extract the diagonal slice
+        value = x_array[tuple(src_idx)]
         
-        # Now we can extract the diagonal from the first two dimensions
-        # Use torch.greater_equal for comparison
-        if torch.greater_equal(torch.tensor(offset), torch.tensor(0)).item():
-            for i in range(diag_len):
-                # Get the slice for the current diagonal element
-                slices = [i, i + offset] + [slice(None)] * (ndim - 2)
-                
-                # Get the diagonal element
-                diag_element = x_transposed[tuple(slices)]
-                
-                # Ensure diag_element is not int64
-                if diag_element.dtype == torch.int64:
-                    diag_element = diag_element.astype(torch.int32)
-                
-                # Set the result
-                result_slices = [slice(None)] * (ndim - 2) + [i]
-                # Use direct assignment for updating
-                result_copy = torch.tensor(result)
-                # Use add instead of direct assignment
-                result_copy = result_copy.at[tuple(result_slices)].add(diag_element)
-                result = result_copy
-        else:
-            for i in range(diag_len):
-                # Get the slice for the current diagonal element
-                slices = [i - offset, i] + [slice(None)] * (ndim - 2)
-                
-                # Get the diagonal element
-                diag_element = x_transposed[tuple(slices)]
-                
-                # Ensure diag_element is not int64
-                if diag_element.dtype == torch.int64:
-                    diag_element = diag_element.astype(torch.int32)
-                
-                # Set the result
-                result_slices = [slice(None)] * (ndim - 2) + [i]
-                # Use direct assignment for updating
-                result_copy = torch.tensor(result)
-                # Use add instead of direct assignment
-                result_copy = result_copy.at[tuple(result_slices)].add(diag_element)
-                result = result_copy
-        
+        # Create result slice with proper indexing for the first dimension
+        result_slice = tuple([i] + [slice(None)] * (len(result_shape) - 1))
+        result[result_slice] = value
+    
     return result

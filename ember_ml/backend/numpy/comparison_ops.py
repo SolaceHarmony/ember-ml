@@ -10,7 +10,6 @@ from typing import Union, Any
 # Import from tensor_ops
 from ember_ml.backend.numpy.tensor import NumpyTensor
 
-convert_to_tensor = NumpyTensor().convert_to_tensor
 
 def equal(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     """
@@ -23,7 +22,9 @@ def equal(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     Returns:
         Boolean NumPy array with True where x == y
     """
-    return np.equal(x, y)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    return np.equal(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
 
 def not_equal(x: np.ndarray, y: np.ndarray) -> np.ndarray:
@@ -37,7 +38,9 @@ def not_equal(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     Returns:
         Boolean NumPy array with True where x != y
     """
-    return np.not_equal(x, y)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    return np.not_equal(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
 
 def less(x: np.ndarray, y: np.ndarray) -> np.ndarray:
@@ -51,7 +54,9 @@ def less(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     Returns:
         Boolean NumPy array with True where x < y
     """
-    return np.less(x, y)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    return np.less(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
 
 def less_equal(x: np.ndarray, y: np.ndarray) -> np.ndarray:
@@ -65,7 +70,9 @@ def less_equal(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     Returns:
         Boolean NumPy array with True where x <= y
     """
-    return np.less_equal(x, y)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    return np.less_equal(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
 
 def greater(x: np.ndarray, y: np.ndarray) -> np.ndarray:
@@ -79,7 +86,9 @@ def greater(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     Returns:
         Boolean NumPy array with True where x > y
     """
-    return np.greater(x, y)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    return np.greater(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
 
 def greater_equal(x: np.ndarray, y: np.ndarray) -> np.ndarray:
@@ -93,7 +102,9 @@ def greater_equal(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     Returns:
         Boolean NumPy array with True where x >= y
     """
-    return np.greater_equal(x, y)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    return np.greater_equal(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
 
 def logical_and(x: Any, y: Any) -> np.ndarray:
@@ -107,7 +118,9 @@ def logical_and(x: Any, y: Any) -> np.ndarray:
     Returns:
         Boolean NumPy array with True where x AND y
     """
-    return np.logical_and(x, y)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    return np.logical_and(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
 
 def logical_or(x: Any, y: Any) -> np.ndarray:
@@ -121,7 +134,9 @@ def logical_or(x: Any, y: Any) -> np.ndarray:
     Returns:
         Boolean NumPy array with True where x OR y
     """
-    return np.logical_or(x, y)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    return np.logical_or(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
 
 def logical_not(x: Any) -> np.ndarray:
@@ -134,7 +149,9 @@ def logical_not(x: Any) -> np.ndarray:
     Returns:
         Boolean NumPy array with True where NOT x
     """
-    return np.logical_not(x)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    return np.logical_not(Tensor.convert_to_tensor(x))
 
 
 def logical_xor(x: Any, y: Any) -> np.ndarray:
@@ -148,7 +165,9 @@ def logical_xor(x: Any, y: Any) -> np.ndarray:
     Returns:
         Boolean NumPy array with True where x XOR y
     """
-    return np.logical_xor(x, y)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    return np.logical_xor(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
 
 def allclose(x: Any, y: Any, rtol: float = 1e-5, atol: float = 1e-8) -> bool:
@@ -164,7 +183,9 @@ def allclose(x: Any, y: Any, rtol: float = 1e-5, atol: float = 1e-8) -> bool:
     Returns:
         Boolean indicating if all elements are close
     """
-    return np.allclose(x, y, rtol=rtol, atol=atol)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    return np.allclose(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y), rtol=rtol, atol=atol)
 
 def isclose(x: Any, y: Any, rtol: float = 1e-5, atol: float = 1e-8) -> np.ndarray:
     """
@@ -179,7 +200,9 @@ def isclose(x: Any, y: Any, rtol: float = 1e-5, atol: float = 1e-8) -> np.ndarra
     Returns:
         Boolean NumPy array with True where elements are close
     """
-    return np.isclose(x, y, rtol=rtol, atol=atol)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    return np.isclose(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y), rtol=rtol, atol=atol)
 
 
 def all(x: Any, axis: Any = None) -> Any:
@@ -196,7 +219,9 @@ def all(x: Any, axis: Any = None) -> Any:
         If axis is specified, the result is a tensor with the specified
         axes reduced.
     """
-    return np.all(x, axis=axis)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    return np.all(Tensor.convert_to_tensor(x), axis=axis)
 
 
 def where(condition: Any, x: Any, y: Any) -> np.ndarray:
@@ -211,7 +236,9 @@ def where(condition: Any, x: Any, y: Any) -> np.ndarray:
     Returns:
         Tensor with values from x where condition is True, and values from y elsewhere
     """
-    return np.where(condition, x, y)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    return np.where(condition, Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
 
 class NumpyComparisonOps:
@@ -226,19 +253,19 @@ class NumpyComparisonOps:
         return not_equal(x, y)
     
     def less(self, x, y):
-        """Check if one tensor is less than another element-wise."""
+        """Check if elements of the first tensor are less than the second element-wise."""
         return less(x, y)
     
     def less_equal(self, x, y):
-        """Check if one tensor is less than or equal to another element-wise."""
+        """Check if elements of the first tensor are less than or equal to the second element-wise."""
         return less_equal(x, y)
     
     def greater(self, x, y):
-        """Check if one tensor is greater than another element-wise."""
+        """Check if elements of the first tensor are greater than the second element-wise."""
         return greater(x, y)
     
     def greater_equal(self, x, y):
-        """Check if one tensor is greater than or equal to another element-wise."""
+        """Check if elements of the first tensor are greater than or equal to the second element-wise."""
         return greater_equal(x, y)
     
     def logical_and(self, x, y):

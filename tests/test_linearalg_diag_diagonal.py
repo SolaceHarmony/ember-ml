@@ -163,36 +163,30 @@ def test_diagonal_with_offset(backend_name, original_backend):
 @pytest.mark.parametrize("backend_name", BACKENDS)
 def test_diagonal_with_axes(backend_name, original_backend):
     """Test diagonal function with different axes."""
-    try:
-        # Set the backend
-        set_backend(backend_name)
-        
-        # Create a 3D tensor
-        t = tensor.convert_to_tensor([
-            [[1, 2], [3, 4]],
-            [[5, 6], [7, 8]]
-        ])
-        
-        # Extract diagonal with default axes (0, 1)
-        d_default = linearalg.diagonal(t)
-        
-        # Extract diagonal with axes (0, 2)
-        d_02 = linearalg.diagonal(t, axis1=0, axis2=2)
-        
-        # Extract diagonal with axes (1, 2)
-        d_12 = linearalg.diagonal(t, axis1=1, axis2=2)
-        
-        # Expected results
-        expected_default = tensor.convert_to_tensor([[1, 2], [8, 8]])
-        expected_02 = tensor.convert_to_tensor([[1, 3], [6, 8]])
-        expected_12 = tensor.convert_to_tensor([[1, 5], [4, 8]])
-        
-        # Check results
-        assert ops.allclose(d_default, expected_default)
-        assert ops.allclose(d_02, expected_02)
-        assert ops.allclose(d_12, expected_12)
-    except ImportError:
-        pytest.skip(f"{backend_name} backend not available")
-    except Exception as e:
-        # Some backends might not support all axis combinations
-        pytest.skip(f"Error with {backend_name} backend: {str(e)}")
+    # Set the backend
+    set_backend(backend_name)
+    
+    # Create a 3D tensor
+    t = tensor.convert_to_tensor([
+        [[1, 2], [3, 4]],
+        [[5, 6], [7, 8]]
+    ])
+    
+    # Extract diagonal with default axes (0, 1)
+    d_default = linearalg.diagonal(t)
+    
+    # Extract diagonal with axes (0, 2)
+    d_02 = linearalg.diagonal(t, axis1=0, axis2=2)
+    
+    # Extract diagonal with axes (1, 2)
+    d_12 = linearalg.diagonal(t, axis1=1, axis2=2)
+    
+    # Expected results
+    expected_default = tensor.convert_to_tensor([[1, 2], [7, 8]])
+    expected_02 = tensor.convert_to_tensor([[1, 3], [6, 8]])
+    expected_12 = tensor.convert_to_tensor([[1, 5], [4, 8]])
+    
+    # Check results
+    assert ops.allclose(d_default, expected_default)
+    assert ops.allclose(d_02, expected_02)
+    assert ops.allclose(d_12, expected_12)

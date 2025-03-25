@@ -19,26 +19,38 @@ def _validate_dtype(dtype_cls: TorchDType, dtype: DType) -> Optional[Any]:
     if dtype is None:
         return None
     
+    # EmberDType handling
+    if (hasattr(dtype, '__class__') and
+        hasattr(dtype.__class__, '__name__') and
+        dtype.__class__.__name__ == 'EmberDType'):
+        from ember_ml.nn.tensor.common.dtypes import EmberDType
+        if isinstance(dtype, EmberDType):
+            dtype_from_ember = dtype._backend_dtype
+            if dtype_from_ember is not None:
+                return dtype_from_ember
+           
     # Handle string dtypes
     if isinstance(dtype, str):
         return dtype_cls.from_dtype_str(dtype)
         
     # If it's already an MLX dtype, return as is
-    if isinstance(dtype, torch.Dtype):
+    if isinstance(dtype, torch.Dtype) or dtype in [torch.float32, torch.float64, torch.int32, torch.int64,
+                                                  torch.bool, torch.int8, torch.int16, torch.uint8,
+                                                  torch.float16]:
         return dtype
         
     raise ValueError(f"Invalid dtype: {dtype}")
 
 def cast(tensor: TensorLike, dtype: DType) -> torch.Tensor:
     """
-    Cast a tensor to a different data type.
+    Cast a tensor to a new data type.
     
     Args:
-        data: Input tensor
-        dtype: The target data type
+        tensor: Input tensor
+        dtype: Target data type
         
     Returns:
-        Cast tensor
+        Tensor with new data type
     """
     # Import TorchTensor lazily to avoid circular import
     from ember_ml.backend.torch.tensor.tensor import TorchTensor

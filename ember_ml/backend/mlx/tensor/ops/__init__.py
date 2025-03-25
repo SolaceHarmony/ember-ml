@@ -25,9 +25,8 @@ from ember_ml.backend.mlx.tensor.ops.random import (
     random_normal, random_uniform, random_binomial, random_gamma, random_exponential,
     random_poisson, random_categorical, random_permutation, shuffle, set_seed, get_seed
 )
-from ember_ml.backend.mlx.tensor.ops.utility import (
-    convert_to_mlx_tensor, to_numpy, item, shape, dtype, copy, var, sort, argsort, maximum
-)
+
+from ember_ml.backend.mlx.tensor.ops.utility import ( to_numpy, item, shape, dtype, copy, var, sort, argsort, maximum )
 
 # Export all operations
 __all__ = [

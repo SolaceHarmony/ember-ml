@@ -73,62 +73,6 @@ def diag(x: TensorLike, k: int = 0) -> np.ndarray:
     Tensor = NumpyTensor()
     x_array = Tensor.convert_to_tensor(x)
     
-    # Use NumPy's built-in diag function
-    return np.diag(x_array, k=k)
-
-def diagonal(x: TensorLike, offset: int = 0, axis1: int = 0, axis2: int = 1) -> np.ndarray:
-    """
-    Return specified diagonals of an array.
-    
-    Args:
-        x: Input array
-        offset: Offset of the diagonal from the main diagonal
-        axis1: First axis of the 2-D sub-arrays from which the diagonals should be taken
-        axis2: Second axis of the 2-D sub-arrays from which the diagonals should be taken
-        
-    Returns:
-        Array of diagonals
-    """
-    # Convert input to NumPy array
-    from ember_ml.backend.numpy.tensor import NumpyTensor
-    Tensor = NumpyTensor()
-    x_array = Tensor.convert_to_tensor(x)
-    
-    # Use NumPy's built-in diagonal function
-    return np.diagonal(x_array, offset=offset, axis1=axis1, axis2=axis2)
-"""
-NumPy matrix linear algebra operations for ember_ml.
-
-This module provides NumPy operations.
-"""
-
-import numpy as np
-from typing import Union, Tuple, Optional, Literal
-
-# Import from tensor_ops
-from ember_ml.backend.numpy.types import TensorLike
-from ember_ml.backend.numpy.tensor import NumpyDType
-
-dtype_obj = NumpyDType()
-
-def diag(x: TensorLike, k: int = 0) -> np.ndarray:
-    """
-    Extract a diagonal or construct a diagonal matrix.
-    
-    Args:
-        x: Input array. If x is 2-D, return the k-th diagonal.
-           If x is 1-D, return a 2-D array with x on the k-th diagonal.
-        k: Diagonal offset. Use k>0 for diagonals above the main diagonal,
-           and k<0 for diagonals below the main diagonal.
-           
-    Returns:
-        The extracted diagonal or constructed diagonal matrix.
-    """
-    # Convert input to NumPy array
-    from ember_ml.backend.numpy.tensor import NumpyTensor
-    Tensor = NumpyTensor()
-    x_array = Tensor.convert_to_tensor(x)
-    
     # Use NumPy's diag function directly
     return np.diag(x_array, k=k)
 
@@ -159,4 +103,5 @@ def diagonal(x: TensorLike, offset: int = 0, axis1: int = 0, axis2: int = 1) -> 
         raise ValueError("axis1 and axis2 must be different")
     
     # Use NumPy's diagonal function directly
-    return np.diagonal(x_array, offset=offset, axis1=axis1, axis2=axis2)
+    diag_result = np.diagonal(x_array, offset=offset, axis1=axis1, axis2=axis2)
+    return np.moveaxis(diag_result, -1, 0)

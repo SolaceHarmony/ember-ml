@@ -11,7 +11,7 @@ from ember_ml.backend.numpy.tensor.ops.indexing import (
     slice_tensor as slice, slice_update, gather, tensor_scatter_nd_update, scatter
 )
 from ember_ml.backend.numpy.tensor.ops.utility import (
-    convert_to_numpy_tensor, convert_to_tensor, to_numpy, item, shape, dtype, copy, var, sort, argsort, maximum
+    to_numpy, item, shape, dtype, copy, var, sort, argsort, maximum
 )
 from ember_ml.backend.numpy.tensor.ops.random import (
     random_normal, random_uniform, random_binomial, random_gamma, random_exponential,

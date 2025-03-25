@@ -1,8 +1,14 @@
-"""
-Wave utilities module.
+"""Wave utilities module for signal processing operations.
 
-This module provides utilities for wave processing,
-including wave conversion, analysis, and visualization.
+This module provides backend-agnostic implementations of wave processing utilities,
+including conversion, analysis, and visualization functions.
+
+Components:
+    wave_conversion: Tools for converting between different wave representations
+    wave_analysis: Signal analysis functions using ops abstraction
+    wave_visualization: Visualization utilities for wave data
+
+All functions maintain backend independence through the ops abstraction layer.
 """
 
 from ember_ml.wave.utils.wave_conversion import *

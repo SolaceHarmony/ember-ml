@@ -14,6 +14,7 @@ import os
 
 from ember_ml.backend import set_backend, get_backend
 from ember_ml import ops
+from ember_ml.nn import tensor
 from ember_ml.utils import backend_utils
 
 # Shape for testing
@@ -48,22 +49,22 @@ def benchmark_function(func: Callable, num_runs: int, *args, **kwargs) -> Tuple[
     avg_time = total_time / num_runs
     return avg_time, result
 
-def calculate_statistics(tensor):
+def calculate_statistics(tensor_var):
     """Calculate statistics using ops module instead of NumPy."""
     # Use ops module for all calculations
-    mean_val = ops.mean(tensor)
+    mean_val = ops.mean(tensor_var)
     
     # Calculate standard deviation: sqrt(mean((x - mean(x))^2))
     # Use ops.full with the shape of the tensor instead of full_like
-    tensor_shape = ops.shape(tensor)
-    mean_tensor = ops.full(tensor_shape, mean_val)
-    squared_diff = ops.square(ops.subtract(tensor, mean_tensor))
+    tensor_shape = tensor.shape(tensor_var)
+    mean_tensor = tensor.full(tensor_shape, mean_val)
+    squared_diff = ops.square(ops.subtract(tensor_var, mean_tensor))
     variance = ops.mean(squared_diff)
     std_val = ops.sqrt(variance)
     
     # Min and max
-    min_val = ops.min(tensor)
-    max_val = ops.max(tensor)
+    min_val = ops.min(tensor_var)
+    max_val = ops.max(tensor_var)
     
     # Convert to Python native types only at the end to avoid precision loss
     # Use the backend's native conversion method
@@ -97,34 +98,32 @@ def run_benchmarks_for_backend(backend_name: str) -> Dict:
     # Normal distribution
     print(f"Benchmarking normal distribution with {backend_name} backend...")
     normal_time, normal_result = benchmark_function(
-        ops.random_normal, NUM_RUNS, SHAPE, 0.0, 1.0
+        tensor.random_normal, NUM_RUNS, SHAPE, 0.0, 1.0
     )
     
     # Uniform distribution
     print(f"Benchmarking uniform distribution with {backend_name} backend...")
     uniform_time, uniform_result = benchmark_function(
-        ops.random_uniform, NUM_RUNS, SHAPE, 0.0, 1.0
+        tensor.random_uniform, NUM_RUNS, SHAPE, 0.0, 1.0
     )
     
-    # Get the random_ops instance to access the methods we implemented
-    random_ops_instance = ops.random_ops()
-    
+  
     # Exponential distribution
     print(f"Benchmarking exponential distribution with {backend_name} backend...")
     exponential_time, exponential_result = benchmark_function(
-        random_ops_instance.random_exponential, NUM_RUNS, SHAPE, 1.0
+        tensor.random_exponential, NUM_RUNS, SHAPE, 1.0
     )
     
     # Gamma distribution
     print(f"Benchmarking gamma distribution with {backend_name} backend...")
     gamma_time, gamma_result = benchmark_function(
-        random_ops_instance.random_gamma, NUM_RUNS, SHAPE, 2.0, 1.0
+        tensor.random_gamma, NUM_RUNS, SHAPE, 2.0, 1.0
     )
     
     # Poisson distribution
     print(f"Benchmarking poisson distribution with {backend_name} backend...")
     poisson_time, poisson_result = benchmark_function(
-        random_ops_instance.random_poisson, NUM_RUNS, SHAPE, 5.0
+        tensor.random_poisson, NUM_RUNS, SHAPE, 5.0
     )
     
     # Categorical distribution
@@ -132,7 +131,7 @@ def run_benchmarks_for_backend(backend_name: str) -> Dict:
     # Create logits for 5 categories
     logits = ops.ones((SHAPE[0], 5))
     categorical_time, categorical_result = benchmark_function(
-        random_ops_instance.random_categorical, NUM_RUNS, logits, 1
+        tensor.random_categorical, NUM_RUNS, logits, 1
     )
     
     # Calculate statistics before converting to numpy

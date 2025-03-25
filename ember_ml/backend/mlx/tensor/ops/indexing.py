@@ -50,25 +50,6 @@ def slice_tensor(tensor: TensorLike, starts: Shape, sizes: Shape) -> mx.array:
 # Alias for slice_tensor to match MLX naming
 slice = slice_tensor
 
-def slice_update(data: TensorLike, slices: ShapeLike, updates: TensorLike) -> mx.array:
-    """
-    Update a tensor at specific indices.
-    
-    Args:
-        data: Input tensor to update
-        slices: List or tuple of slice objects or indices
-        updates: Values to insert at the specified indices
-        
-    Returns:
-        Updated tensor
-    """
-    # Convert inputs to MLX arrays
-    from ember_ml.backend.mlx.tensor import MLXTensor
-    tensor_ops = MLXTensor()
-    data_tensor = tensor_ops.convert_to_tensor(data)
-    updates_tensor = tensor_ops.convert_to_tensor(updates)
- 
-    return mx.slice_update(data_tensor, updates_tensor, slices)
 
 def gather(tensor: TensorLike, indices: TensorLike, axis: int = 0) -> mx.array:
     """
@@ -94,7 +75,17 @@ def gather(tensor: TensorLike, indices: TensorLike, axis: int = 0) -> mx.array:
     return mx.take(tensor_array, indices_int, axis=axis)
 
 def tensor_scatter_nd_update(tensor: TensorLike, indices: TensorLike, updates: TensorLike) -> mx.array:
-    """Update tensor elements at given indices."""
+    """
+    Update tensor elements at given indices.
+    
+    Args:
+        tensor: Input tensor to update
+        indices: N-dimensional indices where to update values
+        updates: Values to insert at the specified indices
+        
+    Returns:
+        Updated tensor
+    """
     # Convert inputs to MLX arrays
     from ember_ml.backend.mlx.tensor.tensor import MLXTensor
     Tensor = MLXTensor()
@@ -109,12 +100,16 @@ def tensor_scatter_nd_update(tensor: TensorLike, indices: TensorLike, updates: T
     if indices_array.ndim == 1:
         indices_list = [indices_array.tolist()]
     else:
-        indices_list = [idx.tolist() for idx in indices_array]
+        # Handle multi-dimensional indices
+        if len(indices_array.shape) > 1:
+            # Convert each index to a list
+            indices_list = [tuple(idx.tolist()) for idx in indices_array]
+        else:
+            indices_list = [indices_array.tolist()]
     
-    # Update the tensor using slice_update
+    # Update the tensor using our slice_update function
     for i, idx in enumerate(indices_list):
-        axes = list(range(len(idx)))
-        result = mx.slice_update(result, updates_array[i], mx.array(idx), axes)
+        result = slice_update(result, idx, updates_array[i])
     
     return result
 
@@ -124,10 +119,8 @@ def slice_update(tensor: TensorLike, slices: TensorLike, updates: Optional[Tenso
     from ember_ml.backend.mlx.tensor.tensor import MLXTensor
     Tensor = MLXTensor()
     tensor_array = Tensor.convert_to_tensor(tensor)
-    
     # Handle the case where slices is an integer (single index)
-    import numpy as np
-    if isinstance(slices, (int, np.integer)):
+    if isinstance(slices, int) or (hasattr(slices, "item") and isinstance(slices.item(), int)):
         # Convert to a list with a single element
         indices_list = [int(slices)]
     else:
@@ -136,7 +129,7 @@ def slice_update(tensor: TensorLike, slices: TensorLike, updates: Optional[Tenso
         indices_list = slices_array.tolist()
         
         # Handle the case where tolist() returns an int
-        if isinstance(indices_list, (int, np.integer)):
+        if isinstance(indices_list, int):
             indices_list = [indices_list]
     
     # Create axes as list of integers
@@ -159,7 +152,19 @@ def slice_update(tensor: TensorLike, slices: TensorLike, updates: Optional[Tenso
 
 def scatter(data: TensorLike, indices: TensorLike, dim_size: Optional[Union[int, mx.array]] = None,
            aggr: Literal["add", "max", "min", "mean", "softmax"] = "add", axis: int = 0) -> mx.array:
-    """Scatter values into a new tensor."""
+    """
+    Scatter values into a new tensor.
+    
+    Args:
+        data: Source tensor containing values to scatter
+        indices: Indices where to scatter the values
+        dim_size: Size of the output tensor along the given axis. If None, uses the maximum index + 1
+        aggr: Aggregation method to use for duplicate indices ("add", "max", "mean", "softmax", "min")
+        axis: Axis along which to scatter
+        
+    Returns:
+        Tensor with scattered values
+    """
     # Convert inputs to MLX arrays
     from ember_ml.backend.mlx.tensor.tensor import MLXTensor
     Tensor = MLXTensor()
@@ -170,42 +175,79 @@ def scatter(data: TensorLike, indices: TensorLike, dim_size: Optional[Union[int,
     indices_int = indices_array.astype(mx.int32)
     
     # Handle dim_size
-    computed_dim_size = (int(indices_int.shape[0])
-                        if dim_size is None
-                        else int(dim_size))
+    if dim_size is None:
+        # Determine maximum index + 1 for dimension size
+        max_idx = mx.max(indices_int)
+        computed_dim_size = int(max_idx.item()) + 1
+    else:
+        computed_dim_size = int(dim_size)
     
-    return scatter_op(data_array, indices_int, computed_dim_size, axis, aggr)
+    # Choose appropriate scatter operation based on aggr
+    if aggr == "add":
+        return scatter_add(data_array, indices_int, computed_dim_size, axis)
+    elif aggr == "max":
+        return scatter_max(data_array, indices_int, computed_dim_size, axis)
+    elif aggr == "min":
+        return scatter_min(data_array, indices_int, computed_dim_size, axis)
+    elif aggr == "mean":
+        return scatter_mean(data_array, indices_int, computed_dim_size, axis)
+    elif aggr == "softmax":
+        return scatter_softmax(data_array, indices_int, computed_dim_size, axis)
+    else:
+        raise ValueError(f"Unsupported aggregation method: {aggr}")
 
 def scatter_op(src: mx.array, index: mx.array, dim_size: int,
-              axis: int, op: Literal["add", "max", "min", "softmax"]) -> mx.array:
+                axis: int, op: Literal["add", "max", "min", "softmax"]) -> mx.array:
     """Helper function for scatter operations."""
+    # Get shape of output tensor
+    output_shape = list(src.shape)
+    if axis < 0:
+        axis = len(output_shape) + axis
+    output_shape[axis] = dim_size
+    
     # Initialize output tensor based on operation
     if op == "add":
-        out = mx.zeros((dim_size,), dtype=src.dtype)
+        out = mx.zeros(output_shape, dtype=src.dtype)
     elif op in ["max", "softmax"]:
-        out = mx.full((dim_size,), -float('inf'), dtype=src.dtype)
+        out = mx.full(output_shape, -float('inf'), dtype=src.dtype)
     elif op == "min":
-        out = mx.full((dim_size,), float('inf'), dtype=src.dtype)
+        out = mx.full(output_shape, float('inf'), dtype=src.dtype)
     else:
         raise ValueError(f"Unknown operation: {op}")
     
     # Convert indices to integer lists
     index_list = index.tolist()
+    if not isinstance(index_list, list):
+        index_list = [index_list]
     
-    # Perform scatter operation
+    # Create slices for indexing
     for i, idx in enumerate(index_list):
-        idx_array = mx.array([idx])
+        # Create a slice for the specified axis with the index
+        slices = [py_slice(None)] * len(output_shape)
+        slices[axis] = idx
+        
+        # Get the value to scatter
         val_i = src[i]
         
         if op == "add":
-            current = out[idx]
-            out = mx.slice_update(out, current + val_i, idx_array, [0])
+            # Get current value and add
+            current = out[tuple(slices)]
+            # Create an index array with the correct shape for slice_update
+            idx_array = mx.array([idx])
+            axes = [axis]  # Use the correct axis for slicing
+            out = mx.slice_update(out, val_i + current, idx_array, axes)
         elif op == "max":
-            current = out[idx]
-            out = mx.slice_update(out, mx.maximum(current, val_i), idx_array, [0])
+            # Get current value and take max
+            current = out[tuple(slices)]
+            idx_array = mx.array([idx])
+            axes = [axis]
+            out = mx.slice_update(out, mx.maximum(current, val_i), idx_array, axes)
         elif op == "min":
-            current = out[idx]
-            out = mx.slice_update(out, mx.minimum(current, val_i), idx_array, [0])
+            # Get current value and take min
+            current = out[tuple(slices)]
+            idx_array = mx.array([idx])
+            axes = [axis]
+            out = mx.slice_update(out, mx.minimum(current, val_i), idx_array, axes)
     
     return out
 

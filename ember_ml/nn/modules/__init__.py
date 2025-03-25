@@ -1,8 +1,24 @@
-"""
-Modules for neural network components.
+"""This module provides backend-agnostic implementations of neural network modules
+using the ops abstraction layer.
 
-This module provides various neural network components that can be used
-to build complex neural networks.
+Available Modules:
+    Base Classes:
+        RNNCell: Base recurrent cell
+        LSTMCell: Long Short-Term Memory cell
+        GRUCell: Gated Recurrent Unit cell
+        
+    Specialized Cells:
+        StrideAware: Stride-aware cell base class
+        StrideAwareCfC: Stride-aware Closed-form Continuous-time cell
+        StrideAwareCell: Stride-aware general cell
+        
+    Advanced Modules:
+        CfC: Closed-form Continuous-time cell
+        WiredCfCCell: CfC with wiring capabilities
+        LTC: Liquid Time-Constant cell
+        LTCCell: LTC cell implementation
+        StrideAwareWiredCfCCell: Stride-aware wired cell implementation
+
 """
 
 from ember_ml.nn.modules.module import Module, Parameter
@@ -25,16 +41,19 @@ __all__ = [
     'LSTM',
     'GRU',
     'RNNCell',
-    'LSTMCell',
+    'LSTMCell', 
     'GRUCell',
+    
+    # Stride-aware
     'StrideAware',
     'StrideAwareCfC',
     'StrideAwareCell',
+    
+    'StrideAwareWiredCfCCell',
+    # Advanced modules
     'CfC',
     'CfCCell',
     'WiredCfCCell',
-    'StrideAwareWiredCfCCell',
     'LTC',
     'LTCCell',
-    'RNNCell',
 ]

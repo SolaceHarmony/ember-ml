@@ -32,8 +32,24 @@ class EmberDType:
             name: The name of the data type
         """
         self._name = name
-        self._backend_dtype = None
-    
+        try:
+            backend_module = _get_backend_module()
+            if hasattr(backend_module, self._name):
+                self._backend_dtype = getattr(backend_module, self._name)
+            elif hasattr(backend_module, 'dtype_ops'):
+                # Try to get the dtype from the dtype_ops
+                dtype_ops = getattr(backend_module, 'dtype_ops')
+                if hasattr(dtype_ops, self._name):
+                    self._backend_dtype = getattr(dtype_ops, self._name)
+                else:
+                    # If all else fails, use the name as a string
+                    self._backend_dtype = self._name
+            else:
+                # If all else fails, use the name as a string
+                self._backend_dtype = self._name
+        except:
+            # If there's an error, use the name as a string
+            self._backend_dtype = None
     @property
     def name(self) -> str:
         """Get the name of the data type."""

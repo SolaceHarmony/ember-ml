@@ -1,8 +1,12 @@
-"""
-Common feature extraction and transformation implementations.
+"""Common feature extraction and transformation implementations.
 
 This module provides backend-agnostic implementations of feature extraction and
 transformation operations using the ops abstraction layer.
+
+Available Classes:
+    PCA: Principal Component Analysis implementation
+    Standardize: Feature standardization (zero mean, unit variance)
+    Normalize: Feature normalization to specified range
 """
 
 from ember_ml.features.common.pca_features import PCA

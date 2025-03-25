@@ -7,103 +7,95 @@ help with static type checking.
 """
 
 from typing import (
-    Any, List, Optional, Sequence, Tuple, Union, Literal,
+    Any, List, Optional, Sequence, Tuple, Union,
     TYPE_CHECKING
 )
 import os
 
 import mlx.core as mx
 
+# Basic type aliases that don't require imports
+type Numeric = Union[int, float]
+type OrdLike = Optional[Union[int, str]]
+type Device = Optional[str]
+type PathLike = Union[str, os.PathLike[str]]
+type Shape = Sequence[int]
+type ShapeType = Union[int, Tuple[int, ...], List[int]]
+type ShapeLike = Union[int, List[int], Tuple[int, ...], Shape]
+type DimSize = Union[int, 'mx.array']
+type Axis = Optional[Union[int, Sequence[int]]]
+type IndexType = Union[int, Sequence[int], 'mx.array'] 
+type Indices = Union[Sequence[int], 'mx.array']
+type TensorLike = Optional[Union[
+    Numeric,
+    bool,
+    List[Any],
+    Tuple[Any, ...],
+    'MLXArray'
+]]
+type ScalarLike = Optional[Union[
+    Numeric,
+    bool,
+    'MLXArray',
+    'TensorLike'
+]]
+
+# MLX specific
+type MLXArray = mx.array
+type DTypeClass = mx.Dtype
+
+# Precision related
 default_int = mx.int32
 default_float = mx.float32
-default_bool = mx.bool_
+default_bool = mx.bool_ if hasattr(mx, 'bool_') else Any
 
-# Conditional imports
+
+# Default type for dtype
+type DType = Any
+
+# Conditional type definitions
 if TYPE_CHECKING == True:
-    from ember_ml.nn.tensor.common.ember_tensor import EmberTensor
-    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
-    from ember_ml.backend.torch.tensor.tensor import TorchTensor
-    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
-    import numpy
-    # Basic type aliases
-    type Numeric = Union[int, float]
-
-    # PyTorch tensor types
-    type MLXArray = mx.core.array
-    type DTypeClass = mx.core.Dtype
-    type ArrayLike = Union[TorchTensor, Numeric, List[Any], Tuple[Any, ...]]
- 
-    type dtype_int32 = Union[DTypeClass.int32, Literal['int32'] ]
-    type dtype_int64 = Union[DTypeClass.int64, Literal['int64'] ]
-    type dtype_float32 = Union[DTypeClass.float32, Literal['float32'] ]
-    type dtype_float64 = Union[DTypeClass.float64, Literal['float64'] ]
-    type dtype_bool = Union[DTypeClass.bool, Literal['bool']]
+    # These imports are for type checking only
+    # Must be done inside TYPE_CHECKING block to avoid circular imports
+    from typing import TypeVar
+    T = TypeVar('T')  # Used for generic type definitions
+    
+    # Define types that reference external modules
     type TensorTypes = Union[
         MLXArray,
-        MLXTensor,
-        EmberTensor,
-        NumpyTensor
+        Any,  # MLXTensor
+        Any,  # EmberTensor
+        Any,  # numpy.ndarray
     ]
+    
+    type ArrayLike = Union[
+        Any,  # MLXTensor
+        MLXArray, 
+        Numeric, 
+        List[Any], 
+        Tuple[Any, ...]
+    ]
+    
     type DTypes = Union[
-        DTypeClass,
-        numpy.dtype,
-        dtype_int32,
-        dtype_int64,
-        dtype_float32,
-        dtype_float64,
-        numpy.dtype,
-        numpy.int32,
-        numpy.int64,
-        numpy.float32,
-        numpy.float64,
-        numpy.bool_,]
-else:
-    DType = Any  # Using Any for maximum compatibility
-    DTypes = Any  # Using Any for maximum compatibility
-    TensorLike = Any  # Using Any for maximum compatibility
-    Shape = Any  # Using Any for maximum compatibility
-    Axis = Any  # Using Any for maximum compatibility
-    OrdLike = Any  # Using Any for maximum compatibility
-    TensorTypes = Any  # Using Any for maximum compatibility
-
-    # Main type definitions
+        mx.Dtype,
+        Any,  # numpy.dtype
+    ]
+    
     type TensorLike = Optional[Union[
         Numeric,
         bool,
         List[Any],
         Tuple[Any, ...],
-        TensorTypes
+        'TensorTypes'
     ]]
-
-    # Shape types
-    type Shape = Sequence[int]
-    type ShapeType = Union[int, Tuple[int, ...], List[int]]
-    type ShapeLike = Union[int, List[int], Tuple[int, ...], Shape]
-
-    # Dimension types
-    type DimSize = Union[int, mx.array]
-    type Axis = Optional[Union[int, Sequence[int]]]
-
-    # Scalar types
+    
     type ScalarLike = Optional[Union[
         Numeric,
         bool,
         MLXArray,
-        TensorTypes
+        'TensorLike'
     ]]
 
-    # OrdLike
-    type OrdLike = Optional[Union[int, str]]
-
-    # Device type
-    type Device = Optional[str]
-
-    # Index types
-    type IndexType = Union[int, Sequence[int], MLXArray]
-    type Indices = Union[Sequence[int], MLXArray]
-
-    # File paths
-    type PathLike = Union[str, os.PathLike[str]]
 
 __all__ = [
     'Numeric',
@@ -111,9 +103,8 @@ __all__ = [
     'Shape',
     'ShapeType', 
     'ShapeLike',
-    'DTypeStr',
     'DTypeClass',
-    'DType',
+    'DTypes',
     'MLXArray',
     'ArrayLike', 
     'TensorTypes',
@@ -126,3 +117,5 @@ __all__ = [
     'Indices',
     'PathLike'
 ]
+
+

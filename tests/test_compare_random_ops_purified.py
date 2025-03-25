@@ -11,7 +11,6 @@ import sys
 import pytest
 from unittest.mock import patch
 import importlib.util
-
 # Add the project root to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -62,10 +61,10 @@ class TestCompareRandomOpsPurified:
 
     def test_calculate_statistics(self):
         """Test the calculate_statistics function."""
-        from ember_ml import ops
+        from ember_ml.nn import tensor
         
         # Create a simple tensor
-        tensor = ops.ones((10,))
+        tensor = tensor.ones((10,))
         
         # Call the calculate_statistics function
         mean, std, min_val, max_val = benchmark_module.calculate_statistics(tensor)

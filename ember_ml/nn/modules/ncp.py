@@ -232,5 +232,6 @@ class NCP(Module):
         wiring = wiring_class.from_config(wiring_config)
         
         # Create the NCP module
-        config['state'] = tensor.zeros((1, wiring.units))
+        # Remove 'state' from the config before passing it to the constructor
+        config.pop('state', None)
         return cls(wiring=wiring, **config)

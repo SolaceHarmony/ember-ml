@@ -7,7 +7,7 @@ which divides neurons into sensory, inter, and motor neurons.
 
 from typing import Optional, Tuple, List, Dict, Any
 
-from ember_ml import ops
+from ember_ml.nn import tensor
 
 from ember_ml.nn.wirings.wiring import Wiring
 from ember_ml.nn.tensor import EmberTensor, int32, zeros, ones, random_uniform
@@ -102,7 +102,7 @@ class NCPWiring(Wiring):
             self.set_input_dim(input_dim)
         # Set random seed for reproducibility
         if self.seed is not None:
-            ops.random_ops().set_seed(self.seed)
+            tensor.set_seed(self.seed)
         
         # Create masks
         recurrent_mask = zeros((self.units, self.units), dtype=int32)

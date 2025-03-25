@@ -64,7 +64,11 @@ def eig(a: TensorLike) -> Tuple[torch.Tensor, torch.Tensor]:
     Returns:
         Tuple of (eigenvalues, eigenvectors)
     """
-    tensor = convert_to_tensor(a)
+    # Convert input to PyTorch tensor
+    from ember_ml.backend.torch.tensor import TorchTensor
+    TensorInstance = TorchTensor()
+
+    tensor = TensorInstance.convert_to_tensor(a)
     
     # PyTorch's eig is deprecated, use eigvals instead
     # But eigvals only returns eigenvalues, so we use torch.linalg.eig
@@ -83,7 +87,11 @@ def eigvals(a: TensorLike) -> torch.Tensor:
     Returns:
         Eigenvalues of the matrix
     """
-    tensor = convert_to_tensor(a)
+    # Convert input to PyTorch tensor
+    from ember_ml.backend.torch.tensor import TorchTensor
+    TensorInstance = TorchTensor()
+
+    tensor = TensorInstance.convert_to_tensor(a)
     return torch.linalg.eigvals(tensor)
 
 
@@ -102,7 +110,11 @@ def qr(a: TensorLike, mode: Literal['reduced', 'complete', 'r', 'raw'] = 'reduce
     Returns:
         Tuple of (Q, R) matrices
     """
-    tensor = convert_to_tensor(a)
+     # Convert input to PyTorch tensor
+    from ember_ml.backend.torch.tensor import TorchTensor
+    TensorInstance = TorchTensor()
+
+    tensor = TensorInstance.convert_to_tensor(a)
     
     # PyTorch's qr doesn't support 'r' or 'raw' modes directly
     # We'll implement them manually

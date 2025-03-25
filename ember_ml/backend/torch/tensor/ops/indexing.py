@@ -2,7 +2,7 @@
 
 import torch
 
-from typing import Sequence, Optional, Literal
+from typing import Sequence, Optional, Literal, Union
 from builtins import slice as py_slice
 from ember_ml.backend.torch.types import (
     TensorLike, Shape
@@ -50,22 +50,28 @@ def slice_tensor(tensor: TensorLike, starts: Shape, sizes: Shape) -> torch.Tenso
 # Alias for slice_tensor to match Torch naming
 slice = slice_tensor
 
-def slice_update(data: TensorLike, slices: TensorLike, updates: TensorLike) -> torch.Tensor:
+def slice_update(data: TensorLike, slices: TensorLike, updates: Optional[TensorLike] = None) -> torch.Tensor:
     """
     Update a tensor at specific indices.
     
     Args:
         data: Input tensor to update
         slices: List or tuple of slice objects or indices
-        updates: Values to insert at the specified indices
+        updates: Values to insert at the specified indices. If None, returns a slice of the tensor.
         
     Returns:
-        Updated tensor
+        Updated tensor or sliced tensor if updates is None
     """
     # Convert inputs to Torch arrays
     from ember_ml.backend.torch.tensor import TorchTensor
     tensor_ops = TorchTensor()
     tensor = tensor_ops.convert_to_tensor(data)
+    
+    # If updates is None, return a slice of the tensor
+    if updates is None:
+        return tensor[slices].clone()
+    
+    # Convert updates to tensor
     updates_tensor = tensor_ops.convert_to_tensor(updates)
     
     # Create a copy of the input tensor
@@ -170,15 +176,15 @@ def scatter(data: TensorLike, indices: TensorLike, dim_size: Optional[int] = Non
     
     # Apply the appropriate scatter operation based on aggr
     if aggr == "add":
-        return scatter_add(data, indices, dim_size, axis)
+        return scatter_add(tensor_torch, indices_torch, dim_size, axis)
     elif aggr == "max":
-        return scatter_max(data, indices, dim_size, axis)
+        return scatter_max(tensor_torch, indices_torch, dim_size, axis)
     elif aggr == "min":
-        return scatter_min(data, indices, dim_size, axis)
+        return scatter_min(tensor_torch, indices_torch, dim_size, axis)
     elif aggr == "mean":
-        return scatter_mean(data, indices, dim_size, axis)
+        return scatter_mean(tensor_torch, indices_torch, dim_size, axis)
     elif aggr == "softmax":
-        return scatter_softmax(data, indices, dim_size, axis)
+        return scatter_softmax(tensor_torch, indices_torch, dim_size, axis)
     else:
         raise ValueError(f"Unsupported aggregation method: {aggr}")
 
@@ -211,8 +217,29 @@ def scatter_add(data: TensorLike, indices: TensorLike, dim_size: Optional[int] =
     # Initialize output tensor with zeros
     output = torch.zeros(output_shape, dtype=tensor_torch.dtype, device=tensor_torch.device)
     
-    # Use torch.scatter_add_ for the operation
-    return output.scatter_add_(axis, indices_torch, tensor_torch)
+    # For multi-dimensional tensors, we need to handle scatter differently
+    if len(tensor_torch.shape) > 1:
+        # Use manual iteration for multi-dimensional tensors
+        for i in range(len(indices_torch)):
+            idx = indices_torch[i].item()
+            
+            # Create slice for the specific index
+            slice_indices = [py_slice(None)] * len(output_shape)
+            slice_indices[axis] = idx
+            
+            # Get current slice of output tensor
+            output_slice = output[tuple(slice_indices)]
+            
+            # Get corresponding slice of input tensor
+            input_slice = tensor_torch[i]
+            
+            # Add values
+            output[tuple(slice_indices)] = output_slice + input_slice
+            
+        return output
+    else:
+        # For 1D tensors, we can use torch.scatter_add_ directly
+        return output.scatter_add_(axis, indices_torch, tensor_torch)
 
 def scatter_max(data: TensorLike, indices: TensorLike, dim_size: Optional[int] = None, axis: int = 0) -> torch.Tensor:
     """
@@ -243,11 +270,24 @@ def scatter_max(data: TensorLike, indices: TensorLike, dim_size: Optional[int] =
     # Initialize output tensor with minimum value
     output = torch.full(output_shape, float('-inf'), dtype=tensor_torch.dtype, device=tensor_torch.device)
     
-    # Use torch.scatter to perform the max operation
-    result, _ = output.scatter_(axis, indices_torch, tensor_torch, reduce='amax')
+    # We can't use the reduce='amax' option as it's not available in all PyTorch versions
+    # Instead, manually implement max scatter
+    for i in range(tensor_torch.shape[0]):
+        idx = indices_torch[i].item()
+        value = tensor_torch[i]
+        
+        # Create slice for the specific index using Python's built-in slice
+        slice_indices = [py_slice(None)] * len(output_shape)
+        slice_indices[axis] = idx
+        
+        # Get current value
+        current = output[tuple(slice_indices)]
+        
+        # Update with max
+        output[tuple(slice_indices)] = torch.maximum(current, value)
     
     # Replace -inf with 0
-    result = torch.where(result == float('-inf'), torch.zeros_like(result), result)
+    result = torch.where(output == float('-inf'), torch.zeros_like(output), output)
     
     return result
 
@@ -280,11 +320,24 @@ def scatter_min(data: TensorLike, indices: TensorLike, dim_size: Optional[int] =
     # Initialize output tensor with maximum value
     output = torch.full(output_shape, float('inf'), dtype=tensor_torch.dtype, device=tensor_torch.device)
     
-    # Use torch.scatter to perform the min operation
-    result, _ = output.scatter_(axis, indices_torch, tensor_torch, reduce='amin')
+    # We can't use the reduce='amin' option as it's not available in all PyTorch versions
+    # Instead, manually implement min scatter
+    for i in range(tensor_torch.shape[0]):
+        idx = indices_torch[i].item()
+        value = tensor_torch[i]
+        
+        # Create slice for the specific index using Python's built-in slice
+        slice_indices = [py_slice(None)] * len(output_shape)
+        slice_indices[axis] = idx
+        
+        # Get current value
+        current = output[tuple(slice_indices)]
+        
+        # Update with min
+        output[tuple(slice_indices)] = torch.minimum(current, value)
     
     # Replace inf with 0
-    result = torch.where(result == float('inf'), torch.zeros_like(result), result)
+    result = torch.where(output == float('inf'), torch.zeros_like(output), output)
     
     return result
 

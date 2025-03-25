@@ -78,7 +78,7 @@ def test_ncp_forward():
     outputs = model(inputs)
     
     # Check that the output has the correct shape
-    assert ops.shape(outputs) == (10, 5)
+    assert tensor.shape(outputs) == (10, 5)
 
 def test_ncp_reset_state():
     """Test NCP reset_state method."""
@@ -114,7 +114,7 @@ def test_ncp_reset_state():
     outputs2 = model(inputs)
     
     # Check that the outputs are the same
-    assert np.allclose(ops.to_numpy(outputs1), ops.to_numpy(outputs2))
+    assert np.allclose(tensor.to_numpy(outputs1), tensor.to_numpy(outputs2))
 
 def test_ncp_config():
     """Test NCP get_config and from_config methods."""

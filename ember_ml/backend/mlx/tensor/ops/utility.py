@@ -20,6 +20,12 @@ def _convert_input(x: TensorLike) -> Any:
     - EmberTensor objects (extract underlying data)
     - Python scalars (int, float, bool)
     - Python sequences (list, tuple)
+       
+    Special handling for:
+    - 0D tensors (scalars)
+    - 1D tensors (vectors)
+    - 2D tensors (matrices)
+    - Higher dimensional tensors
     
     Args:
         x: Input data to convert
@@ -48,7 +54,12 @@ def _convert_input(x: TensorLike) -> Any:
         hasattr(x.__class__, '__name__') and
         x.__class__.__name__ == 'EmberTensor'):
         if hasattr(x, '_tensor'):
-          return x._tensor
+            from ember_ml.nn.tensor.common.dtypes import EmberDType
+            if isinstance(x._dtype, EmberDType):
+                dtype_from_ember = x._dtype._backend_dtype
+                if dtype_from_ember is not None:
+                    x._tensor = x._tensor.astype(dtype_from_ember)
+            return x._tensor
         else:
           raise ValueError(f"EmberTensor does not have a '_tensor' attribute: {x}")
 
@@ -60,11 +71,29 @@ def _convert_input(x: TensorLike) -> Any:
         
     # Handle Python scalars (0D tensors)
     if isinstance(x, (int, float, bool)):
-        return mx.array(x)
+        try:
+            return mx.array(x)
+        except Exception as e:
+            raise ValueError(f"Cannot convert scalar {x} to MLX array: {e}")
     
     # Handle Python sequences (potential 1D or higher tensors) recursively
     if isinstance(x, (list, tuple)):
-        return mx.array([_convert_input(item) for item in x])
+       try:
+            # Check if it's a nested sequence (2D or higher)
+            if x and isinstance(x[0], (list, tuple)):
+                # Handle potential jagged arrays by ensuring consistent dimensions
+                shapes = [len(item) for item in x if isinstance(item, (list, tuple))]
+                if len(set(shapes)) > 1:
+                    # Jagged array - warn but proceed
+                    import warnings
+                    warnings.warn(f"Converting jagged array with inconsistent shapes: {shapes}")
+            return mx.array([_convert_input(item) for item in x])
+       except Exception as e:
+            raise ValueError(f"Cannot convert sequence {type(x)} to MLX array: {e}")
+
+    # Handle MLX scalar types
+    if mx.isscalar(x):
+        return mx.array(x)
 
     # For any other type, reject it
     raise ValueError(f"Cannot convert {type(x)} to MLX array. Only int, float, bool, list, tuple, numpy.ndarray, MLXTensor, and EmberTensor are supported.")

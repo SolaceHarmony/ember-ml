@@ -34,8 +34,10 @@ def _convert_input(x: TensorLike) -> Any:
     Raises:
         ValueError: If the input cannot be converted to a NumPy array
     """
-    # Already a NumPy array
-    if isinstance(x, np.ndarray):
+    # Check for NumPy arrays by type name rather than direct import
+    if (hasattr(x, '__class__') and
+        x.__class__.__module__ == 'numpy' and
+        x.__class__.__name__ == 'ndarray'):
         return x
 
     # Handle NumpyTensor objects - return underlying tensor
@@ -49,7 +51,12 @@ def _convert_input(x: TensorLike) -> Any:
         hasattr(x.__class__, '__name__') and
         x.__class__.__name__ == 'EmberTensor'):
         if hasattr(x, '_tensor'):
-          return x._tensor
+            from ember_ml.nn.tensor.common.dtypes import EmberDType
+            if isinstance(x._dtype, EmberDType):
+                dtype_from_ember = x._dtype._backend_dtype
+                if dtype_from_ember is not None:
+                    x._tensor = x._tensor.astype(dtype_from_ember)
+            return x._tensor
         else:
             raise ValueError(f"EmberTensor does not have a '_tensor' attribute: {x}")
 
@@ -302,6 +309,3 @@ def maximum(data1: TensorLike, data2: TensorLike) -> np.ndarray:
     data1_array = Tensor.convert_to_tensor(data1)
     data2_array = Tensor.convert_to_tensor(data2)
     return np.maximum(data1_array, data2_array)
-
-# Alias for backward compatibility
-convert_to_tensor = convert_to_numpy_tensor

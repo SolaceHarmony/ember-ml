@@ -38,7 +38,7 @@ def _convert_input(x: TensorLike, no_scalars = False) -> Any:
     if (hasattr(x, '__class__') and
         x.__class__.__module__ == 'numpy' and
         x.__class__.__name__ == 'ndarray'):
-        return torch.from_numpy(x)
+        return torch.from_numpy(x.copy())
 
     # Handle Python scalars (0D tensors)
     if not no_scalars and isinstance(x, (int, float, bool)):

@@ -9,6 +9,7 @@ import mlx.core as mx
 # Import from tensor_ops
 from ember_ml.backend.mlx.tensor import MLXDType
 from ember_ml.backend.mlx.types import TensorLike
+from ember_ml.backend.mlx.linearalg.ops.decomp_ops_hpc import HPC16x8
 
 dtype_obj = MLXDType()
 
@@ -29,15 +30,20 @@ def is_spd(A: mx.array) -> bool:
     if not is_symmetric:
         return False
     
-    # Check for positive definiteness using CPU
+    # For performance and precision, we should use our optimized Metal kernels
+    # instead of moving to CPU
     try:
-        # Create a CPU stream and run cholesky on it
-        cpu_device = mx.cpu
-        with mx.stream(cpu_device):
-            A_cpu = mx.array(A)
-            mx.linalg.cholesky(A_cpu)
+        # Use our optimized Metal implementation
+        n = A.shape[0]
+        if n < 32:
+            cholesky_standard(A)
+        elif n < 128:
+            mlx_cholesky_single_thread(A)
+        else:
+            block_size = min(32, max(16, n // 32))
+            mlx_cholesky_block_based(A, block_size=block_size)
         return True
-    except:
+    except Exception:
         return False
 
 def mlx_cholesky_single_thread(A: mx.array) -> mx.array:
@@ -122,13 +128,14 @@ def mlx_cholesky_single_thread(A: mx.array) -> mx.array:
         threads = (1, 1, 1)
         
         # Run the kernel
-        return kernel(
+        result = kernel(
             inputs=[A_inner],
             output_shapes=[A_inner.shape],
             output_dtypes=[A_inner.dtype],
             grid=grid,
             threadgroup=threads
-        )[0]
+        )
+        return result[0]
     
     # Call the inner implementation
     return _inner_impl(A)
@@ -264,13 +271,14 @@ def mlx_cholesky_block_based(A: mx.array, block_size: int = 16) -> mx.array:
         thread_count = mx.array([num_threads], dtype=mx.uint32)
         
         # Run the kernel
-        return kernel(
+        result = kernel(
             inputs=[A_inner, block_param, thread_count],
             output_shapes=[A_inner.shape],
             output_dtypes=[A_inner.dtype],
             grid=grid,
             threadgroup=threads
-        )[0]
+        )
+        return result[0]
     
     # Call the inner implementation
     return _inner_impl(A, block_size)
@@ -357,7 +365,6 @@ def cholesky(a: TensorLike) -> mx.array:
     except Exception:
         # If we can't determine the device type, assume it's not Metal
         is_metal = False
-        is_metal = False
     
     # Choose implementation based on matrix size and device
     if not is_metal or n < 32:
@@ -410,8 +417,8 @@ def svd(a: TensorLike,
     Tensor = MLXTensor()
     a_array = Tensor.convert_to_tensor(a, dtype=dtype_obj.float32)
     
-    # Get matrix dimensions
-    m, n = a_array.shape
+    # Get dimensions (already obtained when deciding which implementation to use)
+    m, n = Tensor.shape(a_array)
     k = min(m, n)
     
     # Compute A^T A for eigendecomposition
@@ -614,35 +621,6 @@ def _add_double_single(a_high, a_low, b_high, b_low):
     e = (a_high - s) + b_high + a_low + b_low
     return s, e
 
-class HPC16x8:
-    """
-    High-Precision Computing class for MLX.
-    This is a simplified version of the HPC16x8 class from the orthogonal.py file.
-    It provides support for non-square matrix QR decomposition.
-    """
-    
-    def __init__(self, data):
-        self.data = data
-        
-    @classmethod
-    def from_array(cls, array):
-        """Convert a regular MLX array to HPC format."""
-        return cls(array)
-        
-    def to_float32(self):
-        """Convert back to regular MLX float32 array."""
-        return self.data
-        
-    def qr(self):
-        """
-        Perform QR decomposition on the HPC matrix.
-        This is a simplified implementation that delegates to the standard QR.
-        """
-        # For simplicity, we'll use the standard QR decomposition
-        # In a real implementation, this would use a more numerically stable approach
-        q, r = _standard_qr(self.data)
-        return HPC16x8(q), HPC16x8(r)
-
 def _standard_qr(a_array):
     """Standard QR decomposition using Gram-Schmidt orthogonalization."""
     m, n = a_array.shape
@@ -766,7 +744,9 @@ def qr(a: TensorLike,
     
     Notes:
         This implementation uses a numerically stable approach for QR decomposition.
-        For non-square matrices, it uses a specialized HPC implementation.
+        For non-square matrices, it uses a specialized HPC implementation (qr_128).
+        For square matrices, it uses a double-single precision approach for increased stability.
+        For non-square matrices, it uses a specialized HPC implementation (qr_128).
         For square matrices, it uses a double-single precision approach for increased stability.
     """
     # Convert input to MLX array with float32 dtype
@@ -777,8 +757,16 @@ def qr(a: TensorLike,
     # Get matrix dimensions
     m, n = a_array.shape
     
-    # Use the custom QR decomposition
-    q, r = _custom_qr(a_array)
+    # Get matrix dimensions and choose appropriate implementation
+    m, n = a_array.shape
+    
+    # For non-square matrices, use the specialized QR implementation
+    if m != n:
+        from ember_ml.backend.mlx.linearalg.ops.qr_128 import qr_128
+        q, r = qr_128(a_array)
+    else:
+        # For square matrices, use the standard implementation
+        q, r = _custom_qr(a_array)
     
     # Handle different modes
     if mode == 'complete' and m > n:

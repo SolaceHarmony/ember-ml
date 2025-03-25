@@ -32,7 +32,7 @@ class SpecializedNeuron(WeightedLTCNeuron):
         state (float): Current activation state
         base_tau (float): Base time constant
         num_inputs (int): Number of input connections
-        weights (NDArray[np.float64]): Input weight vector
+        weights (NDArray[np.float32]): Input weight vector
     """
     
     # Role-specific parameters
@@ -56,7 +56,7 @@ class SpecializedNeuron(WeightedLTCNeuron):
         self.role = role
     
     def update(self,
-              inputs: Union[List[float], NDArray[np.float64]],
+              inputs: Union[List[float], NDArray[np.float32]],
               dt: float = 0.1,
               tau_mod: float = 1.0,
               feedback: float = 0.0) -> float:
@@ -73,7 +73,7 @@ class SpecializedNeuron(WeightedLTCNeuron):
             float: Updated neuron state
         """
         # Ensure inputs are numpy array
-        input_array = np.array(inputs, dtype=np.float64)
+        input_array = np.array(inputs, dtype=np.float32)
         
         # Calculate base synaptic input including feedback
         synaptic_input = np.dot(self.weights, input_array) + feedback

@@ -65,22 +65,32 @@ __version__ = '0.1.0'
 
 # Module level docstring
 __doc__ = """
-Neural Network Core Module
-=========================
+Neural Network Core Module.
 
-Provides core implementations of neural architectures:
+Provides foundational implementations of neural architectures with an emphasis
+on biological plausibility and temporal dynamics.
 
-- LTC (Liquid Time Constant) neurons
-- Geometric and spherical variants
-- Hybrid architectures with attention
-- Blocky road implementations with quantized activation
+Components:
+    Temporal Processing:
+        - LTC (Liquid Time Constant) neurons
+        - Variable time constant dynamics
+        - Temporal integration systems
+        
+    Geometric Processing:
+        - Spherical coordinate systems
+        - Geometric neural representations
+        - Spatial relationship modeling
+        
+    Hybrid Architectures:
+        - Attention-augmented neurons
+        - Multi-modal integration
+        - Adaptive neural circuits
+        
+    Quantized Systems:
+        - Discrete activation functions
+        - Binary neural operations
+        - Low-precision implementations
 
-The module focuses on biologically-inspired neural computations
-with an emphasis on temporal dynamics and geometric processing.
-
-Key Features:
-- Temporal integration with variable time constants
-- Geometric and spherical coordinate processing
-- Hybrid architectures combining multiple approaches
-- Quantized implementations for specific use cases
+All implementations maintain backend independence through the ops
+abstraction layer while preserving biological plausibility.
 """
