@@ -49,7 +49,7 @@ class TestAnimatedFeatureProcessor(unittest.TestCase):
         self.assertIsNotNone(result)
         
         # Check shape (5 rows, 2 columns)
-        shape = ops.shape(result)
+        shape = tensor.shape(result)
         self.assertEqual(shape[0], 5)
         self.assertEqual(shape[1], 2)
         
@@ -70,7 +70,7 @@ class TestAnimatedFeatureProcessor(unittest.TestCase):
         
         # Check shape (5 rows, sum of unique values in each column)
         # categorical_col1 has 3 unique values, categorical_col2 has 3 unique values
-        shape = ops.shape(result)
+        shape = tensor.shape(result)
         self.assertEqual(shape[0], 5)
         self.assertEqual(shape[1], 6)  # 3 + 3 = 6
         
@@ -90,7 +90,7 @@ class TestAnimatedFeatureProcessor(unittest.TestCase):
         self.assertIsNotNone(result)
         
         # Check shape (5 rows, multiple features per datetime column)
-        shape = ops.shape(result)
+        shape = tensor.shape(result)
         self.assertEqual(shape[0], 5)
         
         # We expect at least 2 features per component (sin/cos) for each datetime unit
@@ -113,7 +113,7 @@ class TestAnimatedFeatureProcessor(unittest.TestCase):
         self.assertIsNotNone(result)
         
         # Check shape (5 rows, n_components per identifier column)
-        shape = ops.shape(result)
+        shape = tensor.shape(result)
         self.assertEqual(shape[0], 5)
         self.assertEqual(shape[1], 16)  # Default n_components=16
         
@@ -133,7 +133,7 @@ class TestAnimatedFeatureProcessor(unittest.TestCase):
         self.assertIsNotNone(result)
         
         # Check shape (should be unchanged)
-        self.assertEqual(ops.shape(result), ops.shape(data))
+        self.assertEqual(tensor.shape(result), tensor.shape(data))
         
         # Check that there are no NaNs in the result
         nan_mask = ops.isnan(result)
@@ -156,7 +156,7 @@ class TestAnimatedFeatureProcessor(unittest.TestCase):
         self.assertIsNotNone(result)
         
         # Check shape (should be unchanged)
-        self.assertEqual(ops.shape(result), ops.shape(data))
+        self.assertEqual(tensor.shape(result), tensor.shape(data))
         
         # Convert to numpy for easier inspection
         result_np = tensor.to_numpy(result)
@@ -183,7 +183,7 @@ class TestAnimatedFeatureProcessor(unittest.TestCase):
         self.assertIsNotNone(result)
         
         # Check shape (should be unchanged)
-        self.assertEqual(ops.shape(result), ops.shape(data))
+        self.assertEqual(tensor.shape(result), tensor.shape(data))
         
         # Convert to numpy for easier inspection
         result_np = tensor.to_numpy(result)
@@ -211,7 +211,7 @@ class TestAnimatedFeatureProcessor(unittest.TestCase):
         self.assertIsNotNone(encoded_data)
         
         # Check shape (5 rows, 3 unique values)
-        shape = ops.shape(encoded_data)
+        shape = tensor.shape(encoded_data)
         self.assertEqual(shape[0], 5)
         self.assertEqual(shape[1], 3)
         
@@ -235,7 +235,7 @@ class TestAnimatedFeatureProcessor(unittest.TestCase):
         self.assertIsNotNone(encoded_data)
         
         # Check shape (5 rows, n_components)
-        shape = ops.shape(encoded_data)
+        shape = tensor.shape(encoded_data)
         self.assertEqual(shape[0], 5)
         self.assertEqual(shape[1], n_components)
         

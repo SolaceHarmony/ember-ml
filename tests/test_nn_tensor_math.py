@@ -14,7 +14,7 @@ from ember_ml.nn.tensor import (
 )
 from ember_ml.backend import get_backend, set_backend
 
-# Replace ops.ones with ones, ops.shape with shape, etc.
+# Replace tensor.ones with ones, tensor.shape with shape, etc.
 # But keep ops.add, ops.subtract, etc. as they are
 
 # List of backends to test

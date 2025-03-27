@@ -31,8 +31,8 @@ class TorchLossOps:
         Returns:
             Mean squared error
         """
-        y_true = _tensor_tensor.convert_to_tensor(y_true)
-        y_pred = _tensor_tensor.convert_to_tensor(y_pred)
+        y_true = _tensor_ops.convert_to_tensor(y_true)
+        y_pred = _tensor_ops.convert_to_tensor(y_pred)
         
         squared_error = torch.square(y_true - y_pred)
         
@@ -63,8 +63,8 @@ class TorchLossOps:
         Returns:
             Mean absolute error
         """
-        y_true = _tensor_tensor.convert_to_tensor(y_true)
-        y_pred = _tensor_tensor.convert_to_tensor(y_pred)
+        y_true = _tensor_ops.convert_to_tensor(y_true)
+        y_pred = _tensor_ops.convert_to_tensor(y_pred)
         
         absolute_error = torch.abs(y_true - y_pred)
         
@@ -96,8 +96,8 @@ class TorchLossOps:
         Returns:
             Binary crossentropy loss
         """
-        y_true = _tensor_tensor.convert_to_tensor(y_true)
-        y_pred = _tensor_tensor.convert_to_tensor(y_pred)
+        y_true = _tensor_ops.convert_to_tensor(y_true)
+        y_pred = _tensor_ops.convert_to_tensor(y_pred)
         
         # Use PyTorch's binary cross entropy function
         if from_logits:
@@ -133,8 +133,8 @@ class TorchLossOps:
         Returns:
             Categorical crossentropy loss
         """
-        y_true = _tensor_tensor.convert_to_tensor(y_true)
-        y_pred = _tensor_tensor.convert_to_tensor(y_pred)
+        y_true = _tensor_ops.convert_to_tensor(y_true)
+        y_pred = _tensor_ops.convert_to_tensor(y_pred)
         
         # Use PyTorch's cross entropy function
         if from_logits:
@@ -191,8 +191,8 @@ class TorchLossOps:
         Returns:
             Sparse categorical crossentropy loss
         """
-        y_true = _tensor_tensor.convert_to_tensor(y_true)
-        y_pred = _tensor_tensor.convert_to_tensor(y_pred)
+        y_true = _tensor_ops.convert_to_tensor(y_true)
+        y_pred = _tensor_ops.convert_to_tensor(y_pred)
         
         # PyTorch's cross_entropy expects class indices, which is what sparse categorical uses
         if from_logits:
@@ -248,8 +248,8 @@ class TorchLossOps:
         Returns:
             Huber loss
         """
-        y_true = _tensor_tensor.convert_to_tensor(y_true)
-        y_pred = _tensor_tensor.convert_to_tensor(y_pred)
+        y_true = _tensor_ops.convert_to_tensor(y_true)
+        y_pred = _tensor_ops.convert_to_tensor(y_pred)
         
         # Use PyTorch's smooth_l1_loss which is equivalent to Huber loss
         # with delta=1.0, and scale it appropriately for other delta values
@@ -299,8 +299,8 @@ class TorchLossOps:
         Returns:
             Log-cosh loss
         """
-        y_true = _tensor_tensor.convert_to_tensor(y_true)
-        y_pred = _tensor_tensor.convert_to_tensor(y_pred)
+        y_true = _tensor_ops.convert_to_tensor(y_true)
+        y_pred = _tensor_ops.convert_to_tensor(y_pred)
         
         error = y_pred - y_true
         

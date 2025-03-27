@@ -55,7 +55,7 @@ def calculate_statistics(tensor_var):
     mean_val = ops.mean(tensor_var)
     
     # Calculate standard deviation: sqrt(mean((x - mean(x))^2))
-    # Use ops.full with the shape of the tensor instead of full_like
+    # Use tensor.full with the shape of the tensor instead of full_like
     tensor_shape = tensor.shape(tensor_var)
     mean_tensor = tensor.full(tensor_shape, mean_val)
     squared_diff = ops.square(ops.subtract(tensor_var, mean_tensor))
@@ -91,7 +91,7 @@ def run_benchmarks_for_backend(backend_name: str) -> Dict:
     """Run benchmarks for a specific backend."""
     print(f"\nSetting backend to {backend_name}...")
     set_backend(backend_name)
-    ops.set_seed(SEED)
+    tensor.set_seed(SEED)
     
     results = {}
     

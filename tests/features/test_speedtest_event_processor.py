@@ -81,7 +81,7 @@ class TestSpeedtestEventProcessor(unittest.TestCase):
         
         # Check combined features shape
         combined_features = result['features']
-        shape = ops.shape(combined_features)
+        shape = tensor.shape(combined_features)
         self.assertEqual(shape[0], 5)  # 5 rows
         self.assertGreater(shape[1], 0)  # At least some features
     

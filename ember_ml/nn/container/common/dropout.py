@@ -51,7 +51,7 @@ class Dropout(Module, ContainerInterfaces):
             
         # Create a random mask
         if self.seed is not None:
-            ops.set_seed(self.seed)
+            tensor.set_seed(self.seed)
             
         mask = ops.greater_equal(
             tensor.random_uniform(tensor.shape(x)),

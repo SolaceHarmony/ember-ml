@@ -10,7 +10,7 @@ import platform
 from typing import List, Optional, Dict
 
 from ember_ml import ops
-from ember_ml.ops import set_backend, auto_select_backend
+from ember_ml.backend import set_backend, auto_select_backend
 from ember_ml.nn import tensor
 
 def benchmark_matrix_multiply(
@@ -39,20 +39,20 @@ def benchmark_matrix_multiply(
     
     for size in sizes:
         # Create random matrices
-        a = ops.random_normal(shape=(size, size), device=device)
-        b = ops.random_normal(shape=(size, size), device=device)
+        a = tensor.random_normal(shape=(size, size), device=device)
+        b = tensor.random_normal(shape=(size, size), device=device)
         
         # Print a sample of the matrices to prove they contain data
         if size <= 1000:  # Only for smaller matrices to avoid flooding the output
-            print(f"  Matrix A sample: {ops.item(a[0, 0]):.4f}, {ops.item(a[0, 1]):.4f}, ...")
-            print(f"  Matrix B sample: {ops.item(b[0, 0]):.4f}, {ops.item(b[0, 1]):.4f}, ...")
+            print(f"  Matrix A sample: {tensor.item(a[0, 0]):.4f}, {tensor.item(a[0, 1]):.4f}, ...")
+            print(f"  Matrix B sample: {tensor.item(b[0, 0]):.4f}, {tensor.item(b[0, 1]):.4f}, ...")
         
         # Warm-up
         result = ops.matmul(a, b)
         
         # Print a sample of the result to prove the computation happened
         if size <= 1000:  # Only for smaller matrices to avoid flooding the output
-            print(f"  Result sample: {ops.item(result[0, 0]):.4f}, {ops.item(result[0, 1]):.4f}, ...")
+            print(f"  Result sample: {tensor.item(result[0, 0]):.4f}, {tensor.item(result[0, 1]):.4f}, ...")
         
         # Benchmark with more iterations for more accurate timing
         start_time = time.time()
@@ -66,7 +66,7 @@ def benchmark_matrix_multiply(
         
         # Print a sample of the final result to prove the computation happened
         if size <= 1000 and result is not None:  # Only for smaller matrices to avoid flooding the output
-            print(f"  Final result sample: {ops.item(result[0, 0]):.4f}, {ops.item(result[0, 1]):.4f}, ...")
+            print(f"  Final result sample: {tensor.item(result[0, 0]):.4f}, {tensor.item(result[0, 1]):.4f}, ...")
         
         # Calculate average time using ops.divide
         time_diff = ops.subtract(tensor.convert_to_tensor(end_time),

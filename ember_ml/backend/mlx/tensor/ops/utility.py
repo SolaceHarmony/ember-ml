@@ -63,6 +63,17 @@ def _convert_input(x: TensorLike) -> Any:
         else:
           raise ValueError(f"EmberTensor does not have a '_tensor' attribute: {x}")
 
+    # Handle Parameter objects
+    # Check by class name to avoid direct import which might cause circular dependencies
+    if (hasattr(x, '__class__') and
+        hasattr(x.__class__, '__name__') and
+        x.__class__.__name__ == 'Parameter'):
+        if hasattr(x, 'data'):
+            # Recursively convert the underlying data
+            return _convert_input(x.data)
+        else:
+            raise ValueError(f"Parameter object does not have a 'data' attribute: {x}")
+
     # Check for NumPy arrays by type name rather than direct import
     if (hasattr(x, '__class__') and
         x.__class__.__module__ == 'numpy' and
@@ -91,9 +102,9 @@ def _convert_input(x: TensorLike) -> Any:
        except Exception as e:
             raise ValueError(f"Cannot convert sequence {type(x)} to MLX array: {e}")
 
-    # Handle MLX scalar types
-    if mx.isscalar(x):
-        return mx.array(x)
+    # Handle MLX scalar types (check ndim instead of non-existent isscalar)
+    if isinstance(x, mx.array) and x.ndim == 0:
+        return x # It's already an MLX scalar array
 
     # For any other type, reject it
     raise ValueError(f"Cannot convert {type(x)} to MLX array. Only int, float, bool, list, tuple, numpy.ndarray, MLXTensor, and EmberTensor are supported.")

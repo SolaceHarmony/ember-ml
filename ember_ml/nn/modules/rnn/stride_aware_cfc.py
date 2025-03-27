@@ -487,7 +487,7 @@ class StrideAwareCfC(Module):
         
         # Stack outputs
         if self.return_sequences:
-            outputs = ops.stack(outputs, axis=1)
+            outputs = tensor.stack(outputs, axis=1)
         else:
             outputs = outputs[-1]
         
@@ -610,7 +610,7 @@ def visualize_stride_temporal_dynamics(time_steps=100, stride_lengths=[1, 3, 5],
 
     # Set seeds for reproducibility
     np.random.seed(seed)
-    ops.set_seed(seed)
+    tensor.set_seed(seed)
 
     # Create a simple wiring for each stride cell
     from ember_ml.nn.wirings import AutoNCP
@@ -656,7 +656,7 @@ def visualize_stride_temporal_dynamics(time_steps=100, stride_lengths=[1, 3, 5],
                 current_state = states[stride][0]
                 # Add batch dimension if needed
                 if len(tensor.shape(current_state)) == 1:
-                    current_state = ops.reshape(current_state, [1, -1])
+                    current_state = tensor.reshape(current_state, [1, -1])
                     states[stride] = [current_state]
 
                 output, new_state = cell.forward(x_t, states[stride], time=1.0)
@@ -667,10 +667,10 @@ def visualize_stride_temporal_dynamics(time_steps=100, stride_lengths=[1, 3, 5],
             state_array = states[stride][0]  # Already a tensor
             if len(tensor.shape(state_array)) > 1:
                 state_array = state_array[0]
-            state_evolution[stride] = ops.tensor_scatter_nd_update(
+            state_evolution[stride] = tensor.tensor_scatter_nd_update(
                 state_evolution[stride],
-                ops.stack([[t_idx]], axis=0),
-                ops.expand_dims(state_array, axis=0)
+                tensor.stack([[t_idx]], axis=0),
+                tensor.expand_dims(state_array, axis=0)
             )
 
     # Convert tensors to NumPy for visualization

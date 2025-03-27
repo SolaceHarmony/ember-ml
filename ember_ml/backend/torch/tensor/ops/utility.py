@@ -34,6 +34,17 @@ def _convert_input(x: TensorLike, no_scalars = False) -> Any:
         else:
             raise ValueError(f"EmberTensor does not have a '_tensor' attribute: {x}")
 
+    # Handle Parameter objects
+    # Check by class name to avoid direct import which might cause circular dependencies
+    if (hasattr(x, '__class__') and
+        hasattr(x.__class__, '__name__') and
+        x.__class__.__name__ == 'Parameter'):
+        if hasattr(x, 'data'):
+            # Recursively convert the underlying data
+            return _convert_input(x.data)
+        else:
+            raise ValueError(f"Parameter object does not have a 'data' attribute: {x}")
+
     # Handle NumPy arrays
     if (hasattr(x, '__class__') and
         x.__class__.__module__ == 'numpy' and

@@ -89,7 +89,7 @@ class GeometricNeuron(BaseNeuron):
             **kwargs
         )
         self.state = self.manifold_state
-        self.history.append(ops.copy(self.state))
+        self.history.append(tensor.copy(self.state))
         return self.state
         
     def save_state(self) -> Dict[str, Any]:
@@ -97,7 +97,7 @@ class GeometricNeuron(BaseNeuron):
         state_dict = super().save_state()
         state_dict.update({
             'dim': self.dim,
-            'manifold_state': ops.to_numpy(self.manifold_state).tolist()
+            'manifold_state': tensor.to_numpy(self.manifold_state).tolist()
         })
         return state_dict
         

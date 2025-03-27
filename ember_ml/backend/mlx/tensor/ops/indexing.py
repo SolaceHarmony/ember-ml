@@ -2,7 +2,7 @@
 
 import mlx.core as mx
 
-from typing import Union, Optional, Literal, TYPE_CHECKING
+from typing import Union, Optional, Literal, Any
 from builtins import slice as py_slice
 from ember_ml.backend.mlx.types import (
     TensorLike, Shape
@@ -113,42 +113,58 @@ def tensor_scatter_nd_update(tensor: TensorLike, indices: TensorLike, updates: T
     
     return result
 
-def slice_update(tensor: TensorLike, slices: TensorLike, updates: Optional[TensorLike] = None) -> mx.array:
-    """Update a tensor at specific indices."""
+def slice_update(tensor: TensorLike, slices: Any, updates: Optional[TensorLike] = None) -> mx.array: # Changed slices type hint to Any
+    """Update a tensor at specific indices or return a slice."""
     # Convert inputs to MLX arrays
     from ember_ml.backend.mlx.tensor.tensor import MLXTensor
     Tensor = MLXTensor()
     tensor_array = Tensor.convert_to_tensor(tensor)
-    # Handle the case where slices is an integer (single index)
-    if isinstance(slices, int) or (hasattr(slices, "item") and isinstance(slices.item(), int)):
-        # Convert to a list with a single element
-        indices_list = [int(slices)]
-    else:
-        # Convert slices to MLX array and then to list
-        slices_array = Tensor.convert_to_tensor(slices)
-        indices_list = slices_array.tolist()
-        
-        # Handle the case where tolist() returns an int
-        if isinstance(indices_list, int):
-            indices_list = [indices_list]
-    
-    # Create axes as list of integers
-    axes = list(range(len(indices_list)))
-    
-    # If updates is None, return slice of tensor
+
+    # If updates is None, perform a read slice using standard Python indexing
     if updates is None:
-        # Create a size list of ones matching the shape
-        ones_list = [1] * len(axes)
-        return mx.slice(tensor_array, mx.array(indices_list), axes, ones_list)
-    
-    # Convert updates to MLX array
-    updates_array = Tensor.convert_to_tensor(updates)
-    
-    # Create a copy of the tensor
-    result = mx.array(tensor_array)
-    
-    # Update the tensor using slice_update with proper axes
-    return mx.slice_update(result, updates_array, mx.array(indices_list), axes)
+        # Directly use the slices key with the MLX array
+        # This assumes MLX handles standard Python slicing (int, slice, tuple, etc.)
+        try:
+            return tensor_array[slices]
+        except Exception as e:
+            # Add context if MLX slicing fails
+            raise TypeError(f"Failed to apply slice {slices} of type {type(slices)} to MLX array: {e}") from e
+
+    # If updates is not None, perform an update using the existing logic
+    # (This logic might need further review for general slice updates, but fixes the read path)
+    else:
+        # Convert updates to MLX array
+        updates_array = Tensor.convert_to_tensor(updates)
+
+        # --- Existing update logic (potentially needs review) ---
+        # Handle the case where slices is an integer (single index)
+        if isinstance(slices, int) or (hasattr(slices, "item") and isinstance(slices.item(), int)):
+            # Convert to a list with a single element
+            indices_list = [int(slices)]
+        else:
+            # Try converting slices to MLX array and then to list (May fail for slice objects)
+            try:
+                # THIS CONVERSION IS LIKELY STILL PROBLEMATIC FOR SLICE OBJECTS IN UPDATES
+                slices_array = Tensor.convert_to_tensor(slices)
+                indices_list = slices_array.tolist()
+            except ValueError as e:
+                 raise TypeError(f"Slice update failed: Cannot convert slices argument {slices} for update operation: {e}") from e
+
+            # Handle the case where tolist() returns an int
+            if isinstance(indices_list, int):
+                indices_list = [indices_list]
+
+        # Create axes as list of integers
+        axes = list(range(len(indices_list)))
+
+        # Update the tensor using slice_update with proper axes
+        try:
+            # Ensure indices are passed as an mx.array
+            indices_mx_array = mx.array(indices_list)
+            # Pass the original tensor_array, assuming mx.slice_update returns a new array
+            return mx.slice_update(tensor_array, updates_array, indices_mx_array, axes)
+        except Exception as e:
+            raise RuntimeError(f"MLX slice_update failed with indices {indices_list} and axes {axes}: {e}") from e
 
 def scatter(data: TensorLike, indices: TensorLike, dim_size: Optional[Union[int, mx.array]] = None,
            aggr: Literal["add", "max", "min", "mean", "softmax"] = "add", axis: int = 0) -> mx.array:
@@ -244,7 +260,8 @@ def scatter_op(src: mx.array, index: mx.array, dim_size: int,
             # Create an index array with the correct shape for slice_update
             idx_array = mx.array([idx])
             axes = [axis]  # Use the correct axis for slicing
-            out = mx.slice_update(out, val_i + current, idx_array, axes)
+            update_val = mx.add(val_i, current) # Use mx.add explicitly
+            out = mx.slice_update(out, update_val, idx_array, axes)
         elif op == "max":
             # Get current value and take max
             current = out[tuple(slices)]
@@ -317,7 +334,7 @@ def scatter_softmax(values: TensorLike, index: TensorLike, dim_size: int, axis: 
     max_vals = scatter_op(values_array, index_array, dim_size_int, axis, "max")
     
     # Compute exp(x - max)
-    exp_vals = mx.exp(values_array - max_vals)
+    exp_vals = mx.exp(mx.subtract(values_array, max_vals)) # Use mx.subtract
     
     # Sum exp values
     sum_exp = scatter_op(exp_vals, index_array, dim_size_int, axis, "add")

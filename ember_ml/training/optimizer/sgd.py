@@ -5,11 +5,11 @@ This module provides a backend-agnostic implementation of the SGD optimizer
 that works with any backend (NumPy, PyTorch, MLX).
 """
 
-from typing import Dict, List, Optional, Union, Any, Callable
+# No specific typing imports needed currently
 
 from ember_ml import ops
 from ember_ml.training.optimizer.base import Optimizer
-
+from ember_ml.nn import tensor
 class SGD(Optimizer):
     """
     Stochastic Gradient Descent (SGD) optimizer.
@@ -34,10 +34,12 @@ class SGD(Optimizer):
             'weight_decay': weight_decay,
             'nesterov': nesterov
         }
+        # Call super without args, as defaults are set here and add_param_group is called below
+        super().__init__()
+        # Set defaults *after* super().__init__ initializes state/param_groups but *before* adding params
         self.defaults = defaults
-        self.state = {}
-        self.param_groups = []
         
+        # Manually add parameter group using the correct defaults
         if params is not None:
             self.add_param_group(params)
     

@@ -172,7 +172,7 @@ class BlockyRoadChain(BaseChain):
             dt=dt
         )
         # Initialize weights using ops random functions
-        self.weights = ops.random_uniform(
+        self.weights = tensor.random_uniform(
             shape=(num_neurons,),
             minval=0.5,
             maxval=1.5
@@ -203,7 +203,7 @@ class BlockyRoadChain(BaseChain):
             states = ops.tensor_scatter_update(states, [i], [states_i])
             
         # Store history
-        self.state_history.append(ops.copy(states))
+        self.state_history.append(tensor.copy(states))
         
         return states
     
@@ -223,7 +223,7 @@ class BlockyRoadChain(BaseChain):
         stats = {}
         
         # Convert history list to tensor
-        history = ops.stack(self.state_history)
+        history = tensor.stack(self.state_history)
         
         # Compute forgetting times if pattern_time provided
         if pattern_time is not None:
@@ -234,7 +234,7 @@ class BlockyRoadChain(BaseChain):
                 forget_time = None
                 history_i = history[:, i]
                 
-                for idx in range(ops.to_numpy(pattern_idx), tensor.shape(history)[0]):
+                for idx in range(tensor.to_numpy(pattern_idx), tensor.shape(history)[0]):
                     val = history[idx, i]
                     if ops.less(ops.abs(val), threshold):
                         forget_time = ops.multiply(
@@ -249,11 +249,11 @@ class BlockyRoadChain(BaseChain):
             
         # Compute final states
         final_states = history[-1]
-        stats['final_states'] = ops.to_numpy(final_states)
+        stats['final_states'] = tensor.to_numpy(final_states)
         
         # Create forgot mask
         forgot_mask = ops.less(ops.abs(final_states), threshold)
-        stats['forgot_mask'] = ops.to_numpy(forgot_mask)
+        stats['forgot_mask'] = tensor.to_numpy(forgot_mask)
         
         return stats
 

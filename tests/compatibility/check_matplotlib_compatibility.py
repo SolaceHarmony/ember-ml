@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Create an EmberTensor
-tensor = ops.ones((10,))
+tensor = tensor.ones((10,))
 print('Type:', type(tensor))
 
 # Try to plot directly with matplotlib

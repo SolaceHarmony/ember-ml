@@ -49,15 +49,64 @@ def random_uniform(shape: Shape, minval: float = 0.0, maxval: float = 1.0,
     Returns:
         MLX array with random uniform values
     """
-    # Convert shape to a sequence if it's an int
+    # Special handling for the common case where the function is called as
+    # random_uniform(min, max) to generate a scalar random value
+    if isinstance(shape, (int, float)) and isinstance(minval, (int, float)):
+        # If shape is 0 or close to 0, and minval is positive, assume this is
+        # actually a call like random_uniform(minval=0, maxval=2*pi)
+        if abs(shape) < 1e-10 and minval > 0:
+            # Generate a single random float between shape (as minval) and minval (as maxval)
+            # Use mx.array explicitly for scalar values to avoid broadcasting issues
+            low = mx.array(shape, dtype=mx.float32)
+            high = mx.array(minval, dtype=mx.float32)
+            result = mx.add(
+                low,
+                mx.multiply(
+                    mx.array(mx.random.uniform(shape=()), dtype=mx.float32),
+                    mx.subtract(high, low)
+                )
+            )
+            
+            # Handle dtype conversion
+            mlx_dtype = DTypeHandler.validate_dtype(dtype)
+            if mlx_dtype is not None:
+                result = result.astype(mlx_dtype)
+            
+            return result
+    
+    # Standard case: shape is actually a shape
     if isinstance(shape, int):
         shape = (shape,)
+    
+    # Handle empty shape
+    if shape == () or (isinstance(shape, tuple) and len(shape) == 0):
+        # For scalar output, use (1,) shape and then convert to scalar after
+        shape = (1,)
+    elif isinstance(shape, tuple) and len(shape) == 1 and shape[0] == 0:
+        shape = (1,)
     
     # Validate dtype
     mlx_dtype = DTypeHandler.validate_dtype(dtype)
     
-    # Use MLX's uniform function
-    return mx.random.uniform(shape=shape, low=minval, high=maxval, dtype=mlx_dtype)
+    # Create the low and high values as MLX arrays to ensure proper broadcasting
+    low = mx.array(minval)
+    high = mx.array(maxval)
+    
+    # Generate random values using uniform from 0 to 1
+    u = mx.random.uniform(shape=shape)
+    
+    # Scale to the desired range manually to avoid broadcasting issues
+    result = mx.add(low, mx.multiply(u, mx.subtract(high, low)))
+    
+    # Convert to scalar if shape was originally empty
+    if shape == (1,):
+        result = result[0]
+    
+    # Apply dtype conversion if needed
+    if mlx_dtype is not None:
+        result = result.astype(mlx_dtype)
+    
+    return result
 
 def random_binomial(shape: Shape, p: float = 0.5,
                    dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
@@ -233,11 +282,14 @@ def random_poisson(shape: Shape, lam: float = 1.0,
     if isinstance(shape, int):
         shape = (shape,)
     
+    # Import here to avoid circular imports
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    
     # Convert lambda to MLX array if it's a scalar
     if isinstance(lam, (int, float)):
         lam_array = mx.full(shape, lam)
     else:
-        lam_array = Tensor.convert_to_tensor(lam)
+        lam_array = MLXTensor().convert_to_tensor(lam)
     
     # Initialize counts and time accumulators
     counts = mx.zeros(shape, dtype=mx.int32)
@@ -283,11 +335,11 @@ def random_categorical(logits: TensorLike, num_samples: int,
     Returns:
         MLX array with random categorical values
     """
-    # Convert to MLX array if needed
-    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
-    Tensor = MLXTensor()
+    # Import here to avoid circular imports
+    from ember_ml.backend.mlx.tensor import MLXTensor
 
-    logits_tensor = Tensor.convert_to_tensor(logits)
+
+    logits_tensor = MLXTensor().convert_to_tensor(logits)
     
     # MLX's categorical function takes num_samples parameter
     result = mx.random.categorical(logits=logits_tensor, num_samples=num_samples)
@@ -318,10 +370,9 @@ def random_permutation(x: Union[int, TensorLike], dtype: Optional[DType] = None,
         indices = mx.random.permutation(x)
         return arr[indices]
     else:
-        # Convert to MLX array if needed
-        from ember_ml.backend.mlx.tensor.tensor import MLXTensor
-        Tensor = MLXTensor()
-        arr = Tensor.convert_to_tensor(x)
+        # Import here to avoid circular imports
+        from ember_ml.backend.mlx.tensor import MLXTensor
+        arr = MLXTensor().convert_to_tensor(x)
         indices = mx.random.permutation(arr.shape[0])
         return arr[indices]
 
@@ -335,10 +386,10 @@ def shuffle(x: TensorLike) -> mx.array:
     Returns:
         Shuffled MLX array
     """
-    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
-    Tensor = MLXTensor()
+    # Import here to avoid circular imports
+    from ember_ml.backend.mlx.tensor import MLXTensor
 
-    x_tensor = Tensor.convert_to_tensor(x)
+    x_tensor = MLXTensor().convert_to_tensor(x)
     
     # Get the shape of the tensor
     shape = x_tensor.shape
@@ -370,4 +421,4 @@ def get_seed() -> Any:
         Current random seed (None if not set)
     """
     # MLX doesn't provide a way to get the current seed
-    pass
+    return None

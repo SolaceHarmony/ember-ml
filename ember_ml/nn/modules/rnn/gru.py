@@ -109,7 +109,7 @@ class GRU(Module):
         
         # Handle non-batched inputs
         if not is_batched:
-            inputs = ops.expand_dims(inputs, batch_dim)
+            inputs = tensor.expand_dims(inputs, batch_dim)
         
         # Get batch size and sequence length
         input_shape = tensor.shape(inputs)
@@ -186,9 +186,9 @@ class GRU(Module):
             
             # Stack outputs for this layer
             if self.batch_first:
-                layer_outputs = ops.stack(combined_outputs, axis=1)
+                layer_outputs = tensor.stack(combined_outputs, axis=1)
             else:
-                layer_outputs = ops.stack(combined_outputs, axis=0)
+                layer_outputs = tensor.stack(combined_outputs, axis=0)
             
             # Apply dropout (except for the last layer)
             if layer < self.num_layers - 1 and self.dropout > 0:
@@ -211,10 +211,10 @@ class GRU(Module):
         
         # Handle non-batched outputs
         if not is_batched:
-            outputs = ops.squeeze(outputs, batch_dim)
+            outputs = tensor.squeeze(outputs, batch_dim)
         
         # Prepare final state
-        final_state = ops.stack(final_h_states)
+        final_state = tensor.stack(final_h_states)
         
         # Return outputs and states if requested
         if self.return_state:
@@ -240,4 +240,4 @@ class GRU(Module):
             if self.bidirectional:
                 h_states.append(tensor.zeros((batch_size, self.hidden_size)))
         
-        return ops.stack(h_states)
+        return tensor.stack(h_states)

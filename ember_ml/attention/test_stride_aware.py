@@ -24,7 +24,7 @@ def test_stride_aware_cell():
     
     # Create input
     batch_size = 2
-    inputs = ops.random_normal((batch_size, 10))
+    inputs = tensor.random_normal((batch_size, 10))
     
     # Initialize state
     state = tensor.zeros((batch_size, 20))
@@ -54,7 +54,7 @@ def test_stride_aware_layer():
     # Create input sequence
     batch_size = 2
     seq_length = 5
-    inputs = ops.random_normal((batch_size, seq_length, 10))
+    inputs = tensor.random_normal((batch_size, seq_length, 10))
     
     # Forward pass
     outputs, final_state = layer(inputs)

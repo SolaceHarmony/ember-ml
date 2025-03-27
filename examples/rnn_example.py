@@ -8,14 +8,15 @@ to create and train a basic recurrent neural network for sequence prediction.
 import matplotlib.pyplot as plt
 
 from ember_ml import ops
-from ember_ml.nn.modules.rnn import RNN, RNNCell
-from ember_ml.nn import Module, Sequential, tensor
-from ember_ml.training import Optimizer, Loss
-
+from ember_ml.nn.modules.rnn import RNN
+from ember_ml.nn import Sequential, tensor
+from ember_ml.training import Optimizer, Loss, MSELoss # Added MSELoss import
+from ember_ml.training.optimizer import Adam
+ops.set_backend("mlx")
 def generate_sine_wave_data(num_samples=1000, seq_length=100, num_features=1):
     """Generate sine wave data for sequence prediction."""
     # Generate time points
-    t = ops.linspace(0, 2 * ops.pi, seq_length)
+    t = tensor.linspace(0, ops.multiply(2, ops.pi), seq_length)
     
     # Generate sine waves with random phase shifts
     X = tensor.zeros((num_samples, seq_length, num_features))
@@ -23,32 +24,32 @@ def generate_sine_wave_data(num_samples=1000, seq_length=100, num_features=1):
     
     for i in range(num_samples):
         # Random phase shift
-        phase_shift = ops.random_uniform(0, 2 * ops.pi)
+        phase_shift = tensor.random_uniform(0, ops.multiply(2, ops.pi))
         
         # Generate sine wave with phase shift
-        signal = ops.sin(t + phase_shift)
+        signal = ops.sin(ops.add(t, phase_shift))
         
         # Add some noise
-        noise = ops.random_normal(0, 0.1, seq_length)
+        noise = tensor.random_normal(shape=seq_length, mean=0.0, stddev=0.1)
         noisy_signal = ops.add(signal, noise)
         
         # Store input and target
-        X = ops.tensor_scatter_nd_update(
+        X = tensor.tensor_scatter_nd_update(
             X,
-            ops.stack([
-                ops.ones((seq_length,), dtype=ops.int32) * i,
-                ops.arange(seq_length),
-                tensor.zeros((seq_length,), dtype=ops.int32)
+            tensor.stack([
+                ops.multiply(tensor.ones((seq_length,), dtype=tensor.int32), i),
+                tensor.arange(seq_length),
+                tensor.zeros((seq_length,), dtype=tensor.int32)
             ], axis=1),
             noisy_signal
         )
         
-        y = ops.tensor_scatter_nd_update(
+        y = tensor.tensor_scatter_nd_update(
             y,
-            ops.stack([
-                ops.ones((seq_length,), dtype=ops.int32) * i,
-                ops.arange(seq_length),
-                tensor.zeros((seq_length,), dtype=ops.int32)
+            tensor.stack([
+                ops.multiply(tensor.ones((seq_length,), dtype=tensor.int32), i),
+                tensor.arange(seq_length),
+                tensor.zeros((seq_length,), dtype=tensor.int32)
             ], axis=1),
             signal
         )
@@ -58,12 +59,12 @@ def generate_sine_wave_data(num_samples=1000, seq_length=100, num_features=1):
 def train_rnn_model(model, X_train, y_train, epochs=50, batch_size=32, learning_rate=0.001):
     """Train an RNN model."""
     # Convert data to tensors
-    X_train_tensor = tensor.convert_to_tensor(X_train, dtype=ops.float32)
-    y_train_tensor = tensor.convert_to_tensor(y_train, dtype=ops.float32)
+    X_train_tensor = tensor.convert_to_tensor(X_train, dtype=tensor.float32)
+    y_train_tensor = tensor.convert_to_tensor(y_train, dtype=tensor.float32)
     
     # Define optimizer and loss function
-    optimizer = Optimizer.adam(model.parameters(), learning_rate=learning_rate)
-    loss_fn = Loss.mse()
+    optimizer = Adam(model.parameters(), lr=learning_rate) # Use direct Adam constructor with 'lr'
+    loss_fn = MSELoss() # Instantiate MSELoss class directly
     
     # Training loop
     losses = []
@@ -71,12 +72,12 @@ def train_rnn_model(model, X_train, y_train, epochs=50, batch_size=32, learning_
         epoch_loss = 0.0
         
         # Shuffle the data
-        indices = ops.random_permutation(ops.shape(X_train)[0])
-        shuffled_X = ops.gather(X_train_tensor, indices)
-        shuffled_y = ops.gather(y_train_tensor, indices)
+        indices = tensor.random_permutation(tensor.shape(X_train)[0])
+        shuffled_X = tensor.gather(X_train_tensor, indices)
+        shuffled_y = tensor.gather(y_train_tensor, indices)
         
         # Train in batches
-        for i in range(0, ops.shape(X_train)[0], batch_size):
+        for i in range(0, tensor.shape(X_train)[0], batch_size):
             batch_X = shuffled_X[i:i+batch_size]
             batch_y = shuffled_y[i:i+batch_size]
             
@@ -93,10 +94,10 @@ def train_rnn_model(model, X_train, y_train, epochs=50, batch_size=32, learning_
             grads = ops.gradients(loss, model.parameters())
             optimizer.step(grads)
             
-            epoch_loss += ops.to_numpy(loss)
+            epoch_loss += tensor.to_numpy(loss)
         
         # Print progress
-        avg_loss = epoch_loss / (ops.shape(X_train)[0] // batch_size)
+        avg_loss = epoch_loss / (tensor.shape(X_train)[0] // batch_size)
         losses.append(avg_loss)
         print(f"Epoch {epoch+1}/{epochs}, Loss: {avg_loss:.6f}")
     
@@ -105,8 +106,8 @@ def train_rnn_model(model, X_train, y_train, epochs=50, batch_size=32, learning_
 def evaluate_model(model, X_test, y_test):
     """Evaluate an RNN model."""
     # Convert data to tensors
-    X_test_tensor = tensor.convert_to_tensor(X_test, dtype=ops.float32)
-    y_test_tensor = tensor.convert_to_tensor(y_test, dtype=ops.float32)
+    X_test_tensor = tensor.convert_to_tensor(X_test, dtype=tensor.float32)
+    y_test_tensor = tensor.convert_to_tensor(y_test, dtype=tensor.float32)
     
     # Make predictions
     y_pred = model(X_test_tensor)
@@ -116,9 +117,9 @@ def evaluate_model(model, X_test, y_test):
     loss = loss_fn(y_pred, y_test_tensor)
     
     # Convert predictions to numpy
-    y_pred_np = ops.to_numpy(y_pred)
+    y_pred_np = tensor.to_numpy(y_pred)
     
-    return ops.to_numpy(loss), y_pred_np
+    return tensor.to_numpy(loss), y_pred_np
 
 def main():
     """Run the RNN example."""
@@ -130,12 +131,12 @@ def main():
     X, y = generate_sine_wave_data(num_samples=1000, seq_length=100, num_features=1)
     
     # Split data into train and test sets
-    train_size = int(0.8 * ops.shape(X)[0])
+    train_size = int(tensor.to_numpy(tensor.cast(ops.multiply(tensor.convert_to_tensor(0.8), tensor.convert_to_tensor(tensor.shape(X)[0])), dtype=tensor.int32)))
     X_train, X_test = X[:train_size], X[train_size:]
     y_train, y_test = y[:train_size], y[train_size:]
     
-    print(f"Train data shape: {ops.shape(X_train)}")
-    print(f"Test data shape: {ops.shape(X_test)}")
+    print(f"Train data shape: {tensor.shape(X_train)}")
+    print(f"Test data shape: {tensor.shape(X_test)}")
     
     # Create RNN models with different activation functions
     print("\nCreating RNN models with different activation functions...")
@@ -199,10 +200,10 @@ def main():
     print(f"ReLU RNN Test Loss: {relu_loss:.6f}")
     
     # Convert to numpy for visualization
-    X_test_np = ops.to_numpy(X_test)
-    y_test_np = ops.to_numpy(y_test)
-    tanh_losses_np = ops.to_numpy(tensor.convert_to_tensor(tanh_losses))
-    relu_losses_np = ops.to_numpy(tensor.convert_to_tensor(relu_losses))
+    X_test_np = tensor.to_numpy(X_test)
+    y_test_np = tensor.to_numpy(y_test)
+    tanh_losses_np = tensor.to_numpy(tensor.convert_to_tensor(tanh_losses))
+    relu_losses_np = tensor.to_numpy(tensor.convert_to_tensor(relu_losses))
     
     # Plot the results
     plt.figure(figsize=(15, 10))

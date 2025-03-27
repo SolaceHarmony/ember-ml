@@ -62,18 +62,18 @@ def sample_data():
     backend_utils.initialize_random_seed(42)
     
     # Generate random data using backend-agnostic operations
-    numeric1 = backend_utils.tensor_to_numpy_safe(ops.random_normal(shape=(100,)))
-    numeric2 = backend_utils.tensor_to_numpy_safe(ops.random_normal(shape=(100,)))
+    numeric1 = backend_utils.tensor_to_numpy_safe(tensor.random_normal(shape=(100,)))
+    numeric2 = backend_utils.tensor_to_numpy_safe(tensor.random_normal(shape=(100,)))
     
     # For categorical data, we need to use numpy directly for testing
     category1_idx = backend_utils.tensor_to_numpy_safe(
-        ops.random_uniform(shape=(100,), minval=0, maxval=3).astype(ops.int32)
+        tensor.random_uniform(shape=(100,), minval=0, maxval=3).astype(ops.int32)
     )
     category2_idx = backend_utils.tensor_to_numpy_safe(
-        ops.random_uniform(shape=(100,), minval=0, maxval=3).astype(ops.int32)
+        tensor.random_uniform(shape=(100,), minval=0, maxval=3).astype(ops.int32)
     )
     boolean1 = backend_utils.tensor_to_numpy_safe(
-        ops.random_uniform(shape=(100,), minval=0, maxval=2).astype(ops.int32)
+        tensor.random_uniform(shape=(100,), minval=0, maxval=2).astype(ops.int32)
     ) > 0
     
     # Create sample DataFrame
@@ -173,7 +173,7 @@ class TestTerabyteFeatureExtractorPurified:
     def test_sin_cos_transform(self):
         """Test that sine/cosine transformations are backend-agnostic."""
         # Create test values using backend-agnostic operations
-        values_tensor = ops.linspace(0, 1, 100)
+        values_tensor = tensor.linspace(0, 1, 100)
         values = backend_utils.tensor_to_numpy_safe(values_tensor)
         
         # Apply transformations
@@ -234,9 +234,9 @@ class TestTerabyteFeatureExtractorPurified:
     def test_split_data(self, patched_extractor):
         """Test data splitting with backend-agnostic random generation."""
         # Create sample DataFrame using backend-agnostic operations
-        feature1 = backend_utils.tensor_to_numpy_safe(ops.random_normal(shape=(100,)))
-        feature2 = backend_utils.tensor_to_numpy_safe(ops.random_normal(shape=(100,)))
-        target = backend_utils.tensor_to_numpy_safe(ops.random_normal(shape=(100,)))
+        feature1 = backend_utils.tensor_to_numpy_safe(tensor.random_normal(shape=(100,)))
+        feature2 = backend_utils.tensor_to_numpy_safe(tensor.random_normal(shape=(100,)))
+        target = backend_utils.tensor_to_numpy_safe(tensor.random_normal(shape=(100,)))
         
         df = pd.DataFrame({
             'feature1': feature1,

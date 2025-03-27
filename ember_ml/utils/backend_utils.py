@@ -138,7 +138,7 @@ def tensor_to_numpy_safe(tensor: Any) -> Any:
             return tensor.detach().numpy()
         else:
             # Try ops conversion
-            return ops.to_numpy(tensor)
+            return tensor.to_numpy(tensor)
     except Exception as e:
         logger.warning(f"Error converting tensor to NumPy: {e}")
         # Re-raise the exception since ember_ml is required
@@ -156,7 +156,7 @@ def random_uniform(shape: Union[int, Tuple[int, ...]], low: float = 0.0, high: f
     Returns:
         Tensor of random values in the current backend format
     """
-    return ops.random_uniform(shape=shape, minval=low, maxval=high)
+    return tensor.random_uniform(shape=shape, minval=low, maxval=high)
 
 def sin_cos_transform(values: Any, period: float = 1.0) -> Tuple[Any, Any]:
     """
@@ -197,8 +197,8 @@ def vstack_safe(arrays: List[Any]) -> Any:
     same_shape = all(shape == shapes[0] for shape in shapes)
     
     if same_shape:
-        # Use ops.concatenate for vertical stacking (equivalent to vstack)
-        return ops.concatenate(converted_arrays, axis=0)
+        # Use tensor.concatenate for vertical stacking (equivalent to vstack)
+        return tensor.concatenate(converted_arrays, axis=0)
     else:
         # If shapes are different, log a warning and return the first array
         logger.warning(f"Arrays have different shapes: {shapes}. Cannot stack.")

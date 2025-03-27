@@ -7,7 +7,8 @@ from typing import Tuple
 
 import ember_ml as eh
 from ember_ml import ops
-from ember_ml.ops.tensor import EmberTensor
+from ember_ml.nn.tensor import EmberTensor
+from ember_ml.nn import tensor # Importing the Ember ML neural network module
 import ember_ml.nn as nn
 
 def create_model() -> nn.Sequential:
@@ -62,8 +63,8 @@ def main() -> None:
     print(f"Using {eh.get_backend()} backend")
     
     # Create random data
-    x = EmberTensor(ops.random_normal((32, 10)))  # 32 samples, 10 features
-    y = EmberTensor(ops.random_normal((32, 1)))   # 32 samples, 1 target
+    x = EmberTensor(tensor.random_normal((32, 10)))  # 32 samples, 10 features
+    y = EmberTensor(tensor.random_normal((32, 1)))   # 32 samples, 1 target
     
     # Create model
     model = create_model()
@@ -71,7 +72,7 @@ def main() -> None:
     
     # Forward pass
     y_pred = model(x)
-    print(f"Output shape: {ops.shape(y_pred)}")
+    print(f"Output shape: {tensor.shape(y_pred)}")
     
     # Compute loss
     loss_fn = nn.MSELoss()

@@ -108,9 +108,95 @@ def process_categorical_features(
         all_cat_names.extend(feature_names)
     
     # Concatenate all categorical tensors
-    categorical_tensor = ops.concatenate(all_cat_tensors, axis=1)
+    categorical_tensor = tensor.concatenate(all_cat_tensors, axis=1)
     
     return categorical_tensor, all_cat_names
+
+
+def one_hot_encode(
+    df: pd.DataFrame,
+    column: str,
+    unique_values: Any,
+    device: Optional[str] = None
+) -> Tuple[Any, List[str]]:
+    """
+    One-hot encode a categorical column.
+    
+    Args:
+        df: Input DataFrame
+        column: Column name to encode
+        unique_values: List of unique values in the column
+        device: Device to place tensor on
+        
+    Returns:
+        Tuple of (encoded_tensor, feature_names)
+    """
+    # Fill missing values with special value
+    values = df[column].fillna('__MISSING__').values
+    
+    # Create mapping from category to index
+    category_to_idx = {val: idx for idx, val in enumerate(unique_values)}
+    category_to_idx['__MISSING__'] = len(category_to_idx)  # Add missing value index
+    
+    # Convert values to indices
+    indices = [category_to_idx.get(val, category_to_idx['__MISSING__']) for val in values]
+    indices_tensor = tensor.convert_to_tensor(indices, device=device)
+    
+    # Create one-hot encoding
+    num_classes = len(category_to_idx)
+    one_hot = ops.one_hot(indices_tensor, num_classes)
+    
+    # Create feature names
+    feature_names = [f"{column}_{val}" for val in unique_values]
+    feature_names.append(f"{column}_missing")
+    
+    return one_hot, feature_names
+
+def hash_encode(
+    df: pd.DataFrame, 
+    column: str, 
+    n_components: int = 16, 
+    device: Optional[str] = None
+) -> Tuple[Any, List[str]]:
+    """
+    Hash encode a categorical column.
+    
+    Args:
+        df: Input DataFrame
+        column: Column name to encode
+        n_components: Number of hash components
+        device: Device to place tensor on
+        
+    Returns:
+        Tuple of (encoded_tensor, feature_names)
+    """
+    # Fill missing values with special value
+    values = df[column].fillna('__MISSING__').values
+    
+    # Create feature names
+    feature_names = [f"{column}_hash_{i}" for i in range(n_components)]
+    
+    # Initialize output array
+    encoded = ops.zeros((len(values), n_components))
+    
+    # Simple hash function for each value and component
+    for i, val in enumerate(values):
+        # Convert value to string and get hash
+        val_str = str(val)
+        for j in range(n_components):
+            # Create a unique hash seed for each component
+            hash_seed = hash(f"{val_str}_{j}") % 2**31
+            # Map to either -1 or 1
+            encoded = tensor.slice_update(
+                encoded, 
+                (i, j), 
+                tensor.convert_to_tensor(1.0 if hash_seed % 2 == 0 else -1.0)
+            )
+    
+    # Convert to tensor
+    encoded_tensor = tensor.convert_to_tensor(encoded, device=device)
+    
+    return encoded_tensor, feature_names
 
 
 def process_datetime_features(
@@ -160,7 +246,7 @@ def process_datetime_features(
                 )
                 
                 # Reshape to column vector
-                component_tensor = ops.reshape(
+                component_tensor = tensor.reshape(
                     component_tensor, 
                     (tensor.shape(component_tensor)[0], 1)
                 )
@@ -219,7 +305,7 @@ def process_datetime_features(
         return None, []
     
     # Concatenate all datetime features
-    datetime_tensor = ops.concatenate(datetime_features, axis=1)
+    datetime_tensor = tensor.concatenate(datetime_features, axis=1)
     
     return datetime_tensor, feature_names
 
@@ -243,14 +329,14 @@ def handle_missing_values(data: Any) -> Any:
     
     # Calculate median for each feature
     # First, replace NaNs with zeros for calculation purposes
-    data_no_nan = ops.where(nan_mask, ops.zeros_like(data), data)
+    data_no_nan = ops.where(nan_mask, tensor.zeros_like(data), data)
     
     # Calculate median for each feature (column)
     medians = []
     for i in range(tensor.shape(data)[1]):
         col_data = data_no_nan[:, i]
         # Sort the data
-        sorted_data = ops.sort(col_data)
+        sorted_data = tensor.sort(col_data)
         # Get median
         n = tensor.shape(sorted_data)[0]
         if n % 2 == 0:
@@ -263,10 +349,10 @@ def handle_missing_values(data: Any) -> Any:
         medians.append(median)
     
     # Convert to tensor
-    medians_tensor = ops.stack(medians)
+    medians_tensor = tensor.stack(medians)
     
     # Reshape medians to match data shape for broadcasting
-    medians_tensor = ops.reshape(medians_tensor, (1, -1))
+    medians_tensor = tensor.reshape(medians_tensor, (1, -1))
     
     # Replace NaNs with medians
     return ops.where(nan_mask, ops.broadcast_to(medians_tensor, tensor.shape(data)), data)
@@ -289,7 +375,7 @@ def handle_outliers(data: Any) -> Any:
     for i in range(tensor.shape(data)[1]):
         col_data = data[:, i]
         # Sort the data
-        sorted_data = ops.sort(col_data)
+        sorted_data = tensor.sort(col_data)
         n = tensor.shape(sorted_data)[0]
         
         # Calculate quartile indices
@@ -304,8 +390,8 @@ def handle_outliers(data: Any) -> Any:
         q3_values.append(q3)
     
     # Convert to tensors
-    q1_tensor = ops.stack(q1_values)
-    q3_tensor = ops.stack(q3_values)
+    q1_tensor = tensor.stack(q1_values)
+    q3_tensor = tensor.stack(q3_values)
     
     # Calculate IQR
     iqr_tensor = ops.subtract(q3_tensor, q1_tensor)
@@ -319,8 +405,8 @@ def handle_outliers(data: Any) -> Any:
     ))
     
     # Reshape bounds to match data shape for broadcasting
-    lower_bound = ops.reshape(lower_bound, (1, -1))
-    upper_bound = ops.reshape(upper_bound, (1, -1))
+    lower_bound = tensor.reshape(lower_bound, (1, -1))
+    upper_bound = tensor.reshape(upper_bound, (1, -1))
     
     # Clip values to bounds
     return ops.clip(data, lower_bound, upper_bound)
@@ -343,7 +429,7 @@ def normalize_robust(data: Any) -> Any:
     for i in range(tensor.shape(data)[1]):
         col_data = data[:, i]
         # Sort the data
-        sorted_data = ops.sort(col_data)
+        sorted_data = tensor.sort(col_data)
         n = tensor.shape(sorted_data)[0]
         
         # Calculate percentile indices
@@ -358,19 +444,19 @@ def normalize_robust(data: Any) -> Any:
         max_values.append(p95)
     
     # Convert to tensors
-    min_tensor = ops.stack(min_values)
-    max_tensor = ops.stack(max_values)
+    min_tensor = tensor.stack(min_values)
+    max_tensor = tensor.stack(max_values)
     
     # Reshape min and max to match data shape for broadcasting
-    min_tensor = ops.reshape(min_tensor, (1, -1))
-    max_tensor = ops.reshape(max_tensor, (1, -1))
+    min_tensor = tensor.reshape(min_tensor, (1, -1))
+    max_tensor = tensor.reshape(max_tensor, (1, -1))
     
     # Calculate range
     range_tensor = ops.subtract(max_tensor, min_tensor)
     
     # Avoid division by zero
     epsilon = tensor.convert_to_tensor(1e-8, device=ops.get_device(data))
-    range_tensor = ops.maximum(range_tensor, epsilon)
+    range_tensor = tensor.maximum(range_tensor, epsilon)
     
     # Normalize data
     normalized_data = ops.divide(

@@ -10,6 +10,7 @@ from typing import Optional, Tuple
 from ember_ml import ops
 from ember_ml.nn.tensor import EmberTensor, int32, random_uniform, cast
 from ember_ml.nn.wirings.wiring import Wiring
+from ember_ml.nn import tensor
 
 class RandomWiring(Wiring):
     """
@@ -55,7 +56,7 @@ class RandomWiring(Wiring):
             
         # Set random seed for reproducibility
         if self.seed is not None:
-            ops.set_seed(self.seed)
+            tensor.set_seed(self.seed)
         
         # Create random masks
         input_mask = cast(

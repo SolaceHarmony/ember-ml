@@ -107,7 +107,7 @@ class LTCCell(Module):
         if minval == maxval:
             return tensor.ones(shape) * minval
         else:
-            return ops.random_uniform(minval, maxval, shape)
+            return tensor.random_uniform(minval, maxval, shape)
     
     def _allocate_parameters(self):
         """Allocate all parameters for the LTC cell."""
@@ -151,7 +151,7 @@ class LTCCell(Module):
     
     def _sigmoid(self, v_pre, mu, sigma):
         """Compute sigmoid activation for synapses."""
-        v_pre = ops.expand_dims(v_pre, -1)  # For broadcasting
+        v_pre = tensor.expand_dims(v_pre, -1)  # For broadcasting
         mues = v_pre - mu
         x = sigma * mues
         return ops.sigmoid(x)

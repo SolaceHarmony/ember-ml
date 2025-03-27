@@ -5,6 +5,7 @@ Temporal attention mechanisms for sequence processing and time-based patterns.
 from typing import Optional, Tuple, Dict, Any
 import math
 from ember_ml import ops
+from ember_ml import tensor
 from ember_ml.nn.tensor import EmberTensor, zeros, arange, maximum, shape, concatenate
 from ember_ml.nn.modules import Module
 from ember_ml.nn.container import Dropout, Linear, Sequential
@@ -151,9 +152,9 @@ class TemporalAttention(BaseAttention):
         
         # Add temporal embeddings if enabled
         if self.use_time_embedding and times is not None:
-            query = self.time_embedding(query, ops.slice(times, [0, 0], [-1, query_len]))
-            key = self.time_embedding(key, ops.slice(times, [0, 0], [-1, key_len]))
-            value = self.time_embedding(value, ops.slice(times, [0, 0], [-1, key_len]))
+            query = self.time_embedding(query, tensor.slice(times, [0, 0], [-1, query_len]))
+            key = self.time_embedding(key, tensor.slice(times, [0, 0], [-1, key_len]))
+            value = self.time_embedding(value, tensor.slice(times, [0, 0], [-1, key_len]))
         
         # Project and reshape
         q = self.q_proj(query).view(
@@ -198,11 +199,11 @@ class TemporalAttention(BaseAttention):
             scores = scores.masked_fill(mask.unsqueeze(1) == 0, float('-inf'))
         
         # Apply attention weights
-        self._attention_weights = F.softmax(scores, dim=-1)
+        self._attention_weights = ops.softmax(scores, dim=-1)
         self._attention_weights = self.dropout(self._attention_weights)
         
         # Compute output
-        attn_output = torch.matmul(self._attention_weights, v)
+        attn_output = ops.matmul(self._attention_weights, v)
         
         # Reshape and project output
         attn_output = attn_output.transpose(1, 2).contiguous().view(
@@ -212,7 +213,7 @@ class TemporalAttention(BaseAttention):
         
         return attn_output
     
-    def get_attention_weights(self) -> Optional[torch.Tensor]:
+    def get_attention_weights(self) -> Optional[EmberTensor]:
         """Get last computed attention weights."""
         return self._attention_weights
 

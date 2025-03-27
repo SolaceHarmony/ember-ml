@@ -10,7 +10,7 @@ import os
 import sys
 import logging
 import pandas as pd
-
+from ember_ml.nn import tensor  # Import tensor from ember_ml.utils for backend-agnostic operations
 # Add parent directory to path to import ember_ml
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -34,20 +34,20 @@ def create_sample_data(num_rows=1000):
     backend_utils.initialize_random_seed(42)
     
     # Generate random data using backend-agnostic operations
-    numeric1 = backend_utils.tensor_to_numpy_safe(ops.random_normal(shape=(num_rows,)))
-    numeric2 = backend_utils.tensor_to_numpy_safe(ops.random_normal(shape=(num_rows,)))
+    numeric1 = backend_utils.tensor_to_numpy_safe(tensor.random_normal(shape=(num_rows,)))
+    numeric2 = backend_utils.tensor_to_numpy_safe(tensor.random_normal(shape=(num_rows,)))
     
     # For categorical data, we still need to use pandas/numpy directly
     # but we can minimize direct numpy usage
     import numpy as np  # Local import only where needed
     category1_idx = backend_utils.tensor_to_numpy_safe(
-        ops.random_uniform(shape=(num_rows,), minval=0, maxval=3).astype(ops.int32)
+        tensor.random_uniform(shape=(num_rows,), minval=0, maxval=3).astype(ops.int32)
     )
     category2_idx = backend_utils.tensor_to_numpy_safe(
-        ops.random_uniform(shape=(num_rows,), minval=0, maxval=3).astype(ops.int32)
+        tensor.random_uniform(shape=(num_rows,), minval=0, maxval=3).astype(ops.int32)
     )
     boolean1 = backend_utils.tensor_to_numpy_safe(
-        ops.random_uniform(shape=(num_rows,), minval=0, maxval=2).astype(ops.int32)
+        tensor.random_uniform(shape=(num_rows,), minval=0, maxval=2).astype(ops.int32)
     ) > 0
     
     # Create sample DataFrame
@@ -61,7 +61,7 @@ def create_sample_data(num_rows=1000):
     })
     
     # Create target variable using backend-agnostic operations
-    noise = backend_utils.tensor_to_numpy_safe(ops.random_normal(shape=(num_rows,)) * 0.5)
+    noise = backend_utils.tensor_to_numpy_safe(tensor.random_normal(shape=(num_rows,)) * 0.5)
     df['target'] = 2 * df['numeric1'] - 3 * df['numeric2'] + noise
     
     return df

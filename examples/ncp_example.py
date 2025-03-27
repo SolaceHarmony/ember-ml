@@ -20,12 +20,12 @@ def main():
     
     # Create a simple dataset
     print("\nCreating dataset...")
-    X = ops.reshape(ops.linspace(0, 2 * np.pi, 100), (-1, 1))
+    X = tensor.reshape(tensor.linspace(0, 2 * np.pi, 100), (-1, 1))
     y = ops.sin(X)
     
     # Convert to numpy for splitting
-    X_np = ops.to_numpy(X)
-    y_np = ops.to_numpy(y)
+    X_np = tensor.to_numpy(X)
+    y_np = tensor.to_numpy(y)
     
     # Split into train and test sets
     X_train, X_test = X_np[:80], X_np[80:]
@@ -88,7 +88,7 @@ def main():
             for param, grad in zip(params, grads):
                 param.data = ops.subtract(param.data, ops.multiply(tensor.convert_to_tensor(learning_rate), grad))
             
-            epoch_loss += ops.to_numpy(loss)
+            epoch_loss += tensor.to_numpy(loss)
         
         epoch_loss /= (len(X_train) // batch_size)
         losses.append(epoch_loss)
@@ -98,7 +98,7 @@ def main():
     # Evaluate the model
     print("\nEvaluating NCP model...")
     model.reset_state()
-    y_pred = ops.to_numpy(model(tensor.convert_to_tensor(X_test)))
+    y_pred = tensor.to_numpy(model(tensor.convert_to_tensor(X_test)))
     test_loss = np.mean(np.square(y_pred - y_test))
     print(f"Test Loss: {test_loss:.6f}")
     

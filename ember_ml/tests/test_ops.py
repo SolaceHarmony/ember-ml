@@ -49,14 +49,14 @@ class TestTensorOps:
     def test_ones(self, setup_numpy_backend):
         """Test ones function."""
         t_ops = tensor.EmberTensor()
-        ones = t_tensor.ones((2, 3))
+        ones = t_ops.ones((2, 3))
         assert ones.shape == (2, 3)
         assert np.all(ones == 1)
     
     def test_reshape(self, setup_numpy_backend):
         """Test reshape function."""
         t_ops = tensor.EmberTensor()
-        x = t_tensor.ones((6,))
+        x = t_ops.ones((6,))
         y = t_ops.reshape(x, (2, 3))
         assert y.shape == (2, 3)
     

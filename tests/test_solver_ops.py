@@ -8,6 +8,7 @@ import importlib
 from ember_ml.backend import set_backend
 from ember_ml import ops
 from ember_ml.nn import tensor
+from ember_ml.ops import linearalg
 def test_solve():
     """Test the solve operation."""
     # Reset the ops module to clear cached instances
@@ -42,7 +43,7 @@ def test_inv():
     a = tensor.convert_to_tensor([[3, 1], [1, 2]])
     
     # Compute the inverse using our implementation
-    a_inv = ops.inv(a)
+    a_inv = linearalg.inv(a)
     
     # Expected inverse
     a_inv_expected = tensor.convert_to_tensor([[2/5, -1/5], [-1/5, 3/5]])
@@ -108,9 +109,9 @@ def test_qr():
     q, r = ops.qr(a)
     
     # Check that Q is orthogonal
-    q_transpose = ops.transpose(q)
+    q_transpose = tensor.transpose(q)
     q_transpose_q = ops.matmul(q_transpose, q)
-    identity = ops.eye(q.shape[1])
+    identity = tensor.eye(q.shape[1])
     assert ops.allclose(q_transpose_q, identity)
     
     # Check that A = QR
@@ -134,15 +135,15 @@ def test_svd():
     u, s, vh = ops.svd(a)
     
     # Check that U is orthogonal
-    u_transpose = ops.transpose(u)
+    u_transpose = tensor.transpose(u)
     u_transpose_u = ops.matmul(u_transpose, u)
-    identity_u = ops.eye(u.shape[1])
+    identity_u = tensor.eye(u.shape[1])
     assert ops.allclose(u_transpose_u, identity_u)
     
     # Check that V is orthogonal
-    vh_transpose = ops.transpose(vh)
+    vh_transpose = tensor.transpose(vh)
     vh_vh_transpose = ops.matmul(vh, vh_transpose)
-    identity_v = ops.eye(vh.shape[0])
+    identity_v = tensor.eye(vh.shape[0])
     assert ops.allclose(vh_vh_transpose, identity_v)
     
     # Check that A = U * diag(S) * Vh
@@ -170,7 +171,7 @@ def test_cholesky():
     l = ops.cholesky(a)
     
     # Check that A = L * L^T
-    l_transpose = ops.transpose(l)
+    l_transpose = tensor.transpose(l)
     ll_transpose = ops.matmul(l, l_transpose)
     assert ops.allclose(a, ll_transpose)
     
@@ -245,7 +246,7 @@ def test_eigvals():
     eigenvalues_from_eig, _ = ops.eig(a)
     
     # Check that the results are close
-    assert ops.allclose(ops.sort(eigenvalues), ops.sort(eigenvalues_from_eig))
+    assert ops.allclose(tensor.sort(eigenvalues), tensor.sort(eigenvalues_from_eig))
     
     print("eigvals test passed")
 

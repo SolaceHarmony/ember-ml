@@ -6,15 +6,10 @@ This module provides NumPy implementations of feature extraction and transformat
 
 import numpy as np
 from typing import Optional, Dict, Any, Tuple
-from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
-
-# Create a tensor instance for convert_to_tensor
-_tensor_ops = NumpyTensor()
-convert_to_tensor = _tensor_ops.convert_to_tensor
-
+from ember_ml.backend.numpy.types import TensorLike
 
 def pca(
-    X: Any,
+    X: TensorLike,
     n_components: Optional[int] = None,
     *,
     whiten: bool = False,
@@ -46,7 +41,9 @@ def pca(
         - mean: Per-feature empirical mean, used for centering
         - singular_values: Singular values corresponding to each component
     """
-    X_tensor = convert_to_tensor(X)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    tensor = NumpyTensor()
+    X_tensor = tensor.convert_to_tensor(X)
     n_samples, n_features = X_tensor.shape
     
     # Handle n_components
@@ -109,7 +106,7 @@ def pca(
 
 
 def transform(
-    X: Any,
+    X: TensorLike,
     components: Any,
     mean: Optional[Any] = None,
     *,
@@ -132,12 +129,14 @@ def transform(
     Returns:
         X_new: Transformed values of shape (n_samples, n_components)
     """
-    X_tensor = convert_to_tensor(X)
-    components_tensor = convert_to_tensor(components)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    tensor = NumpyTensor()
+    X_tensor = tensor.convert_to_tensor(X)
+    components_tensor = tensor.convert_to_tensor(components)
     
     # Center data
     if mean is not None:
-        mean_tensor = convert_to_tensor(mean)
+        mean_tensor = tensor.convert_to_tensor(mean)
         X_centered = X_tensor - mean_tensor
     else:
         X_centered = X_tensor
@@ -149,7 +148,7 @@ def transform(
     if whiten:
         if explained_variance is None:
             raise ValueError("explained_variance must be provided when whiten=True")
-        explained_variance_tensor = convert_to_tensor(explained_variance)
+        explained_variance_tensor = tensor.convert_to_tensor(explained_variance)
         # Avoid division by zero
         eps = np.finfo(X_transformed.dtype).eps
         scale = np.sqrt(explained_variance_tensor.clip(eps))
@@ -159,7 +158,7 @@ def transform(
 
 
 def inverse_transform(
-    X: Any,
+    X: TensorLike,
     components: Any,
     mean: Optional[Any] = None,
     *,
@@ -180,14 +179,16 @@ def inverse_transform(
     Returns:
         X_original: Original data of shape (n_samples, n_features)
     """
-    X_tensor = convert_to_tensor(X)
-    components_tensor = convert_to_tensor(components)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    tensor = NumpyTensor()
+    X_tensor = tensor.convert_to_tensor(X)
+    components_tensor = tensor.convert_to_tensor(components)
     
     # Unwhiten if needed
     if whiten:
         if explained_variance is None:
             raise ValueError("explained_variance must be provided when whiten=True")
-        explained_variance_tensor = convert_to_tensor(explained_variance)
+        explained_variance_tensor = tensor.convert_to_tensor(explained_variance)
         # Avoid division by zero
         eps = np.finfo(X_tensor.dtype).eps
         scale = np.sqrt(explained_variance_tensor.clip(eps))
@@ -200,14 +201,14 @@ def inverse_transform(
     
     # Add mean if provided
     if mean is not None:
-        mean_tensor = convert_to_tensor(mean)
+        mean_tensor = tensor.convert_to_tensor(mean)
         X_original += mean_tensor
     
     return X_original
 
 
 def standardize(
-    X: Any,
+    X: TensorLike,
     *,
     with_mean: bool = True,
     with_std: bool = True,
@@ -228,7 +229,9 @@ def standardize(
         - mean: Mean values used for centering (None if with_mean=False)
         - std: Standard deviation values used for scaling (None if with_std=False)
     """
-    X_tensor = convert_to_tensor(X)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    tensor = NumpyTensor()
+    X_tensor = tensor.convert_to_tensor(X)
     
     mean = None
     std = None
@@ -260,7 +263,7 @@ def standardize(
 
 
 def normalize(
-    X: Any,
+    X: TensorLike,
     *,
     norm: str = "l2",
     axis: int = 1,
@@ -279,7 +282,9 @@ def normalize(
     Returns:
         X_normalized: Normalized data
     """
-    X_tensor = convert_to_tensor(X)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    tensor = NumpyTensor()
+    X_tensor = tensor.convert_to_tensor(X)
     
     if norm == "l1":
         norms = np.sum(np.abs(X_tensor), axis=axis, keepdims=True)

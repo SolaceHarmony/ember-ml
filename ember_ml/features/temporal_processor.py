@@ -124,7 +124,7 @@ class TemporalStrideProcessor:
         # This is one of the few cases where numpy conversion is allowed
         window_arrays = [window.numpy() for window in window_batch]
         
-        # Stack windows using ops.stack for the first window to get shape
+        # Stack windows using tensor.stack for the first window to get shape
         first_window = window_batch[0]
         batch_size = len(window_batch)
         window_size = first_window.shape[0]
@@ -138,7 +138,7 @@ class TemporalStrideProcessor:
             reshaped_windows.append(flat_window)
         
         # Stack the reshaped windows
-        stacked_windows = ops.stack(reshaped_windows)
+        stacked_windows = tensor.stack(reshaped_windows)
         
         # Convert to numpy for PCA processing
         # This is one of the few cases where numpy conversion is allowed

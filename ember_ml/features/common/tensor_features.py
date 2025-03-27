@@ -68,7 +68,7 @@ class TensorFeatures(TensorFeaturesInterface):
             slices[axis] = slice(idx, idx+1)
             
             # Update the tensor
-            one_hot_tensor = ops.slice_update(one_hot_tensor, slices, updates)
+            one_hot_tensor = tensor.slice_update(one_hot_tensor, slices, updates)
         
         return one_hot_tensor
     
@@ -98,7 +98,7 @@ class TensorFeatures(TensorFeaturesInterface):
         updates = tensor.convert_to_tensor(updates)
         
         # Create a copy of the tensor to update
-        result = ops.copy(tensor)
+        result = tensor.copy(tensor)
         
         # For each index, update the corresponding position in the tensor
         for i in range(tensor.shape(indices)[0]):
@@ -113,6 +113,6 @@ class TensorFeatures(TensorFeaturesInterface):
             update = updates[i:i+1]
             
             # Update the tensor
-            result = ops.slice_update(result, slices, update)
+            result = tensor.slice_update(result, slices, update)
         
         return result

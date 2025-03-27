@@ -10,7 +10,7 @@ from typing import Optional, Any, Tuple
 from ember_ml import ops
 from ember_ml.nn.modules.base_module import BaseModule as Module, Parameter
 from ember_ml.nn.container.interfaces import BatchNormalizationInterface
-
+from ember_ml.nn import tensor
 class BatchNormalization(Module, BatchNormalizationInterface):
     """
     Batch Normalization layer.
@@ -111,7 +111,7 @@ class BatchNormalization(Module, BatchNormalizationInterface):
         if training:
             # Compute statistics from mini-batch
             mean = ops.mean(x, axis=reduction_axes, keepdims=True)
-            variance = ops.var(x, axis=reduction_axes, keepdims=True)
+            variance = tensor.var(x, axis=reduction_axes, keepdims=True)
             
             # Update moving statistics
             self.moving_mean = ops.add(

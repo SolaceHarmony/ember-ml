@@ -55,9 +55,9 @@ def calculate_statistics(tensor):
     mean_val = ops.mean(tensor)
     
     # Calculate standard deviation: sqrt(mean((x - mean(x))^2))
-    # Use ops.full with the shape of the tensor instead of full_like
+    # Use tensor.full with the shape of the tensor instead of full_like
     tensor_shape = tensor.shape(tensor)
-    mean_tensor = ops.full(tensor_shape, mean_val)
+    mean_tensor = tensor.full(tensor_shape, mean_val)
     diff = ops.subtract(tensor, mean_tensor)
     # Use multiply instead of square since square might not be available in all backends
     squared_diff = ops.multiply(diff, diff)
@@ -98,7 +98,7 @@ def run_benchmarks_for_backend(backend_name: str) -> Dict:
     
     # Create test tensors
     x = tensor.ones(SHAPE)
-    y = ops.full(SHAPE, 2.0)
+    y = tensor.full(SHAPE, 2.0)
     
     # Basic arithmetic operations
     print(f"Benchmarking add operation with {backend_name} backend...")

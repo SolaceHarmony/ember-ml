@@ -41,6 +41,9 @@ def _load_container_module():
 
 # Import directly from common implementation
 from ember_ml.nn.container.common import Linear, Dropout, Sequential
+from ember_ml.nn.container.batch_normalization import BatchNormalization
+from ember_ml.nn.container.dense import Dense
+from ember_ml.nn.container.sequential import Sequential
 
 # Export all functions and classes
 __all__ = [
@@ -55,4 +58,6 @@ __all__ = [
     'Linear',
     'Dropout',
     'Sequential',
+    'BatchNormalization',
+    'Dense'
 ]

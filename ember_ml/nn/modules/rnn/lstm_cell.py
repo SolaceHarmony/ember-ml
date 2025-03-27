@@ -66,9 +66,9 @@ class LSTMCell(Module):
             bias_data = tensor.zeros((self.hidden_size * 4,))
             forget_gate_bias = bias_data[self.hidden_size:self.hidden_size*2]
             forget_gate_bias = tensor.ones_like(forget_gate_bias)
-            bias_data = ops.tensor_scatter_nd_update(
+            bias_data = tensor.tensor_scatter_nd_update(
                 bias_data,
-                ops.stack([ops.arange(self.hidden_size, self.hidden_size*2)], axis=1),
+                tensor.stack([tensor.arange(self.hidden_size, self.hidden_size*2)], axis=1),
                 forget_gate_bias
             )
             self.bias.data = bias_data
@@ -98,7 +98,7 @@ class LSTMCell(Module):
             z = ops.add(z, self.bias)
         
         # Split into gates
-        z_chunks = ops.split(z, 4, axis=-1)
+        z_chunks = tensor.split(z, 4, axis=-1)
         z_i, z_f, z_o, z_c = z_chunks
         
         # Apply activations

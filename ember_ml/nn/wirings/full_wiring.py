@@ -66,14 +66,14 @@ class FullyConnectedWiring(Wiring):
             for src in range(self.input_dim):
                 for dest in range(self.units):
                     # Use a bias towards excitatory connections (2/3 probability)
-                    polarity = 1 if ops.random_uniform(()) > 0.33 else -1
+                    polarity = 1 if tensor.random_uniform(()) > 0.33 else -1
                     self.add_sensory_synapse(src, dest, polarity)
         
         # Create internal synapses
         for src in range(self.units):
             for dest in range(self.units):
                 # Use a bias towards excitatory connections (2/3 probability)
-                polarity = 1 if ops.random_uniform(()) > 0.33 else -1
+                polarity = 1 if tensor.random_uniform(()) > 0.33 else -1
                 self.add_synapse(src, dest, polarity)
         
         # Create masks
@@ -84,21 +84,21 @@ class FullyConnectedWiring(Wiring):
         return input_mask, recurrent_mask, output_mask
         # Set random seed for reproducibility
         if self.seed is not None:
-            ops.set_seed(self.seed)
+            tensor.set_seed(self.seed)
         
         # Create masks
         if self.sparsity_level > 0.0:
             # Create sparse masks
             input_mask = tensor.cast(
-                ops.random_uniform((self.input_dim,)) >= self.sparsity_level,
+                tensor.random_uniform((self.input_dim,)) >= self.sparsity_level,
                 ops.int32
             )
             recurrent_mask = tensor.cast(
-                ops.random_uniform((self.units, self.units)) >= self.sparsity_level,
+                tensor.random_uniform((self.units, self.units)) >= self.sparsity_level,
                 ops.int32
             )
             output_mask = tensor.cast(
-                ops.random_uniform((self.units,)) >= self.sparsity_level,
+                tensor.random_uniform((self.units,)) >= self.sparsity_level,
                 ops.int32
             )
         else:
@@ -108,8 +108,8 @@ class FullyConnectedWiring(Wiring):
             output_mask = tensor.ones((self.units,), dtype=ops.int32)
         
         # Convert to numpy arrays for consistency with the wiring interface
-        input_mask = ops.to_numpy(input_mask)
-        recurrent_mask = ops.to_numpy(recurrent_mask)
-        output_mask = ops.to_numpy(output_mask)
+        input_mask = tensor.to_numpy(input_mask)
+        recurrent_mask = tensor.to_numpy(recurrent_mask)
+        output_mask = tensor.to_numpy(output_mask)
         
         return input_mask, recurrent_mask, output_mask

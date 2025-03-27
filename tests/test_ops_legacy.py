@@ -142,7 +142,7 @@ def test_random_operations(backend_name, original_backend):
         shuffled = tensor.shuffle(x)
         assert tensor.shape(shuffled) == (5,)
         # Check that all elements are still present (order may be different)
-        assert ops.all(ops.equal(ops.sort(shuffled), x))
+        assert ops.all(ops.equal(tensor.sort(shuffled), x))
     except ImportError:
         pytest.skip(f"{backend_name} backend not available")
 

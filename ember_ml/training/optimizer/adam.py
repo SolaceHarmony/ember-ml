@@ -5,10 +5,11 @@ This module provides a backend-agnostic implementation of the Adam optimizer
 that works with any backend (NumPy, PyTorch, MLX).
 """
 
-from typing import Dict, List, Optional, Union, Any, Callable
+# No specific typing imports needed currently
 
 from ember_ml import ops
 from ember_ml.training.optimizer.base import Optimizer
+from ember_ml.nn import tensor
 
 class Adam(Optimizer):
     """
@@ -37,17 +38,36 @@ class Adam(Optimizer):
             weight_decay: Weight decay (L2 penalty)
             amsgrad: Whether to use the AMSGrad variant
         """
-        defaults = {
-            'lr': lr,
+        # Call the base class initializer
+        super().__init__(params=params, lr=lr)
+        
+        # Update defaults with Adam specific parameters
+        # Note: super().__init__ already sets 'lr' in self.defaults
+        # and calls add_param_group if params is not None, which uses self.defaults.
+        # We need to ensure the defaults are fully set before add_param_group is potentially called by super.
+        # A better approach might be to pass all defaults to super() if the base class supports it,
+        # or set them before calling super(). Let's adjust the base class or this approach.
+        # For now, let's set them *after* super() and potentially re-process param groups if needed,
+        # or assume the base 'lr' is sufficient initially.
+        # Re-evaluating: The base add_param_group uses self.defaults. If called by super(),
+        # it won't have the Adam defaults yet.
+        # Let's set defaults *before* calling super and pass None for params initially,
+        # then call add_param_group manually.
+        
+        adam_defaults = {
             'betas': betas,
             'eps': eps,
             'weight_decay': weight_decay,
             'amsgrad': amsgrad
         }
-        self.defaults = defaults
-        self.state = {}
-        self.param_groups = []
+        # Initialize with base defaults first to ensure lr is present
+        base_defaults = {'lr': lr}
+        self.defaults = {**base_defaults, **adam_defaults}
         
+        # Call super without params, as add_param_group needs the full defaults
+        super().__init__(lr=lr) # Pass lr only, params=None handled by default
+        
+        # Now add the parameter group with the correct, full defaults
         if params is not None:
             self.add_param_group(params)
     
@@ -107,7 +127,7 @@ class Adam(Optimizer):
                 # Apply AMSGrad if enabled
                 if amsgrad:
                     max_exp_avg_sq = state['max_exp_avg_sq']
-                    max_exp_avg_sq = ops.maximum(max_exp_avg_sq, exp_avg_sq)
+                    max_exp_avg_sq = tensor.maximum(max_exp_avg_sq, exp_avg_sq)
                     state['max_exp_avg_sq'] = max_exp_avg_sq
                     denom = ops.sqrt(max_exp_avg_sq)
                 else:

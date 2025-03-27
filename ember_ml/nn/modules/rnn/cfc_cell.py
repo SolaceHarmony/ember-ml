@@ -161,7 +161,7 @@ class CfCCell(ModuleCell):
             z = ops.add(z, self.bias)
         
         # Split into gates
-        z_chunks = ops.split(z, 4, axis=-1)
+        z_chunks = tensor.split(z, 4, axis=-1)
         z_i, z_f, z_o, z_c = z_chunks
         
         # Apply activations

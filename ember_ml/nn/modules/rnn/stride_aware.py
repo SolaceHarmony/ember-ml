@@ -86,7 +86,7 @@ class StrideAware(Module):
         
         # Handle non-batched inputs
         if not is_batched:
-            inputs = ops.expand_dims(inputs, batch_dim)
+            inputs = tensor.expand_dims(inputs, batch_dim)
         
         # Get batch size and sequence length
         input_shape = tensor.shape(inputs)
@@ -110,7 +110,7 @@ class StrideAware(Module):
                 )
                 
                 # Add batch dimension for non-batched states
-                state = ops.expand_dims(state, 0)
+                state = tensor.expand_dims(state, 0)
         
         # Process sequence
         output_sequence = []
@@ -130,15 +130,15 @@ class StrideAware(Module):
         # Prepare output
         if self.return_sequences:
             stack_dim = 1 if self.batch_first else 0
-            outputs = ops.stack(output_sequence, axis=stack_dim)
+            outputs = tensor.stack(output_sequence, axis=stack_dim)
         else:
             # If not returning sequences, use the last output
             outputs = output_sequence[-1]
         
         # Handle non-batched outputs
         if not is_batched:
-            outputs = ops.squeeze(outputs, batch_dim)
-            state = ops.squeeze(state, 0)
+            outputs = tensor.squeeze(outputs, batch_dim)
+            state = tensor.squeeze(state, 0)
         
         return outputs, state
     

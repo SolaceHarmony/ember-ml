@@ -45,6 +45,7 @@ if TYPE_CHECKING == True:
     # These imports are for type checking only
     # Must be done inside TYPE_CHECKING block to avoid circular imports
     from typing import TypeVar
+    from ember_ml.nn.modules.base_module import Parameter # Import Parameter here
     T = TypeVar('T')  # Used for generic type definitions
     
     # Define types that reference external modules
@@ -53,6 +54,7 @@ if TYPE_CHECKING == True:
         Any,  # TorchTensor
         Any,  # EmberTensor
         Any,  # numpy.ndarray
+        Parameter # Add Parameter here
     ]
     
     type ArrayLike = Union[

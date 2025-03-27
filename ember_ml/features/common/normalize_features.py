@@ -77,7 +77,7 @@ class Normalize:
         
         # Avoid division by zero
         eps = ops.finfo(X_tensor.dtype).eps
-        norms_clipped = ops.maximum(self.norms_, eps)
+        norms_clipped = tensor.maximum(self.norms_, eps)
         
         # Normalize
         X_normalized = X_tensor / norms_clipped

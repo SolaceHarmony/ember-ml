@@ -18,7 +18,7 @@ def test_gather():
     indices = tensor.convert_to_tensor([0, 2])
     
     # Test gather operation
-    result = ops.gather(x, indices, axis=0)
+    result = tensor.gather(x, indices, axis=0)
     print("Result of gather operation:")
     print(result)
     

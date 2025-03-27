@@ -47,7 +47,7 @@ class BinomialInitializer:
         if self.seed is not None:
             tensor.set_seed(self.seed)
         
-        # Generate random values using ops.random_uniform
+        # Generate random values using tensor.random_uniform
         random_values = tensor.random_uniform(shape, minval=0.0, maxval=1.0)
         
         # Create binary mask by comparing with probability

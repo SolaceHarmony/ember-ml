@@ -11,7 +11,7 @@ from ember_ml import ops
 from ember_ml.nn import tensor
 from ember_ml.nn.wirings import Wiring, NCPWiring, AutoNCP
 from ember_ml.nn.modules import Module, Parameter
-
+from ember_ml.initializers import glorot_uniform, orthogonal
 class CfCCell(Module):
     """
     Closed-form Continuous-time (CfC) cell.
@@ -116,7 +116,7 @@ class CfCCell(Module):
             z = ops.add(z, self.bias)
         
         # Split into gates
-        z_chunks = ops.split(z, 4, axis=-1)
+        z_chunks = tensor.split(z, 4, axis=-1)
         z_i, z_f, z_o, z_c = z_chunks
         
         # Apply activations
@@ -224,9 +224,9 @@ class WiredCfCCell(CfCCell):
         self.input_mask, self.recurrent_mask, self.output_mask = self.wiring.build()
         
         # Convert masks to tensors
-        self.input_mask = tensor.convert_to_tensor(self.input_mask, dtype=ops.float32)
-        self.recurrent_mask = tensor.convert_to_tensor(self.recurrent_mask, dtype=ops.float32)
-        self.output_mask = tensor.convert_to_tensor(self.output_mask, dtype=ops.float32)
+        self.input_mask = tensor.convert_to_tensor(self.input_mask, dtype=tensor.float32)
+        self.recurrent_mask = tensor.convert_to_tensor(self.recurrent_mask, dtype=tensor.float32)
+        self.output_mask = tensor.convert_to_tensor(self.output_mask, dtype=tensor.float32)
         
         # Input weights
         self.kernel = Parameter(tensor.zeros((self.units, self.units * 4)))
@@ -243,17 +243,17 @@ class WiredCfCCell(CfCCell):
         
         # Initialize weights
         if self.kernel_initializer == "glorot_uniform":
-            self.kernel.data = ops.glorot_uniform((self.units, self.units * 4))
+            self.kernel.data = glorot_uniform((self.units, self.units * 4))
         
         if self.recurrent_initializer == "orthogonal":
-            self.recurrent_kernel.data = ops.orthogonal((self.units, self.units * 4))
+            self.recurrent_kernel.data = tensor.orthogonal((self.units, self.units * 4))
         
         if self.use_bias and self.bias_initializer == "zeros":
             self.bias.data = tensor.zeros((self.units * 4,))
         
         # Apply masks to weights
-        self.kernel_mask = ops.repeat(self.input_mask, 4, axis=-1)
-        self.recurrent_kernel_mask = ops.repeat(self.recurrent_mask, 4, axis=-1)
+        self.kernel_mask = tensor.repeat(self.input_mask, 4, axis=-1)
+        self.recurrent_kernel_mask = tensor.repeat(self.recurrent_mask, 4, axis=-1)
     
     def forward(self, inputs, states=None):
         """
@@ -284,7 +284,7 @@ class WiredCfCCell(CfCCell):
             z = ops.add(z, self.bias)
         
         # Split into gates
-        z_chunks = ops.split(z, 4, axis=-1)
+        z_chunks = tensor.split(z, 4, axis=-1)
         z_i, z_f, z_o, z_c = z_chunks
         
         # Apply activations
@@ -403,7 +403,7 @@ class CfC(Module):
         
         # Stack outputs
         if self.return_sequences:
-            outputs = ops.stack(outputs, axis=1)
+            outputs = tensor.stack(outputs, axis=1)
         else:
             outputs = outputs[-1]
         

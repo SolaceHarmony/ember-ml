@@ -23,7 +23,7 @@ try:
     # Test the var function
     print("\nTesting var function...")
     tensor = tensor.convert_to_tensor([1, 2, 3, 4, 5])
-    variance = ops.var(tensor)
+    variance = tensor.var(tensor)
     print(f"Variance of [1, 2, 3, 4, 5] = {variance}")
     
     print("\nAll tests passed successfully!")

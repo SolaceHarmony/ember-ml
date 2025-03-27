@@ -38,7 +38,7 @@ class Linear(Module, ContainerInterfaces):
         # Initialize weights using Kaiming initialization (He initialization)
         # This is a good default for layers followed by ReLU
         std = ops.sqrt(ops.divide(2.0, in_features))
-        weight_data = ops.random_normal(
+        weight_data = tensor.random_normal(
             (out_features, in_features),
             mean=0.0,
             stddev=std,
@@ -68,7 +68,7 @@ class Linear(Module, ContainerInterfaces):
         x = tensor.convert_to_tensor(x)
         
         # Compute the linear transformation
-        output = ops.matmul(x, ops.transpose(self.weight))
+        output = ops.matmul(x, tensor.transpose(self.weight))
         
         # Add bias if present
         if self.bias is not None:

@@ -5,7 +5,7 @@ This module provides standard type aliases for tensor operations in the Ember ML
 These type aliases ensure consistent type annotations across the codebase and
 help with static type checking.
 """
-
+import numpy
 from typing import (
     Any, List, Optional, Sequence, Tuple, Union,
     TYPE_CHECKING
@@ -31,7 +31,8 @@ type TensorLike = Optional[Union[
     bool,
     List[Any],
     Tuple[Any, ...],
-    'MLXArray'
+    'MLXArray',
+    'numpy.ndarray',
 ]]
 type ScalarLike = Optional[Union[
     Numeric,
@@ -58,6 +59,7 @@ if TYPE_CHECKING == True:
     # These imports are for type checking only
     # Must be done inside TYPE_CHECKING block to avoid circular imports
     from typing import TypeVar
+    from ember_ml.nn.modules.base_module import Parameter # Import Parameter here
     T = TypeVar('T')  # Used for generic type definitions
     
     # Define types that reference external modules
@@ -66,6 +68,7 @@ if TYPE_CHECKING == True:
         Any,  # MLXTensor
         Any,  # EmberTensor
         Any,  # numpy.ndarray
+        Parameter # Add Parameter here
     ]
     
     type ArrayLike = Union[

@@ -10,7 +10,7 @@ import importlib
 from ember_ml import ops
 from ember_ml.nn import tensor
 from ember_ml.ops import set_ops
-
+from ember_ml.ops import linearalg
 
 @pytest.fixture(autouse=True)
 def setup_numpy_backend():
@@ -34,13 +34,13 @@ class TestSolverOps:
         # Test with NumPy backend
         set_ops('numpy')
         importlib.reload(ops)
-        x_numpy = ops.solve(a, b)
+        x_numpy = linearalg.solve(a, b)
         
         # Test with MLX backend
         try:
             set_ops('mlx')
             importlib.reload(ops)
-            x_mlx = ops.solve(a, b)
+            x_mlx = linearalg.solve(a, b)
             
             # Check that the solutions are close
             assert ops.allclose(x_mlx, x_numpy, rtol=1e-4, atol=1e-4)
@@ -51,7 +51,7 @@ class TestSolverOps:
         try:
             set_ops('torch')
             importlib.reload(ops)
-            x_torch = ops.solve(a, b)
+            x_torch = linearalg.solve(a, b)
             
             # Check that the solutions are close
             assert ops.allclose(x_torch, x_numpy, rtol=1e-4, atol=1e-4)
@@ -66,13 +66,13 @@ class TestSolverOps:
         # Test with NumPy backend
         set_ops('numpy')
         importlib.reload(ops)
-        a_inv_numpy = ops.inv(a)
+        a_inv_numpy = linearalg.inv(a)
         
         # Test with MLX backend
         try:
             set_ops('mlx')
             importlib.reload(ops)
-            a_inv_mlx = ops.inv(a)
+            a_inv_mlx = linearalg.inv(a)
             
             # Check that the inverses are close
             assert ops.allclose(a_inv_mlx, a_inv_numpy, rtol=1e-4, atol=1e-4)
@@ -83,7 +83,7 @@ class TestSolverOps:
         try:
             set_ops('torch')
             importlib.reload(ops)
-            a_inv_torch = ops.inv(a)
+            a_inv_torch = linearalg.inv(a)
             
             # Check that the inverses are close
             assert ops.allclose(a_inv_torch, a_inv_numpy, rtol=1e-4, atol=1e-4)
@@ -98,13 +98,13 @@ class TestSolverOps:
         # Test with NumPy backend
         set_ops('numpy')
         importlib.reload(ops)
-        det_numpy = ops.det(a)
+        det_numpy = linearalg.det(a)
         
         # Test with MLX backend
         try:
             set_ops('mlx')
             importlib.reload(ops)
-            det_mlx = ops.det(a)
+            det_mlx = linearalg.det(a)
             
             # Check that the determinants are close
             assert ops.allclose(det_mlx, det_numpy, rtol=1e-4, atol=1e-4)
@@ -115,7 +115,7 @@ class TestSolverOps:
         try:
             set_ops('torch')
             importlib.reload(ops)
-            det_torch = ops.det(a)
+            det_torch = linearalg.det(a)
             
             # Check that the determinants are close
             assert ops.allclose(det_torch, det_numpy, rtol=1e-4, atol=1e-4)

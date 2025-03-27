@@ -54,7 +54,6 @@ def glorot_normal(shape: Tuple[int, ...], dtype: Optional[Any] = None, device: O
     stddev = ops.sqrt(ops.divide(2.0, ops.add(fan_in, fan_out)))
     
     return tensor.random_normal(shape, 0.0, stddev, dtype=dtype, device=device)
-    return ops.random_normal(shape, 0.0, stddev, dtype=dtype, device=device)
 
 def orthogonal(shape: Tuple[int, ...], gain: float = 1.0, dtype: Optional[Any] = None, device: Optional[str] = None):
     """
@@ -107,7 +106,7 @@ def orthogonal(shape: Tuple[int, ...], gain: float = 1.0, dtype: Optional[Any] =
         flat_dim = cols
         for dim in extra_dims:
             flat_dim *= dim
-        a = ops.reshape(a, (rows, flat_dim))
-        a = ops.reshape(a, shape)
+        a = tensor.reshape(a, (rows, flat_dim))
+        a = tensor.reshape(a, shape)
     
     return a

@@ -69,7 +69,7 @@ class BatchNormalization(Module):
         # Training mode: use batch statistics
         # Compute batch mean and variance
         batch_mean = ops.mean(x, axis=(0, 1))
-        batch_var = ops.var(x, axis=(0, 1))
+        batch_var = tensor.var(x, axis=(0, 1))
         
         # Update moving statistics
         self.moving_mean = ops.add(

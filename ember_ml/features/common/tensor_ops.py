@@ -64,27 +64,27 @@ class TensorOps(TensorOpsInterface):
         for i in range(ndims):
             if i == axis:
                 # This is the one-hot dimension
-                scatter_indices.append(ops.reshape(indices, [-1]))
+                scatter_indices.append(tensor.reshape(indices, [-1]))
             else:
                 # Create indices for other dimensions
                 idx = i if i < axis else i - 1
                 dim_size = shape[i]
                 
                 # Create a range for this dimension
-                dim_indices = ops.arange(dim_size)
+                dim_indices = tensor.arange(dim_size)
                 
                 # Reshape to broadcast with other dimensions
                 reshape_shape = [1] * (ndims - 1)
                 reshape_shape[idx] = dim_size
-                dim_indices = ops.reshape(dim_indices, reshape_shape)
+                dim_indices = tensor.reshape(dim_indices, reshape_shape)
                 
                 # Tile to match the shape of indices
                 tile_shape = list(tensor.shape(indices))
                 tile_shape[idx] = 1
-                dim_indices = ops.tile(dim_indices, tile_shape)
+                dim_indices = tensor.tile(dim_indices, tile_shape)
                 
                 # Flatten for scatter
-                scatter_indices.append(ops.reshape(dim_indices, [-1]))
+                scatter_indices.append(tensor.reshape(dim_indices, [-1]))
         
         # Create updates (all ones)
         updates = tensor.ones([tensor.shape(indices)[0]], dtype=dtype)
@@ -118,7 +118,7 @@ class TensorOps(TensorOpsInterface):
         updates = tensor.convert_to_tensor(updates)
         
         # Create a copy of the tensor to update
-        result = ops.copy(tensor)
+        result = tensor.copy(tensor)
         
         # Handle different backends
         backend = ops.get_ops()
@@ -156,9 +156,9 @@ class TensorOps(TensorOpsInterface):
             # MLX doesn't have a direct scatter operation
             
             # Convert to numpy, perform scatter, and convert back
-            tensor_np = ops.to_numpy(tensor)
-            indices_np = ops.to_numpy(indices)
-            updates_np = ops.to_numpy(updates)
+            tensor_np = tensor.to_numpy(tensor)
+            indices_np = tensor.to_numpy(indices)
+            updates_np = tensor.to_numpy(updates)
             
             if isinstance(indices, list):
                 # Multiple indices for different dimensions

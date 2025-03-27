@@ -25,7 +25,7 @@ def generate_synthetic_data(num_samples=1000, num_features=10, seed=42):
     nl.set_seed(seed)
     
     # Generate features with different frequencies
-    t = ops.linspace(0, 4 * ops.pi, num_samples)
+    t = tensor.linspace(0, 4 * ops.pi, num_samples)
     X = tensor.zeros((num_samples, num_features))
     
     for i in range(num_features):
@@ -36,7 +36,7 @@ def generate_synthetic_data(num_samples=1000, num_features=10, seed=42):
     
     # Generate target as a non-linear function of features
     y = ops.sin(X[:, 0] * X[:, 1]) + ops.cos(X[:, 2] + X[:, 3]) + 0.1 * ops.random.normal(shape=(num_samples,))
-    y = ops.reshape(y, (-1, 1))
+    y = tensor.reshape(y, (-1, 1))
     
     # Split into train, validation, and test sets
     train_size = int(0.7 * num_samples)

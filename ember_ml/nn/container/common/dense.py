@@ -10,7 +10,7 @@ from typing import Optional, Any
 from ember_ml import ops
 from ember_ml.nn.modules.base_module import BaseModule as Module, Parameter
 from ember_ml.nn.container.interfaces import DenseInterface
-
+from ember_ml.nn import tensor
 class Dense(Module, DenseInterface):
     """
     Dense (fully connected) layer.
@@ -64,7 +64,7 @@ class Dense(Module, DenseInterface):
             input_dim = input_shape[-1]
             
             # Initialize weights using Glorot uniform initialization
-            self.kernel = Parameter(ops.random_uniform(
+            self.kernel = Parameter(tensor.random_uniform(
                 (input_dim, self.units),
                 minval=-ops.sqrt(6.0 / (input_dim + self.units)),
                 maxval=ops.sqrt(6.0 / (input_dim + self.units))
@@ -79,7 +79,7 @@ class Dense(Module, DenseInterface):
         original_shape = input_shape
         if len(input_shape) > 2:
             # Flatten all dimensions except the last one
-            x = ops.reshape(x, (-1, input_shape[-1]))
+            x = tensor.reshape(x, (-1, input_shape[-1]))
         
         # Linear transformation
         output = ops.matmul(x, self.kernel)
@@ -94,7 +94,7 @@ class Dense(Module, DenseInterface):
         # Reshape output if needed
         if len(original_shape) > 2:
             output_shape = list(original_shape[:-1]) + [self.units]
-            output = ops.reshape(output, output_shape)
+            output = tensor.reshape(output, output_shape)
         
         return output
     

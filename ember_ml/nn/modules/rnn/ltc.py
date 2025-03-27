@@ -198,9 +198,9 @@ class LTC(Module):
         
         # Handle non-batched inputs
         if not is_batched:
-            inputs = ops.expand_dims(inputs, batch_dim)
+            inputs = tensor.expand_dims(inputs, batch_dim)
             if timespans is not None:
-                timespans = ops.expand_dims(timespans, batch_dim)
+                timespans = tensor.expand_dims(timespans, batch_dim)
         
         # Get batch size and sequence length
         input_shape = tensor.shape(inputs)
@@ -224,13 +224,9 @@ class LTC(Module):
                     f"For batched inputs, initial_state should be 2D but got {len(tensor.shape(h_state))}D"
                 )
             elif not is_batched and len(tensor.shape(h_state)) != 1:
-                raise ValueError(
-                    f"For non-batched inputs, initial_state should be 1D but got {len(tensor.shape(h_state))}D"
-                )
-                
                 # Add batch dimension for non-batched states
-                h_state = ops.expand_dims(h_state, 0)
-                c_state = ops.expand_dims(c_state, 0) if c_state is not None else None
+                h_state = tensor.expand_dims(h_state, 0)
+                c_state = tensor.expand_dims(c_state, 0) if c_state is not None else None
         
         # Process sequence
         output_sequence = []
@@ -257,7 +253,7 @@ class LTC(Module):
         # Prepare output
         if self.return_sequences:
             stack_dim = 1 if self.batch_first else 0
-            outputs = ops.stack(output_sequence, axis=stack_dim)
+            outputs = tensor.stack(output_sequence, axis=stack_dim)
         else:
             # If not returning sequences, use the last output
             outputs = output_sequence[-1] if output_sequence else None
@@ -267,11 +263,11 @@ class LTC(Module):
         
         # Handle non-batched outputs
         if not is_batched:
-            outputs = ops.squeeze(outputs, batch_dim)
+            outputs = tensor.squeeze(outputs, batch_dim)
             if self.mixed_memory:
-                final_state = (ops.squeeze(h_state, 0), ops.squeeze(c_state, 0))
+                final_state = (tensor.squeeze(h_state, 0), tensor.squeeze(c_state, 0))
             else:
-                final_state = ops.squeeze(h_state, 0)
+                final_state = tensor.squeeze(h_state, 0)
         
         return outputs, final_state
     

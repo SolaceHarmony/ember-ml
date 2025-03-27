@@ -41,20 +41,20 @@ def run_benchmarks_for_backend(backend_name: str) -> Dict:
     """Run benchmarks for a specific backend."""
     print(f"\nSetting backend to {backend_name}...")
     set_backend(backend_name)
-    ops.set_seed(SEED)
+    tensor.set_seed(SEED)
     
     results = {}
     
     # Normal distribution
     print(f"Benchmarking normal distribution with {backend_name} backend...")
     normal_time, normal_result = benchmark_function(
-        ops.random_normal, NUM_RUNS, SHAPE, 0.0, 1.0
+        tensor.random_normal, NUM_RUNS, SHAPE, 0.0, 1.0
     )
     
     # Uniform distribution
     print(f"Benchmarking uniform distribution with {backend_name} backend...")
     uniform_time, uniform_result = benchmark_function(
-        ops.random_uniform, NUM_RUNS, SHAPE, 0.0, 1.0
+        tensor.random_uniform, NUM_RUNS, SHAPE, 0.0, 1.0
     )
     
     # Get the random_ops instance to access the methods we implemented

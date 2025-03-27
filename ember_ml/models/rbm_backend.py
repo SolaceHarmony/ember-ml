@@ -71,7 +71,7 @@ class RBM:
         # Initialize weights and biases
         # Use small random values for weights to break symmetry
         # Scale by 1/sqrt(n_visible) for better initial convergence
-        self.weights = ops.random_normal(
+        self.weights = tensor.random_normal(
             (n_visible, n_hidden), 
             mean=0.0, 
             stddev=0.01 / ops.sqrt(tensor.convert_to_tensor(n_visible))
@@ -155,7 +155,7 @@ class RBM:
         Returns:
             Probabilities of visible units [batch_size, n_visible]
         """
-        visible_activations = ops.add(ops.dot(hidden_states, ops.transpose(self.weights)), self.visible_bias)
+        visible_activations = ops.add(ops.dot(hidden_states, tensor.transpose(self.weights)), self.visible_bias)
         return self.sigmoid(visible_activations)
     
     def sample_visible_states(self, visible_probs):
@@ -196,11 +196,11 @@ class RBM:
         pos_hidden_states = self.sample_hidden_states(pos_hidden_probs)
         
         # Compute positive associations
-        pos_associations = ops.dot(ops.transpose(batch_data), pos_hidden_probs)
+        pos_associations = ops.dot(tensor.transpose(batch_data), pos_hidden_probs)
         
         # Negative phase
         # Start with the hidden states from positive phase
-        neg_hidden_states = ops.copy(pos_hidden_states)
+        neg_hidden_states = tensor.copy(pos_hidden_states)
         
         # Perform k steps of Gibbs sampling
         for _ in range(k):
@@ -213,7 +213,7 @@ class RBM:
             neg_hidden_states = self.sample_hidden_states(neg_hidden_probs)
         
         # Compute negative associations
-        neg_associations = ops.dot(ops.transpose(neg_visible_states), neg_hidden_probs)
+        neg_associations = ops.dot(tensor.transpose(neg_visible_states), neg_hidden_probs)
         
         # Compute gradients
         weights_gradient = ops.divide(ops.subtract(pos_associations, neg_associations), batch_size)
@@ -259,12 +259,12 @@ class RBM:
         # Track state if enabled
         if self.track_states and len(self.training_states) < self.max_tracked_states:
             self.training_states.append({
-                'weights': ops.to_numpy(self.weights),
-                'visible_bias': ops.to_numpy(self.visible_bias),
-                'hidden_bias': ops.to_numpy(self.hidden_bias),
-                'error': float(ops.to_numpy(reconstruction_error)),
-                'visible_sample': ops.to_numpy(neg_visible_states[0]) if batch_size > 0 else None,
-                'hidden_sample': ops.to_numpy(neg_hidden_states[0]) if batch_size > 0 else None
+                'weights': tensor.to_numpy(self.weights),
+                'visible_bias': tensor.to_numpy(self.visible_bias),
+                'hidden_bias': tensor.to_numpy(self.hidden_bias),
+                'error': float(tensor.to_numpy(reconstruction_error)),
+                'visible_sample': tensor.to_numpy(neg_visible_states[0]) if batch_size > 0 else None,
+                'hidden_sample': tensor.to_numpy(neg_hidden_states[0]) if batch_size > 0 else None
             })
         
         return reconstruction_error
@@ -306,9 +306,9 @@ class RBM:
         
         for epoch in range(epochs):
             # Shuffle data for each epoch
-            indices = ops.to_numpy(ops.random_uniform((n_samples,)))
+            indices = tensor.to_numpy(tensor.random_uniform((n_samples,)))
             indices = tensor.convert_to_tensor(indices.argsort())
-            shuffled_data = tensor.convert_to_tensor([data[i] for i in ops.to_numpy(indices)])
+            shuffled_data = tensor.convert_to_tensor([data[i] for i in tensor.to_numpy(indices)])
             
             epoch_error = 0
             for batch_idx in range(n_batches):
@@ -322,8 +322,8 @@ class RBM:
                 
                 # Train on batch
                 batch_error = self.contrastive_divergence(batch, k)
-                epoch_error += ops.to_numpy(batch_error)
-                self.last_batch_error = float(ops.to_numpy(batch_error))
+                epoch_error += tensor.to_numpy(batch_error)
+                self.last_batch_error = float(tensor.to_numpy(batch_error))
             
             # Compute average epoch error
             avg_epoch_error = epoch_error / n_batches
@@ -333,7 +333,7 @@ class RBM:
             # Check validation error if provided
             validation_error = None
             if validation_data is not None:
-                validation_error = float(ops.to_numpy(self.reconstruction_error(validation_data)))
+                validation_error = float(tensor.to_numpy(self.reconstruction_error(validation_data)))
                 
                 # Early stopping check
                 if validation_error < best_validation_error:
@@ -356,14 +356,14 @@ class RBM:
         # Compute threshold for anomaly detection based on training data
         if self.reconstruction_error_threshold is None:
             errors = self.reconstruction_error(data, per_sample=True)
-            self.reconstruction_error_threshold = float(ops.to_numpy(
-                tensor.convert_to_tensor(sorted(ops.to_numpy(errors)))[int(0.95 * len(errors))]
+            self.reconstruction_error_threshold = float(tensor.to_numpy(
+                tensor.convert_to_tensor(sorted(tensor.to_numpy(errors)))[int(0.95 * len(errors))]
             ))
         
         if self.free_energy_threshold is None:
             energies = self.free_energy(data)
-            self.free_energy_threshold = float(ops.to_numpy(
-                tensor.convert_to_tensor(sorted(ops.to_numpy(energies)))[int(0.05 * len(energies))]
+            self.free_energy_threshold = float(tensor.to_numpy(
+                tensor.convert_to_tensor(sorted(tensor.to_numpy(energies)))[int(0.05 * len(energies))]
             ))
         
         return self.training_errors
@@ -499,7 +499,7 @@ class RBM:
         if start_data is not None:
             visible_state = tensor.convert_to_tensor(start_data)
         else:
-            visible_state = ops.random_uniform((1, self.n_visible))
+            visible_state = tensor.random_uniform((1, self.n_visible))
         
         # Clear previous dream states
         self.dream_states = []
@@ -515,7 +515,7 @@ class RBM:
             visible_state = self.sample_visible_states(visible_probs)
             
             # Store state
-            self.dream_states.append(ops.to_numpy(visible_state))
+            self.dream_states.append(tensor.to_numpy(visible_state))
         
         return self.dream_states
     
@@ -531,9 +531,9 @@ class RBM:
         
         # Prepare model data
         model_data = {
-            'weights': ops.to_numpy(self.weights),
-            'visible_bias': ops.to_numpy(self.visible_bias),
-            'hidden_bias': ops.to_numpy(self.hidden_bias),
+            'weights': tensor.to_numpy(self.weights),
+            'visible_bias': tensor.to_numpy(self.visible_bias),
+            'hidden_bias': tensor.to_numpy(self.hidden_bias),
             'n_visible': self.n_visible,
             'n_hidden': self.n_hidden,
             'learning_rate': self.learning_rate,

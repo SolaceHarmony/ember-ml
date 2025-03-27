@@ -310,7 +310,7 @@ class SpeedtestEventProcessor:
         
         if feature_tensors:
             logger.info("Combining all features")
-            self.combined_features = ops.concatenate(feature_tensors, axis=1)
+            self.combined_features = tensor.concatenate(feature_tensors, axis=1)
             logger.info(f"Combined features shape: {tensor.shape(self.combined_features)}")
         else:
             logger.warning("No features to combine")

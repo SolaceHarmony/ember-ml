@@ -9,6 +9,7 @@ import numpy as np
 from typing import Dict, List, Optional, Tuple, Union, Any, Callable
 
 from ember_ml import ops
+from ember_ml.nn import tensor
 from ember_ml.nn.modules import Module
 from ember_ml.nn.modules.rnn import CfC, LSTMCell
 from ember_ml.nn.wirings import AutoNCP
@@ -198,10 +199,10 @@ class StrideAwareCfCCell(CfC):
             Tuple: (output, new_states)
         """
         # Apply stride scaling to inputs
-        scaled_inputs = inputs * ops.reshape(self.stride_scale, (1, -1))
+        scaled_inputs = inputs * tensor.reshape(self.stride_scale, (1, -1))
         
         # Apply time scaling to states
-        scaled_states = [state * ops.reshape(self.time_scale, (1, -1)) for state in states]
+        scaled_states = [state * tensor.reshape(self.time_scale, (1, -1)) for state in states]
         
         # Call parent class with scaled inputs and states
         outputs, new_states = super().call(scaled_inputs, scaled_states, training=training)
@@ -334,9 +335,9 @@ class LiquidNetworkWithMotorNeuron(Module):
             threshold_values.append(threshold)
         
         # Stack outputs
-        outputs = ops.stack(outputs, axis=1)
-        trigger_signals = ops.stack(trigger_signals, axis=1)
-        threshold_values = ops.stack(threshold_values, axis=1)
+        outputs = tensor.stack(outputs, axis=1)
+        trigger_signals = tensor.stack(trigger_signals, axis=1)
+        threshold_values = tensor.stack(threshold_values, axis=1)
         
         return outputs, [trigger_signals, threshold_values]
 
@@ -404,7 +405,7 @@ class MotorNeuron(Module):
         if self.adaptive_threshold:
             threshold = self.threshold_projection(inputs)
         else:
-            threshold = ops.full_like(output, self.threshold)
+            threshold = tensor.full_like(output, self.threshold)
         
         # Generate trigger
         trigger = tensor.cast(output > threshold, ops.float32)
@@ -524,7 +525,7 @@ class LSTMGatedLiquidNetwork(Module):
             gated_cfc_output = gate * cfc_output
             
             # Concatenate gated CfC output and LSTM output
-            combined_output = ops.concatenate([gated_cfc_output, lstm_output], axis=-1)
+            combined_output = tensor.concatenate([gated_cfc_output, lstm_output], axis=-1)
             
             # Project output
             output = self.output_projection(combined_output)
@@ -533,7 +534,7 @@ class LSTMGatedLiquidNetwork(Module):
             outputs.append(output)
         
         # Stack outputs
-        outputs = ops.stack(outputs, axis=1)
+        outputs = tensor.stack(outputs, axis=1)
         
         return outputs
 
@@ -631,7 +632,7 @@ class MultiStrideLiquidNetwork(Module):
                     cell_outputs.append(tensor.zeros((tensor.shape(x_t)[0], cell.units)))
             
             # Concatenate cell outputs
-            combined_output = ops.concatenate(cell_outputs, axis=-1)
+            combined_output = tensor.concatenate(cell_outputs, axis=-1)
             
             # Project output
             output = self.output_projection(combined_output)
@@ -640,6 +641,6 @@ class MultiStrideLiquidNetwork(Module):
             outputs.append(output)
         
         # Stack outputs
-        outputs = ops.stack(outputs, axis=1)
+        outputs = tensor.stack(outputs, axis=1)
         
         return outputs

@@ -7,7 +7,7 @@ abstraction system for optimal performance across different hardware.
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple, Union, Callable
+from typing import Any, Dict, List, Optional, Tuple # Removed Union, Callable
 import pandas as pd
 
 from ember_ml.nn import tensor
@@ -45,14 +45,14 @@ class AnimatedFeatureProcessor:
         self.sample_tables_enabled = sample_tables_enabled
         self.device = device
         
+        
         # Storage for animation frames
-        self.processing_frames = []
+        self.processing_frames: List[Dict[str, Any]] = []
         
         # Storage for sample tables
-        self.sample_tables = {}
+        self.sample_tables: Dict[str, Dict[str, Any]] = {}
     
-    def process_numeric_features(
-        self,
+    def process_numeric_features(self,
         df: Any,
         columns: List[str],
         with_imputation: bool = True,
@@ -293,12 +293,19 @@ class AnimatedFeatureProcessor:
                         elif comp_name == 'month':
                             max_val = 12
                         elif comp_name == 'day_of_week':
-                            max_val = 7
+                            # Use tensor for consistency, ensure float for later division
+                            max_val_tensor = tensor.convert_to_tensor(7.0, dtype=tensor.float32, device=self.device)
                         else:
-                            max_val = ops.max(comp_tensor).item() + 1
-                        
+                            # Add 1 using ops.add and ensure float
+                            comp_max = ops.max(comp_tensor)
+                            max_val_tensor = ops.add(
+                                comp_max,
+                                tensor.ones((), dtype=tensor.dtype(comp_max), device=self.device)
+                            )
+                            max_val_tensor = tensor.cast(max_val_tensor, dtype=tensor.float32) # Ensure float
+
                         # Apply sin/cos encoding
-                        sin_comp, cos_comp = self._cyclical_encode(comp_tensor, max_val)
+                        sin_comp, cos_comp = self._cyclical_encode(comp_tensor, max_val_tensor) # Pass float tensor
                         
                         # Add to processed components
                         processed_components.append(sin_comp)
@@ -316,11 +323,11 @@ class AnimatedFeatureProcessor:
                     # Reshape components to 2D
                     reshaped_components = []
                     for comp in processed_components:
-                        reshaped_comp = ops.reshape(comp, (tensor.shape(comp)[0], 1))
+                        reshaped_comp = tensor.reshape(comp, (tensor.shape(comp)[0], 1))
                         reshaped_components.append(reshaped_comp)
                     
                     # Concatenate along columns
-                    column_features = ops.concatenate(reshaped_components, axis=1)
+                    column_features = tensor.concatenate(reshaped_components, axis=1)
                     
                     # Add to all features
                     all_features.append(column_features)
@@ -347,7 +354,7 @@ class AnimatedFeatureProcessor:
         
         # Combine all datetime features
         if all_features:
-            combined_features = ops.concatenate(all_features, axis=1)
+            combined_features = tensor.concatenate(all_features, axis=1)
             
             # Create a sample data table for all processed datetime features
             if self.sample_tables_enabled:
@@ -471,38 +478,51 @@ class AnimatedFeatureProcessor:
         nan_mask = ops.isnan(data)
         
         # If no NaNs, return the original data
-        if not ops.any(nan_mask):
+        if not tensor.any(nan_mask): # Use tensor.any
             return data
         
         # Calculate median for each feature
         # First, replace NaNs with zeros for calculation purposes
-        data_no_nan = ops.where(nan_mask, ops.zeros_like(data), data)
+        data_no_nan = ops.where(nan_mask, tensor.zeros_like(data), data)
         
         # Calculate median for each feature (column)
         medians = []
         for i in range(tensor.shape(data)[1]):
             col_data = data_no_nan[:, i]
             # Sort the data
-            sorted_data = ops.sort(col_data)
+            sorted_data = tensor.sort(col_data)
             # Get median
-            n = tensor.shape(sorted_data)[0]
-            if n % 2 == 0:
+            n_scalar = tensor.shape(sorted_data)[0] # Assuming scalar int
+            n_tensor = tensor.convert_to_tensor(n_scalar, device=self.device) # Use tensor for ops
+            two_tensor = tensor.convert_to_tensor(2, dtype=tensor.dtype(n_tensor), device=self.device)
+            
+            # Use ops.mod for modulo check
+            if ops.equal(ops.mod(n_tensor, two_tensor), tensor.zeros_like(n_tensor)):
+                # Use ops.floor_divide for integer division, ensure int indices
+                idx1 = ops.subtract(ops.floor_divide(n_tensor, two_tensor), tensor.ones_like(n_tensor))
+                idx2 = ops.floor_divide(n_tensor, two_tensor)
+                # Cast indices to int64 for safety if needed by backend indexing
+                idx1_int = tensor.cast(idx1, dtype=tensor.int64)
+                idx2_int = tensor.cast(idx2, dtype=tensor.int64)
                 median = ops.divide(
-                    ops.add(sorted_data[n // 2 - 1], sorted_data[n // 2]),
-                    tensor.convert_to_tensor(2.0)
+                    ops.add(sorted_data[idx1_int], sorted_data[idx2_int]),
+                    tensor.convert_to_tensor(2.0, device=self.device) # Ensure device
                 )
             else:
-                median = sorted_data[n // 2]
+                # Use ops.floor_divide for integer division
+                idx = ops.floor_divide(n_tensor, two_tensor)
+                idx_int = tensor.cast(idx, dtype=tensor.int64) # Cast index
+                median = sorted_data[idx_int]
             medians.append(median)
         
         # Convert to tensor
-        medians_tensor = ops.stack(medians)
+        medians_tensor = tensor.stack(medians)
         
         # Reshape medians to match data shape for broadcasting
-        medians_tensor = ops.reshape(medians_tensor, (1, -1))
+        medians_tensor = tensor.reshape(medians_tensor, (1, -1))
         
         # Replace NaNs with medians
-        return ops.where(nan_mask, ops.broadcast_to(medians_tensor, tensor.shape(data)), data)
+        return ops.where(nan_mask, tensor.broadcast_to(medians_tensor, tensor.shape(data)), data) # Use tensor.broadcast_to
     
     def _handle_outliers(self, data: Any) -> Any:
         """
@@ -521,13 +541,20 @@ class AnimatedFeatureProcessor:
         for i in range(tensor.shape(data)[1]):
             col_data = data[:, i]
             # Sort the data
-            sorted_data = ops.sort(col_data)
-            n = tensor.shape(sorted_data)[0]
+            sorted_data = tensor.sort(col_data)
+            n_scalar = tensor.shape(sorted_data)[0] # Assuming scalar int
+            n_tensor = tensor.convert_to_tensor(n_scalar, device=self.device) # Use tensor for ops
+            four_tensor = tensor.convert_to_tensor(4, dtype=tensor.dtype(n_tensor), device=self.device)
+            three_tensor = tensor.convert_to_tensor(3, dtype=tensor.dtype(n_tensor), device=self.device)
             
-            # Calculate quartile indices
-            q1_idx = n // 4
-            q3_idx = (3 * n) // 4
+            # Calculate quartile indices using ops
+            q1_idx_tensor = ops.floor_divide(n_tensor, four_tensor)
+            q3_idx_tensor = ops.floor_divide(ops.multiply(three_tensor, n_tensor), four_tensor)
             
+            # Cast indices to int64 for safety
+            q1_idx = tensor.cast(q1_idx_tensor, dtype=tensor.int64)
+            q3_idx = tensor.cast(q3_idx_tensor, dtype=tensor.int64)
+
             # Get quartile values
             q1 = sorted_data[q1_idx]
             q3 = sorted_data[q3_idx]
@@ -536,23 +563,20 @@ class AnimatedFeatureProcessor:
             q3_values.append(q3)
         
         # Convert to tensors
-        q1_tensor = ops.stack(q1_values)
-        q3_tensor = ops.stack(q3_values)
+        q1_tensor = tensor.stack(q1_values)
+        q3_tensor = tensor.stack(q3_values)
         
         # Calculate IQR
         iqr_tensor = ops.subtract(q3_tensor, q1_tensor)
-        
-        # Calculate bounds
-        lower_bound = ops.subtract(q1_tensor, ops.multiply(
-            iqr_tensor, tensor.convert_to_tensor(1.5)
-        ))
-        upper_bound = ops.add(q3_tensor, ops.multiply(
-            iqr_tensor, tensor.convert_to_tensor(1.5)
-        ))
+        one_point_five = tensor.convert_to_tensor(1.5, dtype=tensor.dtype(iqr_tensor), device=self.device) # Ensure same dtype and device
+
+        # Calculate bounds using ops.multiply
+        lower_bound = ops.subtract(q1_tensor, ops.multiply(iqr_tensor, one_point_five))
+        upper_bound = ops.add(q3_tensor, ops.multiply(iqr_tensor, one_point_five))
         
         # Reshape bounds to match data shape for broadcasting
-        lower_bound = ops.reshape(lower_bound, (1, -1))
-        upper_bound = ops.reshape(upper_bound, (1, -1))
+        lower_bound = tensor.reshape(lower_bound, (1, -1))
+        upper_bound = tensor.reshape(upper_bound, (1, -1))
         
         # Clip values to bounds
         return ops.clip(data, lower_bound, upper_bound)
@@ -574,14 +598,31 @@ class AnimatedFeatureProcessor:
         for i in range(tensor.shape(data)[1]):
             col_data = data[:, i]
             # Sort the data
-            sorted_data = ops.sort(col_data)
-            n = tensor.shape(sorted_data)[0]
+            sorted_data = tensor.sort(col_data)
+            n_scalar = tensor.shape(sorted_data)[0] # Assuming this returns a scalar (int or 0-d tensor)
+            n_tensor = tensor.convert_to_tensor(n_scalar, dtype=tensor.float32, device=self.device) # Ensure float for multiplication
             
-            # Calculate percentile indices
-            p05_idx = max(0, int(0.05 * n))
-            p95_idx = min(n - 1, int(0.95 * n))
+            # Calculate percentile indices using tensor ops
+            idx_05_float = ops.multiply(tensor.convert_to_tensor(0.05, device=self.device), n_tensor)
+            idx_95_float = ops.multiply(tensor.convert_to_tensor(0.95, device=self.device), n_tensor)
             
-            # Get percentile values
+            # Floor and cast to integer type suitable for indexing
+            idx_05_int = tensor.cast(ops.floor(idx_05_float), dtype=tensor.int64) # Use int64 for safety
+            idx_95_int = tensor.cast(ops.floor(idx_95_float), dtype=tensor.int64)
+            
+            # Ensure indices are within bounds [0, n-1] using tensor ops
+            zero_tensor = tensor.zeros((), dtype=tensor.int64, device=self.device)
+            # Need n as int64 for comparison/min
+            n_int64_tensor = tensor.cast(n_tensor, dtype=tensor.int64)
+            n_minus_1_tensor = ops.subtract(n_int64_tensor, tensor.ones((), dtype=tensor.int64, device=self.device))
+
+            p05_idx = tensor.maximum(zero_tensor, idx_05_int)
+            # Ensure p95_idx doesn't exceed n-1
+            p95_idx = tensor.minimum(n_minus_1_tensor, idx_95_int)
+            
+            # Get percentile values (indexing expects scalar int or 0-d int tensor)
+            # Convert tensor indices back to scalar integers if necessary for indexing
+            # Assuming the backend tensor indexing supports 0-d tensors directly
             p05 = sorted_data[p05_idx]
             p95 = sorted_data[p95_idx]
             
@@ -589,19 +630,19 @@ class AnimatedFeatureProcessor:
             max_values.append(p95)
         
         # Convert to tensors
-        min_tensor = ops.stack(min_values)
-        max_tensor = ops.stack(max_values)
+        min_tensor = tensor.stack(min_values)
+        max_tensor = tensor.stack(max_values)
         
         # Reshape min and max to match data shape for broadcasting
-        min_tensor = ops.reshape(min_tensor, (1, -1))
-        max_tensor = ops.reshape(max_tensor, (1, -1))
+        min_tensor = tensor.reshape(min_tensor, (1, -1))
+        max_tensor = tensor.reshape(max_tensor, (1, -1))
         
         # Calculate range
         range_tensor = ops.subtract(max_tensor, min_tensor)
         
         # Avoid division by zero
         epsilon = tensor.convert_to_tensor(1e-8, device=self.device)
-        range_tensor = ops.maximum(range_tensor, epsilon)
+        range_tensor = tensor.maximum(range_tensor, epsilon)
         
         # Normalize data
         normalized_data = ops.divide(
@@ -796,9 +837,13 @@ class AnimatedFeatureProcessor:
             Tuple of (sin_component, cos_component)
         """
         # Scale to [0, 2π]
+        two_pi = ops.multiply(
+            tensor.convert_to_tensor(2.0, device=self.device),
+            tensor.convert_to_tensor(3.14159, device=self.device)
+        )
         scaled_data = ops.multiply(
-            ops.divide(data, tensor.convert_to_tensor(period, device=self.device)),
-            tensor.convert_to_tensor(2.0 * 3.14159, device=self.device)
+            ops.divide(data, tensor.convert_to_tensor(period, dtype=tensor.float32, device=self.device)), # Ensure period is float tensor
+            tensor.cast(two_pi, dtype=tensor.dtype(data)) # Ensure two_pi matches data dtype
         )
         
         # Apply sin and cos transformations
@@ -826,27 +871,171 @@ class AnimatedFeatureProcessor:
         
         # Avoid division by zero
         epsilon = tensor.convert_to_tensor(1e-8, device=self.device)
-        data_range = ops.maximum(data_range, epsilon)
+        data_range = tensor.maximum(data_range, epsilon)
         
         # Normalize
         return ops.divide(
             ops.subtract(data, min_val),
             data_range
         )
-    
     def _create_sample_table(
-        self, 
-        df: Any, 
-        columns: List[str], 
-        table_id: str, 
+        self,
+        df: Any,
+        columns: List[str],
+        table_id: str,
         title: str,
         max_rows: int = 5
     ) -> None:
         """
         Create a sample data table from DataFrame columns.
-        
+
         Args:
             df: Input DataFrame
             columns: Columns to include in the table
             table_id: Unique identifier for the table
             title: Title of the table
+            max_rows: Maximum number of rows for the sample table
+        """
+        if not self.sample_tables_enabled or not columns:
+            return
+
+        try:
+            # Select columns and take the head
+            sample_df = df[columns].head(max_rows).copy()
+
+            # Convert potential tensor columns back for display if needed
+            for col in columns:
+                try:
+                    first_element = sample_df[col].iloc[0]
+                    if isinstance(first_element, tensor.EmberTensor):
+                        try:
+                            sample_df[col] = sample_df[col].apply(lambda x: tensor.to_numpy(x) if isinstance(x, tensor.EmberTensor) else x)
+                        except Exception as e_inner:
+                            logger.debug(f"Could not convert column {col} to numpy for sample table: {e_inner}")
+                except IndexError:
+                    logger.debug(f"Column {col} is empty, skipping numpy conversion check.")
+                except Exception as e_outer:
+                     logger.debug(f"Error checking column {col} for tensor type: {e_outer}")
+
+            # Store the sample table
+            self.sample_tables[table_id] = {
+                'title': title,
+                'data': sample_df.to_dict(orient='records'),
+                'columns': columns
+            }
+            logger.debug(f"Created sample table '{table_id}' with title '{title}'")
+
+        except Exception as e:
+            logger.error(f"Error creating sample table '{table_id}': {e}", exc_info=True)
+
+    def _create_sample_table_from_tensor(
+        self,
+        data: Any,
+        columns: List[str],
+        table_id: str,
+        title: str,
+        max_rows: int = 5
+    ) -> None:
+        """
+        Create a sample data table from a tensor.
+
+        Args:
+            data: Input tensor
+            columns: Column names corresponding to tensor columns
+            table_id: Unique identifier for the table
+            title: Title of the table
+            max_rows: Maximum number of rows for the sample table
+        """
+        if not self.sample_tables_enabled or tensor.shape(data)[1] == 0:
+            return
+
+        try:
+            # Take the first max_rows
+            num_rows_to_take = min(tensor.shape(data)[0], max_rows)
+            sample_data_tensor = data[:num_rows_to_take, :]
+
+            # Convert tensor slice to a pandas DataFrame
+            try:
+                sample_data_np = tensor.to_numpy(sample_data_tensor)
+            except Exception as e:
+                 logger.warning(f"Could not convert tensor to NumPy for sample table {table_id}, falling back: {e}")
+                 sample_data_np = [[tensor.to_numpy(item) for item in row] for row in sample_data_tensor]
+
+            sample_df = pd.DataFrame(sample_data_np, columns=columns)
+
+            # Store the sample table
+            self.sample_tables[table_id] = {
+                'title': title,
+                'data': sample_df.to_dict(orient='records'),
+                'columns': columns
+            }
+            logger.debug(f"Created sample table '{table_id}' from tensor with title '{title}'")
+
+        except Exception as e:
+            logger.error(f"Error creating sample table '{table_id}' from tensor: {e}", exc_info=True)
+
+    def _capture_frame(
+        self,
+        data: Any,
+        step_description: str,
+        feature_type: str
+    ) -> None:
+        """
+        Capture a frame for the processing animation.
+
+        Args:
+            data: Tensor data at the current step
+            step_description: Description of the processing step
+            feature_type: Type of feature being processed
+        """
+        if not self.visualization_enabled or tensor.shape(data)[1] == 0:
+            return
+
+        try:
+            # Convert tensor to a serializable format
+            try:
+                data_np = tensor.to_numpy(data)
+            except Exception as e:
+                logger.warning(f"Could not convert tensor to NumPy for frame capture, falling back: {e}")
+                data_np = [[tensor.to_numpy(item) for item in row] for row in data]
+
+            frame_data = {
+                'step': step_description,
+                'feature_type': feature_type,
+                # Store a sample for visualization
+                'data_sample': (data_np[:100, :].tolist() if hasattr(data_np, 'shape') and len(data_np.shape) > 1 
+                                else [row[:] for row in data_np[:100]]),
+                'shape': tensor.shape(data)
+            }
+            self.processing_frames.append(frame_data)
+            logger.debug(f"Captured animation frame for step: {step_description}")
+
+        except Exception as e:
+            logger.error(f"Error capturing animation frame for step '{step_description}': {e}", exc_info=True)
+
+    def _generate_processing_animation(self) -> None:
+        """
+        Generate or prepare the processing animation from captured frames. (Placeholder)
+        """
+        if not self.visualization_enabled or not self.processing_frames:
+            return
+
+        logger.info(f"Animation frames captured: {len(self.processing_frames)}. "
+                    f"Ready for animation generation (implementation pending).")
+        # Placeholder for actual animation generation logic
+
+    def get_processing_frames(self) -> List[Dict[str, Any]]:
+        """Returns the captured animation frames."""
+        return self.processing_frames
+
+    def get_sample_tables(self) -> Dict[str, Dict[str, Any]]:
+        """Returns the generated sample tables."""
+        return self.sample_tables
+
+    def clear_artifacts(self) -> None:
+        """Clears stored animation frames and sample tables."""
+        self.processing_frames = []
+        self.sample_tables = {}
+        logger.debug("Cleared animation frames and sample tables.")
+
+    # [Deleted Method Block]

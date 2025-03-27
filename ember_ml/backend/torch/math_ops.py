@@ -161,8 +161,20 @@ def mean(x: TensorLike, axis: Optional[ShapeLike] = None, keepdims: bool = False
     from ember_ml.backend.torch.tensor import TorchTensor
     x_tensor = TorchTensor().convert_to_tensor(x)
     
+    # Ensure float dtype for mean calculation if input is integer
+    if not x_tensor.dtype.is_floating_point and not x_tensor.dtype.is_complex:
+        x_tensor = x_tensor.to(torch.float32) # Cast to float32
+
     if axis is None:
-        return torch.mean(x_tensor, keepdim=keepdims)
+        # torch.mean doesn't accept keepdim when axis is None (mean over all elements)
+        result = torch.mean(x_tensor)
+        # If keepdims is True, we need to manually reshape the scalar result
+        if keepdims:
+            # Create a shape of all ones with the same ndim as input
+            target_shape = (1,) * x_tensor.ndim
+            return result.reshape(target_shape)
+        else:
+            return result
     elif isinstance(axis, tuple):
         result = x_tensor
         for dim in sorted(axis, reverse=True):
@@ -1131,7 +1143,28 @@ class TorchMathOps:
         
     def sum(self, x, axis=None, keepdims=False):
         """Compute the sum of a tensor along specified axes."""
-        return sum(x, axis=axis, keepdims=keepdims)
+        # Correct implementation using torch.sum and handling keepdims
+        from ember_ml.backend.torch.tensor import TorchTensor # Import needed here
+        x_tensor = TorchTensor().convert_to_tensor(x)
+        
+        if axis is None:
+            # torch.sum doesn't accept keepdim when axis is None
+            result = torch.sum(x_tensor)
+            if keepdims:
+                # Manually reshape to keep dimensions if keepdims=True
+                target_shape = (1,) * x_tensor.ndim
+                return result.reshape(target_shape)
+            else:
+                return result
+        elif isinstance(axis, tuple):
+            # Handle tuple axis by summing iteratively
+            result = x_tensor
+            for dim in sorted(axis, reverse=True):
+                result = torch.sum(result, dim=dim, keepdim=keepdims)
+            return result
+        else:
+            # Handle single axis
+            return torch.sum(x_tensor, dim=axis, keepdim=keepdims)
         
     def var(self, x, axis=None, keepdims=False):
         """Compute the variance of a tensor along specified axes."""

@@ -5,10 +5,11 @@ from datetime import datetime
 from sklearn.preprocessing import StandardScaler
 
 from ember_ml import ops
+from ember_ml.nn import tensor
 from ember_ml.nn.tensor import EmberTensor
 from ember_ml.nn.wirings import AutoNCP
 from ember_ml.nn.modules.rnn import CfC
-from ember_ml.nn import Module
+from ember_ml.nn.modules import Module
 from ember_ml.nn.container import Sequential, BatchNormalization, Dense
 
 def generate_log_data(num_logs=1000):
@@ -164,7 +165,7 @@ class LiquidAnomalyDetector:
         
         # Get predictions
         predictions = self.model(sequences_tensor.data)
-        predictions_np = ops.to_numpy(predictions)
+        predictions_np = tensor.to_numpy(predictions)
         
         # Convert predictions to boolean array and flatten
         return (predictions_np.squeeze() > threshold).astype(bool)
@@ -219,7 +220,7 @@ class LiquidAnomalyDetector:
         train_size = num_samples - val_size
         
         # Shuffle indices
-        indices = ops.random_permutation(num_samples)
+        indices = tensor.random_permutation(num_samples)
         train_indices = indices[:train_size]
         val_indices = indices[train_size:]
         
@@ -240,8 +241,8 @@ class LiquidAnomalyDetector:
             batch_size = 32
             for i in range(0, train_size, batch_size):
                 batch_indices = train_indices[i:i+batch_size]
-                x_batch = ops.gather(sequences_tensor, batch_indices)
-                y_batch = ops.gather(labels_tensor, batch_indices)
+                x_batch = tensor.gather(sequences_tensor, batch_indices)
+                y_batch = tensor.gather(labels_tensor, batch_indices)
                 
                 # Forward pass
                 with ops.GradientTape() as tape:
@@ -253,11 +254,11 @@ class LiquidAnomalyDetector:
                 optimizer.apply_gradients(zip(grads, self.model.trainable_variables))
                 
                 # Compute metrics
-                train_loss += ops.to_numpy(loss)
-                train_acc += ops.to_numpy(ops.mean(ops.cast(
+                train_loss += tensor.to_numpy(loss)
+                train_acc += tensor.to_numpy(ops.mean(tensor.cast(
                     ops.equal(
-                        ops.cast(y_batch > 0.5, ops.int32),
-                        ops.cast(y_pred > 0.5, ops.int32)
+                        tensor.cast(y_batch > 0.5, ops.int32),
+                        tensor.cast(y_pred > 0.5, ops.int32)
                     ),
                     ops.float32
                 )))
@@ -269,19 +270,19 @@ class LiquidAnomalyDetector:
             # Process validation data
             for i in range(0, val_size, batch_size):
                 batch_indices = val_indices[i:i+batch_size]
-                x_batch = ops.gather(sequences_tensor, batch_indices)
-                y_batch = ops.gather(labels_tensor, batch_indices)
+                x_batch = tensor.gather(sequences_tensor, batch_indices)
+                y_batch = tensor.gather(labels_tensor, batch_indices)
                 
                 # Forward pass
                 y_pred = self.model(x_batch)
                 loss = loss_fn(y_batch, y_pred)
                 
                 # Compute metrics
-                val_loss += ops.to_numpy(loss)
-                val_acc += ops.to_numpy(ops.mean(ops.cast(
+                val_loss += tensor.to_numpy(loss)
+                val_acc += tensor.to_numpy(ops.mean(tensor.cast(
                     ops.equal(
-                        ops.cast(y_batch > 0.5, ops.int32),
-                        ops.cast(y_pred > 0.5, ops.int32)
+                        tensor.cast(y_batch > 0.5, ops.int32),
+                        tensor.cast(y_pred > 0.5, ops.int32)
                     ),
                     ops.float32
                 )))
@@ -327,7 +328,7 @@ class LiquidAnomalyDetector:
         
         # Get raw predictions
         raw_predictions = self.model(sequences_tensor)
-        raw_predictions_np = ops.to_numpy(raw_predictions)
+        raw_predictions_np = tensor.to_numpy(raw_predictions)
         
         # Detect anomalies using threshold
         anomalies = raw_predictions_np.squeeze() > threshold

@@ -83,7 +83,7 @@ class TestNCP:
         )
         
         # Create input tensor
-        x = ops.random_normal(shape=(32, 15))
+        x = tensor.random_normal(shape=(32, 15))
         
         # Forward pass
         output = model(x, return_state=False)
@@ -113,7 +113,7 @@ class TestNCP:
         )
         
         # Create input tensor
-        x = ops.random_normal(shape=(32, 15))
+        x = tensor.random_normal(shape=(32, 15))
         
         # Forward pass
         output = model(x, return_state=False)
@@ -212,7 +212,7 @@ class TestAutoNCP:
         )
         
         # Create input tensor with the same shape as the wiring input_dim
-        x = ops.random_normal(shape=(32, model.wiring.input_dim))
+        x = tensor.random_normal(shape=(32, model.wiring.input_dim))
         
         # Forward pass
         output = model(x, return_state=False)

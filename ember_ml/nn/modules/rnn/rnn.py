@@ -11,7 +11,7 @@ from ember_ml import ops
 from ember_ml.nn.modules import Module
 from ember_ml.nn.modules.rnn.rnn_cell import RNNCell
 from ember_ml.nn import tensor
-
+from ember_ml.nn.container.common import Dropout
 class RNN(Module):
     """
     Recurrent Neural Network (RNN) layer.
@@ -114,7 +114,7 @@ class RNN(Module):
         
         # Handle non-batched inputs
         if not is_batched:
-            inputs = ops.expand_dims(inputs, batch_dim)
+            inputs = tensor.expand_dims(inputs, batch_dim)
         
         # Get batch size and sequence length
         input_shape = tensor.shape(inputs)
@@ -184,20 +184,20 @@ class RNN(Module):
             if self.bidirectional:
                 combined_outputs = []
                 for t in range(seq_length):
-                    combined = ops.concat([forward_outputs[t], backward_outputs[t]], axis=-1)
+                    combined = tensor.concatenate([forward_outputs[t], backward_outputs[t]], axis=-1)
                     combined_outputs.append(combined)
             else:
                 combined_outputs = forward_outputs
             
             # Stack outputs for this layer
             if self.batch_first:
-                layer_outputs = ops.stack(combined_outputs, axis=1)
+                layer_outputs = tensor.stack(combined_outputs, axis=1)
             else:
-                layer_outputs = ops.stack(combined_outputs, axis=0)
+                layer_outputs = tensor.stack(combined_outputs, axis=0)
             
             # Apply dropout (except for the last layer)
             if layer < self.num_layers - 1 and self.dropout > 0:
-                layer_outputs = ops.dropout(layer_outputs, self.dropout)
+                layer_outputs = Dropout(layer_outputs, self.dropout)
             
             # Store final states for this layer
             final_h_states.append(forward_h)
@@ -216,10 +216,10 @@ class RNN(Module):
         
         # Handle non-batched outputs
         if not is_batched:
-            outputs = ops.squeeze(outputs, batch_dim)
+            outputs = tensor.squeeze(outputs, batch_dim)
         
         # Prepare final state
-        final_state = ops.stack(final_h_states)
+        final_state = tensor.stack(final_h_states)
         
         # Return outputs and states if requested
         if self.return_state:
@@ -245,4 +245,4 @@ class RNN(Module):
             if self.bidirectional:
                 h_states.append(tensor.zeros((batch_size, self.hidden_size)))
         
-        return ops.stack(h_states)
+        return tensor.stack(h_states)

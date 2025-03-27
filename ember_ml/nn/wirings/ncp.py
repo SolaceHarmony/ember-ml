@@ -46,7 +46,7 @@ class NCP(Wiring):
         
         # Initialize random number generator
         if seed is not None:
-            ops.set_seed(seed)
+            tensor.set_seed(seed)
         
         # Generate masks
         self.input_mask = self._generate_input_mask()
@@ -72,15 +72,15 @@ class NCP(Wiring):
         # Connect each input to a random subset of units
         for i in range(self.input_dim):
             # Generate random indices
-            indices = ops.random_permutation(self.units)
+            indices = tensor.random_permutation(self.units)
             # Take the first connections_per_input indices
             target_indices = indices[:tensor.cast(connections_per_input, int32)]
             # Set the mask values to 1.0 at these indices
             for idx in target_indices:
                 mask_idx = tensor.convert_to_tensor([i, idx], dtype=int32)
-                mask = ops.tensor_scatter_nd_update(
+                mask = tensor.tensor_scatter_nd_update(
                     mask, 
-                    ops.expand_dims(mask_idx, 0), 
+                    tensor.expand_dims(mask_idx, 0), 
                     tensor.convert_to_tensor([1.0])
                 )
         
@@ -105,15 +105,15 @@ class NCP(Wiring):
         # Connect each unit to a random subset of units
         for i in range(self.units):
             # Generate random indices
-            indices = ops.random_permutation(self.units)
+            indices = tensor.random_permutation(self.units)
             # Take the first connections_per_unit indices
             target_indices = indices[:tensor.cast(connections_per_unit, int32)]
             # Set the mask values to 1.0 at these indices
             for idx in target_indices:
                 mask_idx = tensor.convert_to_tensor([i, idx], dtype=int32)
-                mask = ops.tensor_scatter_nd_update(
+                mask = tensor.tensor_scatter_nd_update(
                     mask, 
-                    ops.expand_dims(mask_idx, 0), 
+                    tensor.expand_dims(mask_idx, 0), 
                     tensor.convert_to_tensor([1.0])
                 )
         
@@ -138,15 +138,15 @@ class NCP(Wiring):
         # Connect each output to a random subset of units
         for i in range(self.output_dim):
             # Generate random indices
-            indices = ops.random_permutation(self.units)
+            indices = tensor.random_permutation(self.units)
             # Take the first connections_per_output indices
             source_indices = indices[:tensor.cast(connections_per_output, int32)]
             # Set the mask values to 1.0 at these indices
             for idx in source_indices:
                 mask_idx = tensor.convert_to_tensor([idx, i], dtype=int32)
-                mask = ops.tensor_scatter_nd_update(
+                mask = tensor.tensor_scatter_nd_update(
                     mask, 
-                    ops.expand_dims(mask_idx, 0), 
+                    tensor.expand_dims(mask_idx, 0), 
                     tensor.convert_to_tensor([1.0])
                 )
         

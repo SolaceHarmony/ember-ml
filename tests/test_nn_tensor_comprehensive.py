@@ -8,7 +8,7 @@ covering all its methods and properties.
 import pytest
 from ember_ml import ops
 from ember_ml.nn.tensor import EmberTensor
-
+from ember_ml.nn import tensor
 
 def test_initialization():
     """Test initialization of EmberTensor."""
@@ -106,8 +106,8 @@ def test_to_method():
     comparison = ops.equal(t2.data, t.data)
     # Use ops.all to check if all elements are equal
     all_equal = ops.all(comparison)
-    # Convert to a Python value using ops.item
-    assert ops.item(all_equal)
+    # Convert to a Python value using tensor.item
+    assert tensor.item(all_equal)
 
 
 def test_data_and_backend():
@@ -144,44 +144,44 @@ def test_arithmetic_operations():
     # Test addition
     t_add = t1 + t2
     assert t_add.shape == (3,)
-    assert ops.item(t_add[0]) == 5
-    assert ops.item(t_add[1]) == 7
-    assert ops.item(t_add[2]) == 9
+    assert tensor.item(t_add[0]) == 5
+    assert tensor.item(t_add[1]) == 7
+    assert tensor.item(t_add[2]) == 9
     
     # Test subtraction
     t_sub = t2 - t1
     assert t_sub.shape == (3,)
-    assert ops.item(t_sub[0]) == 3
-    assert ops.item(t_sub[1]) == 3
-    assert ops.item(t_sub[2]) == 3
+    assert tensor.item(t_sub[0]) == 3
+    assert tensor.item(t_sub[1]) == 3
+    assert tensor.item(t_sub[2]) == 3
     
     # Test multiplication
     t_mul = t1 * t2
     assert t_mul.shape == (3,)
-    assert ops.item(t_mul[0]) == 4
-    assert ops.item(t_mul[1]) == 10
-    assert ops.item(t_mul[2]) == 18
+    assert tensor.item(t_mul[0]) == 4
+    assert tensor.item(t_mul[1]) == 10
+    assert tensor.item(t_mul[2]) == 18
     
     # Test division
     t_div = t2 / t1
     assert t_div.shape == (3,)
-    assert ops.item(t_div[0]) == 4
-    assert abs(ops.item(t_div[1]) - 2.5) < 1e-6
-    assert ops.item(t_div[2]) == 2
+    assert tensor.item(t_div[0]) == 4
+    assert abs(tensor.item(t_div[1]) - 2.5) < 1e-6
+    assert tensor.item(t_div[2]) == 2
     
     # Test negation
     t_neg = -t1
     assert t_neg.shape == (3,)
-    assert ops.item(t_neg[0]) == -1
-    assert ops.item(t_neg[1]) == -2
-    assert ops.item(t_neg[2]) == -3
+    assert tensor.item(t_neg[0]) == -1
+    assert tensor.item(t_neg[1]) == -2
+    assert tensor.item(t_neg[2]) == -3
     
     # Test absolute value
     t_abs = abs(-t1)
     assert t_abs.shape == (3,)
-    assert ops.item(t_abs[0]) == 1
-    assert ops.item(t_abs[1]) == 2
-    assert ops.item(t_abs[2]) == 3
+    assert tensor.item(t_abs[0]) == 1
+    assert tensor.item(t_abs[1]) == 2
+    assert tensor.item(t_abs[2]) == 3
 
 
 def test_comparison_operations():
@@ -226,28 +226,28 @@ def test_reduction_operations():
     # Test sum
     t_sum = t.sum()
     assert t_sum.size() == 1
-    assert ops.item(t_sum) == 21
+    assert tensor.item(t_sum) == 21
     
     t_sum_axis0 = t.sum(axis=0)
     assert t_sum_axis0.shape == (3,)
-    assert ops.item(t_sum_axis0[0]) == 5
-    assert ops.item(t_sum_axis0[1]) == 7
-    assert ops.item(t_sum_axis0[2]) == 9
+    assert tensor.item(t_sum_axis0[0]) == 5
+    assert tensor.item(t_sum_axis0[1]) == 7
+    assert tensor.item(t_sum_axis0[2]) == 9
     
     # Test mean
     t_mean = t.mean()
     assert t_mean.size() == 1
-    assert ops.item(t_mean) == 3.5
+    assert tensor.item(t_mean) == 3.5
     
     # Test max
     t_max = t.max()
     assert t_max.size() == 1
-    assert ops.item(t_max) == 6
+    assert tensor.item(t_max) == 6
     
     # Test min
     t_min = t.min()
     assert t_min.size() == 1
-    assert ops.item(t_min) == 1
+    assert tensor.item(t_min) == 1
 
 
 def test_static_creation_methods():
@@ -257,33 +257,33 @@ def test_static_creation_methods():
     assert t_zeros.shape == (2, 3)
     for i in range(2):
         for j in range(3):
-            assert ops.item(t_zeros[i, j]) == 0
+            assert tensor.item(t_zeros[i, j]) == 0
     
     # Test ones
     t_ones = EmberTensor.ones((2, 3))
     assert t_ones.shape == (2, 3)
     for i in range(2):
         for j in range(3):
-            assert ops.item(t_ones[i, j]) == 1
+            assert tensor.item(t_ones[i, j]) == 1
     
     # Test full
     t_full = EmberTensor.full((2, 3), 7)
     assert t_full.shape == (2, 3)
     for i in range(2):
         for j in range(3):
-            assert ops.item(t_full[i, j]) == 7
+            assert tensor.item(t_full[i, j]) == 7
     
     # Test arange
     t_arange = EmberTensor.arange(0, 5)
     assert t_arange.shape == (5,)
     for i in range(5):
-        assert ops.item(t_arange[i]) == i
+        assert tensor.item(t_arange[i]) == i
     
     # Test linspace
     t_linspace = EmberTensor.linspace(0, 1, 5)
     assert t_linspace.shape == (5,)
-    assert ops.item(t_linspace[0]) == 0
-    assert ops.item(t_linspace[-1]) == 1
+    assert tensor.item(t_linspace[0]) == 0
+    assert tensor.item(t_linspace[-1]) == 1
     
     # Test eye
     t_eye = EmberTensor.eye(3)
@@ -291,7 +291,7 @@ def test_static_creation_methods():
     for i in range(3):
         for j in range(3):
             expected = 1 if i == j else 0
-            assert ops.item(t_eye[i, j]) == expected
+            assert tensor.item(t_eye[i, j]) == expected
     
     # Test zeros_like and ones_like
     t = EmberTensor([[1, 2], [3, 4]])
@@ -299,13 +299,13 @@ def test_static_creation_methods():
     assert t_zeros_like.shape == (2, 2)
     for i in range(2):
         for j in range(2):
-            assert ops.item(t_zeros_like[i, j]) == 0
+            assert tensor.item(t_zeros_like[i, j]) == 0
     
     t_ones_like = EmberTensor.ones_like(t)
     assert t_ones_like.shape == (2, 2)
     for i in range(2):
         for j in range(2):
-            assert ops.item(t_ones_like[i, j]) == 1
+            assert tensor.item(t_ones_like[i, j]) == 1
 
 
 def test_conversion_methods():
@@ -318,12 +318,12 @@ def test_conversion_methods():
     t_from_tensor = EmberTensor.from_tensor(t1)
     assert t_from_tensor.shape == (3,)
     for i in range(3):
-        assert ops.item(t_from_tensor[i]) == data[i]
+        assert tensor.item(t_from_tensor[i]) == data[i]
 
 
 # Add a new test specifically for NumPy conversion
 def test_numpy_conversion():
     """Test conversion to NumPy arrays."""
     t = EmberTensor([[1, 2, 3], [4, 5, 6]])
-    np_arr = ops.to_numpy(t.data)
+    np_arr = tensor.to_numpy(t.data)
     assert np_arr.shape == (2, 3)

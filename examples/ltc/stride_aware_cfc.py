@@ -23,7 +23,7 @@ class BinomialInitializer(keras.initializers.Initializer):
     def __call__(self, shape, dtype=None):
         if dtype is None:
             dtype = keras.backend.floatx()
-        return keras.ops.cast(
+        return keras.tensor.cast(
             keras.random.uniform(shape, minval=0.0, maxval=1.0, seed=self.seed) < self.probability,
             dtype=dtype
         )
@@ -160,7 +160,7 @@ class StrideAwareWiredCfCCell(keras.layers.Layer):
             t = t * self.stride_length * self.time_scale_factor
         else:
             t = kwargs.get("time", 1.0) * self.stride_length * self.time_scale_factor
-            t = keras.ops.cast(t, dtype=keras.backend.floatx())
+            t = keras.tensor.cast(t, dtype=keras.backend.floatx())
         return inputs, t
 
 
@@ -375,7 +375,7 @@ class StrideAwareCfCCell(keras.layers.Layer):
             t = t * self.stride_length * self.time_scale_factor
         else:
             t = kwargs.get("time", 1.0) * self.stride_length * self.time_scale_factor
-            t = keras.ops.cast(t, dtype=keras.backend.floatx())
+            t = keras.tensor.cast(t, dtype=keras.backend.floatx())
         return inputs, t
 
     def call(self, inputs, states, **kwargs):

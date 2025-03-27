@@ -16,7 +16,7 @@ from ember_ml.backend.mlx.tensor.tensor import MLXTensor
 from ember_ml.backend.mlx.tensor.dtype import MLXDType
 
 # Import the cast function and _validate_dtype function directly
-from ember_ml.backend.mlx.tensor.ops.casting import cast, _validate_dtype
+from ember_ml.backend.mlx.tensor.tensor.casting import cast, _validate_dtype
 
 # Create a test tensor
 tensor = mx.array([1, 2, 3], dtype=mx.float32)

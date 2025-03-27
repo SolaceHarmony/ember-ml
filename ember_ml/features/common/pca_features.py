@@ -26,7 +26,7 @@ def _svd_flip(u, v):
     """
     # Columns of u, rows of v
     max_abs_cols = ops.argmax(ops.abs(u), axis=0)
-    signs = ops.sign(ops.gather(u, max_abs_cols, axis=0))
+    signs = ops.sign(tensor.gather(u, max_abs_cols, axis=0))
     u = ops.multiply(u, signs)
     v = ops.multiply(v, signs[:, ops.newaxis])
     return u, v
@@ -86,7 +86,7 @@ def _infer_dimensions(explained_variance, n_samples):
         if i < n_components - 1:
             sigma2 = ops.mean(explained_variance[i+1:])
             if sigma2 > 0:
-                ll = ops.tensor_scatter_nd_update(
+                ll = tensor.tensor_scatter_nd_update(
                     ll,
                     [[i]],
                     [ops.multiply(
@@ -107,7 +107,7 @@ def _infer_dimensions(explained_variance, n_samples):
                     )]
                 )
         else:
-            ll = ops.tensor_scatter_nd_update(
+            ll = tensor.tensor_scatter_nd_update(
                 ll,
                 [[i]],
                 [ops.multiply(-0.5, ops.multiply(n_samples, ops.sum(ops.log(explained_variance))))]
@@ -141,7 +141,7 @@ def _randomized_svd(
     
     # Set random seed if provided
     if random_state is not None:
-        ops.set_seed(random_state)
+        tensor.set_seed(random_state)
     
     # Handle n_iter parameter
     if n_iter == 'auto':
@@ -153,7 +153,7 @@ def _randomized_svd(
     
     # Step 1: Sample random vectors
     n_random = min(n_components + n_oversamples, min(n_samples, n_features))
-    Q = ops.random_normal((n_features, n_random))
+    Q = tensor.random_normal((n_features, n_random))
     
     # Step 2: Compute Y = X * Q
     Y = ops.matmul(X, Q)
@@ -169,7 +169,7 @@ def _randomized_svd(
             Q = Y
         
         # Project X onto Q
-        Y = ops.matmul(X, ops.matmul(ops.transpose(X), Q))
+        Y = ops.matmul(X, ops.matmul(tensor.transpose(X), Q))
         
         if power_iteration_normalizer == 'auto' or power_iteration_normalizer == 'QR':
             Q, _ = ops.qr(Y)
@@ -182,7 +182,7 @@ def _randomized_svd(
     Q, _ = ops.qr(Y)
     
     # Step 5: Project X onto Q
-    B = ops.matmul(ops.transpose(Q), X)
+    B = ops.matmul(tensor.transpose(Q), X)
     
     # Step 6: Compute SVD of the small matrix B
     Uhat, S, V = ops.svd(B)
@@ -285,13 +285,13 @@ class PCA:
         elif svd_solver == "covariance_eigh":
             # Compute covariance matrix
             cov = ops.divide(
-                ops.matmul(ops.transpose(X_centered), X_centered),
+                ops.matmul(tensor.transpose(X_centered), X_centered),
                 ops.subtract(self.n_samples_, 1)
             )
             # Eigendecomposition
             eigenvals, eigenvecs = ops.eigh(cov)
             # Sort in descending order
-            idx = ops.argsort(eigenvals)[::-1]
+            idx = tensor.argsort(eigenvals)[::-1]
             eigenvals = eigenvals[idx]
             eigenvecs = eigenvecs[:, idx]
             # Fix numerical errors
@@ -301,7 +301,7 @@ class PCA:
             total_var = ops.sum(explained_variance)
             explained_variance_ratio = ops.divide(explained_variance, total_var)
             S = ops.sqrt(ops.multiply(eigenvals, ops.subtract(self.n_samples_, 1)))
-            V = ops.transpose(eigenvecs)
+            V = tensor.transpose(eigenvecs)
             U = None  # Not needed
         else:
             raise ValueError(f"Unrecognized svd_solver='{svd_solver}'")
@@ -348,7 +348,7 @@ class PCA:
         
         X_tensor = tensor.convert_to_tensor(X)
         X_centered = ops.subtract(X_tensor, self.mean_)
-        X_transformed = ops.matmul(X_centered, ops.transpose(self.components_))
+        X_transformed = ops.matmul(X_centered, tensor.transpose(self.components_))
         
         if self.whiten_:
             # Avoid division by zero
