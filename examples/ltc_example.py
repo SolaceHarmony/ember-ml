@@ -37,9 +37,9 @@ def generate_sine_wave_data(num_samples=1000, seq_length=100, num_features=1):
         X = tensor.tensor_scatter_nd_update(
             X,
             tensor.stack([
-                tensor.ones((seq_length,), dtype=ops.int32) * i,
+                tensor.ones((seq_length,), dtype=tensor.int32) * i,
                 tensor.arange(seq_length),
-                tensor.zeros((seq_length,), dtype=ops.int32)
+                tensor.zeros((seq_length,), dtype=tensor.int32)
             ], axis=1),
             noisy_signal
         )
@@ -47,9 +47,9 @@ def generate_sine_wave_data(num_samples=1000, seq_length=100, num_features=1):
         y = tensor.tensor_scatter_nd_update(
             y,
             tensor.stack([
-                tensor.ones((seq_length,), dtype=ops.int32) * i,
+                tensor.ones((seq_length,), dtype=tensor.int32) * i,
                 tensor.arange(seq_length),
-                tensor.zeros((seq_length,), dtype=ops.int32)
+                tensor.zeros((seq_length,), dtype=tensor.int32)
             ], axis=1),
             signal
         )
@@ -59,8 +59,8 @@ def generate_sine_wave_data(num_samples=1000, seq_length=100, num_features=1):
 def train_ltc_model(model, X_train, y_train, epochs=50, batch_size=32, learning_rate=0.001):
     """Train an LTC model."""
     # Convert data to tensors
-    X_train_tensor = tensor.convert_to_tensor(X_train, dtype=ops.float32)
-    y_train_tensor = tensor.convert_to_tensor(y_train, dtype=ops.float32)
+    X_train_tensor = tensor.convert_to_tensor(X_train, dtype=tensor.float32)
+    y_train_tensor = tensor.convert_to_tensor(y_train, dtype=tensor.float32)
     
     # Define optimizer and loss function
     optimizer = Optimizer.adam(model.parameters(), learning_rate=learning_rate)
@@ -106,8 +106,8 @@ def train_ltc_model(model, X_train, y_train, epochs=50, batch_size=32, learning_
 def evaluate_model(model, X_test, y_test):
     """Evaluate an LTC model."""
     # Convert data to tensors
-    X_test_tensor = tensor.convert_to_tensor(X_test, dtype=ops.float32)
-    y_test_tensor = tensor.convert_to_tensor(y_test, dtype=ops.float32)
+    X_test_tensor = tensor.convert_to_tensor(X_test, dtype=tensor.float32)
+    y_test_tensor = tensor.convert_to_tensor(y_test, dtype=tensor.float32)
     
     # Make predictions
     y_pred = model(X_test_tensor)

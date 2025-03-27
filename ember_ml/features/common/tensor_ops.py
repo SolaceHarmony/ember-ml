@@ -53,7 +53,7 @@ class TensorOps(TensorOpsInterface):
         
         # Create a tensor of zeros with the output shape
         if dtype is None:
-            dtype = ops.float32
+            dtype = tensor.float32
         
         one_hot_tensor = tensor.zeros(shape, dtype=dtype)
         

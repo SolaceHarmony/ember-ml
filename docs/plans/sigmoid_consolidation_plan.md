@@ -48,7 +48,7 @@ Following the project's architecture, we need to:
 ```python
 # ember_ml/nn/activations/common/sigmoid.py
 from ember_ml import ops
-from ember_ml.ops.tensor import EmberTensor
+from ember_ml.nn.tensor import EmberTensor
 from ember_ml.nn.activations.interfaces.activation import ActivationInterface
 
 class Sigmoid(ActivationInterface):

@@ -219,7 +219,7 @@ class TerabyteFeatureExtractorModule(BaseFeatureExtractorModule):
             Extracted features
         """
         # Process numerical features
-        numerical_features = ops.to_numpy(self.numerical_features).tolist()
+        numerical_features = tensor.to_numpy(self.numerical_features).tolist()
         if len(numerical_features) > 0:
             # Impute missing values
             df_numerical = pd.DataFrame(
@@ -236,7 +236,7 @@ class TerabyteFeatureExtractorModule(BaseFeatureExtractorModule):
             df_numerical = pd.DataFrame()
         
         # Process categorical features
-        categorical_features = ops.to_numpy(self.categorical_features).tolist()
+        categorical_features = tensor.to_numpy(self.categorical_features).tolist()
         if len(categorical_features) > 0:
             # One-hot encode categorical features
             df_categorical = pd.get_dummies(df[categorical_features], drop_first=True)
@@ -254,7 +254,7 @@ class TerabyteFeatureExtractorModule(BaseFeatureExtractorModule):
             df_features = pd.DataFrame()
         
         # Convert to tensor
-        features = tensor.convert_to_tensor(df_features.values, dtype=ops.float32)
+        features = tensor.convert_to_tensor(df_features.values, dtype=tensor.float32)
         
         return features
     
@@ -368,7 +368,7 @@ class TemporalStrideProcessorModule(BaseFeatureExtractorModule):
         """
         # Convert data to numpy if it's a tensor
         if ops.is_tensor(data):
-            data = ops.to_numpy(data)
+            data = tensor.to_numpy(data)
         
         # Initialize PCA models for each stride
         from sklearn.decomposition import PCA, IncrementalPCA
@@ -410,7 +410,7 @@ class TemporalStrideProcessorModule(BaseFeatureExtractorModule):
         """
         # Convert data to numpy if it's a tensor
         if ops.is_tensor(data):
-            data = ops.to_numpy(data)
+            data = tensor.to_numpy(data)
         
         # Process data for each stride
         result = {}
@@ -426,7 +426,7 @@ class TemporalStrideProcessorModule(BaseFeatureExtractorModule):
             pca_data = self.pca_models[stride].transform(flattened_data)
             
             # Store result
-            result[stride] = tensor.convert_to_tensor(pca_data, dtype=ops.float32)
+            result[stride] = tensor.convert_to_tensor(pca_data, dtype=tensor.float32)
         
         return result
     
@@ -475,24 +475,24 @@ class TemporalStrideProcessorModule(BaseFeatureExtractorModule):
         for batch in data_generator:
             # Convert batch to numpy if it's a tensor
             if ops.is_tensor(batch):
-                batch = ops.to_numpy(batch)
+                batch = tensor.to_numpy(batch)
             
             # Process batch
             batch_result = self.forward(batch)
             
             # Append results
             for stride, data in batch_result.items():
-                result[stride].append(ops.to_numpy(data))
+                result[stride].append(tensor.to_numpy(data))
         
         # Combine results
         for stride in self.stride_perspectives:
             if result[stride]:
                 result[stride] = tensor.convert_to_tensor(
                     np.vstack(result[stride]),
-                    dtype=ops.float32
+                    dtype=tensor.float32
                 )
             else:
-                result[stride] = tensor.zeros((0, self.pca_components), dtype=ops.float32)
+                result[stride] = tensor.zeros((0, self.pca_components), dtype=tensor.float32)
         
         return result
 ```

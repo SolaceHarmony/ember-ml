@@ -57,7 +57,7 @@ class TestBackendSelection:
             
             # Reset to default backend
             set_backend('numpy')
-            ops.set_ops('numpy')
+            ops.set_backend('numpy')
             
             # Verify that the backend is set to numpy
             assert get_backend() == 'numpy'
@@ -65,7 +65,7 @@ class TestBackendSelection:
             
             # Restore the original backend
             set_backend(current_backend)
-            ops.set_ops(current_backend)
+            ops.set_backend(current_backend)
 
     @pytest.mark.parametrize('backend_name', BACKENDS)
     def test_backend_switching(self, backend_name):
@@ -75,7 +75,7 @@ class TestBackendSelection:
         
         # Switch to the specified backend
         set_backend(backend_name)
-        ops.set_ops(backend_name)
+        ops.set_backend(backend_name)
         
         # Verify that the backend is set correctly
         assert get_backend() == backend_name
@@ -83,7 +83,7 @@ class TestBackendSelection:
         
         # Restore the original backend
         set_backend(current_backend or 'numpy')
-        ops.set_ops(current_backend or 'numpy')
+        ops.set_backend(current_backend or 'numpy')
 
     def test_invalid_backend(self):
         """Test switching to an invalid backend."""
@@ -99,7 +99,7 @@ class TestBackendSelection:
         
         # Try to switch ops to an invalid backend
         with pytest.raises(ValueError):
-            ops.set_ops('invalid_backend')
+            ops.set_backend('invalid_backend')
         
         # Verify that the ops backend is still set to the original backend
         assert ops.get_ops() == current_backend
@@ -116,7 +116,7 @@ class TestBackendPersistence:
         try:
             # Switch to the specified backend
             set_backend(backend_name)
-            ops.set_ops(backend_name)
+            ops.set_backend(backend_name)
             
             # Verify that the backend is set correctly
             assert get_backend() == backend_name
@@ -131,7 +131,7 @@ class TestBackendPersistence:
         finally:
             # Restore the original backend
             set_backend(current_backend or 'numpy')
-            ops.set_ops(current_backend or 'numpy')
+            ops.set_backend(current_backend or 'numpy')
 
 class TestBackendCompatibility:
     """Tests for backend compatibility."""
@@ -146,14 +146,14 @@ class TestBackendCompatibility:
         try:
             # Switch to the first backend
             set_backend(backend1)
-            ops.set_ops(backend1)
+            ops.set_backend(backend1)
             
             # Create a tensor
             x1 = tensor.ones((3, 4))
             
             # Switch to the second backend
             set_backend(backend2)
-            ops.set_ops(backend2)
+            ops.set_backend(backend2)
             
             # For MLX and PyTorch combinations, direct conversion should fail with ValueError
             # This is a PASS condition as we want strong typing between these backends
@@ -164,12 +164,12 @@ class TestBackendCompatibility:
                 # But conversion through NumPy should work
                 # Switch back to the first backend to get NumPy representation
                 set_backend(backend1)
-                ops.set_ops(backend1)
+                ops.set_backend(backend1)
                 x_np = tensor.to_numpy(x1)
                 
                 # Switch back to the second backend
                 set_backend(backend2)
-                ops.set_ops(backend2)
+                ops.set_backend(backend2)
                 
                 # Convert from NumPy to the second backend
                 x2 = tensor.convert_to_tensor(x_np)
@@ -195,7 +195,7 @@ class TestBackendCompatibility:
         finally:
             # Restore the original backend
             set_backend(current_backend or 'numpy')
-            ops.set_ops(current_backend or 'numpy')
+            ops.set_backend(current_backend or 'numpy')
     @pytest.mark.parametrize('backend_name', BACKENDS)
     def test_operation_consistency(self, backend_name):
         """Test operation results consistency across backends."""
@@ -214,7 +214,7 @@ class TestBackendCompatibility:
             
             # Switch to numpy backend
             set_backend('numpy')
-            ops.set_ops('numpy')
+            ops.set_backend('numpy')
             
             # Create tensors
             x_numpy = tensor.ones((3, 4))
@@ -234,7 +234,7 @@ class TestBackendCompatibility:
             
             # Switch to the specified backend
             set_backend(backend_name)
-            ops.set_ops(backend_name)
+            ops.set_backend(backend_name)
             
             # Create tensors
             x = tensor.ones((3, 4))
@@ -257,7 +257,7 @@ class TestBackendCompatibility:
         finally:
             # Restore the original backend
             set_backend(current_backend or 'numpy')
-            ops.set_ops(current_backend or 'numpy')
+            ops.set_backend(current_backend or 'numpy')
 
 class TestBackendAutoDetection:
     """Tests for backend auto-detection."""
@@ -270,7 +270,7 @@ class TestBackendAutoDetection:
         try:
             # Reset to default backend
             set_backend('numpy')
-            ops.set_ops('numpy')
+            ops.set_backend('numpy')
             
             # Verify that the backend is set to numpy
             assert get_backend() == 'numpy'
@@ -280,7 +280,7 @@ class TestBackendAutoDetection:
             if 'torch' in BACKENDS:
                 # Switch to torch backend
                 set_backend('torch')
-                ops.set_ops('torch')
+                ops.set_backend('torch')
                 
                 # Verify that the backend is set to torch
                 assert get_backend() == 'torch'
@@ -290,7 +290,7 @@ class TestBackendAutoDetection:
             if 'mlx' in BACKENDS:
                 # Switch to mlx backend
                 set_backend('mlx')
-                ops.set_ops('mlx')
+                ops.set_backend('mlx')
                 
                 # Verify that the backend is set to mlx
                 assert get_backend() == 'mlx'
@@ -298,4 +298,4 @@ class TestBackendAutoDetection:
         finally:
             # Restore the original backend
             set_backend(current_backend or 'numpy')
-            ops.set_ops(current_backend or 'numpy')
+            ops.set_backend(current_backend or 'numpy')

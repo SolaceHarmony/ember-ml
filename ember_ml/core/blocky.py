@@ -193,14 +193,14 @@ class BlockyRoadChain(BaseChain):
         
         # Update first neuron
         states_0 = self.neurons[0].update(input_signals[0])
-        states = ops.tensor_scatter_update(states, [0], [states_0])
+        states = tensor.tensor_scatter_update(states, [0], [states_0])
         
         # Update chain
         for i in range(1, self.num_neurons):
             prev_idx = ops.subtract(i, 1)
             chain_input = ops.multiply(self.weights[prev_idx], states[prev_idx])
             states_i = self.neurons[i].update(chain_input)
-            states = ops.tensor_scatter_update(states, [i], [states_i])
+            states = tensor.tensor_scatter_update(states, [i], [states_i])
             
         # Store history
         self.state_history.append(tensor.copy(states))
@@ -227,7 +227,7 @@ class BlockyRoadChain(BaseChain):
         
         # Compute forgetting times if pattern_time provided
         if pattern_time is not None:
-            pattern_idx = tensor.cast(ops.divide(pattern_time, self.dt), ops.int32)
+            pattern_idx = tensor.cast(ops.divide(pattern_time, self.dt), tensor.int32)
             forget_times = []
             
             for i in range(self.num_neurons):

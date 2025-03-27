@@ -250,7 +250,7 @@ def test_tensor_like_type_conversion():
     """Test conversion of various TensorLike inputs."""
     # Set the backend to MLX
     set_backend('mlx')
-    ops.set_ops('mlx')
+    ops.set_backend('mlx')
     
     # Test with Python scalar
     x = tensor.convert_to_tensor(5)
@@ -286,7 +286,7 @@ def test_error_messages():
     """Test that error messages are clear and informative."""
     # Set the backend to MLX
     set_backend('mlx')
-    ops.set_ops('mlx')
+    ops.set_backend('mlx')
     
     # Test with PyTorch tensor - should raise ValueError with specific message
     x_torch = torch.tensor([1, 2, 3])

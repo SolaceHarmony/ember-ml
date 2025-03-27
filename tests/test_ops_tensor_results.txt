@@ -55,7 +55,7 @@ backend = 'mlx'
         """Test zeros_like operation."""
         # Create a tensor to use as reference
         shape = (3, 4)
-        x_ref = ops.ones(shape)
+        x_ref = tensor.ones(shape)
     
         # Test zeros_like
 >       x = tensor.zeros_like(x_ref)
@@ -104,7 +104,7 @@ backend = 'mlx'
         x_ref = tensor.zeros(shape)
     
         # Test ones_like
->       x = ops.ones_like(x_ref)
+>       x = tensor.ones_like(x_ref)
 
 test_ops_tensor.py:134: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
@@ -147,7 +147,7 @@ backend = 'torch'
         """Test eye operation."""
         # Test square matrix
         n = 3
->       x = ops.eye(n)
+>       x = tensor.eye(n)
 
 test_ops_tensor.py:158: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
@@ -186,11 +186,11 @@ backend = 'numpy'
         """Test transpose operation."""
         # Create a tensor
         shape = (2, 3, 4)
-        x = ops.ones(shape)
+        x = tensor.ones(shape)
     
         # Test default transpose (swap last two dimensions)
         y = ops.transpose(x)
->       assert ops.shape(y) == (2, 4, 3)
+>       assert tensor.shape(y) == (2, 4, 3)
 E       AssertionError: assert (4, 3, 2) == (2, 4, 3)
 E         
 E         At index 0 diff: 4 != 2
@@ -212,7 +212,7 @@ backend = 'torch'
         """Test transpose operation."""
         # Create a tensor
         shape = (2, 3, 4)
-        x = ops.ones(shape)
+        x = tensor.ones(shape)
     
         # Test default transpose (swap last two dimensions)
 >       y = ops.transpose(x)
@@ -259,11 +259,11 @@ backend = 'mlx'
         """Test transpose operation."""
         # Create a tensor
         shape = (2, 3, 4)
-        x = ops.ones(shape)
+        x = tensor.ones(shape)
     
         # Test default transpose (swap last two dimensions)
         y = ops.transpose(x)
->       assert ops.shape(y) == (2, 4, 3)
+>       assert tensor.shape(y) == (2, 4, 3)
 E       AssertionError: assert (4, 3, 2) == (2, 4, 3)
 E         
 E         At index 0 diff: 4 != 2
@@ -283,7 +283,7 @@ self = <test_ops_tensor.TestTensorInfo object at 0x34389a630>, backend = 'mlx'
     def test_cast(self, backend):
         """Test cast operation."""
         # Create a tensor
-        x = ops.ones((3, 4))
+        x = tensor.ones((3, 4))
     
         # Test cast to different dtype
         if backend == 'numpy':
@@ -334,28 +334,28 @@ self = <test_ops_tensor.TestTensorInfo object at 0x34389aab0>, backend = 'mlx'
     def test_copy(self, backend):
         """Test copy operation."""
         # Create a tensor
-        x = ops.ones((3, 4))
+        x = tensor.ones((3, 4))
     
         # Test copy
         y = ops.copy(x)
-        assert ops.shape(y) == ops.shape(x)
+        assert tensor.shape(y) == tensor.shape(x)
         assert ops.dtype(y) == ops.dtype(x)
-        assert np.allclose(ops.to_numpy(y), ops.to_numpy(x))
+        assert np.allclose(tensor.to_numpy(y), tensor.to_numpy(x))
     
         # Verify that y is a copy, not a reference
         if backend == 'numpy':
             # For NumPy, we can modify the array directly
-            x_np = ops.to_numpy(x)
+            x_np = tensor.to_numpy(x)
             x_np[0, 0] = 0
-            assert ops.to_numpy(x)[0, 0] == 0
-            assert ops.to_numpy(y)[0, 0] == 1
+            assert tensor.to_numpy(x)[0, 0] == 0
+            assert tensor.to_numpy(y)[0, 0] == 1
         elif backend == 'torch':
             # For PyTorch, we need to modify the tensor
             import torch
             x_torch = x
             x_torch[0, 0] = 0
-            assert ops.to_numpy(x)[0, 0] == 0
-            assert ops.to_numpy(y)[0, 0] == 1
+            assert tensor.to_numpy(x)[0, 0] == 0
+            assert tensor.to_numpy(y)[0, 0] == 1
         elif backend == 'mlx':
             # For MLX, we need to create a new tensor
             import mlx.core

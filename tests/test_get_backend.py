@@ -38,7 +38,7 @@ def test_get_backend_with_env_var(backend_name, original_backend):
 
     # Also set the ops backend to ensure the ops module is updated
     from ember_ml import ops
-    ops.set_ops(backend)
+    ops.set_backend(backend)
 
     # Assert that the backend is set correctly
     assert backend == backend_name

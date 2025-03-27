@@ -177,7 +177,7 @@ def hash_encode(
     feature_names = [f"{column}_hash_{i}" for i in range(n_components)]
     
     # Initialize output array
-    encoded = ops.zeros((len(values), n_components))
+    encoded = tensor.zeros((len(values), n_components))
     
     # Simple hash function for each value and component
     for i, val in enumerate(values):

@@ -408,7 +408,7 @@ class MotorNeuron(Module):
             threshold = tensor.full_like(output, self.threshold)
         
         # Generate trigger
-        trigger = tensor.cast(output > threshold, ops.float32)
+        trigger = tensor.cast(output > threshold, tensor.float32)
         
         return output, trigger, threshold
 

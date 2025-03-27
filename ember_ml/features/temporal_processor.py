@@ -92,7 +92,7 @@ class TemporalStrideProcessor:
             tensor.convert_to_tensor(stride)
         )
         # Convert to int and add 1 for range
-        num_windows_int = tensor.cast(num_windows_tensor, ops.int32).numpy()
+        num_windows_int = tensor.cast(num_windows_tensor, tensor.int32).numpy()
         num_windows = ops.add(num_windows_int, 1).numpy()
         
         for i in range(num_windows):

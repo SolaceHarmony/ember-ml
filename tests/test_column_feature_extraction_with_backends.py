@@ -37,10 +37,10 @@ def backend(request):
     """Fixture to test with different backends."""
     prev_backend = get_backend()
     set_backend(request.param)
-    ops.set_ops(request.param)
+    ops.set_backend(request.param)
     yield request.param
     set_backend(prev_backend)
-    ops.set_ops(prev_backend)
+    ops.set_backend(prev_backend)
 
 class TestColumnFeatureExtractor:
     """Tests for the ColumnFeatureExtractor class."""

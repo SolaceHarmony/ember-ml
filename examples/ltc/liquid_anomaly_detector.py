@@ -161,7 +161,7 @@ class LiquidAnomalyDetector:
     def _detect_anomalies(self, sequences, threshold=0.8):
         """Detect anomalies using the liquid neural network"""
         # Convert to EmberTensor
-        sequences_tensor = EmberTensor(sequences, dtype=ops.float32)
+        sequences_tensor = EmberTensor(sequences, dtype=tensor.float32)
         
         # Get predictions
         predictions = self.model(sequences_tensor.data)
@@ -211,8 +211,8 @@ class LiquidAnomalyDetector:
             return
         
         # Convert to EmberTensor
-        sequences_tensor = EmberTensor(sequences, dtype=ops.float32).data
-        labels_tensor = EmberTensor(labels, dtype=ops.float32).data
+        sequences_tensor = EmberTensor(sequences, dtype=tensor.float32).data
+        labels_tensor = EmberTensor(labels, dtype=tensor.float32).data
         
         # Split data for validation
         num_samples = sequences.shape[0]
@@ -257,10 +257,10 @@ class LiquidAnomalyDetector:
                 train_loss += tensor.to_numpy(loss)
                 train_acc += tensor.to_numpy(ops.mean(tensor.cast(
                     ops.equal(
-                        tensor.cast(y_batch > 0.5, ops.int32),
-                        tensor.cast(y_pred > 0.5, ops.int32)
+                        tensor.cast(y_batch > 0.5, tensor.int32),
+                        tensor.cast(y_pred > 0.5, tensor.int32)
                     ),
-                    ops.float32
+                    tensor.float32
                 )))
             
             # Validation
@@ -281,10 +281,10 @@ class LiquidAnomalyDetector:
                 val_loss += tensor.to_numpy(loss)
                 val_acc += tensor.to_numpy(ops.mean(tensor.cast(
                     ops.equal(
-                        tensor.cast(y_batch > 0.5, ops.int32),
-                        tensor.cast(y_pred > 0.5, ops.int32)
+                        tensor.cast(y_batch > 0.5, tensor.int32),
+                        tensor.cast(y_pred > 0.5, tensor.int32)
                     ),
-                    ops.float32
+                    tensor.float32
                 )))
             
             # Average metrics
@@ -324,7 +324,7 @@ class LiquidAnomalyDetector:
             print("-" * 50)
         
         # Convert to EmberTensor
-        sequences_tensor = EmberTensor(sequences, dtype=ops.float32).data
+        sequences_tensor = EmberTensor(sequences, dtype=tensor.float32).data
         
         # Get raw predictions
         raw_predictions = self.model(sequences_tensor)

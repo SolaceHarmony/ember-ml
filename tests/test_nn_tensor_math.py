@@ -36,11 +36,11 @@ def backend(request):
     """Fixture to test with different backends."""
     prev_backend = get_backend()
     set_backend(request.param)
-    ops.set_ops(request.param)
+    ops.set_backend(request.param)
     yield request.param
     if prev_backend is not None:
         set_backend(prev_backend)
-        ops.set_ops(prev_backend)
+        ops.set_backend(prev_backend)
 
 class TestBasicArithmetic:
     """Tests for basic arithmetic operations."""

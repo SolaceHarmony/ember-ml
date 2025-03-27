@@ -29,12 +29,12 @@ def backend(request):
     """Fixture to test with different backends."""
     prev_backend = get_backend()
     set_backend(request.param)
-    ops.set_ops(request.param)
+    ops.set_backend(request.param)
     yield request.param
     # A backend must always be defined - not having one is a critical failure
     assert prev_backend is not None, "No backend was defined before test"
     set_backend(prev_backend)
-    ops.set_ops(prev_backend)
+    ops.set_backend(prev_backend)
 
 class TestDTypeOperations:
     """Tests for data type operations."""

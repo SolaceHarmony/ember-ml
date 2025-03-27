@@ -94,7 +94,7 @@ class EnhancedTypeDetector:
             )
         elif analysis['inferred_type'] == 'categorical':
             unique_values, counts = self._compute_unique_with_counts(tensor_data)
-            analysis['cardinality'] = ops.shape(unique_values)[0]
+            analysis['cardinality'] = tensor.shape(unique_values)[0]
             analysis['statistics'] = self._analyze_categorical(unique_values, counts)
             analysis['recommended_strategy'] = self._recommend_categorical_strategy(
                 analysis['cardinality'], 
@@ -349,7 +349,7 @@ class ConfigurableFeatureExtractor:
         # Set backend if specified
         if preferred_backend:
             from ember_ml import ops
-            ops.set_ops(preferred_backend)
+            ops.set_backend(preferred_backend)
             
         self.project_id = project_id
         self.config = self._load_config(config_path)

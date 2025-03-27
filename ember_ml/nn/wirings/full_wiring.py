@@ -80,8 +80,6 @@ class FullyConnectedWiring(Wiring):
         input_mask = tensor.ones((self.input_dim,), dtype='int32')
         recurrent_mask = tensor.ones((self.units, self.units), dtype='int32')
         output_mask = tensor.ones((self.units,), dtype='int32')
-        
-        return input_mask, recurrent_mask, output_mask
         # Set random seed for reproducibility
         if self.seed is not None:
             tensor.set_seed(self.seed)
@@ -91,21 +89,21 @@ class FullyConnectedWiring(Wiring):
             # Create sparse masks
             input_mask = tensor.cast(
                 tensor.random_uniform((self.input_dim,)) >= self.sparsity_level,
-                ops.int32
+                tensor.int32
             )
             recurrent_mask = tensor.cast(
                 tensor.random_uniform((self.units, self.units)) >= self.sparsity_level,
-                ops.int32
+                tensor.int32
             )
             output_mask = tensor.cast(
                 tensor.random_uniform((self.units,)) >= self.sparsity_level,
-                ops.int32
+                tensor.int32
             )
         else:
             # Create dense masks
-            input_mask = tensor.ones((self.input_dim,), dtype=ops.int32)
-            recurrent_mask = tensor.ones((self.units, self.units), dtype=ops.int32)
-            output_mask = tensor.ones((self.units,), dtype=ops.int32)
+            input_mask = tensor.ones((self.input_dim,), dtype=tensor.int32)
+            recurrent_mask = tensor.ones((self.units, self.units), dtype=tensor.int32)
+            output_mask = tensor.ones((self.units,), dtype=tensor.int32)
         
         # Convert to numpy arrays for consistency with the wiring interface
         input_mask = tensor.to_numpy(input_mask)

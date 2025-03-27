@@ -120,21 +120,21 @@ class LTCCell(Module):
         self.sigma = Parameter(self._get_init_value((self.state_size, self.state_size), "sigma"))
         self.mu = Parameter(self._get_init_value((self.state_size, self.state_size), "mu"))
         self.w = Parameter(self._get_init_value((self.state_size, self.state_size), "w"))
-        self.erev = Parameter(tensor.convert_to_tensor(self._wiring.erev_initializer(), dtype=ops.float32))
+        self.erev = Parameter(tensor.convert_to_tensor(self._wiring.erev_initializer(), dtype=tensor.float32))
         
         # Sensory synapse parameters
         self.sensory_sigma = Parameter(self._get_init_value((self.sensory_size, self.state_size), "sensory_sigma"))
         self.sensory_mu = Parameter(self._get_init_value((self.sensory_size, self.state_size), "sensory_mu"))
         self.sensory_w = Parameter(self._get_init_value((self.sensory_size, self.state_size), "sensory_w"))
-        self.sensory_erev = Parameter(tensor.convert_to_tensor(self._wiring.sensory_erev_initializer(), dtype=ops.float32))
+        self.sensory_erev = Parameter(tensor.convert_to_tensor(self._wiring.sensory_erev_initializer(), dtype=tensor.float32))
         
         # Sparsity masks
         self.sparsity_mask = Parameter(
-            tensor.convert_to_tensor(np.abs(self._wiring.adjacency_matrix), dtype=ops.float32),
+            tensor.convert_to_tensor(np.abs(self._wiring.adjacency_matrix), dtype=tensor.float32),
             requires_grad=False
         )
         self.sensory_sparsity_mask = Parameter(
-            tensor.convert_to_tensor(np.abs(self._wiring.sensory_adjacency_matrix), dtype=ops.float32),
+            tensor.convert_to_tensor(np.abs(self._wiring.sensory_adjacency_matrix), dtype=tensor.float32),
             requires_grad=False
         )
         

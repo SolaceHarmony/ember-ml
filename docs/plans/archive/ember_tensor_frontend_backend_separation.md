@@ -248,21 +248,21 @@ class EmberTensor:
         """Convert tensor to int."""
         # Only works for scalar tensors
         if len(self.shape) == 0 or (len(self.shape) == 1 and self.shape[0] == 1):
-            return int(ops.item(self._tensor))
+            return int(tensor.item(self._tensor))
         raise ValueError("Only scalar tensors can be converted to int")
     
     def __float__(self):
         """Convert tensor to float."""
         # Only works for scalar tensors
         if len(self.shape) == 0 or (len(self.shape) == 1 and self.shape[0] == 1):
-            return float(ops.item(self._tensor))
+            return float(tensor.item(self._tensor))
         raise ValueError("Only scalar tensors can be converted to float")
     
     def __bool__(self):
         """Convert tensor to bool."""
         # Only works for scalar tensors
         if len(self.shape) == 0 or (len(self.shape) == 1 and self.shape[0] == 1):
-            return bool(ops.item(self._tensor))
+            return bool(tensor.item(self._tensor))
         raise ValueError("Only scalar tensors can be converted to bool")
     
     def __array__(self):

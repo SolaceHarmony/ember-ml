@@ -228,7 +228,7 @@ def __mul__(self, other):
     return ops.multiply(self, other)
 
 def __getitem__(self, key):
-    return ops.slice(self, key)
+    return tensor.slice(self, key)
 ```
 
 This allows for intuitive, Pythonic code when working with EmberTensor objects:
@@ -239,7 +239,7 @@ x = EmberTensor([1, 2, 3])
 y = EmberTensor([4, 5, 6])
 z = x + y  # Uses __add__ which calls ops.add
 w = x * 2  # Uses __mul__ which calls ops.multiply
-element = x[0]  # Uses __getitem__ which calls ops.slice
+element = x[0]  # Uses __getitem__ which calls tensor.slice
 ```
 
 The operator support is continuously expanding as more operations are tested and implemented, making the EmberTensor API increasingly Pythonic and user-friendly.

@@ -139,7 +139,7 @@ class LiquidNetworkModule(Module):
         
     def forward(self, inputs, states=None, **kwargs):
         # Process inputs through the liquid network
-        batch_size = ops.shape(inputs)[0]
+        batch_size = tensor.shape(inputs)[0]
         
         if states is None:
             states = self.ncp_cell.get_initial_state(batch_size)
@@ -149,7 +149,7 @@ class LiquidNetworkModule(Module):
         trigger_signals = []
         threshold_values = []
         
-        for t in range(ops.shape(inputs)[1]):
+        for t in range(tensor.shape(inputs)[1]):
             # Get input at current time step
             x_t = inputs[:, t, :]
             
@@ -217,7 +217,7 @@ class MotorNeuronModule(Module):
             threshold = ops.full_like(output, self.threshold)
             
         # Generate trigger
-        trigger = ops.cast(output > threshold, ops.float32)
+        trigger = ops.cast(output > threshold, tensor.float32)
         
         return output, trigger, threshold
 ```

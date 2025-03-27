@@ -120,6 +120,6 @@ class CrossEntropyLoss(Loss):
         # Apply reduction
         if self.reduction == 'mean':
             # Compute mean over non-ignored elements
-            return ops.divide(ops.sum(loss), ops.sum(tensor.cast(mask, ops.float32)))
+            return ops.divide(ops.sum(loss), ops.sum(tensor.cast(mask, tensor.float32)))
         else:
             return self._reduce(loss)

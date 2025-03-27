@@ -9,7 +9,7 @@ import pytest
 import numpy as np
 from ember_ml import ops
 from ember_ml.backend import get_backend, set_backend
-
+from ember_ml.nn import tensor
 class TestNumPyFolderStructure:
     """Tests for the NumPy backend with the new folder structure."""
 
@@ -18,10 +18,10 @@ class TestNumPyFolderStructure:
         """Set up the NumPy backend for testing."""
         prev_backend = get_backend()
         set_backend('numpy')
-        ops.set_ops('numpy')
+        ops.set_backend('numpy')
         yield
         set_backend(prev_backend)
-        ops.set_ops(prev_backend)
+        ops.set_backend(prev_backend)
 
     def test_tensor_creation(self):
         """Test tensor creation operations."""

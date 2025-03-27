@@ -31,13 +31,13 @@ class TestMLXBackendStrongTyping:
         # Ensure we have a valid backend name (not None)
         backend_name = self.original_backend if self.original_backend is not None else 'numpy'
         set_backend(backend_name)
-        ops.set_ops(backend_name)
+        ops.set_backend(backend_name)
 
     def test_mlx_tensor_creation(self):
         """Test MLX tensor creation with different input types."""
         # Set the backend to MLX
         set_backend('mlx')
-        ops.set_ops('mlx')
+        ops.set_backend('mlx')
         
         # Test with Python list
         data = [1, 2, 3, 4]
@@ -66,7 +66,7 @@ class TestMLXBackendStrongTyping:
         """Test MLX tensor operations with strong typing."""
         # Set the backend to MLX
         set_backend('mlx')
-        ops.set_ops('mlx')
+        ops.set_backend('mlx')
         
         # Create MLX tensors
         x = tensor.ones((3, 4))
@@ -97,7 +97,7 @@ class TestMLXBackendStrongTyping:
         """Test conversion from MLX tensor to NumPy array."""
         # Set the backend to MLX
         set_backend('mlx')
-        ops.set_ops('mlx')
+        ops.set_backend('mlx')
         
         # Create MLX tensor
         x = tensor.ones((3, 4))
@@ -111,7 +111,7 @@ class TestMLXBackendStrongTyping:
         """Test conversion from NumPy array to MLX tensor."""
         # Set the backend to MLX
         set_backend('mlx')
-        ops.set_ops('mlx')
+        ops.set_backend('mlx')
         
         # Create NumPy array
         x_np = np.ones((3, 4))
@@ -125,7 +125,7 @@ class TestMLXBackendStrongTyping:
         """Test conversion from NumPy backend to MLX backend."""
         # Set the backend to NumPy
         set_backend('numpy')
-        ops.set_ops('numpy')
+        ops.set_backend('numpy')
         
         # Create tensor in NumPy backend
         x_numpy = tensor.ones((3, 4))
@@ -135,7 +135,7 @@ class TestMLXBackendStrongTyping:
         
         # Switch to MLX backend
         set_backend('mlx')
-        ops.set_ops('mlx')
+        ops.set_backend('mlx')
         
         # Convert NumPy array to MLX tensor
         x_mlx = tensor.convert_to_tensor(x_np)
@@ -146,7 +146,7 @@ class TestMLXBackendStrongTyping:
         """Test conversion from MLX backend to NumPy backend."""
         # Set the backend to MLX
         set_backend('mlx')
-        ops.set_ops('mlx')
+        ops.set_backend('mlx')
         
         # Create tensor in MLX backend
         x_mlx = tensor.ones((3, 4))
@@ -156,7 +156,7 @@ class TestMLXBackendStrongTyping:
         
         # Switch to NumPy backend
         set_backend('numpy')
-        ops.set_ops('numpy')
+        ops.set_backend('numpy')
         
         # Convert NumPy array to NumPy backend tensor
         x_numpy = tensor.convert_to_tensor(x_np)
@@ -167,14 +167,14 @@ class TestMLXBackendStrongTyping:
         """Test that direct conversion between backend tensors fails."""
         # Set the backend to MLX
         set_backend('mlx')
-        ops.set_ops('mlx')
+        ops.set_backend('mlx')
         
         # Create MLX tensor
         x_mlx = tensor.ones((3, 4))
         
         # Switch to PyTorch backend
         set_backend('torch')
-        ops.set_ops('torch')
+        ops.set_backend('torch')
         
         # Attempt to convert MLX tensor to PyTorch tensor directly
         # This should fail with a ValueError due to strong typing

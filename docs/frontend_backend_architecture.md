@@ -126,11 +126,11 @@ def scatter_mean(values: tensor.Tensor, indices: tensor.Tensor,
     sum_result = ops.scatter(values, indices, dim_size, "add")
     
     # Then compute count using ones
-    ones = ops.ones_like(values)
+    ones = tensor.ones_like(values)
     count = ops.scatter(ones, indices, dim_size, "add")
     
     # Avoid division by zero
-    count = ops.where(count == 0, ops.ones_like(count), count)
+    count = ops.where(count == 0, tensor.ones_like(count), count)
     
     return ops.divide(sum_result, count)
 ```

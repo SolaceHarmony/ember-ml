@@ -102,7 +102,7 @@ class TestBackendAutoSelection:
         
         # Also set the ops backend to ensure the ops module is updated
         from ember_ml import ops
-        ops.set_ops(backend_name)
+        ops.set_backend(backend_name)
         
         # Verify the backend was switched
         assert get_backend() == backend_name
@@ -128,7 +128,7 @@ class TestBackendAutoSelection:
             set_backend('torch')
             # Also set the ops backend
             from ember_ml import ops
-            ops.set_ops('torch')
+            ops.set_backend('torch')
         
         # Test setting and getting the device
         set_device('cpu')

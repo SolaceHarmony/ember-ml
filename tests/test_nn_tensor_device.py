@@ -28,10 +28,10 @@ def backend(request):
     """Fixture to test with different backends."""
     prev_backend = str(ops.get_backend())
     ops.set_backend(request.param)
-    ops.set_ops(request.param)
+    ops.set_backend(request.param)
     yield request.param
     ops.set_backend(prev_backend)
-    ops.set_ops(prev_backend)
+    ops.set_backend(prev_backend)
 
 class TestDeviceOperations:
     """Tests for device operations."""

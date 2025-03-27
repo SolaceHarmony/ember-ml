@@ -20,8 +20,7 @@ logger = logging.getLogger('test_terabyte_feature_extractor')
 
 # Import backend utilities and ops
 from ember_ml.utils import backend_utils
-from ember_ml import ops
-
+from ember_ml.nn import tensor
 # Import the TerabyteFeatureExtractor (now using the purified backend-agnostic implementation)
 from ember_ml.features.terabyte_feature_extractor import TerabyteFeatureExtractor
 
@@ -67,13 +66,13 @@ def sample_data():
     
     # For categorical data, we need to use numpy directly for testing
     category1_idx = backend_utils.tensor_to_numpy_safe(
-        tensor.random_uniform(shape=(100,), minval=0, maxval=3).astype(ops.int32)
+        tensor.random_uniform(shape=(100,), minval=0, maxval=3).astype(tensor.int32)
     )
     category2_idx = backend_utils.tensor_to_numpy_safe(
-        tensor.random_uniform(shape=(100,), minval=0, maxval=3).astype(ops.int32)
+        tensor.random_uniform(shape=(100,), minval=0, maxval=3).astype(tensor.int32)
     )
     boolean1 = backend_utils.tensor_to_numpy_safe(
-        tensor.random_uniform(shape=(100,), minval=0, maxval=2).astype(ops.int32)
+        tensor.random_uniform(shape=(100,), minval=0, maxval=2).astype(tensor.int32)
     ) > 0
     
     # Create sample DataFrame

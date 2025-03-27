@@ -100,7 +100,7 @@ cast = _import_backend_function('cast')
 The current implementation of the wiring module has several issues related to the tensor refactoring:
 
 1. It tries to use EmberTensor methods as static methods, which is not supported
-2. It imports EmberTensor from the wrong location (`ember_ml.ops.tensor` instead of `ember_ml.nn.tensor`)
+2. It imports EmberTensor from the wrong location (`ember_ml.nn.tensor` instead of `ember_ml.nn.tensor`)
 3. It uses a `data` property on EmberTensor, which doesn't exist in the new implementation
 4. It specifies dtypes as strings (e.g., `'int32'`) instead of using dtype objects (e.g., `int32`)
 
@@ -122,7 +122,7 @@ Update the imports and method calls:
 ```python
 # Before
 from ember_ml import ops
-from ember_ml.ops.tensor import EmberTensor
+from ember_ml.nn.tensor import EmberTensor
 
 class Wiring:
     # ...
@@ -164,7 +164,7 @@ class RandomWiring(Wiring):
         # Create random masks
         input_mask = ops.cast(
             ops.random_uniform((self.input_dim,)) >= self.sparsity_level,
-            ops.int32
+            tensor.int32
         )
         recurrent_mask = EmberTensor.cast(
             EmberTensor.random_uniform((self.units, self.units)) >= self.sparsity_level,

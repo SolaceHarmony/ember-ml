@@ -9,7 +9,7 @@ import importlib
 
 from ember_ml import ops
 from ember_ml.nn import tensor
-from ember_ml.ops import set_ops
+from ember_ml.ops import set_backend
 from ember_ml.ops import linearalg
 
 @pytest.fixture(autouse=True)
@@ -96,14 +96,13 @@ class TestSolverOps:
         a = tensor.convert_to_tensor([[3, 1], [1, 2]], dtype='float32')
         
         # Test with NumPy backend
-        set_ops('numpy')
+        set_backend('numpy')
         importlib.reload(ops)
         det_numpy = linearalg.det(a)
         
         # Test with MLX backend
         try:
-            set_ops('mlx')
-            importlib.reload(ops)
+            ops.set_backend('mlx')
             det_mlx = linearalg.det(a)
             
             # Check that the determinants are close
@@ -113,7 +112,7 @@ class TestSolverOps:
         
         # Test with PyTorch backend
         try:
-            set_ops('torch')
+            ops.set_backend('torch')
             importlib.reload(ops)
             det_torch = linearalg.det(a)
             
@@ -128,13 +127,13 @@ class TestSolverOps:
         a = tensor.convert_to_tensor([[3, 1], [1, 2]], dtype='float32')
         
         # Test with NumPy backend
-        set_ops('numpy')
+        ops.set_ops('numpy')
         importlib.reload(ops)
         norm_numpy = ops.norm(a)
         
         # Test with MLX backend
         try:
-            set_ops('mlx')
+            ops.set_ops('mlx')
             importlib.reload(ops)
             norm_mlx = ops.norm(a)
             
@@ -145,7 +144,7 @@ class TestSolverOps:
         
         # Test with PyTorch backend
         try:
-            set_ops('torch')
+            ops.set_ops('torch')
             importlib.reload(ops)
             norm_torch = ops.norm(a)
             
@@ -160,13 +159,13 @@ class TestSolverOps:
         a = tensor.convert_to_tensor([[3, 1], [1, 2], [0, 1]], dtype='float32')
         
         # Test with NumPy backend
-        set_ops('numpy')
+        ops.set_ops('numpy')
         importlib.reload(ops)
         q_numpy, r_numpy = ops.qr(a)
         
         # Test with MLX backend
         try:
-            set_ops('mlx')
+            ops.set_ops('mlx')
             importlib.reload(ops)
             q_mlx, r_mlx = ops.qr(a)
             
@@ -206,13 +205,13 @@ class TestSolverOps:
         a = tensor.convert_to_tensor([[3, 1], [1, 2], [0, 1]], dtype='float32')
         
         # Test with NumPy backend
-        set_ops('numpy')
+        ops.set_ops('numpy')
         importlib.reload(ops)
         u_numpy, s_numpy, vh_numpy = ops.svd(a)
         
         # Test with MLX backend
         try:
-            set_ops('mlx')
+            ops.set_ops('mlx')
             importlib.reload(ops)
             u_mlx, s_mlx, vh_mlx = ops.svd(a)
             
@@ -225,7 +224,7 @@ class TestSolverOps:
         
         # Test with PyTorch backend
         try:
-            set_ops('torch')
+            ops.set_ops('torch')
             importlib.reload(ops)
             u_torch, s_torch, vh_torch = ops.svd(a)
             
@@ -242,13 +241,13 @@ class TestSolverOps:
         a = tensor.convert_to_tensor([[4, 1], [1, 3]], dtype='float32')
         
         # Test with NumPy backend
-        set_ops('numpy')
+        ops.set_ops('numpy')
         importlib.reload(ops)
         l_numpy = ops.cholesky(a)
         
         # Test with MLX backend
         try:
-            set_ops('mlx')
+            ops.set_ops('mlx')
             importlib.reload(ops)
             l_mlx = ops.cholesky(a)
             
@@ -264,7 +263,7 @@ class TestSolverOps:
         
         # Test with PyTorch backend
         try:
-            set_ops('torch')
+            ops.set_ops('torch')
             importlib.reload(ops)
             l_torch = ops.cholesky(a)
             
@@ -285,13 +284,13 @@ class TestSolverOps:
         b = tensor.convert_to_tensor([9, 8, 3], dtype='float32')
         
         # Test with NumPy backend
-        set_ops('numpy')
+        ops.set_ops('numpy')
         importlib.reload(ops)
         x_numpy, residuals_numpy, rank_numpy, s_numpy = ops.lstsq(a, b)
         
         # Test with MLX backend
         try:
-            set_ops('mlx')
+            ops.set_ops('mlx')
             importlib.reload(ops)
             x_mlx, residuals_mlx, rank_mlx, s_mlx = ops.lstsq(a, b)
             
@@ -304,7 +303,7 @@ class TestSolverOps:
         
         # Test with PyTorch backend
         try:
-            set_ops('torch')
+            ops.set_ops('torch')
             importlib.reload(ops)
             x_torch, residuals_torch, rank_torch, s_torch = ops.lstsq(a, b)
             
@@ -319,13 +318,13 @@ class TestSolverOps:
         a = tensor.convert_to_tensor([[3, 1], [1, 2]], dtype='float32')
         
         # Test with NumPy backend
-        set_ops('numpy')
+        ops.set_ops('numpy')
         importlib.reload(ops)
         eigenvalues_numpy, eigenvectors_numpy = ops.eig(a)
         
         # Test with MLX backend
         try:
-            set_ops('mlx')
+            ops.set_ops('mlx')
             importlib.reload(ops)
             eigenvalues_mlx, eigenvectors_mlx = ops.eig(a)
             
@@ -350,7 +349,7 @@ class TestSolverOps:
         
         # Test with PyTorch backend
         try:
-            set_ops('torch')
+            ops.set_ops('torch')
             importlib.reload(ops)
             eigenvalues_torch, eigenvectors_torch = ops.eig(a)
             
@@ -367,13 +366,13 @@ class TestSolverOps:
         a = tensor.convert_to_tensor([[3, 1], [1, 2]], dtype='float32')
         
         # Test with NumPy backend
-        set_ops('numpy')
+        ops.set_ops('numpy')
         importlib.reload(ops)
         eigenvalues_numpy = ops.eigvals(a)
         
         # Test with MLX backend
         try:
-            set_ops('mlx')
+            ops.set_ops('mlx')
             importlib.reload(ops)
             eigenvalues_mlx = ops.eigvals(a)
             
@@ -386,7 +385,7 @@ class TestSolverOps:
         
         # Test with PyTorch backend
         try:
-            set_ops('torch')
+            ops.set_ops('torch')
             importlib.reload(ops)
             eigenvalues_torch = ops.eigvals(a)
             

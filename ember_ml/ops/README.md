@@ -71,7 +71,7 @@ x = tensor.convert_to_tensor(x_np)
 y = ops.relu(x)
 
 # Convert back to NumPy
-y_np = ops.to_numpy(y)
+y_np = tensor.to_numpy(y)
 ```
 
 ## Available Operations
@@ -114,10 +114,10 @@ y = ops.random_normal((4, 5))
 z = ops.matmul(x, y)
 w = ops.relu(z)
 
-print(f"x shape: {ops.shape(x)}")
-print(f"y shape: {ops.shape(y)}")
-print(f"z shape: {ops.shape(z)}")
-print(f"w shape: {ops.shape(w)}")
+print(f"x shape: {tensor.shape(x)}")
+print(f"y shape: {tensor.shape(y)}")
+print(f"z shape: {tensor.shape(z)}")
+print(f"w shape: {tensor.shape(w)}")
 ```
 
 ### Neural Network Operations
@@ -148,9 +148,9 @@ b2 = tensor.zeros((output_size,))
 h = ops.relu(ops.add(ops.matmul(x, w1), b1))
 y = ops.softmax(ops.add(ops.matmul(h, w2), b2))
 
-print(f"Input shape: {ops.shape(x)}")
-print(f"Hidden layer shape: {ops.shape(h)}")
-print(f"Output shape: {ops.shape(y)}")
+print(f"Input shape: {tensor.shape(x)}")
+print(f"Hidden layer shape: {tensor.shape(h)}")
+print(f"Output shape: {tensor.shape(y)}")
 ```
 
 ### Custom Operations
@@ -183,8 +183,8 @@ x = ops.random_normal((3, 4))
 # Apply the custom activation
 y = custom_activation(x)
 
-print(f"x: {ops.to_numpy(x)}")
-print(f"y: {ops.to_numpy(y)}")
+print(f"x: {tensor.to_numpy(x)}")
+print(f"y: {tensor.to_numpy(y)}")
 ```
 
 ## Implementation Details

@@ -41,13 +41,13 @@ def create_sample_data(num_rows=1000):
     # but we can minimize direct numpy usage
     import numpy as np  # Local import only where needed
     category1_idx = backend_utils.tensor_to_numpy_safe(
-        tensor.random_uniform(shape=(num_rows,), minval=0, maxval=3).astype(ops.int32)
+        tensor.random_uniform(shape=(num_rows,), minval=0, maxval=3).astype(tensor.int32)
     )
     category2_idx = backend_utils.tensor_to_numpy_safe(
-        tensor.random_uniform(shape=(num_rows,), minval=0, maxval=3).astype(ops.int32)
+        tensor.random_uniform(shape=(num_rows,), minval=0, maxval=3).astype(tensor.int32)
     )
     boolean1 = backend_utils.tensor_to_numpy_safe(
-        tensor.random_uniform(shape=(num_rows,), minval=0, maxval=2).astype(ops.int32)
+        tensor.random_uniform(shape=(num_rows,), minval=0, maxval=2).astype(tensor.int32)
     ) > 0
     
     # Create sample DataFrame

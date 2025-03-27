@@ -211,10 +211,10 @@ y = ops.random_normal((4, 5))
 z = ops.matmul(x, y)
 w = ops.relu(z)
 
-print(f"x shape: {ops.shape(x)}")
-print(f"y shape: {ops.shape(y)}")
-print(f"z shape: {ops.shape(z)}")
-print(f"w shape: {ops.shape(w)}")
+print(f"x shape: {tensor.shape(x)}")
+print(f"y shape: {tensor.shape(y)}")
+print(f"z shape: {tensor.shape(z)}")
+print(f"w shape: {tensor.shape(w)}")
 ```
 
 ### Backend Auto-Selection
@@ -237,10 +237,10 @@ y = ops.random_normal((4, 5))
 z = ops.matmul(x, y)
 w = ops.relu(z)
 
-print(f"x shape: {ops.shape(x)}")
-print(f"y shape: {ops.shape(y)}")
-print(f"z shape: {ops.shape(z)}")
-print(f"w shape: {ops.shape(w)}")
+print(f"x shape: {tensor.shape(x)}")
+print(f"y shape: {tensor.shape(y)}")
+print(f"z shape: {tensor.shape(z)}")
+print(f"w shape: {tensor.shape(w)}")
 ```
 
 ### Backend-Specific Code
@@ -263,7 +263,7 @@ x = ops.random_normal((3, 4))
 # Convert to a backend-specific tensor
 if backend.name == 'torch':
     import torch
-    x_torch = torch.tensor(ops.to_numpy(x))
+    x_torch = torch.tensor(tensor.to_numpy(x))
     # Use PyTorch-specific features
     x_torch = x_torch.cuda()
     # Convert back to ember_ml tensor

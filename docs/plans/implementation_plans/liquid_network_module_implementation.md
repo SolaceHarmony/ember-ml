@@ -153,7 +153,7 @@ class MotorNeuronModule(Module):
             threshold = ops.full_like(output, self.threshold)
         
         # Generate trigger
-        trigger = ops.cast(output > threshold, ops.float32)
+        trigger = ops.cast(output > threshold, tensor.float32)
         
         return output, trigger, threshold
 ```
@@ -264,7 +264,7 @@ class NCPLiquidNetworkModule(BaseLiquidNetworkModule):
         """
         # Initialize states if not provided
         if states is None:
-            batch_size = ops.shape(inputs)[0]
+            batch_size = tensor.shape(inputs)[0]
             states = self.get_initial_state(batch_size)
         
         # Process each time step
@@ -272,7 +272,7 @@ class NCPLiquidNetworkModule(BaseLiquidNetworkModule):
         trigger_signals = []
         threshold_values = []
         
-        for t in range(ops.shape(inputs)[1]):
+        for t in range(tensor.shape(inputs)[1]):
             # Get input at current time step
             x_t = inputs[:, t, :]
             
@@ -412,7 +412,7 @@ class LSTMGatedLiquidNetworkModule(BaseLiquidNetworkModule):
         """
         # Initialize states if not provided
         if states is None:
-            batch_size = ops.shape(inputs)[0]
+            batch_size = tensor.shape(inputs)[0]
             states = self.get_initial_state(batch_size)
         
         # Unpack states
@@ -421,7 +421,7 @@ class LSTMGatedLiquidNetworkModule(BaseLiquidNetworkModule):
         # Process each time step
         outputs = []
         
-        for t in range(ops.shape(inputs)[1]):
+        for t in range(tensor.shape(inputs)[1]):
             # Get input at current time step
             x_t = inputs[:, t, :]
             
@@ -552,13 +552,13 @@ class MultiStrideLiquidNetworkModule(BaseLiquidNetworkModule):
         """
         # Initialize states if not provided
         if states is None:
-            batch_size = ops.shape(inputs)[0]
+            batch_size = tensor.shape(inputs)[0]
             states = self.get_initial_state(batch_size)
         
         # Process each time step
         outputs = []
         
-        for t in range(ops.shape(inputs)[1]):
+        for t in range(tensor.shape(inputs)[1]):
             # Get input at current time step
             x_t = inputs[:, t, :]
             
@@ -580,7 +580,7 @@ class MultiStrideLiquidNetworkModule(BaseLiquidNetworkModule):
                     cell_outputs.append(states[stride][0])
                 else:
                     # Initialize with zeros if no previous output
-                    cell_outputs.append(tensor.zeros((ops.shape(x_t)[0], self.units_per_stride)))
+                    cell_outputs.append(tensor.zeros((tensor.shape(x_t)[0], self.units_per_stride)))
             
             # Concatenate cell outputs
             combined_output = ops.concatenate(cell_outputs, axis=-1)
@@ -730,14 +730,14 @@ def train_liquid_network(
         Dictionary of training history
     """
     # Convert inputs to tensors
-    features = tensor.convert_to_tensor(features, dtype=ops.float32)
-    targets = tensor.convert_to_tensor(targets, dtype=ops.float32)
+    features = tensor.convert_to_tensor(features, dtype=tensor.float32)
+    targets = tensor.convert_to_tensor(targets, dtype=tensor.float32)
     
     # Convert validation data if provided
     if validation_data is not None:
         val_features, val_targets = validation_data
-        val_features = tensor.convert_to_tensor(val_features, dtype=ops.float32)
-        val_targets = tensor.convert_to_tensor(val_targets, dtype=ops.float32)
+        val_features = tensor.convert_to_tensor(val_features, dtype=tensor.float32)
+        val_targets = tensor.convert_to_tensor(val_targets, dtype=tensor.float32)
         validation_data = (val_features, val_targets)
     
     # Create optimizer
@@ -751,7 +751,7 @@ def train_liquid_network(
     
     for epoch in range(epochs):
         # Shuffle data
-        indices = ops.random.permutation(ops.shape(features)[0])
+        indices = ops.random.permutation(tensor.shape(features)[0])
         features_shuffled = ops.gather(features, indices)
         targets_shuffled = ops.gather(targets, indices)
         
@@ -759,7 +759,7 @@ def train_liquid_network(
         epoch_loss = 0
         n_batches = 0
         
-        for i in range(0, ops.shape(features)[0], batch_size):
+        for i in range(0, tensor.shape(features)[0], batch_size):
             batch_features = features_shuffled[i:i+batch_size]
             batch_targets = targets_shuffled[i:i+batch_size]
             
