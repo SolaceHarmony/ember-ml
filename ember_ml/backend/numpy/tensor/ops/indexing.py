@@ -122,19 +122,33 @@ def slice_update(tensor: TensorLike, slices: TensorLike, updates: Optional[Tenso
     Tensor = NumpyTensor()
     tensor_array = Tensor.convert_to_tensor(tensor)
 
-    if isinstance(slices, (int, np.integer)):
+    # Handle different types for slices
+    if isinstance(slices, slice):
+        # If it's already a slice object, use it directly
+        indices_tuple = slices
+    elif isinstance(slices, (int, np.integer)):
+        # Handle single integer index
         indices_tuple = (int(slices),)
     else:
-        slices_array = Tensor.convert_to_tensor(slices)
-        indices_list = slices_array.tolist()
-        if isinstance(indices_list[0], list):
-            indices_tuple = tuple(map(tuple, indices_list))
-        else:
-            indices_tuple = tuple(indices_list)
+        # Attempt conversion for list/array-like indices
+        try:
+            slices_array = Tensor.convert_to_tensor(slices)
+            indices_list = slices_array.tolist()
+            # Handle nested lists for multi-dimensional indexing if necessary
+            if isinstance(indices_list, list) and indices_list and isinstance(indices_list[0], list):
+                 indices_tuple = tuple(map(tuple, indices_list))
+            elif isinstance(indices_list, list): # Handle flat list of indices
+                 indices_tuple = tuple(indices_list)
+            else: # Handle scalar index case after conversion
+                 indices_tuple = (indices_list,)
+        except ValueError:
+            raise TypeError(f"Unsupported slice/index type for NumPy backend: {type(slices)}")
 
     if updates is None:
+        # Perform slicing
         return tensor_array[indices_tuple]
 
+    # Perform update
     updates_array = Tensor.convert_to_tensor(updates)
     result = tensor_array.copy()
     result[indices_tuple] = updates_array
