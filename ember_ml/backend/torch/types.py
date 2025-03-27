@@ -27,22 +27,17 @@ type Axis = Optional[Union[int, Sequence[int]]]
 type IndexType = Union[int, Sequence[int], 'torch.Tensor'] 
 type Indices = Union[Sequence[int], 'torch.Tensor']
 
-# MLX specific
-type TorchArray = 'torch.Tensor'
-type DTypeClass = 'torch.dtype'
+# PyTorch specific
+type TorchArray = torch.Tensor
+type DTypeClass = torch.dtype
 
 # Precision related
-default_int = 'torch.int32'
-default_float = 'torch.float32'
-default_bool = 'torch.bool' if hasattr(torch, 'bool') else Any
-
-
-# Runtime definitions (simplified)
-type TensorTypes = Any
-type ArrayLike = Any
+default_int = torch.int32
+default_float = torch.float32
+default_bool = torch.bool if hasattr(torch, 'bool') else Any
 type TensorLike = Any
-type ScalarLike = Any
-type DTypes = Any
+
+# Default type for dtype
 type DType = Any
 
 # Conditional type definitions
@@ -55,13 +50,13 @@ if TYPE_CHECKING == True:
     # Define types that reference external modules
     type TensorTypes = Union[
         TorchArray,
-        Any,  # MLXTensor
+        Any,  # TorchTensor
         Any,  # EmberTensor
         Any,  # numpy.ndarray
     ]
     
     type ArrayLike = Union[
-        Any,  # MLXTensor
+        Any,  # TorchTensor
         TorchArray, 
         Numeric, 
         List[Any], 
@@ -69,7 +64,7 @@ if TYPE_CHECKING == True:
     ]
     
     type DTypes = Union[
-        torch.Dtype,
+        torch.dtype,
         Any,  # numpy.dtype
     ]
     
@@ -109,5 +104,3 @@ __all__ = [
     'Indices',
     'PathLike'
 ]
-
-

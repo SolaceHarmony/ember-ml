@@ -82,7 +82,7 @@ class RNNCell(Module):
         """
         # Initialize states if not provided
         if states is None:
-            h_prev = tensor.zeros((ops.shape(inputs)[0], self.hidden_size))
+            h_prev = tensor.zeros((tensor.shape(inputs)[0], self.hidden_size))
         else:
             h_prev = states[0]
         

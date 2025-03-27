@@ -5,7 +5,7 @@ import mlx.core as mx
 from typing import Union, Optional, Literal, TYPE_CHECKING
 from builtins import slice as py_slice
 from ember_ml.backend.mlx.types import (
-    TensorLike, Shape, ShapeLike
+    TensorLike, Shape
 )
 
 def slice_tensor(tensor: TensorLike, starts: Shape, sizes: Shape) -> mx.array:
@@ -199,6 +199,15 @@ def scatter(data: TensorLike, indices: TensorLike, dim_size: Optional[Union[int,
 def scatter_op(src: mx.array, index: mx.array, dim_size: int,
                 axis: int, op: Literal["add", "max", "min", "softmax"]) -> mx.array:
     """Helper function for scatter operations."""
+    # Handle empty case
+    if dim_size == 0 or len(index) == 0:
+        # Return empty array with appropriate shape
+        output_shape = list(src.shape)
+        if axis < 0:
+            axis = len(output_shape) + axis
+        output_shape[axis] = 0
+        return mx.zeros(output_shape, dtype=src.dtype)
+    
     # Get shape of output tensor
     output_shape = list(src.shape)
     if axis < 0:

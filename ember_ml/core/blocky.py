@@ -227,14 +227,14 @@ class BlockyRoadChain(BaseChain):
         
         # Compute forgetting times if pattern_time provided
         if pattern_time is not None:
-            pattern_idx = ops.cast(ops.divide(pattern_time, self.dt), ops.int32)
+            pattern_idx = tensor.cast(ops.divide(pattern_time, self.dt), ops.int32)
             forget_times = []
             
             for i in range(self.num_neurons):
                 forget_time = None
                 history_i = history[:, i]
                 
-                for idx in range(ops.to_numpy(pattern_idx), ops.shape(history)[0]):
+                for idx in range(ops.to_numpy(pattern_idx), tensor.shape(history)[0]):
                     val = history[idx, i]
                     if ops.less(ops.abs(val), threshold):
                         forget_time = ops.multiply(

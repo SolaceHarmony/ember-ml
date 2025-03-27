@@ -79,7 +79,7 @@ class CfCCell(Module):
             self.bias = Parameter(tensor.zeros((self.units * 4,)))
         
         # Time-scale parameter (learnable)
-        self.time_scale = Parameter(ops.ones((self.units,)) * self.time_scale_factor)
+        self.time_scale = Parameter(tensor.ones((self.units,)) * self.time_scale_factor)
         
         # Initialize weights
         if self.kernel_initializer == "glorot_uniform":
@@ -104,8 +104,8 @@ class CfCCell(Module):
         """
         # Initialize states if not provided
         if states is None:
-            h_prev = tensor.zeros((ops.shape(inputs)[0], self.units))
-            t_prev = tensor.zeros((ops.shape(inputs)[0], self.units))
+            h_prev = tensor.zeros((tensor.shape(inputs)[0], self.units))
+            t_prev = tensor.zeros((tensor.shape(inputs)[0], self.units))
         else:
             h_prev, t_prev = states
         
@@ -143,7 +143,7 @@ class CfCCell(Module):
         
         # Apply time decay to hidden state
         decay_term = ops.multiply(decay, h_prev)
-        time_term = ops.multiply(ops.subtract(ops.ones_like(decay), decay), t)
+        time_term = ops.multiply(ops.subtract(tensor.ones_like(decay), decay), t)
         
         if self.activation == "tanh":
             h = ops.multiply(o, ops.tanh(ops.add(decay_term, time_term)))
@@ -239,7 +239,7 @@ class WiredCfCCell(CfCCell):
             self.bias = Parameter(tensor.zeros((self.units * 4,)))
         
         # Time-scale parameter (learnable)
-        self.time_scale = Parameter(ops.ones((self.units,)) * self.time_scale_factor)
+        self.time_scale = Parameter(tensor.ones((self.units,)) * self.time_scale_factor)
         
         # Initialize weights
         if self.kernel_initializer == "glorot_uniform":
@@ -268,8 +268,8 @@ class WiredCfCCell(CfCCell):
         """
         # Initialize states if not provided
         if states is None:
-            h_prev = tensor.zeros((ops.shape(inputs)[0], self.units))
-            t_prev = tensor.zeros((ops.shape(inputs)[0], self.units))
+            h_prev = tensor.zeros((tensor.shape(inputs)[0], self.units))
+            t_prev = tensor.zeros((tensor.shape(inputs)[0], self.units))
         else:
             h_prev, t_prev = states
         
@@ -311,7 +311,7 @@ class WiredCfCCell(CfCCell):
         
         # Apply time decay to hidden state
         decay_term = ops.multiply(decay, h_prev)
-        time_term = ops.multiply(ops.subtract(ops.ones_like(decay), decay), t)
+        time_term = ops.multiply(ops.subtract(tensor.ones_like(decay), decay), t)
         
         if self.activation == "tanh":
             h = ops.multiply(o, ops.tanh(ops.add(decay_term, time_term)))
@@ -379,7 +379,7 @@ class CfC(Module):
             Layer output
         """
         # Get input shape
-        input_shape = ops.shape(inputs)
+        input_shape = tensor.shape(inputs)
         batch_size, time_steps, input_dim = input_shape[0], input_shape[1], input_shape[2]
         
         # Create initial state if not provided

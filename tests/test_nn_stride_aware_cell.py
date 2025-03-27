@@ -7,7 +7,8 @@ This module tests the stride-aware cell functionality across all supported backe
 import pytest
 from ember_ml.nn import tensor
 from ember_ml import ops
-from ember_ml.nn import modules, wirings
+from ember_ml.nn import modules
+from ember_ml.nn.wirings import AutoNCP
 from ember_ml.nn.modules.rnn import StrideAwareWiredCfCCell, StrideAwareCfC
 from ember_ml.backend import set_backend, get_backend
 
@@ -29,7 +30,11 @@ def original_backend():
 @pytest.fixture
 def wiring():
     """Create a test wiring."""
-    return modules.AutoNCP(8, 4)  # Reduced for faster testing
+    return AutoNCP(
+        units=8,
+        output_size=4,
+        sparsity_level=0.5
+    )  # Reduced for faster testing
 
 @pytest.mark.parametrize("backend_name", BACKENDS)
 def test_stride_aware_cell_creation(backend_name, original_backend, wiring):

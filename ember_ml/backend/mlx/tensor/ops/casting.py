@@ -54,17 +54,17 @@ def cast(tensor: TensorLike, dtype: DType) -> mlx.core.array:
     """
     # Import MLXTensor lazily to avoid circular import
     from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+    from ember_ml.backend.mlx.tensor.dtype import MLXDType
+    # Create an MLXTensor object
     tensor_obj = MLXTensor()
     
     # Get the tensor array from the tensor object
-    tensor_array = tensor_obj.convert_to_tensor(tensor)
+    tensor_array = tensor_obj.convert_to_tensor(tensor,dtype=dtype)
     
     # Validate the dtype
     mlx_dtype = _validate_dtype(MLXDType(), dtype)
     
     # If mlx_dtype is None, return the tensor as is
-    if mlx_dtype is None:
-        return tensor_array
+    
+    return tensor_array
         
-    # Cast the tensor to the new dtype
-    return tensor_array.astype(mlx_dtype)

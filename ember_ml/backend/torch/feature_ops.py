@@ -7,11 +7,9 @@ This module provides PyTorch implementations of feature extraction and transform
 import torch
 import numpy as np
 from typing import Optional, Dict, Any, Tuple
-from ember_ml.backend.torch.tensor.tensor import TorchTensor
 
-# Create a tensor instance for convert_to_tensor
-_tensor_ops = TorchTensor()
-convert_to_tensor = _tensor_tensor.convert_to_tensor
+# We avoid creating global instances to prevent circular imports
+# Each function will create its own instances when needed
 
 
 def pca(
@@ -47,7 +45,11 @@ def pca(
         - mean: Per-feature empirical mean, used for centering
         - singular_values: Singular values corresponding to each component
     """
-    X_tensor = convert_to_tensor(X)
+    # Create instances for each call to avoid circular imports
+    from ember_ml.backend.torch.tensor.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    
+    X_tensor = tensor_ops.convert_to_tensor(X)
     n_samples, n_features = X_tensor.shape
     
     # Handle n_components
@@ -157,8 +159,12 @@ def transform(
     Returns:
         X_new: Transformed values of shape (n_samples, n_components)
     """
-    X_tensor = convert_to_tensor(X)
-    components_tensor = convert_to_tensor(components)
+    # Create instances for each call to avoid circular imports
+    from ember_ml.backend.torch.tensor.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    
+    X_tensor = tensor_ops.convert_to_tensor(X)
+    components_tensor = tensor_ops.convert_to_tensor(components)
     
     # Ensure components are on the same device as X
     if components_tensor.device != X_tensor.device:
@@ -166,7 +172,7 @@ def transform(
     
     # Center data
     if mean is not None:
-        mean_tensor = convert_to_tensor(mean)
+        mean_tensor = tensor_ops.convert_to_tensor(mean)
         if mean_tensor.device != X_tensor.device:
             mean_tensor = mean_tensor.to(X_tensor.device)
         X_centered = X_tensor - mean_tensor
@@ -180,7 +186,7 @@ def transform(
     if whiten:
         if explained_variance is None:
             raise ValueError("explained_variance must be provided when whiten=True")
-        explained_variance_tensor = convert_to_tensor(explained_variance)
+        explained_variance_tensor = tensor_ops.convert_to_tensor(explained_variance)
         if explained_variance_tensor.device != X_tensor.device:
             explained_variance_tensor = explained_variance_tensor.to(X_tensor.device)
         # Avoid division by zero
@@ -213,8 +219,12 @@ def inverse_transform(
     Returns:
         X_original: Original data of shape (n_samples, n_features)
     """
-    X_tensor = convert_to_tensor(X)
-    components_tensor = convert_to_tensor(components)
+    # Create instances for each call to avoid circular imports
+    from ember_ml.backend.torch.tensor.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    
+    X_tensor = tensor_ops.convert_to_tensor(X)
+    components_tensor = tensor_ops.convert_to_tensor(components)
     
     # Ensure components are on the same device as X
     if components_tensor.device != X_tensor.device:
@@ -224,7 +234,7 @@ def inverse_transform(
     if whiten:
         if explained_variance is None:
             raise ValueError("explained_variance must be provided when whiten=True")
-        explained_variance_tensor = convert_to_tensor(explained_variance)
+        explained_variance_tensor = tensor_ops.convert_to_tensor(explained_variance)
         if explained_variance_tensor.device != X_tensor.device:
             explained_variance_tensor = explained_variance_tensor.to(X_tensor.device)
         # Avoid division by zero
@@ -239,7 +249,7 @@ def inverse_transform(
     
     # Add mean if provided
     if mean is not None:
-        mean_tensor = convert_to_tensor(mean)
+        mean_tensor = tensor_ops.convert_to_tensor(mean)
         if mean_tensor.device != X_tensor.device:
             mean_tensor = mean_tensor.to(X_tensor.device)
         X_original = X_original + mean_tensor
@@ -269,7 +279,11 @@ def standardize(
         - mean: Mean values used for centering (None if with_mean=False)
         - std: Standard deviation values used for scaling (None if with_std=False)
     """
-    X_tensor = convert_to_tensor(X)
+    # Create instances for each call to avoid circular imports
+    from ember_ml.backend.torch.tensor.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    
+    X_tensor = tensor_ops.convert_to_tensor(X)
     
     mean = None
     std = None
@@ -320,7 +334,11 @@ def normalize(
     Returns:
         X_normalized: Normalized data
     """
-    X_tensor = convert_to_tensor(X)
+    # Create instances for each call to avoid circular imports
+    from ember_ml.backend.torch.tensor.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    
+    X_tensor = tensor_ops.convert_to_tensor(X)
     
     if norm == "l1":
         norms = torch.sum(torch.abs(X_tensor), dim=axis, keepdim=True)

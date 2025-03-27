@@ -32,9 +32,9 @@ def test_stride_aware_cell():
     # Forward pass
     output, new_state = cell(inputs, state)
     
-    print(f"Input shape: {ops.shape(inputs)}")
-    print(f"Output shape: {ops.shape(output)}")
-    print(f"State shape: {ops.shape(new_state)}")
+    print(f"Input shape: {tensor.shape(inputs)}")
+    print(f"Output shape: {tensor.shape(output)}")
+    print(f"State shape: {tensor.shape(new_state)}")
     
     return output, new_state
 
@@ -59,9 +59,9 @@ def test_stride_aware_layer():
     # Forward pass
     outputs, final_state = layer(inputs)
     
-    print(f"Input shape: {ops.shape(inputs)}")
-    print(f"Output shape: {ops.shape(outputs)}")
-    print(f"Final state shape: {ops.shape(final_state)}")
+    print(f"Input shape: {tensor.shape(inputs)}")
+    print(f"Output shape: {tensor.shape(outputs)}")
+    print(f"Final state shape: {tensor.shape(final_state)}")
     
     # Test with return_sequences=False
     layer_no_seq = StrideAware(
@@ -74,7 +74,7 @@ def test_stride_aware_layer():
     
     outputs_no_seq, final_state_no_seq = layer_no_seq(inputs)
     
-    print(f"Output shape (return_sequences=False): {ops.shape(outputs_no_seq)}")
+    print(f"Output shape (return_sequences=False): {tensor.shape(outputs_no_seq)}")
     
     return outputs, final_state
 

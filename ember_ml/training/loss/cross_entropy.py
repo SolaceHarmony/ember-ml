@@ -44,7 +44,7 @@ class CrossEntropyLoss(Loss):
             Cross Entropy loss
         """
         # Check if y_true is one-hot encoded
-        if len(ops.shape(y_true)) == len(ops.shape(y_pred)):
+        if len(tensor.shape(y_true)) == len(tensor.shape(y_pred)):
             return self._forward_one_hot(y_pred, y_true)
         else:
             return self._forward_sparse(y_pred, y_true)
@@ -62,10 +62,10 @@ class CrossEntropyLoss(Loss):
         """
         # Apply label smoothing if needed
         if self.label_smoothing > 0:
-            num_classes = ops.shape(y_true)[-1]
+            num_classes = tensor.shape(y_true)[-1]
             y_true = ops.add(
                 ops.multiply(y_true, 1.0 - self.label_smoothing),
-                ops.multiply(ops.ones_like(y_true), self.label_smoothing / num_classes)
+                ops.multiply(tensor.ones_like(y_true), self.label_smoothing / num_classes)
             )
         
         # Compute log softmax
@@ -97,8 +97,8 @@ class CrossEntropyLoss(Loss):
         log_softmax = ops.log_softmax(y_pred, axis=-1)
         
         # Gather log probabilities for the true classes
-        batch_size = ops.shape(y_pred)[0]
-        num_classes = ops.shape(y_pred)[-1]
+        batch_size = tensor.shape(y_pred)[0]
+        num_classes = tensor.shape(y_pred)[-1]
         
         # Convert y_true to one-hot encoding
         y_true_one_hot = ops.one_hot(y_true, num_classes)
@@ -107,7 +107,7 @@ class CrossEntropyLoss(Loss):
         if self.label_smoothing > 0:
             y_true_one_hot = ops.add(
                 ops.multiply(y_true_one_hot, 1.0 - self.label_smoothing),
-                ops.multiply(ops.ones_like(y_true_one_hot), self.label_smoothing / num_classes)
+                ops.multiply(tensor.ones_like(y_true_one_hot), self.label_smoothing / num_classes)
             )
         
         # Compute cross entropy
@@ -120,6 +120,6 @@ class CrossEntropyLoss(Loss):
         # Apply reduction
         if self.reduction == 'mean':
             # Compute mean over non-ignored elements
-            return ops.divide(ops.sum(loss), ops.sum(ops.cast(mask, ops.float32)))
+            return ops.divide(ops.sum(loss), ops.sum(tensor.cast(mask, ops.float32)))
         else:
             return self._reduce(loss)

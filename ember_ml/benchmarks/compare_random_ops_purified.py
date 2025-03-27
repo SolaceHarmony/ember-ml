@@ -129,7 +129,7 @@ def run_benchmarks_for_backend(backend_name: str) -> Dict:
     # Categorical distribution
     print(f"Benchmarking categorical distribution with {backend_name} backend...")
     # Create logits for 5 categories
-    logits = ops.ones((SHAPE[0], 5))
+    logits = tensor.ones((SHAPE[0], 5))
     categorical_time, categorical_result = benchmark_function(
         tensor.random_categorical, NUM_RUNS, logits, 1
     )

@@ -56,7 +56,7 @@ class Dense(Module, DenseInterface):
             Output tensor
         """
         # Get input shape
-        input_shape = ops.shape(x)
+        input_shape = tensor.shape(x)
         
         # Initialize parameters if not already done
         if not self.initialized:

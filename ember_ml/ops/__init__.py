@@ -179,6 +179,7 @@ allclose = lambda *args, **kwargs: comparison_ops().allclose(*args, **kwargs)
 isclose = lambda *args, **kwargs: comparison_ops().isclose(*args, **kwargs)
 all = lambda *args, **kwargs: comparison_ops().all(*args, **kwargs)
 where = lambda *args, **kwargs: comparison_ops().where(*args, **kwargs)
+isnan = lambda *args, **kwargs: comparison_ops().isnan(*args, **kwargs)
 
 # Activation functions
 def get_activation(activation: str):
@@ -311,6 +312,7 @@ __all__ = [
     'isclose',
     'all',
     'where',
+    'isnan',
     
     # I/O operations
     'save',

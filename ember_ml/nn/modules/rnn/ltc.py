@@ -100,7 +100,7 @@ class LTC(Module):
                 # Forget gate
                 self.forget_kernel = glorot_uniform((input_size, state_size))
                 self.forget_recurrent_kernel = orthogonal((state_size, state_size))
-                self.forget_bias = ops.ones((state_size,))  # Initialize with 1s for better gradient flow
+                self.forget_bias = tensor.ones((state_size,))  # Initialize with 1s for better gradient flow
                 
                 # Cell gate
                 self.cell_kernel = glorot_uniform((input_size, state_size))
@@ -192,7 +192,7 @@ class LTC(Module):
             Layer output and final state
         """
         # Get device and batch information
-        is_batched = len(ops.shape(inputs)) == 3
+        is_batched = len(tensor.shape(inputs)) == 3
         batch_dim = 0 if self.batch_first else 1
         seq_dim = 1 if self.batch_first else 0
         
@@ -203,7 +203,7 @@ class LTC(Module):
                 timespans = ops.expand_dims(timespans, batch_dim)
         
         # Get batch size and sequence length
-        input_shape = ops.shape(inputs)
+        input_shape = tensor.shape(inputs)
         batch_size = input_shape[batch_dim]
         seq_length = input_shape[seq_dim]
         
@@ -219,13 +219,13 @@ class LTC(Module):
             h_state, c_state = initial_state if self.mixed_memory else (initial_state, None)
             
             # Handle non-batched states
-            if is_batched and len(ops.shape(h_state)) != 2:
+            if is_batched and len(tensor.shape(h_state)) != 2:
                 raise ValueError(
-                    f"For batched inputs, initial_state should be 2D but got {len(ops.shape(h_state))}D"
+                    f"For batched inputs, initial_state should be 2D but got {len(tensor.shape(h_state))}D"
                 )
-            elif not is_batched and len(ops.shape(h_state)) != 1:
+            elif not is_batched and len(tensor.shape(h_state)) != 1:
                 raise ValueError(
-                    f"For non-batched inputs, initial_state should be 1D but got {len(ops.shape(h_state))}D"
+                    f"For non-batched inputs, initial_state should be 1D but got {len(tensor.shape(h_state))}D"
                 )
                 
                 # Add batch dimension for non-batched states

@@ -5,7 +5,7 @@ This module defines the abstract interfaces for comparison operations.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Optional, Union, Sequence, List, Tuple
+from typing import Any, Optional
 
 
 class ComparisonOps(ABC):
@@ -194,6 +194,19 @@ class ComparisonOps(ABC):
             
         Returns:
             Boolean tensor with all result
+        """
+        pass
+        
+    @abstractmethod
+    def isnan(self, x: Any) -> Any:
+        """
+        Test element-wise for NaN values.
+        
+        Args:
+            x: Input tensor
+            
+        Returns:
+            Boolean tensor with True where x is NaN, False otherwise
         """
         pass
         

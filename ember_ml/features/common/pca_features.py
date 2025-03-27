@@ -137,7 +137,7 @@ def _randomized_svd(
     Returns:
         U, S, V: Left singular vectors, singular values, right singular vectors
     """
-    n_samples, n_features = ops.shape(X)
+    n_samples, n_features = tensor.shape(X)
     
     # Set random seed if provided
     if random_state is not None:

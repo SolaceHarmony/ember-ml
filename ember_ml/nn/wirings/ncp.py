@@ -9,7 +9,7 @@ from typing import Optional, Dict, Any
 
 from ember_ml import ops
 from ember_ml.nn import tensor
-from ember_ml.nn.tensor import EmberTensor, zeros, convert_to_tensor, cast, expand_dims, tensor_scatter_nd_update, maximum, int32
+from ember_ml.nn.tensor import EmberTensor, convert_to_tensor, cast, maximum, int32
 from ember_ml.nn.wirings.wiring import Wiring
 
 class NCP(Wiring):
@@ -74,7 +74,7 @@ class NCP(Wiring):
             # Generate random indices
             indices = ops.random_permutation(self.units)
             # Take the first connections_per_input indices
-            target_indices = indices[:ops.cast(connections_per_input, int32)]
+            target_indices = indices[:tensor.cast(connections_per_input, int32)]
             # Set the mask values to 1.0 at these indices
             for idx in target_indices:
                 mask_idx = tensor.convert_to_tensor([i, idx], dtype=int32)
@@ -107,7 +107,7 @@ class NCP(Wiring):
             # Generate random indices
             indices = ops.random_permutation(self.units)
             # Take the first connections_per_unit indices
-            target_indices = indices[:ops.cast(connections_per_unit, int32)]
+            target_indices = indices[:tensor.cast(connections_per_unit, int32)]
             # Set the mask values to 1.0 at these indices
             for idx in target_indices:
                 mask_idx = tensor.convert_to_tensor([i, idx], dtype=int32)
@@ -140,7 +140,7 @@ class NCP(Wiring):
             # Generate random indices
             indices = ops.random_permutation(self.units)
             # Take the first connections_per_output indices
-            source_indices = indices[:ops.cast(connections_per_output, int32)]
+            source_indices = indices[:tensor.cast(connections_per_output, int32)]
             # Set the mask values to 1.0 at these indices
             for idx in source_indices:
                 mask_idx = tensor.convert_to_tensor([idx, i], dtype=int32)

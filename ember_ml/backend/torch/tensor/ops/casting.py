@@ -34,7 +34,7 @@ def _validate_dtype(dtype_cls: TorchDType, dtype: DType) -> Optional[Any]:
         return dtype_cls.from_dtype_str(dtype)
         
     # If it's already an MLX dtype, return as is
-    if isinstance(dtype, torch.Dtype) or dtype in [torch.float32, torch.float64, torch.int32, torch.int64,
+    if isinstance(dtype, torch.dtype) or dtype in [torch.float32, torch.float64, torch.int32, torch.int64,
                                                   torch.bool, torch.int8, torch.int16, torch.uint8,
                                                   torch.float16]:
         return dtype
@@ -67,4 +67,4 @@ def cast(tensor: TensorLike, dtype: DType) -> torch.Tensor:
         return tensor_array
         
     # Cast the tensor to the new dtype
-    return tensor.astype(torch_dtype)
+    return tensor.to(torch_dtype)

@@ -38,7 +38,7 @@ class TensorFeatures(TensorFeaturesInterface):
         indices = tensor.convert_to_tensor(indices)
         
         # Get the shape of the output tensor
-        shape = list(ops.shape(indices))
+        shape = list(tensor.shape(indices))
         
         # Handle negative axis
         if axis < 0:
@@ -56,10 +56,10 @@ class TensorFeatures(TensorFeaturesInterface):
         one_hot_tensor = tensor.zeros(shape, dtype=dtype)
         
         # Create a tensor of ones for updates
-        updates = ops.ones([1], dtype=dtype)
+        updates = tensor.ones([1], dtype=dtype)
         
         # For each index, update the corresponding position in the one-hot tensor
-        for i in range(ops.shape(indices)[0]):
+        for i in range(tensor.shape(indices)[0]):
             # Get the index for this sample
             idx = indices[i]
             
@@ -101,12 +101,12 @@ class TensorFeatures(TensorFeaturesInterface):
         result = ops.copy(tensor)
         
         # For each index, update the corresponding position in the tensor
-        for i in range(ops.shape(indices)[0]):
+        for i in range(tensor.shape(indices)[0]):
             # Get the index for this update
             idx = indices[i]
             
             # Create the slice for this update
-            slices = [slice(None)] * len(ops.shape(tensor))
+            slices = [slice(None)] * len(tensor.shape(tensor))
             slices[axis] = slice(idx, idx+1)
             
             # Get the update value

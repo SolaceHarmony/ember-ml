@@ -5,7 +5,8 @@ This module provides NumPy implementations of comparison operations.
 """
 
 import numpy as np
-from typing import Union, Any
+from typing import Any
+from ember_ml.backend.numpy.types import TensorLike
 
 # Import from tensor_ops
 from ember_ml.backend.numpy.tensor import NumpyTensor
@@ -224,7 +225,7 @@ def all(x: Any, axis: Any = None) -> Any:
     return np.all(Tensor.convert_to_tensor(x), axis=axis)
 
 
-def where(condition: Any, x: Any, y: Any) -> np.ndarray:
+def where(condition: TensorLike, x: TensorLike, y: TensorLike) -> np.ndarray:
     """
     Return elements chosen from x or y depending on condition.
     
@@ -238,7 +239,25 @@ def where(condition: Any, x: Any, y: Any) -> np.ndarray:
     """
     from ember_ml.backend.numpy.tensor import NumpyTensor
     Tensor = NumpyTensor()
-    return np.where(condition, Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
+    condition_tensor = Tensor.convert_to_tensor(condition)
+    x_tensor = Tensor.convert_to_tensor(x)
+    y_tensor = Tensor.convert_to_tensor(y)
+    return np.where(condition_tensor, x_tensor, y_tensor)
+
+
+def isnan(x: TensorLike) -> np.ndarray:
+    """
+    Test element-wise for NaN values.
+    
+    Args:
+        x: Input tensor
+        
+    Returns:
+        Boolean tensor with True where x is NaN, False otherwise
+    """
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    return np.isnan(Tensor.convert_to_tensor(x))
 
 
 class NumpyComparisonOps:
@@ -253,19 +272,19 @@ class NumpyComparisonOps:
         return not_equal(x, y)
     
     def less(self, x, y):
-        """Check if elements of the first tensor are less than the second element-wise."""
+        """Check if one tensor is less than another element-wise."""
         return less(x, y)
     
     def less_equal(self, x, y):
-        """Check if elements of the first tensor are less than or equal to the second element-wise."""
+        """Check if one tensor is less than or equal to another element-wise."""
         return less_equal(x, y)
     
     def greater(self, x, y):
-        """Check if elements of the first tensor are greater than the second element-wise."""
+        """Check if one tensor is greater than another element-wise."""
         return greater(x, y)
     
     def greater_equal(self, x, y):
-        """Check if elements of the first tensor are greater than or equal to the second element-wise."""
+        """Check if one tensor is greater than or equal to another element-wise."""
         return greater_equal(x, y)
     
     def logical_and(self, x, y):
@@ -299,3 +318,7 @@ class NumpyComparisonOps:
     def where(self, condition, x, y):
         """Return elements chosen from x or y depending on condition."""
         return where(condition, x, y)
+        
+    def isnan(self, x):
+        """Test element-wise for NaN values."""
+        return isnan(x)

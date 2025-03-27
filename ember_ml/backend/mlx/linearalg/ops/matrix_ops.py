@@ -227,10 +227,10 @@ def diag(x: TensorLike, k: int = 0) -> mx.array:
         for i in range(n):
             if k >= 0:
                 # Diagonal above main
-                result = result.at[i, i + k].set(x_array[i])
+                result = mx.scatter(result, mx.array([i, i + k]), x_array[i])
             else:
                 # Diagonal below main
-                result = result.at[i - k, i].set(x_array[i])
+                result = mx.scatter(result, mx.array([i - k, i]), x_array[i])
                 
         return result
     
@@ -254,9 +254,10 @@ def diag(x: TensorLike, k: int = 0) -> mx.array:
         # Extract the diagonal
         for i in range(diag_len):
             if k >= 0:
-                result = result.at[i].set(x_array[i, i + k])
+                from ember_ml.backend.mlx.tensor.ops.indexing import scatter
+                result = scatter(result, mx.array([i]), x_array[i, i + k])
             else:
-                result = result.at[i].set(x_array[i - k, i])
+                result = scatter(result, mx.array([i]), x_array[i - k, i])
                 
         return result
     
@@ -322,8 +323,22 @@ def diagonal(x: TensorLike, offset: int = 0, axis1: int = 0, axis2: int = 1) -> 
         
         # Create slices for extracting and assigning values
         src_slice = []
+        dst_slice = [i]
+        dst_idx = 1  # Start after the diagonal dimension
+        
         for d in range(ndim):
             if d == axis1:
                 src_slice.append(idx_axis1)
             elif d == axis2:
                 src_slice.append(idx_axis2)
+            else:
+                # For non-diagonal dimensions, use full slices
+                src_slice.append(slice(None))
+                dst_slice.append(slice(None))
+                dst_idx += 1
+                
+        # Extract the diagonal element and set it in the result
+        src_value = x_array[tuple(src_slice)]
+        result = mx.scatter(result, mx.array([i] + [slice(None)] * (len(dst_slice) - 1)), src_value)
+    
+    return result

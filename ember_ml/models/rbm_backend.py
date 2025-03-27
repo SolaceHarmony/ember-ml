@@ -142,8 +142,8 @@ class RBM:
         if not self.use_binary_states:
             return hidden_probs
         
-        random_values = ops.random_uniform(ops.shape(hidden_probs))
-        return ops.cast(ops.greater(hidden_probs, random_values), hidden_probs.dtype)
+        random_values = tensor.random_uniform(tensor.shape(hidden_probs))
+        return tensor.cast(ops.greater(hidden_probs, random_values), hidden_probs.dtype)
     
     def compute_visible_probabilities(self, hidden_states):
         """
@@ -171,8 +171,8 @@ class RBM:
         if not self.use_binary_states:
             return visible_probs
         
-        random_values = ops.random_uniform(ops.shape(visible_probs))
-        return ops.cast(ops.greater(visible_probs, random_values), visible_probs.dtype)
+        random_values = tensor.random_uniform(tensor.shape(visible_probs))
+        return tensor.cast(ops.greater(visible_probs, random_values), visible_probs.dtype)
     
     def contrastive_divergence(self, batch_data, k=1):
         """

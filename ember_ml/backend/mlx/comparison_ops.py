@@ -131,7 +131,7 @@ def logical_or(x: TensorLike, y: TensorLike) -> mx.array:
     Tensor = MLXTensor()
     return mx.logical_or(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
-def logical_not(x: mx.array) -> mx.array:
+def logical_not(x: TensorLike) -> mx.array:
     """
     Compute the logical NOT of an MLX array element-wise.
     
@@ -206,7 +206,7 @@ def isclose(x: TensorLike, y: TensorLike, rtol: float = 1e-5, atol: float = 1e-8
     return mx.less_equal(abs_diff, tolerance)
 
 
-def all(x: mx.array, axis: Any = None, keepdims: bool = False) -> mx.array:
+def all(x: TensorLike, axis: Any = None, keepdims: bool = False) -> mx.array:
     """
     Check if all elements in a tensor are True.
     
@@ -227,7 +227,7 @@ def all(x: mx.array, axis: Any = None, keepdims: bool = False) -> mx.array:
     return mx.all(x_tensor, axis=axis, keepdims=keepdims)
 
 
-def where(condition: mx.array, x: TensorLike, y: TensorLike) -> mx.array:
+def where(condition: TensorLike, x: TensorLike, y: TensorLike) -> mx.array:
     """
     Return elements chosen from x or y depending on condition.
     
@@ -245,6 +245,22 @@ def where(condition: mx.array, x: TensorLike, y: TensorLike) -> mx.array:
     x_tensor = Tensor.convert_to_tensor(x)
     y_tensor = Tensor.convert_to_tensor(y)
     return mx.where(condition_tensor, x_tensor, y_tensor)
+
+
+def isnan(x: TensorLike) -> mx.array:
+    """
+    Test element-wise for NaN values.
+    
+    Args:
+        x: Input tensor
+        
+    Returns:
+        Boolean tensor with True where x is NaN, False otherwise
+    """
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    Tensor = MLXTensor()
+    x_tensor = Tensor.convert_to_tensor(x)
+    return mx.isnan(x_tensor)
 
 
 class MLXComparisonOps:
@@ -305,3 +321,7 @@ class MLXComparisonOps:
     def where(self, condition, x, y):
         """Return elements chosen from x or y depending on condition."""
         return where(condition, x, y)
+        
+    def isnan(self, x):
+        """Test element-wise for NaN values."""
+        return isnan(x)

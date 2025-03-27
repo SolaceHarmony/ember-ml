@@ -9,7 +9,7 @@ from typing import Optional, Union, Tuple, Any
 
 from ember_ml import ops
 from ember_ml.nn.modules import Module, Parameter
-
+from ember_ml.nn import tensor
 class BatchNormalization(Module):
     """
     Batch normalization layer.
@@ -56,14 +56,14 @@ class BatchNormalization(Module):
             Normalized tensor
         """
         # Get input shape
-        input_shape = ops.shape(x)
+        input_shape = tensor.shape(x)
         
         # Initialize parameters if not already done
         if not self.initialized:
-            self.gamma = Parameter(ops.ones((input_shape[-1],)))
+            self.gamma = Parameter(tensor.ones((input_shape[-1],)))
             self.beta = Parameter(tensor.zeros((input_shape[-1],)))
             self.moving_mean = tensor.zeros((input_shape[-1],))
-            self.moving_var = ops.ones((input_shape[-1],))
+            self.moving_var = tensor.ones((input_shape[-1],))
             self.initialized = True
         
         # Training mode: use batch statistics

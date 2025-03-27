@@ -9,7 +9,7 @@ from typing import Optional, List, Dict, Any, Union, Tuple
 
 from ember_ml import ops
 from ember_ml.nn.modules import Module, Parameter
-
+from ember_ml.nn import tensor
 class LSTMCell(Module):
     """
     Long Short-Term Memory (LSTM) cell.
@@ -65,7 +65,7 @@ class LSTMCell(Module):
             # Initialize forget gate bias to 1.0 for better gradient flow
             bias_data = tensor.zeros((self.hidden_size * 4,))
             forget_gate_bias = bias_data[self.hidden_size:self.hidden_size*2]
-            forget_gate_bias = ops.ones_like(forget_gate_bias)
+            forget_gate_bias = tensor.ones_like(forget_gate_bias)
             bias_data = ops.tensor_scatter_nd_update(
                 bias_data,
                 ops.stack([ops.arange(self.hidden_size, self.hidden_size*2)], axis=1),
@@ -86,8 +86,8 @@ class LSTMCell(Module):
         """
         # Initialize states if not provided
         if states is None:
-            h_prev = tensor.zeros((ops.shape(inputs)[0], self.hidden_size))
-            c_prev = tensor.zeros((ops.shape(inputs)[0], self.hidden_size))
+            h_prev = tensor.zeros((tensor.shape(inputs)[0], self.hidden_size))
+            c_prev = tensor.zeros((tensor.shape(inputs)[0], self.hidden_size))
         else:
             h_prev, c_prev = states
         

@@ -77,7 +77,7 @@ class BatchNormalization(Module, BatchNormalizationInterface):
             Normalized output tensor
         """
         # Get input shape
-        input_shape = ops.shape(x)
+        input_shape = tensor.shape(x)
         ndim = len(input_shape)
         
         # Convert axis to positive index
@@ -92,14 +92,14 @@ class BatchNormalization(Module, BatchNormalizationInterface):
             param_shape[axis] = dim
             
             if self.scale:
-                self.gamma = Parameter(ops.ones(param_shape))
+                self.gamma = Parameter(tensor.ones(param_shape))
             
             if self.center:
                 self.beta = Parameter(tensor.zeros(param_shape))
             
             # Initialize moving statistics
             self.moving_mean = tensor.zeros(param_shape)
-            self.moving_variance = ops.ones(param_shape)
+            self.moving_variance = tensor.ones(param_shape)
             
             self.initialized = True
         

@@ -353,7 +353,7 @@ class ColumnFeatureExtractor:
             result[f"{column}_dayofweek"] = dt.dayofweek
             result[f"{column}_quarter"] = dt.quarter
             
-            # Time since epoch - use ops.cast instead of direct int64 cast
+            # Time since epoch - use tensor.cast instead of direct int64 cast
             timestamp_tensor = tensor.convert_to_tensor(df[column].astype('int64').to_numpy())
             divisor = tensor.convert_to_tensor(10**9)
             result[f"{column}_timestamp"] = tensor.cast(ops.floor_divide(timestamp_tensor, divisor), dtype=tensor.int32)

@@ -197,7 +197,7 @@ def test_auto_ncp_forward():
     outputs = model(inputs)
     
     # Check that the output has the correct shape
-    assert ops.shape(outputs) == (10, 5)
+    assert tensor.shape(outputs) == (10, 5)
 
 def test_auto_ncp_config():
     """Test AutoNCP get_config and from_config methods."""

@@ -193,7 +193,7 @@ def vstack_safe(arrays: List[Any]) -> Any:
     converted_arrays = [convert_to_tensor_safe(arr) for arr in arrays]
     
     # Check if all arrays have the same shape except for the first dimension
-    shapes = [ops.shape(arr)[1:] for arr in converted_arrays]
+    shapes = [tensor.shape(arr)[1:] for arr in converted_arrays]
     same_shape = all(shape == shapes[0] for shape in shapes)
     
     if same_shape:
@@ -231,8 +231,8 @@ def print_backend_info() -> None:
     print(f"Device: {info.get('device', 'unknown')}")
     
     # Test a simple operation
-    a = ops.ones((2, 2))
-    b = ops.ones((2, 2))
+    a = tensor.ones((2, 2))
+    b = tensor.ones((2, 2))
     c = ops.matmul(a, b)
     
     print(f"Test operation: {a} @ {b} = {c}")

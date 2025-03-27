@@ -156,7 +156,7 @@ class MLXDType:
             return None
             
         # If it's already an MLX dtype, return it
-        if isinstance(dtype, type(mx.float32)):  # Using float32 as a reference type
+        if isinstance(dtype, type(mx.Dtype)):  # Using float32 as a reference type
             return dtype
             
         # If it's a string, use it directly

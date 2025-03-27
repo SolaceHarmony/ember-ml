@@ -80,7 +80,7 @@ class StrideAware(Module):
             Layer output and final state
         """
         # Get device and batch information
-        is_batched = len(ops.shape(inputs)) == 3
+        is_batched = len(tensor.shape(inputs)) == 3
         batch_dim = 0 if self.batch_first else 1
         seq_dim = 1 if self.batch_first else 0
         
@@ -89,7 +89,7 @@ class StrideAware(Module):
             inputs = ops.expand_dims(inputs, batch_dim)
         
         # Get batch size and sequence length
-        input_shape = ops.shape(inputs)
+        input_shape = tensor.shape(inputs)
         batch_size = input_shape[batch_dim]
         seq_length = input_shape[seq_dim]
         
@@ -100,13 +100,13 @@ class StrideAware(Module):
             state = initial_state
             
             # Handle non-batched states
-            if is_batched and len(ops.shape(state)) != 2:
+            if is_batched and len(tensor.shape(state)) != 2:
                 raise ValueError(
-                    f"For batched inputs, initial_state should be 2D but got {len(ops.shape(state))}D"
+                    f"For batched inputs, initial_state should be 2D but got {len(tensor.shape(state))}D"
                 )
-            elif not is_batched and len(ops.shape(state)) != 1:
+            elif not is_batched and len(tensor.shape(state)) != 1:
                 raise ValueError(
-                    f"For non-batched inputs, initial_state should be 1D but got {len(ops.shape(state))}D"
+                    f"For non-batched inputs, initial_state should be 1D but got {len(tensor.shape(state))}D"
                 )
                 
                 # Add batch dimension for non-batched states

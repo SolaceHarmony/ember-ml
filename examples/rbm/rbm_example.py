@@ -12,8 +12,8 @@ import time
 from datetime import datetime
 
 # Import our modules
-from neural_lib.models.rbm import RestrictedBoltzmannMachine
-from neural_lib.visualization.rbm_visualizer import RBMVisualizer
+from ember_ml.models.rbm import RestrictedBoltzmannMachine
+from ember_ml.visualization.rbm_visualizer import RBMVisualizer
 
 
 def generate_toy_data(n_samples=500, n_features=100, pattern_size=10, n_patterns=3):

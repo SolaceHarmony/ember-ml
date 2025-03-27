@@ -6,9 +6,11 @@ This module provides PyTorch implementations of the ember_ml I/O operations inte
 
 import os
 import torch
-from typing import Any, Optional
+from typing import Union, Dict
+from ember_ml.backend.torch.types import TensorLike, PathLike, TorchArray
+from ember_ml.backend.torch.tensor.tensor import TorchTensor
 
-def save(filepath: str, obj: Any, allow_pickle: bool = True) -> None:
+def save(filepath: PathLike, obj: TensorLike, allow_pickle: bool = True) -> None:
     """
     Save a tensor or dictionary of tensors to a file.
     
@@ -23,10 +25,14 @@ def save(filepath: str, obj: Any, allow_pickle: bool = True) -> None:
     # Create directory if it doesn't exist
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
     
+    # Convert input to PyTorch tensor
+    tensor_converter = TorchTensor()
+    obj_tensor = tensor_converter.convert_to_tensor(obj)
+    
     # Save to file using PyTorch
-    torch.save(obj, filepath)
+    torch.save(obj_tensor, filepath)
 
-def load(filepath: str, allow_pickle: bool = True) -> Any:
+def load(filepath: PathLike, allow_pickle: bool = True) -> Union[TorchArray, Dict[str, TorchArray]]:
     """
     Load a tensor or dictionary of tensors from a file.
     
@@ -43,7 +49,7 @@ def load(filepath: str, allow_pickle: bool = True) -> Any:
 class TorchIOOps:
     """PyTorch implementation of I/O operations."""
     
-    def save(self, filepath: str, obj: Any, allow_pickle: bool = True) -> None:
+    def save(self, filepath: PathLike, obj: TensorLike, allow_pickle: bool = True) -> None:
         """
         Save a tensor or dictionary of tensors to a file.
         
@@ -57,7 +63,7 @@ class TorchIOOps:
         """
         save(filepath, obj, allow_pickle)
     
-    def load(self, filepath: str, allow_pickle: bool = True) -> Any:
+    def load(self, filepath: PathLike, allow_pickle: bool = True) -> Union[TorchArray, Dict[str, TorchArray]]:
         """
         Load a tensor or dictionary of tensors from a file.
         

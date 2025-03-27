@@ -40,7 +40,7 @@ class TensorOps(TensorOpsInterface):
         indices = tensor.convert_to_tensor(indices)
         
         # Get the shape of the output tensor
-        shape = list(ops.shape(indices))
+        shape = list(tensor.shape(indices))
         
         # Handle negative axis
         if axis < 0:
@@ -79,7 +79,7 @@ class TensorOps(TensorOpsInterface):
                 dim_indices = ops.reshape(dim_indices, reshape_shape)
                 
                 # Tile to match the shape of indices
-                tile_shape = list(ops.shape(indices))
+                tile_shape = list(tensor.shape(indices))
                 tile_shape[idx] = 1
                 dim_indices = ops.tile(dim_indices, tile_shape)
                 
@@ -87,7 +87,7 @@ class TensorOps(TensorOpsInterface):
                 scatter_indices.append(ops.reshape(dim_indices, [-1]))
         
         # Create updates (all ones)
-        updates = ops.ones([ops.shape(indices)[0]], dtype=dtype)
+        updates = tensor.ones([tensor.shape(indices)[0]], dtype=dtype)
         
         # Use scatter to set the one-hot values
         return self.scatter(one_hot_tensor, scatter_indices, updates, axis=axis)
@@ -132,7 +132,7 @@ class TensorOps(TensorOpsInterface):
             else:
                 # Single index for the specified axis
                 # Create a tuple of slices for indexing
-                idx = [slice(None)] * len(ops.shape(tensor))
+                idx = [slice(None)] * len(tensor.shape(tensor))
                 idx[axis] = indices
                 result[tuple(idx)] = updates
         
@@ -147,7 +147,7 @@ class TensorOps(TensorOpsInterface):
             else:
                 # Single index for the specified axis
                 # Create a tuple of slices for indexing
-                idx = [slice(None)] * len(ops.shape(tensor))
+                idx = [slice(None)] * len(tensor.shape(tensor))
                 idx[axis] = indices
                 result = torch.index_put(result, tuple(idx), updates)
         

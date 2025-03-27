@@ -11,13 +11,13 @@ def test_negative_function():
     # Test with scalar
     x = tensor.convert_to_tensor(5)
     result = ops.negative(x)
-    assert ops.to_numpy(result) == -5
+    assert tensor.to_numpy(result) == -5
     
     # Test with 1D tensor
     x = tensor.convert_to_tensor([1, 2, 3])
     result = ops.negative(x)
     expected = [-1, -2, -3]
-    result_np = ops.to_numpy(result)
+    result_np = tensor.to_numpy(result)
     for i in range(len(expected)):
         assert result_np[i] == expected[i]
     
@@ -25,7 +25,7 @@ def test_negative_function():
     x = tensor.convert_to_tensor([[1, 2], [3, 4]])
     result = ops.negative(x)
     expected = [[-1, -2], [-3, -4]]
-    result_np = ops.to_numpy(result)
+    result_np = tensor.to_numpy(result)
     for i in range(len(expected)):
         for j in range(len(expected[i])):
             assert result_np[i][j] == expected[i][j]

@@ -9,7 +9,7 @@ from typing import Optional, Union, Tuple, Any, Callable
 
 from ember_ml import ops
 from ember_ml.nn.modules import Module, Parameter
-
+from ember_ml.nn import tensor
 class Dense(Module):
     """
     Dense (fully connected) layer.
@@ -50,7 +50,7 @@ class Dense(Module):
             Output tensor
         """
         # Get input shape
-        input_shape = ops.shape(x)
+        input_shape = tensor.shape(x)
         
         # Initialize parameters if not already done
         if not self.initialized:

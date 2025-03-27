@@ -129,8 +129,8 @@ class WiredCfCCell(ModuleWiredCell):
         """
         # Initialize states if not provided
         if hx is None:
-            h_prev = tensor.zeros((ops.shape(input)[0], self.state_size))
-            t_prev = tensor.zeros((ops.shape(input)[0], self.state_size))
+            h_prev = tensor.zeros((tensor.shape(input)[0], self.state_size))
+            t_prev = tensor.zeros((tensor.shape(input)[0], self.state_size))
         else:
             h_prev, t_prev = hx
         

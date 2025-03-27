@@ -138,7 +138,7 @@ class StrideAwareWiredCfCCell(Module):
             self.gate_recurrent_kernel = Parameter(tensor.zeros((self.units, self.units)))
             self.gate_recurrent_kernel.data = orthogonal((self.units, self.units))
             
-            self.gate_bias = Parameter(ops.ones((self.units,)))  # Initialize with ones for open gates
+            self.gate_bias = Parameter(tensor.ones((self.units,)))  # Initialize with ones for open gates
         
         # Sparsity masks
         sparsity = self.wiring.sparsity_level
@@ -161,7 +161,7 @@ class StrideAwareWiredCfCCell(Module):
         else:
             t = kwargs.get("time", 1.0)
             t = ops.multiply(ops.multiply(t, self.stride_length), self.time_scale_factor)
-            t = ops.cast(t, dtype='float32')
+            t = tensor.cast(t, dtype='float32')
         return inputs, t
 
     def forward(self, inputs, states=None, **kwargs):
@@ -178,7 +178,7 @@ class StrideAwareWiredCfCCell(Module):
         """
         # Initialize states if not provided
         if states is None:
-            h_prev = tensor.zeros((ops.shape(inputs)[0], self.units))
+            h_prev = tensor.zeros((tensor.shape(inputs)[0], self.units))
         else:
             h_prev = states[0]
         
@@ -194,8 +194,8 @@ class StrideAwareWiredCfCCell(Module):
         float_dtype = 'float32'
         
         # Cast masks to float32
-        input_mask_tensor = ops.cast(input_mask_data, dtype=float_dtype)
-        recurrent_mask_tensor = ops.cast(recurrent_mask_data, dtype=float_dtype)
+        input_mask_tensor = tensor.cast(input_mask_data, dtype=float_dtype)
+        recurrent_mask_tensor = tensor.cast(recurrent_mask_data, dtype=float_dtype)
         
         # Apply masks
         masked_inputs = ops.multiply(inputs, input_mask_tensor)
@@ -219,7 +219,7 @@ class StrideAwareWiredCfCCell(Module):
         if self.mode == "no_gate":
             h_new = ops.add(
                 ops.multiply(h_prev, time_gate),
-                ops.multiply(h_candidate, ops.subtract(ops.ones_like(time_gate), time_gate))
+                ops.multiply(h_candidate, ops.subtract(tensor.ones_like(time_gate), time_gate))
             )
         else:
             # Compute gate values
@@ -232,15 +232,15 @@ class StrideAwareWiredCfCCell(Module):
                 gate_time = ops.multiply(gate, time_gate)
                 h_new = ops.add(
                     ops.multiply(h_prev, gate_time),
-                    ops.multiply(h_candidate, ops.subtract(ops.ones_like(gate_time), gate_time))
+                    ops.multiply(h_candidate, ops.subtract(tensor.ones_like(gate_time), gate_time))
                 )
             else:
                 # Default mode: h_new = h_prev * gate + h_candidate * (1 - gate) * (1 - time_gate)
                 h_new = ops.add(
                     ops.multiply(h_prev, gate),
                     ops.multiply(
-                        ops.multiply(h_candidate, ops.subtract(ops.ones_like(gate), gate)),
-                        ops.subtract(ops.ones_like(time_gate), time_gate)
+                        ops.multiply(h_candidate, ops.subtract(tensor.ones_like(gate), gate)),
+                        ops.subtract(tensor.ones_like(time_gate), time_gate)
                     )
                 )
         
@@ -249,7 +249,7 @@ class StrideAwareWiredCfCCell(Module):
         output_mask_data = self.output_mask.data if hasattr(self.output_mask, 'data') else self.output_mask
         
         # Use string dtypes for consistent behavior across backends
-        output_mask_tensor = ops.cast(output_mask_data, dtype='float32')
+        output_mask_tensor = tensor.cast(output_mask_data, dtype='float32')
         output = ops.multiply(h_new, output_mask_tensor)
         
         return output, [h_new]
@@ -315,8 +315,19 @@ class StrideAwareWiredCfCCell(Module):
     @property
     def output_size(self):
         return self.output_dim
-
-
+        
+    def get_initial_state(self, batch_size=1):
+        """
+        Get the initial state for the cell.
+        
+        Args:
+            batch_size: Batch size
+            
+        Returns:
+            Initial state
+        """
+        h = tensor.zeros((batch_size, self.units))
+        return [h]
 
 
 class StrideAwareCfC(Module):
@@ -453,8 +464,8 @@ class StrideAwareCfC(Module):
             Output tensor or tuple of (output, state) if return_state is True
         """
         # Process the sequence
-        batch_size = ops.shape(inputs)[0]
-        time_steps = ops.shape(inputs)[1]
+        batch_size = tensor.shape(inputs)[0]
+        time_steps = tensor.shape(inputs)[1]
         
         # Initialize state if not provided
         if initial_state is None:
@@ -644,7 +655,7 @@ def visualize_stride_temporal_dynamics(time_steps=100, stride_lengths=[1, 3, 5],
                 # Ensure states have the right shape for the cell
                 current_state = states[stride][0]
                 # Add batch dimension if needed
-                if len(ops.shape(current_state)) == 1:
+                if len(tensor.shape(current_state)) == 1:
                     current_state = ops.reshape(current_state, [1, -1])
                     states[stride] = [current_state]
 
@@ -654,7 +665,7 @@ def visualize_stride_temporal_dynamics(time_steps=100, stride_lengths=[1, 3, 5],
             # Record state at every time step for all cells
             # Ensure we're getting a numpy array with the right shape
             state_array = states[stride][0]  # Already a tensor
-            if len(ops.shape(state_array)) > 1:
+            if len(tensor.shape(state_array)) > 1:
                 state_array = state_array[0]
             state_evolution[stride] = ops.tensor_scatter_nd_update(
                 state_evolution[stride],

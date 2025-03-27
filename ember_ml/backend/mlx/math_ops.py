@@ -12,9 +12,6 @@ from ember_ml.backend.mlx.types import TensorLike, ShapeLike
 # We avoid creating global instances to prevent circular imports
 # Each function will create its own instances when needed
 
-from ember_ml.backend.mlx.types import TensorLike
-
-
 def gather(x: TensorLike, indices: TensorLike, axis: int = 0) -> mx.array:
     """
     Gather slices from x along the specified axis according to indices.
@@ -60,6 +57,8 @@ def add(x: TensorLike, y: TensorLike) -> mx.array:
     tensor_ops = MLXTensor()
     
     return mx.add(tensor_ops.convert_to_tensor(x), tensor_ops.convert_to_tensor(y))
+
+
 def subtract(x: TensorLike, y: TensorLike) -> mx.array:
     """
     Subtract two MLX arrays element-wise.
@@ -77,6 +76,7 @@ def subtract(x: TensorLike, y: TensorLike) -> mx.array:
     
     return mx.subtract(tensor_ops.convert_to_tensor(x), tensor_ops.convert_to_tensor(y))
 
+
 def multiply(x: TensorLike, y: TensorLike) -> mx.array:
     """
     Multiply two MLX arrays element-wise.
@@ -92,7 +92,19 @@ def multiply(x: TensorLike, y: TensorLike) -> mx.array:
     from ember_ml.backend.mlx.tensor import MLXTensor
     tensor_ops = MLXTensor()
     
-    return mx.multiply(tensor_ops.convert_to_tensor(x), tensor_ops.convert_to_tensor(y))
+    x_tensor = tensor_ops.convert_to_tensor(x)
+    y_tensor = tensor_ops.convert_to_tensor(y)
+    
+    # Handle empty arrays
+    if x_tensor.size == 0 or y_tensor.size == 0:
+        # If either array is empty, return an empty array with appropriate shape
+        if x_tensor.size == 0:
+            return x_tensor  # Return the empty array
+        else:
+            return mx.zeros((0,), dtype=y_tensor.dtype)
+    
+    return mx.multiply(x_tensor, y_tensor)
+
 
 def divide(x: TensorLike, y: TensorLike) -> mx.array:
     """
@@ -108,8 +120,8 @@ def divide(x: TensorLike, y: TensorLike) -> mx.array:
     # Create instances for each call to avoid circular imports
     from ember_ml.backend.mlx.tensor import MLXTensor
     tensor_ops = MLXTensor()
-    
     return mx.divide(tensor_ops.convert_to_tensor(x), tensor_ops.convert_to_tensor(y))
+
 
 def dot(x: TensorLike, y: TensorLike) -> mx.array:
     """
@@ -135,6 +147,7 @@ def dot(x: TensorLike, y: TensorLike) -> mx.array:
     else:
         return mx.matmul(x_array, y_array)
 
+
 def matmul(x: TensorLike, y: TensorLike) -> mx.array:
     """
     Compute the matrix product of two MLX arrays.
@@ -149,9 +162,9 @@ def matmul(x: TensorLike, y: TensorLike) -> mx.array:
     # Create instances for each call to avoid circular imports
     from ember_ml.backend.mlx.tensor import MLXTensor
     tensor_ops = MLXTensor()
-    
     return mx.matmul(tensor_ops.convert_to_tensor(x), tensor_ops.convert_to_tensor(y))
 
+# Note: MLX does not support broadcasting for mean, sum, var, min, and max
 def mean(x: TensorLike, axis: Optional[ShapeLike] = None, keepdims: bool = False) -> mx.array:
     """
     Compute the mean of an MLX array along specified axes.
@@ -166,13 +179,10 @@ def mean(x: TensorLike, axis: Optional[ShapeLike] = None, keepdims: bool = False
     """
     # Create instances for each call to avoid circular imports
     from ember_ml.backend.mlx.tensor import MLXTensor
-    tensor_ops = MLXTensor()
-    
-    x_array = tensor_ops.convert_to_tensor(x)
+    x_array = MLXTensor().convert_to_tensor(x)
     
     if axis is None:
         return mx.mean(x_array, keepdims=keepdims)
-    
     if isinstance(axis, (list, tuple)):
         # MLX doesn't support multiple axes directly, so we need to do it sequentially
         result = x_array
@@ -180,11 +190,10 @@ def mean(x: TensorLike, axis: Optional[ShapeLike] = None, keepdims: bool = False
         for ax in sorted(axis, reverse=True):
             result = mx.mean(result, axis=ax, keepdims=keepdims)
         return result
-    
     return mx.mean(x_array, axis=axis, keepdims=keepdims)
 
-def sum(x: TensorLike,
-        axis: Optional[ShapeLike] = None, keepdims: bool = False) -> mx.array:
+
+def sum(x: TensorLike, axis: Optional[ShapeLike] = None, keepdims: bool = False) -> mx.array:
     """
     Compute the sum of an MLX array along specified axes.
     
@@ -203,7 +212,6 @@ def sum(x: TensorLike,
     
     if axis is None:
         return mx.sum(x_array, keepdims=keepdims)
-    
     if isinstance(axis, (list, tuple)):
         # MLX doesn't support multiple axes directly, so we need to do it sequentially
         result = x_array
@@ -211,8 +219,8 @@ def sum(x: TensorLike,
         for ax in sorted(axis, reverse=True):
             result = mx.sum(result, axis=ax, keepdims=keepdims)
         return result
-    
-    return mx.sum(x_array, axis=axis, keepdims=keepdims)
+    else:
+        return mx.sum(x_array, axis=axis, keepdims=keepdims)
 
 def var(x: TensorLike, axis: Optional[ShapeLike] = None, keepdims: bool = False) -> mx.array:
     """
@@ -240,8 +248,9 @@ def var(x: TensorLike, axis: Optional[ShapeLike] = None, keepdims: bool = False)
         for ax in sorted(axis, reverse=True):
             result = mx.var(result, axis=ax, keepdims=keepdims)
         return result
-    
-    return mx.var(x_array, axis=axis, keepdims=keepdims)
+    else:
+        return mx.var(x_array, axis=axis, keepdims=keepdims)
+
 
 def exp(x: TensorLike) -> mx.array:
     """
@@ -256,6 +265,8 @@ def exp(x: TensorLike) -> mx.array:
     # Create instances for each call to avoid circular imports 
     from ember_ml.backend.mlx.tensor import MLXTensor   
     return mx.exp(MLXTensor().convert_to_tensor(x))
+
+
 def log(x: TensorLike) -> mx.array:
     """
     Compute the natural logarithm of an MLX array element-wise.
@@ -270,8 +281,8 @@ def log(x: TensorLike) -> mx.array:
     from ember_ml.backend.mlx.tensor import MLXTensor   
     return mx.log(MLXTensor().convert_to_tensor(x))
 
-def pow(x: TensorLike,
-        y: TensorLike) -> mx.array:
+# Note: MLX does not support broadcasting for log1p
+def pow(x: TensorLike, y: TensorLike) -> mx.array:
     """
     Compute x raised to the power of y element-wise.
     
@@ -286,6 +297,7 @@ def pow(x: TensorLike,
     from ember_ml.backend.mlx.tensor import MLXTensor   
     tensor_ops = MLXTensor()
     return mx.power(tensor_ops.convert_to_tensor(x), tensor_ops.convert_to_tensor(y))
+
 
 def sqrt(x: TensorLike) -> mx.array:
     """
@@ -322,19 +334,27 @@ def clip(x: TensorLike,
     
     return mx.clip(x_array, min_val, max_val)
 
+
 def sigmoid(x: mx.array) -> mx.array:
-    """Compute the sigmoid of an MLX array element-wise.
+    """
+    Compute sigmoid function on all elements.
+    
+    The sigmoid function is defined as:
+    sigmoid(x) = 1 / (1 + exp(-x))
+    
+    It transforms each element of input tensor to a value between 0 and 1.
     
     Args:
         x: Input array
         
     Returns:
-        Element-wise sigmoid
+        Tensor with sigmoid applied to each element
     """
     from ember_ml.backend.mlx.tensor import MLXTensor  # inserted missing import
     x_array = MLXTensor().convert_to_tensor(x)
     x_safe = clip(x_array, -88.0, 88.0)  # Prevent overflow
     return mx.sigmoid(x_safe)
+
 
 def softplus(x: TensorLike) -> mx.array:
     """
@@ -354,9 +374,11 @@ def softplus(x: TensorLike) -> mx.array:
     # softplus(x) = log(1 + exp(x))
     return mx.log(mx.add(1.0, mx.exp(x_safe)))
 
+
 def tanh(x: TensorLike) -> mx.array:
-    """Compute the hyperbolic tangent of an MLX array element-wise.
-    
+    """
+    Compute the hyperbolic tangent of an MLX array element-wise.
+
     Args:
         x: Input array
         
@@ -366,15 +388,18 @@ def tanh(x: TensorLike) -> mx.array:
     from ember_ml.backend.mlx.tensor import MLXTensor  # inserted missing import
     return mx.tanh(MLXTensor().convert_to_tensor(x))
 
+
 def relu(x: TensorLike) -> mx.array:
     """
-    Compute the rectified linear unit of an MLX array element-wise.
+    Apply Rectified Linear Unit function element-wise.
+    
+    ReLU(x) = max(0, x)
     
     Args:
-        x: Input array
+        x: Input tensor
         
     Returns:
-        Element-wise ReLU
+        Tensor with ReLU applied to each element
     """
     from ember_ml.backend.mlx.tensor import MLXTensor   
     return mx.maximum(0, MLXTensor().convert_to_tensor(x))
@@ -395,13 +420,13 @@ def abs(x: TensorLike) -> mx.array:
 
 def negative(x: TensorLike) -> mx.array:
     """
-    Compute the negative of an MLX array element-wise.
+    Compute the negative of tensor elements.
     
     Args:
-        x: Input array
+        x: Input tensor
         
     Returns:
-        Element-wise negative
+        Tensor with negated values
     """
     from ember_ml.backend.mlx.tensor import MLXTensor   
     return mx.negative(MLXTensor().convert_to_tensor(x))
@@ -409,13 +434,15 @@ def negative(x: TensorLike) -> mx.array:
 
 def sign(x: TensorLike) -> mx.array:
     """
-    Compute the sign of an MLX array element-wise.
+    Compute the sign of tensor elements.
+    
+    Returns -1 for negative values, 0 for zero, and 1 for positive values.
     
     Args:
-        x: Input array
+        x: Input tensor
         
     Returns:
-        Element-wise sign (-1 for negative, 0 for zero, 1 for positive)
+        Tensor with sign values
     """
     from ember_ml.backend.mlx.tensor import MLXTensor   
     x_tensor = MLXTensor().convert_to_tensor(x)
@@ -486,7 +513,7 @@ def tan(x: TensorLike) -> mx.array:
     from ember_ml.backend.mlx.tensor import MLXTensor   
     x_tensor = MLXTensor().convert_to_tensor(x)
     # tan(x) = sin(x) / cos(x)
-    return mx.divide(mx.sin(x_tensor), mx.cos(x_tensor))
+    return mx.divide(mx.sin(x_tensor), mx.cos(x_tensor)) if mx.cos(x_tensor) != 0 else mx.array(float('inf'))  # Avoid division by zero
 
 
 def sinh(x: TensorLike) -> mx.array:
@@ -567,9 +594,7 @@ def square(x: TensorLike) -> mx.array:
         Element-wise square
     """
     from ember_ml.backend.mlx.tensor import MLXTensor
-    tensor_ops = MLXTensor()
-    x_tensor = tensor_ops.convert_to_tensor(x)
-    return mx.multiply(x_tensor, x_tensor)
+    return mx.square(MLXTensor().convert_to_tensor(x))
 
 
 def mod(x: TensorLike, y: TensorLike) -> mx.array:
@@ -612,13 +637,14 @@ def floor_divide(x: TensorLike, y: TensorLike) -> mx.array:
     return mx.floor_divide(x_tensor, y_tensor)
 
 
-def min(x: TensorLike, 
-        axis: Optional[ShapeLike] = None, keepdims: bool = False) -> mx.array:
-    """Compute the minimum value of an MLX array along specified axes.
+def min(x: TensorLike, axis: Optional[ShapeLike] = None, keepdims: bool = False) -> mx.array:
+    """
+    Compute the minimum value of an MLX array along specified axes.
     
     Args:
         x: Input array
         axis: Axis or axes along which to compute the minimum
+
         keepdims: Whether to keep the reduced dimensions
         
     Returns:
@@ -628,29 +654,20 @@ def min(x: TensorLike,
     x_array = MLXTensor().convert_to_tensor(x)
     
     if axis is None:
-        # Flatten the array and find the minimum
-        x_flat = mx.reshape(x_array, (-1,))
-        return mx.min(x_flat)
-    
-    if isinstance(axis, (list, tuple)):
-        # MLX doesn't support multiple axes directly, so we need to do it sequentially
-        result = x_array
-        # Sort axes in descending order to avoid dimension shifting
-        for ax in sorted(axis, reverse=True):
-            result = mx.min(result, axis=ax, keepdims=keepdims)
-        return result
-    
+        # Find the minimum of the flattened array
+        return mx.min(x_array)
     return mx.min(x_array, axis=axis, keepdims=keepdims)
 
 
-def max(x: TensorLike, 
-        axis: Optional[ShapeLike] = None, keepdims: bool = False) -> mx.array:
-    """Compute the maximum value of an MLX array along specified axes.
+def max(x: TensorLike, axis: Optional[ShapeLike] = None, keepdims: bool = False) -> mx.array:
+    """
+    Compute the maximum value of an MLX array along specified axes.
     
     Args:
-        x: Input array
-        axis: Axis or axes along which to compute the maximum
-        keepdims: Whether to keep the reduced dimensions
+        x: Input tensor
+        axis: Axis along which to find maximum.
+            If None, find maximum over all elements.
+        keepdims: Whether the output tensor has dim retained or not.
         
     Returns:
         Maximum value of the array
@@ -659,22 +676,10 @@ def max(x: TensorLike,
     x_array = MLXTensor().convert_to_tensor(x)
     
     if axis is None:
-        # Flatten the array and find the maximum
-        x_flat = mx.reshape(x_array, (-1,))
-        return mx.max(x_flat)
-    
-    if isinstance(axis, (list, tuple)):
-        # MLX doesn't support multiple axes directly, so we need to do it sequentially
-        result = x_array
-        # Sort axes in descending order to avoid dimension shifting
-        for ax in sorted(axis, reverse=True):
-            result = mx.max(result, axis=ax, keepdims=keepdims)
-        return result
-    
+        return mx.max(x_array)
     return mx.max(x_array, axis=axis, keepdims=keepdims)
 
-def softmax(x: TensorLike,
-            axis: int = -1) -> mx.array:
+def softmax(x: TensorLike, axis: int = -1) -> mx.array:
     """Compute the softmax of an MLX array along a specified axis.
     
     Args:
@@ -690,7 +695,8 @@ def softmax(x: TensorLike,
     exp_x = mx.exp(mx.subtract(x_array, x_max))
     return mx.divide(exp_x, mx.sum(exp_x, axis=axis, keepdims=True))
 
-def sort(x: mx.array, axis: int = -1) -> mx.array:
+
+def sort(x: TensorLike, axis: int = -1) -> mx.array:
     """
     Sort an MLX array along a specified axis.
     
@@ -877,6 +883,7 @@ def cumsum(x: mx.array, axis: Optional[int] = None) -> mx.array:
     x_array = tensor_ops.convert_to_tensor(x)
     return mx.cumsum(x_array, axis=axis)
 
+
 def eigh(a: mx.array) -> Tuple[mx.array, mx.array]:
     """
     Compute the eigenvalues and eigenvectors of a Hermitian or symmetric matrix.
@@ -891,12 +898,13 @@ def eigh(a: mx.array) -> Tuple[mx.array, mx.array]:
     tensor_ops = MLXTensor()
     a_array = tensor_ops.convert_to_tensor(a)
     
-    # MLX doesn't have a direct eigh function yet
-    raise NotImplementedError(
-        "The eigh function is not yet implemented for the MLX backend. "
-        "This operation requires eigenvalue decomposition which is not currently "
-        "available in MLX's native operations."
-    )
+    # Ensure the input is a 2D matrix
+    if len(a_array.shape) != 2 or a_array.shape[0] != a_array.shape[1]:
+        raise ValueError("Input must be a square matrix.")
+    
+
+    eigenvalues, eigenvectors = mx.linalg.eig(a_array)
+    return eigenvalues, eigenvectors
 
 # Define the pi constant using Chudnovsky algorithm
 def _calculate_pi_value(precision_digits=15):
@@ -997,8 +1005,57 @@ PI_CONSTANT = _calculate_pi_value(15)  # Increased precision to match reference 
 pi : mx.array = mx.array([PI_CONSTANT], dtype=mx.float32)
 
 
-# pi is now a class variable, not a function
 
+def binary_split(a: TensorLike, b: TensorLike) -> Tuple[mx.array, mx.array]:
+    """
+    Recursive binary split for the Chudnovsky algorithm.
+    
+    This is used in the implementation of PI calculation for the PyTorch backend.
+    
+    Args:
+        a: Start value
+        b: End value
+        
+    Returns:
+        Tuple of intermediate values for PI calculation
+    """
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    tensor_ops = MLXTensor()
+    a_tensor = tensor_ops.convert_to_tensor(a)
+    b_tensor = tensor_ops.convert_to_tensor(b)
+    
+    # Use mx operations
+    diff = mx.subtract(b_tensor, a_tensor)
+    
+    if mx.equal(diff, mx.array(1)):
+        # Base case
+        if mx.equal(a_tensor, mx.array(0)):
+            Pab = mx.array(1)
+            Qab = mx.array(1)
+        else:
+            # Calculate terms using mx operations
+            term1 = mx.subtract(mx.multiply(mx.array(6), a_tensor), mx.array(5))
+            term2 = mx.subtract(mx.multiply(mx.array(2), a_tensor), mx.array(1))
+            term3 = mx.subtract(mx.multiply(mx.array(6), a_tensor), mx.array(1))
+            Pab = mx.multiply(mx.multiply(term1, term2), term3)
+            
+            # Define C3_OVER_24
+            C = mx.array(640320.0)
+            C3_OVER_24 = mx.divide(mx.power(C, mx.array(3.0)), mx.array(24.0))
+            
+            Qab = mx.multiply(mx.power(a_tensor, mx.array(3.0)), C3_OVER_24)
+        
+        return Pab, Qab
+    else:
+        # Recursive case
+        m = mx.divide(mx.add(a_tensor, b_tensor), mx.array(2.0))
+        Pam, Qam = binary_split(a_tensor, m)
+        Pmb, Qmb = binary_split(m, b_tensor)
+        
+        Pab = mx.multiply(Pam, Pmb)
+        Qab = mx.add(mx.multiply(Qam, Pmb), mx.multiply(Pam, Qmb))
+        
+        return Pab, Qab
 
 class MLXMathOps:
     """MLX implementation of math operations."""
@@ -1122,6 +1179,7 @@ class MLXMathOps:
     def cosh(self, x):
         """Compute the hyperbolic cosine of a tensor element-wise."""
         return cosh(x)
+    
     def sign(self, x):
         """Compute the sign of a tensor element-wise."""
         return sign(x)
@@ -1163,9 +1221,14 @@ class MLXMathOps:
     def eigh(self, a):
         """Compute the eigenvalues and eigenvectors of a Hermitian or symmetric matrix."""
         return eigh(a)
-    
+
+    def binary_split(self, a, b):
+        """Recursive binary split for the Chudnovsky algorithm."""
+        return binary_split(a, b)
+
     @property
     def pi(self):
         """Return the value of pi."""
         return mx.array([PI_CONSTANT], dtype=mx.float32)
+
 

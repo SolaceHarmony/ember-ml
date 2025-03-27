@@ -297,8 +297,8 @@ class LiquidNetworkWithMotorNeuron(Module):
         """
         # Initialize states if not provided
         if states is None:
-            batch_size = ops.shape(inputs)[0]
-            time_steps = ops.shape(inputs)[1]
+            batch_size = tensor.shape(inputs)[0]
+            time_steps = tensor.shape(inputs)[1]
             states = self.cell.get_initial_state(batch_size)
         
         # Process each time step
@@ -306,7 +306,7 @@ class LiquidNetworkWithMotorNeuron(Module):
         trigger_signals = []
         threshold_values = []
         
-        for t in range(ops.shape(inputs)[1]):
+        for t in range(tensor.shape(inputs)[1]):
             # Get input at current time step
             x_t = inputs[:, t, :]
             
@@ -407,7 +407,7 @@ class MotorNeuron(Module):
             threshold = ops.full_like(output, self.threshold)
         
         # Generate trigger
-        trigger = ops.cast(output > threshold, ops.float32)
+        trigger = tensor.cast(output > threshold, ops.float32)
         
         return output, trigger, threshold
 
@@ -491,7 +491,7 @@ class LSTMGatedLiquidNetwork(Module):
         """
         # Initialize states if not provided
         if states is None:
-            batch_size = ops.shape(inputs)[0]
+            batch_size = tensor.shape(inputs)[0]
             cfc_states = self.cfc_cell.get_initial_state(batch_size)
             lstm_states = self.lstm_cell.get_initial_state(batch_size)
             states = [cfc_states, lstm_states]
@@ -501,7 +501,7 @@ class LSTMGatedLiquidNetwork(Module):
         # Process each time step
         outputs = []
         
-        for t in range(ops.shape(inputs)[1]):
+        for t in range(tensor.shape(inputs)[1]):
             # Get input at current time step
             x_t = inputs[:, t, :]
             
@@ -598,7 +598,7 @@ class MultiStrideLiquidNetwork(Module):
         """
         # Initialize states if not provided
         if states is None:
-            batch_size = ops.shape(inputs)[0]
+            batch_size = tensor.shape(inputs)[0]
             states = {}
             for stride, cell in self.cells.items():
                 states[stride] = cell.get_initial_state(batch_size)
@@ -606,7 +606,7 @@ class MultiStrideLiquidNetwork(Module):
         # Process each time step
         outputs = []
         
-        for t in range(ops.shape(inputs)[1]):
+        for t in range(tensor.shape(inputs)[1]):
             # Get input at current time step
             x_t = inputs[:, t, :]
             
@@ -628,7 +628,7 @@ class MultiStrideLiquidNetwork(Module):
                     cell_outputs.append(states[stride][0])
                 else:
                     # Initialize with zeros if no previous output
-                    cell_outputs.append(tensor.zeros((ops.shape(x_t)[0], cell.units)))
+                    cell_outputs.append(tensor.zeros((tensor.shape(x_t)[0], cell.units)))
             
             # Concatenate cell outputs
             combined_output = ops.concatenate(cell_outputs, axis=-1)

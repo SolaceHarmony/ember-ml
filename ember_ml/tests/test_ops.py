@@ -9,9 +9,9 @@ import pytest
 
 from ember_ml.ops import (
     get_ops, set_ops,
-    tensor_ops, math_ops, device_ops, random_ops
+    math_ops, device_ops
 )
-
+from ember_ml.nn import tensor
 # Setup and teardown
 @pytest.fixture
 def setup_numpy_backend():
@@ -41,28 +41,28 @@ class TestTensorOps:
     
     def test_zeros(self, setup_numpy_backend):
         """Test zeros function."""
-        t_ops = tensor_ops()
+        t_ops = tensor.EmberTensor()
         zeros = t_ops.zeros((2, 3))
         assert zeros.shape == (2, 3)
         assert np.all(zeros == 0)
     
     def test_ones(self, setup_numpy_backend):
         """Test ones function."""
-        t_ops = tensor_ops()
-        ones = t_ops.ones((2, 3))
+        t_ops = tensor.EmberTensor()
+        ones = t_tensor.ones((2, 3))
         assert ones.shape == (2, 3)
         assert np.all(ones == 1)
     
     def test_reshape(self, setup_numpy_backend):
         """Test reshape function."""
-        t_ops = tensor_ops()
-        x = t_ops.ones((6,))
+        t_ops = tensor.EmberTensor()
+        x = t_tensor.ones((6,))
         y = t_ops.reshape(x, (2, 3))
         assert y.shape == (2, 3)
     
     def test_convert_to_tensor(self, setup_numpy_backend):
         """Test convert_to_tensor function."""
-        t_ops = tensor_ops()
+        t_ops = tensor.EmberTensor()
         x = t_ops.convert_to_tensor([1, 2, 3])
         assert x.shape == (3,)
         assert np.all(x == np.array([1, 2, 3]))
@@ -335,26 +335,26 @@ class TestRandomOps:
     
     def test_set_seed(self, setup_numpy_backend):
         """Test set_seed function."""
-        r_ops = random_ops()
+        r_ops = tensor
         r_ops.set_seed(42)
         assert r_ops.get_seed() == 42
     
     def test_random_normal(self, setup_numpy_backend):
         """Test random_normal function."""
-        r_ops = random_ops()
+        r_ops = tensor
         x = r_ops.random_normal((2, 3))
         assert x.shape == (2, 3)
     
     def test_random_uniform(self, setup_numpy_backend):
         """Test random_uniform function."""
-        r_ops = random_ops()
+        r_ops = tensor
         x = r_ops.random_uniform((2, 3))
         assert x.shape == (2, 3)
         assert np.all(x >= 0) and np.all(x < 1)
     
     def test_shuffle(self, setup_numpy_backend):
         """Test shuffle function."""
-        r_ops = random_ops()
+        r_ops = tensor
         x = np.array([1, 2, 3, 4, 5])
         y = r_ops.shuffle(x)
         assert y.shape == (5,)

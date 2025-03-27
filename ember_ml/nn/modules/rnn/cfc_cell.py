@@ -11,7 +11,7 @@ from ember_ml import ops
 from ember_ml.initializers import glorot_uniform, orthogonal
 from ember_ml.nn.modules import Module, Parameter
 from ember_ml.nn.modules.module_cell import ModuleCell
-
+from ember_ml.nn import tensor
 class CfCCell(ModuleCell):
     """
     Closed-form Continuous-time (CfC) cell.
@@ -116,7 +116,7 @@ class CfCCell(ModuleCell):
             self.bias = Parameter(tensor.zeros((self.units * 4,)))
         
         # Time-scale parameter (learnable)
-        self.time_scale = Parameter(ops.ones((self.units,)) * self.time_scale_factor)
+        self.time_scale = Parameter(tensor.ones((self.units,)) * self.time_scale_factor)
         
         # Initialize weights
         if self.kernel_initializer == "glorot_uniform":
@@ -146,8 +146,8 @@ class CfCCell(ModuleCell):
         
         # Initialize states if not provided
         if state is None:
-            h_prev = tensor.zeros((ops.shape(inputs)[0], self.units))
-            t_prev = tensor.zeros((ops.shape(inputs)[0], self.units))
+            h_prev = tensor.zeros((tensor.shape(inputs)[0], self.units))
+            t_prev = tensor.zeros((tensor.shape(inputs)[0], self.units))
         else:
             h_prev, t_prev = state
         
@@ -190,7 +190,7 @@ class CfCCell(ModuleCell):
         
         # Apply time decay to hidden state
         decay_term = ops.multiply(decay, h_prev)
-        time_term = ops.multiply(ops.subtract(ops.ones_like(decay), decay), t)
+        time_term = ops.multiply(ops.subtract(tensor.ones_like(decay), decay), t)
         
         if self.activation_name == "tanh":
             h = ops.multiply(o, ops.tanh(ops.add(decay_term, time_term)))

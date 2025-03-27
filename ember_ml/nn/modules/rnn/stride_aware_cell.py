@@ -98,7 +98,7 @@ class StrideAwareCell(Module):
         
         # Initialize state if None
         if state is None:
-            batch_size = ops.shape(inputs)[0]
+            batch_size = tensor.shape(inputs)[0]
             state = tensor.zeros((batch_size, self.hidden_size))
         
         # Compute input contribution

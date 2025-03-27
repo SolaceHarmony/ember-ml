@@ -105,7 +105,7 @@ class LTCCell(Module):
         """Get initial values for parameters based on predefined ranges."""
         minval, maxval = self._init_ranges[param_name]
         if minval == maxval:
-            return ops.ones(shape) * minval
+            return tensor.ones(shape) * minval
         else:
             return ops.random_uniform(minval, maxval, shape)
     
@@ -140,12 +140,12 @@ class LTCCell(Module):
         
         # Input and output mapping parameters
         if self._input_mapping in ["affine", "linear"]:
-            self.input_w = Parameter(ops.ones((self.sensory_size,)))
+            self.input_w = Parameter(tensor.ones((self.sensory_size,)))
         if self._input_mapping == "affine":
             self.input_b = Parameter(tensor.zeros((self.sensory_size,)))
         
         if self._output_mapping in ["affine", "linear"]:
-            self.output_w = Parameter(ops.ones((self.motor_size,)))
+            self.output_w = Parameter(tensor.ones((self.motor_size,)))
         if self._output_mapping == "affine":
             self.output_b = Parameter(tensor.zeros((self.motor_size,)))
     

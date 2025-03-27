@@ -396,7 +396,7 @@ class TorchTensor:
         Returns:
             Tensor with new data type
         """
-        from ember_ml.backend.torch.tensor.ops.casting import cast as cast_func
+        from ember_ml.backend.torch.tensor.tensor.casting import cast as cast_func
         return cast_func(data, dtype)
 
     def full_like(self, data: TensorLike, fill_value: Union[int, float, bool], dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:

@@ -54,13 +54,13 @@ class Dropout(Module, ContainerInterfaces):
             ops.set_seed(self.seed)
             
         mask = ops.greater_equal(
-            ops.random_uniform(ops.shape(x)),
+            tensor.random_uniform(tensor.shape(x)),
             tensor.convert_to_tensor(self.rate)
         )
         
         # Apply mask and scale
         scale = tensor.convert_to_tensor(1.0 / (1.0 - self.rate))
-        return ops.multiply(ops.multiply(x, ops.cast(mask, ops.dtype(x))), scale)
+        return ops.multiply(ops.multiply(x, tensor.cast(mask, ops.dtype(x))), scale)
     
     def add(self, layer: Any) -> None:
         """

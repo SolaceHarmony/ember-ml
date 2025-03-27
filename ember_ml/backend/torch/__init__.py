@@ -16,6 +16,8 @@ __all__ = [
     'TorchDeviceOps',
     'TorchIOOps',
     'TorchLinearAlgOps',
+    'TorchFeatureOps',
+    'TorchVectorOps',
     
     # Math operations
     'add', 'subtract', 'multiply', 'divide', 'matmul', 'dot',
@@ -38,17 +40,18 @@ __all__ = [
     'cholesky', 'lstsq', 'diag', 'diagonal',
     
     # I/O operations
-    'save', 'load'
+    'save', 'load',
+    
+    # Feature operations
+    'pca', 'transform', 'inverse_transform', 'standardize', 'normalize',
+    
+    # Vector operations
+    'normalize_vector', 'euclidean_distance', 'cosine_similarity',
+    'exponential_decay', 'gaussian', 'compute_energy_stability',
+    'compute_interference_strength', 'compute_phase_coherence',
+    'partial_interference', 'fft', 'ifft', 'fft2', 'ifft2', 'fftn',
+    'ifftn', 'rfft', 'irfft', 'rfft2', 'irfft2', 'rfftn', 'irfftn'
 ]
-
-# Import configuration variables
-from ember_ml.backend.torch.config import (
-    DEFAULT_DEVICE,
-    DEFAULT_DTYPE
-)
-
-# Import tensor classes
-from ember_ml.backend.torch.tensor import TorchDType, TorchTensor
 
 # Import all ops classes
 from ember_ml.backend.torch.math_ops import TorchMathOps
@@ -56,6 +59,7 @@ from ember_ml.backend.torch.comparison_ops import TorchComparisonOps
 from ember_ml.backend.torch.device_ops import TorchDeviceOps
 from ember_ml.backend.torch.io_ops import TorchIOOps
 from ember_ml.backend.torch.linearalg import TorchLinearAlgOps
+
 
 # Import specific functions from math_ops
 from ember_ml.backend.torch.math_ops import (
@@ -139,6 +143,40 @@ from ember_ml.backend.torch.linearalg import (
 from ember_ml.backend.torch.io_ops import (
     save,
     load
+)
+
+# Import specific functions from feature_ops
+from ember_ml.backend.torch.feature_ops import (
+    pca,
+    transform,
+    inverse_transform,
+    standardize,
+    normalize
+)
+
+# Import specific functions from vector_ops
+from ember_ml.backend.torch.vector_ops import (
+    normalize_vector,
+    euclidean_distance,
+    cosine_similarity,
+    exponential_decay,
+    gaussian,
+    compute_energy_stability,
+    compute_interference_strength,
+    compute_phase_coherence,
+    partial_interference,
+    fft,
+    ifft,
+    fft2,
+    ifft2,
+    fftn,
+    ifftn,
+    rfft,
+    irfft,
+    rfft2,
+    irfft2,
+    rfftn,
+    irfftn
 )
 
 # Set power function

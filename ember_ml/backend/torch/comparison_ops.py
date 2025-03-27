@@ -6,14 +6,13 @@ This module provides PyTorch implementations of comparison operations.
 
 import torch
 from typing import Any
+from ember_ml.backend.torch.types import TensorLike
 
-# Import from tensor_ops
-from ember_ml.backend.torch.tensor import TorchTensor
-
-convert_to_tensor = TorchTensor().convert_to_tensor
+# We avoid creating global instances to prevent circular imports
+# Each function will create its own instances when needed
 
 
-def equal(x: Any, y: Any) -> torch.Tensor:
+def equal(x: TensorLike, y: TensorLike) -> torch.Tensor:
     """
     Check if two tensors are equal element-wise.
     
@@ -24,10 +23,17 @@ def equal(x: Any, y: Any) -> torch.Tensor:
     Returns:
         Boolean tensor with True where x == y
     """
-    return torch.eq(convert_to_tensor(x), convert_to_tensor(y))
+    # Create instances for each call to avoid circular imports
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    
+    x_tensor = tensor_ops.convert_to_tensor(x)
+    y_tensor = tensor_ops.convert_to_tensor(y)
+    
+    return torch.eq(x_tensor, y_tensor)
 
 
-def not_equal(x: Any, y: Any) -> torch.Tensor:
+def not_equal(x: TensorLike, y: TensorLike) -> torch.Tensor:
     """
     Check if two tensors are not equal element-wise.
     
@@ -38,10 +44,17 @@ def not_equal(x: Any, y: Any) -> torch.Tensor:
     Returns:
         Boolean tensor with True where x != y
     """
-    return torch.ne(convert_to_tensor(x), convert_to_tensor(y))
+    # Create instances for each call to avoid circular imports
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    
+    x_tensor = tensor_ops.convert_to_tensor(x)
+    y_tensor = tensor_ops.convert_to_tensor(y)
+    
+    return torch.ne(x_tensor, y_tensor)
 
 
-def less(x: Any, y: Any) -> torch.Tensor:
+def less(x: TensorLike, y: TensorLike) -> torch.Tensor:
     """
     Check if one tensor is less than another element-wise.
     
@@ -52,10 +65,17 @@ def less(x: Any, y: Any) -> torch.Tensor:
     Returns:
         Boolean tensor with True where x < y
     """
-    return torch.lt(convert_to_tensor(x), convert_to_tensor(y))
+    # Create instances for each call to avoid circular imports
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    
+    x_tensor = tensor_ops.convert_to_tensor(x)
+    y_tensor = tensor_ops.convert_to_tensor(y)
+    
+    return torch.lt(x_tensor, y_tensor)
 
 
-def less_equal(x: Any, y: Any) -> torch.Tensor:
+def less_equal(x: TensorLike, y: TensorLike) -> torch.Tensor:
     """
     Check if one tensor is less than or equal to another element-wise.
     
@@ -66,10 +86,17 @@ def less_equal(x: Any, y: Any) -> torch.Tensor:
     Returns:
         Boolean tensor with True where x <= y
     """
-    return torch.le(convert_to_tensor(x), convert_to_tensor(y))
+    # Create instances for each call to avoid circular imports
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    
+    x_tensor = tensor_ops.convert_to_tensor(x)
+    y_tensor = tensor_ops.convert_to_tensor(y)
+    
+    return torch.le(x_tensor, y_tensor)
 
 
-def greater(x: Any, y: Any) -> torch.Tensor:
+def greater(x: TensorLike, y: TensorLike) -> torch.Tensor:
     """
     Check if one tensor is greater than another element-wise.
     
@@ -80,10 +107,17 @@ def greater(x: Any, y: Any) -> torch.Tensor:
     Returns:
         Boolean tensor with True where x > y
     """
-    return torch.gt(convert_to_tensor(x), convert_to_tensor(y))
+    # Create instances for each call to avoid circular imports
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    
+    x_tensor = tensor_ops.convert_to_tensor(x)
+    y_tensor = tensor_ops.convert_to_tensor(y)
+    
+    return torch.gt(x_tensor, y_tensor)
 
 
-def greater_equal(x: Any, y: Any) -> torch.Tensor:
+def greater_equal(x: TensorLike, y: TensorLike) -> torch.Tensor:
     """
     Check if one tensor is greater than or equal to another element-wise.
     
@@ -94,10 +128,17 @@ def greater_equal(x: Any, y: Any) -> torch.Tensor:
     Returns:
         Boolean tensor with True where x >= y
     """
-    return torch.ge(convert_to_tensor(x), convert_to_tensor(y))
+    # Create instances for each call to avoid circular imports
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    
+    x_tensor = tensor_ops.convert_to_tensor(x)
+    y_tensor = tensor_ops.convert_to_tensor(y)
+    
+    return torch.ge(x_tensor, y_tensor)
 
 
-def logical_and(x: Any, y: Any) -> torch.Tensor:
+def logical_and(x: TensorLike, y: TensorLike) -> torch.Tensor:
     """
     Compute the logical AND of two tensors element-wise.
     
@@ -108,10 +149,17 @@ def logical_and(x: Any, y: Any) -> torch.Tensor:
     Returns:
         Boolean tensor with True where x AND y
     """
-    return torch.logical_and(convert_to_tensor(x), convert_to_tensor(y))
+    # Create instances for each call to avoid circular imports
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    
+    x_tensor = tensor_ops.convert_to_tensor(x)
+    y_tensor = tensor_ops.convert_to_tensor(y)
+    
+    return torch.logical_and(x_tensor, y_tensor)
 
 
-def logical_or(x: Any, y: Any) -> torch.Tensor:
+def logical_or(x: TensorLike, y: TensorLike) -> torch.Tensor:
     """
     Compute the logical OR of two tensors element-wise.
     
@@ -122,10 +170,17 @@ def logical_or(x: Any, y: Any) -> torch.Tensor:
     Returns:
         Boolean tensor with True where x OR y
     """
-    return torch.logical_or(convert_to_tensor(x), convert_to_tensor(y))
+    # Create instances for each call to avoid circular imports
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    
+    x_tensor = tensor_ops.convert_to_tensor(x)
+    y_tensor = tensor_ops.convert_to_tensor(y)
+    
+    return torch.logical_or(x_tensor, y_tensor)
 
 
-def logical_not(x: Any) -> torch.Tensor:
+def logical_not(x: TensorLike) -> torch.Tensor:
     """
     Compute the logical NOT of a tensor element-wise.
     
@@ -135,10 +190,16 @@ def logical_not(x: Any) -> torch.Tensor:
     Returns:
         Boolean tensor with True where NOT x
     """
-    return torch.logical_not(convert_to_tensor(x))
+    # Create instances for each call to avoid circular imports
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    
+    x_tensor = tensor_ops.convert_to_tensor(x)
+    
+    return torch.logical_not(x_tensor)
 
 
-def logical_xor(x: Any, y: Any) -> torch.Tensor:
+def logical_xor(x: TensorLike, y: TensorLike) -> torch.Tensor:
     """
     Compute the logical XOR of two tensors element-wise.
     
@@ -149,10 +210,17 @@ def logical_xor(x: Any, y: Any) -> torch.Tensor:
     Returns:
         Boolean tensor with True where x XOR y
     """
-    return torch.logical_xor(convert_to_tensor(x), convert_to_tensor(y))
+    # Create instances for each call to avoid circular imports
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    
+    x_tensor = tensor_ops.convert_to_tensor(x)
+    y_tensor = tensor_ops.convert_to_tensor(y)
+    
+    return torch.logical_xor(x_tensor, y_tensor)
 
 
-def allclose(x: Any, y: Any, rtol: float = 1e-5, atol: float = 1e-8) -> bool:
+def allclose(x: TensorLike, y: TensorLike, rtol: float = 1e-5, atol: float = 1e-8) -> bool:
     """
     Check if all elements of two tensors are close within a tolerance.
     
@@ -165,9 +233,16 @@ def allclose(x: Any, y: Any, rtol: float = 1e-5, atol: float = 1e-8) -> bool:
     Returns:
         Boolean indicating if all elements are close
     """
-    return torch.allclose(convert_to_tensor(x), convert_to_tensor(y), rtol=rtol, atol=atol)
+    # Create instances for each call to avoid circular imports
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    
+    x_tensor = tensor_ops.convert_to_tensor(x)
+    y_tensor = tensor_ops.convert_to_tensor(y)
+    
+    return torch.allclose(x_tensor, y_tensor, rtol=rtol, atol=atol)
 
-def isclose(x: Any, y: Any, rtol: float = 1e-5, atol: float = 1e-8) -> torch.Tensor:
+def isclose(x: TensorLike, y: TensorLike, rtol: float = 1e-5, atol: float = 1e-8) -> torch.Tensor:
     """
     Check if elements of two tensors are close within a tolerance element-wise.
     
@@ -180,10 +255,17 @@ def isclose(x: Any, y: Any, rtol: float = 1e-5, atol: float = 1e-8) -> torch.Ten
     Returns:
         Boolean tensor with True where elements are close
     """
-    return torch.isclose(convert_to_tensor(x), convert_to_tensor(y), rtol=rtol, atol=atol)
+    # Create instances for each call to avoid circular imports
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    
+    x_tensor = tensor_ops.convert_to_tensor(x)
+    y_tensor = tensor_ops.convert_to_tensor(y)
+    
+    return torch.isclose(x_tensor, y_tensor, rtol=rtol, atol=atol)
 
 
-def all(x: Any, axis: Any = None) -> Any:
+def all(x: TensorLike, axis: Any = None) -> Any:
     """
     Check if all elements in a tensor are True.
     
@@ -197,14 +279,19 @@ def all(x: Any, axis: Any = None) -> Any:
         If axis is specified, the result is a tensor with the specified
         axes reduced.
     """
-    x_tensor = convert_to_tensor(x)
+    # Create instances for each call to avoid circular imports
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    
+    x_tensor = tensor_ops.convert_to_tensor(x)
+    
     if axis is None:
         return torch.all(x_tensor)
     else:
         return torch.all(x_tensor, dim=axis)
 
 
-def where(condition: Any, x: Any, y: Any) -> torch.Tensor:
+def where(condition: TensorLike, x: TensorLike, y: TensorLike) -> torch.Tensor:
     """
     Return elements chosen from x or y depending on condition.
     
@@ -216,11 +303,34 @@ def where(condition: Any, x: Any, y: Any) -> torch.Tensor:
     Returns:
         Tensor with values from x where condition is True, and values from y elsewhere
     """
-    return torch.where(
-        convert_to_tensor(condition),
-        convert_to_tensor(x),
-        convert_to_tensor(y)
-    )
+    # Create instances for each call to avoid circular imports
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    
+    condition_tensor = tensor_ops.convert_to_tensor(condition)
+    x_tensor = tensor_ops.convert_to_tensor(x)
+    y_tensor = tensor_ops.convert_to_tensor(y)
+    
+    return torch.where(condition_tensor, x_tensor, y_tensor)
+
+
+def isnan(x: TensorLike) -> torch.Tensor:
+    """
+    Test element-wise for NaN values.
+    
+    Args:
+        x: Input tensor
+        
+    Returns:
+        Boolean tensor with True where x is NaN, False otherwise
+    """
+    # Create instances for each call to avoid circular imports
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    
+    x_tensor = tensor_ops.convert_to_tensor(x)
+    
+    return torch.isnan(x_tensor)
 
 
 class TorchComparisonOps:
@@ -281,3 +391,7 @@ class TorchComparisonOps:
     def where(self, condition, x, y):
         """Return elements chosen from x or y depending on condition."""
         return where(condition, x, y)
+        
+    def isnan(self, x):
+        """Test element-wise for NaN values."""
+        return isnan(x)

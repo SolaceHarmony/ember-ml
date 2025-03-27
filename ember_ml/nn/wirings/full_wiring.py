@@ -10,6 +10,7 @@ from typing import Optional, Tuple
 
 from ember_ml import ops
 from ember_ml.nn.wirings.wiring import Wiring
+from ember_ml.nn import tensor
 
 class FullyConnectedWiring(Wiring):
     """
@@ -76,9 +77,9 @@ class FullyConnectedWiring(Wiring):
                 self.add_synapse(src, dest, polarity)
         
         # Create masks
-        input_mask = ops.ones((self.input_dim,), dtype='int32')
-        recurrent_mask = ops.ones((self.units, self.units), dtype='int32')
-        output_mask = ops.ones((self.units,), dtype='int32')
+        input_mask = tensor.ones((self.input_dim,), dtype='int32')
+        recurrent_mask = tensor.ones((self.units, self.units), dtype='int32')
+        output_mask = tensor.ones((self.units,), dtype='int32')
         
         return input_mask, recurrent_mask, output_mask
         # Set random seed for reproducibility
@@ -88,23 +89,23 @@ class FullyConnectedWiring(Wiring):
         # Create masks
         if self.sparsity_level > 0.0:
             # Create sparse masks
-            input_mask = ops.cast(
+            input_mask = tensor.cast(
                 ops.random_uniform((self.input_dim,)) >= self.sparsity_level,
                 ops.int32
             )
-            recurrent_mask = ops.cast(
+            recurrent_mask = tensor.cast(
                 ops.random_uniform((self.units, self.units)) >= self.sparsity_level,
                 ops.int32
             )
-            output_mask = ops.cast(
+            output_mask = tensor.cast(
                 ops.random_uniform((self.units,)) >= self.sparsity_level,
                 ops.int32
             )
         else:
             # Create dense masks
-            input_mask = ops.ones((self.input_dim,), dtype=ops.int32)
-            recurrent_mask = ops.ones((self.units, self.units), dtype=ops.int32)
-            output_mask = ops.ones((self.units,), dtype=ops.int32)
+            input_mask = tensor.ones((self.input_dim,), dtype=ops.int32)
+            recurrent_mask = tensor.ones((self.units, self.units), dtype=ops.int32)
+            output_mask = tensor.ones((self.units,), dtype=ops.int32)
         
         # Convert to numpy arrays for consistency with the wiring interface
         input_mask = ops.to_numpy(input_mask)

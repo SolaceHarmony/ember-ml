@@ -102,7 +102,7 @@ class LSTM(Module):
             Layer output and final state
         """
         # Get batch information
-        is_batched = len(ops.shape(inputs)) == 3
+        is_batched = len(tensor.shape(inputs)) == 3
         batch_dim = 0 if self.batch_first else 1
         seq_dim = 1 if self.batch_first else 0
         
@@ -111,7 +111,7 @@ class LSTM(Module):
             inputs = ops.expand_dims(inputs, batch_dim)
         
         # Get batch size and sequence length
-        input_shape = ops.shape(inputs)
+        input_shape = tensor.shape(inputs)
         batch_size = input_shape[batch_dim]
         seq_length = input_shape[seq_dim]
         
