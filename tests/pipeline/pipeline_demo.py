@@ -27,7 +27,7 @@ logger = logging.getLogger('pipeline_demo')
 # Import our components (using the purified backend-agnostic implementation)
 from ember_ml.features.terabyte_feature_extractor import TerabyteFeatureExtractor, TerabyteTemporalStrideProcessor
 from ember_ml.models.optimized_rbm import OptimizedRBM
-from ember_ml.core.stride_aware_cfc import (
+from ember_ml.models.stride_aware_cfc import (
     create_liquid_network_with_motor_neuron,
     create_lstm_gated_liquid_network,
     create_multi_stride_liquid_network

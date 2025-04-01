@@ -5,8 +5,8 @@ and precise fraction-based computations.
 
 from typing import Optional, Tuple, Dict, Any
 from ember_ml import ops
-from .base import BaseNeuron, BaseChain
 from ember_ml.nn import tensor
+from ember_ml.nn.neurons import BaseNeuron
 class BlockySigmoid:
     """Quantized sigmoid implementation with discrete steps."""
     

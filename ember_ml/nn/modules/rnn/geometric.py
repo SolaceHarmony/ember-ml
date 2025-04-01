@@ -2,10 +2,10 @@
 Base geometric neural implementations for non-Euclidean manifolds.
 """
 
-from typing import Optional, Union, Dict, Any
+from typing import Dict, Any
 from ember_ml import ops
 from ember_ml.nn import tensor
-from .base import BaseNeuron
+from ember_ml.nn.modules import Module
 
 def normalize_sphere(vec):
     """
@@ -22,7 +22,7 @@ def normalize_sphere(vec):
         return vec
     return ops.divide(vec, norm)
 
-class GeometricNeuron(BaseNeuron):
+class GeometricNeuron(Module):
     """Base class for geometry-aware neural processing."""
     
     def __init__(self,
