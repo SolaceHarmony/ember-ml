@@ -208,7 +208,7 @@ def argmax(x: TensorLike, axis: Optional[int] = None,
     if keepdims and axis is not None:
         result = np.expand_dims(result, axis=axis)
     
-    return result
+    return np.array(result) # Ensure return type is always ndarray
 
 def sort(x: TensorLike, axis: int = -1, descending: bool = False) -> np.ndarray:
     """
@@ -251,3 +251,31 @@ def argsort(x: TensorLike, axis: int = -1, descending: bool = False) -> np.ndarr
         return np.argsort(-x_array, axis=axis)
     else:
         return np.argsort(x_array, axis=axis)
+
+
+def gaussian(input_value: TensorLike, mu: TensorLike = 0.0, sigma: TensorLike = 1.0) -> np.ndarray:
+    """
+    Compute the value of the Gaussian (normal distribution) function.
+
+    Formula: (1 / (sigma * sqrt(2 * pi))) * exp(-0.5 * ((x - mu) / sigma)^2)
+
+    Args:
+        input_value: The input value(s) (x).
+        mu: The mean (center) of the distribution. Defaults to 0.0.
+        sigma: The standard deviation (spread) of the distribution. Defaults to 1.0.
+
+    Returns:
+        The Gaussian function evaluated at the input value(s).
+    """
+    x_tensor = Tensor.convert_to_tensor(input_value)
+    mu_tensor = Tensor.convert_to_tensor(mu)
+    sigma_tensor = Tensor.convert_to_tensor(sigma)
+    # Use np functions for arithmetic
+    half = np.array(0.5, dtype=x_tensor.dtype) # Match dtype
+    two = np.array(2.0, dtype=x_tensor.dtype)
+    diff = np.subtract(x_tensor, mu_tensor)
+    scaled_diff = np.divide(diff, sigma_tensor)
+    exponent = np.multiply(np.negative(half), np.square(scaled_diff))
+    sqrt_two_pi = np.sqrt(np.multiply(two, np.pi)) # Use np.pi
+    denominator = np.multiply(sigma_tensor, sqrt_two_pi)
+    return np.divide(np.exp(exponent), denominator)

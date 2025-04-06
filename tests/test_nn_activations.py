@@ -69,9 +69,13 @@ def test_activation_lecun_tanh(activation_input, backend):
     output = activation(activation_input)
     # Calculate expected using ops
     # Expected: 1.7159 * tanh(0.666 * x)
-    expected = ops.multiply(1.7159, ops.tanh(ops.multiply(0.666, activation_input)))
-    # Cast expected value to match output dtype for comparison if needed
-    expected = tensor.cast(expected, output.dtype)
+    # Calculate expected using ops and ensuring consistent dtype
+    dtype = output.dtype # Get the actual output dtype
+    c1 = tensor.convert_to_tensor(1.7159, dtype=dtype)
+    c2 = tensor.convert_to_tensor(0.666, dtype=dtype)
+    expected = ops.multiply(c1, ops.tanh(ops.multiply(c2, activation_input)))
+    # No need to cast expected anymore as calculation uses target dtype
+    # Use default tolerance (or potentially 1e-6 if needed)
     assert ops.allclose(output, expected, atol=1e-6), f"{backend}: LeCunTanh module failed"
 
 def test_activation_dropout(activation_input, backend):

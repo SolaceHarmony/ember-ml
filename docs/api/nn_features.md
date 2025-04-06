@@ -218,12 +218,13 @@ You can define custom feature functions for use with the feature extraction comp
 ```python
 from ember_ml.nn import tensor
 from ember_ml import ops
+from ember_ml.ops import stats
 
 def entropy(x, axis=None):
     """Compute the entropy of a probability distribution."""
     x = tensor.convert_to_tensor(x)
     x = ops.clip(x, 1e-10, 1.0)
-    return -ops.sum(x * ops.log(x), axis=axis)
+    return -ops.stats.sum(x * ops.log(x), axis=axis)
 
 # Use the custom feature function
 from ember_ml.nn.features import TemporalStrideProcessor

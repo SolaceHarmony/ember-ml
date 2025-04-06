@@ -64,6 +64,8 @@ cumsum = lambda *args, **kwargs: stats_ops().cumsum(*args, **kwargs)
 argmax = lambda *args, **kwargs: stats_ops().argmax(*args, **kwargs)
 sort = lambda *args, **kwargs: stats_ops().sort(*args, **kwargs)
 argsort = lambda *args, **kwargs: stats_ops().argsort(*args, **kwargs)
+gaussian = lambda *args, **kwargs: stats_ops().gaussian(*args, **kwargs)
+
 
 # Define exports
 __all__ = [
@@ -79,4 +81,6 @@ __all__ = [
     'argmax',
     'sort',
     'argsort',
+    'gaussian',
+
 ]

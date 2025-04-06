@@ -177,8 +177,8 @@ class LTCCell(ModuleWiredCell): # Inherit from ModuleWiredCell
         sensory_rev_activation = sensory_w_activation * self.sensory_erev
         
         # Reduce over dimension 1 (=source sensory neurons)
-        w_numerator_sensory = ops.sum(sensory_rev_activation, axis=1)
-        w_denominator_sensory = ops.sum(sensory_w_activation, axis=1)
+        w_numerator_sensory = ops.stats.sum(sensory_rev_activation, axis=1)
+        w_denominator_sensory = ops.stats.sum(sensory_w_activation, axis=1)
         
         # cm/t is loop invariant
         cm_t = self.make_positive_fn(self.cm) / (elapsed_time / self._ode_unfolds)
@@ -192,8 +192,8 @@ class LTCCell(ModuleWiredCell): # Inherit from ModuleWiredCell
             rev_activation = w_activation * self.erev
             
             # Reduce over dimension 1 (=source neurons)
-            w_numerator = ops.sum(rev_activation, axis=1) + w_numerator_sensory
-            w_denominator = ops.sum(w_activation, axis=1) + w_denominator_sensory
+            w_numerator = ops.stats.sum(rev_activation, axis=1) + w_numerator_sensory
+            w_denominator = ops.stats.sum(w_activation, axis=1) + w_denominator_sensory
             
             gleak = self.make_positive_fn(self.gleak)
             numerator = cm_t * v_pre + gleak * self.vleak + w_numerator

@@ -29,7 +29,7 @@ def get_scalar_value(x: Tensor) -> float:
 def normalize(x: Tensor, axis: int = -1) -> Tensor:
     """Apply softmax normalization."""
     exp_x = ops.exp(x)
-    return ops.divide(exp_x, ops.sum(exp_x, axis=axis, keepdims=True))
+    return ops.divide(exp_x, ops.stats.sum(exp_x, axis=axis, keepdims=True))
 
 def zero_masking(x: Tensor, mask: Tensor) -> Tensor:
     """Apply zero masking to tensor."""
@@ -104,11 +104,11 @@ class CausalMemory:
         b_flat = reshape(b, (-1,))
         
         # Compute dot product
-        dot_product = ops.sum(ops.multiply(a_flat, b_flat))
+        dot_product = ops.stats.sum(ops.multiply(a_flat, b_flat))
         
         # Compute norms
-        norm_a = ops.sqrt(ops.sum(ops.multiply(a_flat, a_flat)))
-        norm_b = ops.sqrt(ops.sum(ops.multiply(b_flat, b_flat)))
+        norm_a = ops.sqrt(ops.stats.sum(ops.multiply(a_flat, a_flat)))
+        norm_b = ops.sqrt(ops.stats.sum(ops.multiply(b_flat, b_flat)))
         
         # Compute similarity
         similarity = ops.divide(dot_product, ops.multiply(norm_a, norm_b))

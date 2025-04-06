@@ -9,6 +9,8 @@ from typing import Union, Sequence, Optional
 
 from ember_ml.backend.torch.types import TensorLike
 from ember_ml.backend.torch.tensor import TorchTensor
+from ember_ml.backend.torch.math_ops import pi
+
 
 Tensor = TorchTensor()
 
@@ -349,3 +351,35 @@ def argsort(x: TensorLike, axis: int = -1, descending: bool = False) -> torch.Te
     # Get argsort along the specified axis
     _, indices = torch.sort(x_tensor, dim=axis, descending=descending)
     return indices
+
+
+def gaussian(input_value: TensorLike, mu: TensorLike = 0.0, sigma: TensorLike = 1.0) -> torch.Tensor:
+    """
+    Compute the value of the Gaussian (normal distribution) function.
+
+    Formula: (1 / (sigma * sqrt(2 * pi))) * exp(-0.5 * ((x - mu) / sigma)^2)
+
+    Args:
+        input_value: The input value(s) (x).
+        mu: The mean (center) of the distribution. Defaults to 0.0.
+        sigma: The standard deviation (spread) of the distribution. Defaults to 1.0.
+
+    Returns:
+        The Gaussian function evaluated at the input value(s).
+    """
+    x_tensor = Tensor.convert_to_tensor(input_value)
+    mu_tensor = Tensor.convert_to_tensor(mu)
+    sigma_tensor = Tensor.convert_to_tensor(sigma)
+    half = Tensor.convert_to_tensor(0.5)
+    two = Tensor.convert_to_tensor(2.0)
+    pi_tensor = Tensor.convert_to_tensor(pi)
+
+    exponent = torch.multiply(
+        torch.negative(half),
+        torch.square(torch.divide(torch.subtract(x_tensor, mu_tensor), sigma_tensor))
+    )
+    denominator = torch.multiply(
+        sigma_tensor,
+        torch.multiply(torch.sqrt(two), torch.sqrt(pi_tensor))
+    )
+    return torch.divide(torch.exp(exponent), denominator)

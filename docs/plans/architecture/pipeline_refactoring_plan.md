@@ -321,7 +321,8 @@ def train_rbm(rbm_module, data_generator, epochs=10, batch_size=100, **kwargs):
                 hidden_bias_gradient = ops.mean(pos_hidden_probs - neg_hidden_probs, axis=0)
                 
                 # Compute reconstruction error
-                reconstruction_error = ops.mean(ops.sum((batch_data - neg_visible_probs) ** 2, axis=1))
+                from ember_ml.ops import stats
+                reconstruction_error = ops.mean(ops.stats.sum((batch_data - neg_visible_probs) ** 2, axis=1))
                 
             # Apply gradients
             gradients = [weights_gradient, visible_bias_gradient, hidden_bias_gradient]

@@ -73,7 +73,7 @@ class CrossEntropyLoss(Loss):
         
         # Compute cross entropy
         loss = ops.multiply(ops.negative(y_true), log_softmax)
-        loss = ops.sum(loss, axis=-1)
+        loss = ops.stats.sum(loss, axis=-1)
         
         # Apply reduction
         return self._reduce(loss)
@@ -112,7 +112,7 @@ class CrossEntropyLoss(Loss):
         
         # Compute cross entropy
         loss = ops.multiply(ops.negative(y_true_one_hot), log_softmax)
-        loss = ops.sum(loss, axis=-1)
+        loss = ops.stats.sum(loss, axis=-1)
         
         # Apply mask for ignored indices
         loss = ops.where(mask, loss, tensor.zeros_like(loss))
@@ -120,6 +120,6 @@ class CrossEntropyLoss(Loss):
         # Apply reduction
         if self.reduction == 'mean':
             # Compute mean over non-ignored elements
-            return ops.divide(ops.sum(loss), ops.sum(tensor.cast(mask, tensor.float32)))
+            return ops.divide(ops.stats.sum(loss), ops.stats.sum(tensor.cast(mask, tensor.float32)))
         else:
             return self._reduce(loss)

@@ -6,144 +6,131 @@ and wave signal analysis functions.
 """
 
 import torch
-from typing import Optional, Tuple, Sequence
+from typing import Optional, Tuple, Sequence # Remove unused List, Union, Any
+from ember_ml.backend.torch.types import TensorLike, Shape, Axis, default_float
 
-from ember_ml.backend.torch.types import TensorLike
 
-
-def normalize_vector(vector: TensorLike) -> torch.Tensor:
+def normalize_vector(input_vector: TensorLike) -> torch.Tensor:
     """
-    Normalize a vector to unit length.
+    Normalize an input vector to unit length (L2 norm).
+
+    If the vector's norm is zero, the original vector is returned.
 
     Args:
-        vector: Input vector
+        input_vector: The vector to normalize.
 
     Returns:
-        Normalized vector
+        The normalized vector as a PyTorch tensor.
     """
     # Create instances for each call to avoid circular imports
     from ember_ml.backend.torch.tensor import TorchTensor
     tensor_ops = TorchTensor()
     
-    vector_tensor = tensor_ops.convert_to_tensor(vector)
+    vector_tensor = tensor_ops.convert_to_tensor(input_vector)
     norm = torch.linalg.norm(vector_tensor)
     if norm > 0:
         return torch.divide(vector_tensor, norm)
     return vector_tensor
 
 
-def euclidean_distance(x: TensorLike, y: TensorLike) -> torch.Tensor:
+def euclidean_distance(vector1: TensorLike, vector2: TensorLike) -> torch.Tensor:
     """
-    Compute the Euclidean distance between two vectors.
+    Compute the Euclidean (L2) distance between two vectors.
 
     Args:
-        x: First vector
-        y: Second vector
+        vector1: The first input vector.
+        vector2: The second input vector.
 
     Returns:
-        Euclidean distance
+        A PyTorch scalar tensor representing the Euclidean distance.
     """
     # Create instances for each call to avoid circular imports
     from ember_ml.backend.torch.tensor import TorchTensor
     tensor_ops = TorchTensor()
     
-    x_tensor = tensor_ops.convert_to_tensor(x)
-    y_tensor = tensor_ops.convert_to_tensor(y)
+    x_tensor = tensor_ops.convert_to_tensor(vector1)
+    y_tensor = tensor_ops.convert_to_tensor(vector2)
     return torch.sqrt(torch.sum(torch.square(torch.subtract(x_tensor, y_tensor))))
 
-def cosine_similarity(x: TensorLike, y: TensorLike) -> torch.Tensor:
+def cosine_similarity(vector1: TensorLike, vector2: TensorLike) -> torch.Tensor:
     """
     Compute the cosine similarity between two vectors.
 
+    Measures the cosine of the angle between two non-zero vectors.
+    Result ranges from -1 (exactly opposite) to 1 (exactly the same).
+
     Args:
-        x: First vector
-        y: Second vector
+        vector1: The first input vector.
+        vector2: The second input vector.
 
     Returns:
-        Cosine similarity between -1 and 1
+        A PyTorch scalar tensor representing the cosine similarity.
     """
     from ember_ml.backend.torch.tensor import TorchTensor
     tensor_ops = TorchTensor()
-    x_tensor = tensor_ops.convert_to_tensor(x)
-    y_tensor = tensor_ops.convert_to_tensor(y)
+    x_tensor = tensor_ops.convert_to_tensor(vector1)
+    y_tensor = tensor_ops.convert_to_tensor(vector2)
 
     dot_product = torch.sum(torch.multiply(x_tensor, y_tensor))
     norm_x = torch.sqrt(torch.sum(torch.square(x_tensor)))
     norm_y = torch.sqrt(torch.sum(torch.square(y_tensor)))
     return torch.divide(dot_product, torch.add(torch.multiply(norm_x, norm_y), tensor_ops.convert_to_tensor(1e-8)))
 
-def exponential_decay(initial_value: TensorLike, decay_rate: TensorLike, time_step: TensorLike) -> torch.Tensor:
+def exponential_decay(initial_value: TensorLike, decay_rate: TensorLike, time_step: Optional[TensorLike] = None) -> torch.Tensor:
     """
     Compute exponential decay.
 
+    If `time_step` is provided, applies uniform decay:
+        value = initial * exp(-rate * time_step)
+    If `time_step` is None, applies index-based decay to the input array:
+        value[i] = initial[i] * exp(-rate * i)
+
     Args:
-        initial_value: Initial value
-        decay_rate: Decay rate
-        time_step: Time step
+        initial_value: The starting value(s) (TensorLike).
+        decay_rate: The rate of decay (must be positive, TensorLike).
+        time_step: The elapsed time (TensorLike) for uniform decay,
+                   or None for index-based decay. Defaults to None.
 
     Returns:
-        Exponentially decayed value
+        The value(s) after exponential decay as a PyTorch tensor.
     """
     from ember_ml.backend.torch.tensor import TorchTensor
     tensor_ops = TorchTensor()
     initial_tensor = tensor_ops.convert_to_tensor(initial_value)
     decay_tensor = tensor_ops.convert_to_tensor(decay_rate)
-    time_tensor = tensor_ops.convert_to_tensor(time_step)
-    return torch.multiply(
-        initial_tensor,
-        torch.exp(torch.multiply(torch.negative(decay_tensor), time_tensor))
-    )
+    if time_step is not None:
+        # Uniform time step decay
+        time_tensor = tensor_ops.convert_to_tensor(time_step)
+        decay_factor = torch.exp(torch.multiply(torch.negative(decay_tensor), time_tensor))
+    else:
+        # Index-based decay
+        indices = torch.arange(initial_tensor.shape[0], dtype=default_float, device=initial_tensor.device) # Match device and dtype
+        decay_factor = torch.exp(torch.multiply(torch.negative(decay_tensor), indices))
 
-def gaussian(x: TensorLike, mu: TensorLike = 0.0, sigma: TensorLike = 1.0) -> torch.Tensor:
-    """
-    Compute the Gaussian function.
+    return torch.multiply(initial_tensor, decay_factor)
 
-    Args:
-        x: Input tensor
-        mu: Mean
-        sigma: Standard deviation
-
-    Returns:
-        Gaussian function evaluated at x
-    """
-    from ember_ml.backend.torch.tensor import TorchTensor
-    from ember_ml.backend.torch.math_ops import pi
-    tensor_ops = TorchTensor()
-    x_tensor = tensor_ops.convert_to_tensor(x)
-    mu_tensor = tensor_ops.convert_to_tensor(mu)
-    sigma_tensor = tensor_ops.convert_to_tensor(sigma)
-    half = tensor_ops.convert_to_tensor(0.5)
-    two = tensor_ops.convert_to_tensor(2.0)
-    pi_tensor = tensor_ops.convert_to_tensor(pi)
-
-    exponent = torch.multiply(
-        torch.negative(half),
-        torch.square(torch.divide(torch.subtract(x_tensor, mu_tensor), sigma_tensor))
-    )
-    denominator = torch.multiply(
-        sigma_tensor,
-        torch.multiply(torch.sqrt(two), torch.sqrt(pi_tensor))
-    )
-    return torch.divide(torch.exp(exponent), denominator)
-
-def compute_energy_stability(wave: TensorLike, window_size: int = 100) -> float:
+def compute_energy_stability(input_wave: TensorLike, window_size: int = 100) -> torch.Tensor:
     """
     Compute the energy stability of a wave signal.
 
+    Calculates stability based on the variance of energy across sliding windows.
+    A value closer to 1.0 indicates higher stability.
+
     Args:
-        wave: Wave signal
-        window_size: Window size for stability computation
+        input_wave: The input wave signal.
+        window_size: The size of the sliding window used for energy calculation.
 
     Returns:
-        Energy stability metric between 0 and 1
+        A PyTorch scalar tensor representing the energy stability metric (0.0 to 1.0).
     """
     from ember_ml.backend.torch.tensor import TorchTensor
     tensor_ops = TorchTensor()
-    wave_tensor = tensor_ops.convert_to_tensor(wave)
+    wave_tensor = tensor_ops.convert_to_tensor(input_wave)
     if len(wave_tensor.shape) == 0 or wave_tensor.shape[0] < window_size:
-        return 1.0  # Perfectly stable for short signals
+        return torch.tensor(1.0, dtype=default_float) # Return torch scalar
 
     # Compute energy in windows
+    # Ensure integer division for range
     num_windows = wave_tensor.shape[0] // window_size
     energies = []
     
@@ -155,37 +142,42 @@ def compute_energy_stability(wave: TensorLike, window_size: int = 100) -> float:
         energies.append(energy.item())
 
     if len(energies) <= 1:
-        return 1.0
+        return torch.tensor(1.0, dtype=default_float) # Return torch scalar
 
     energies_tensor = tensor_ops.convert_to_tensor(energies)
     energy_mean = torch.mean(energies_tensor)
     
     if energy_mean == 0:
-        return 1.0
+        return torch.tensor(1.0, dtype=default_float) # Return torch scalar
 
     energy_var = torch.var(energies_tensor)
     stability = torch.divide(tensor_ops.convert_to_tensor(1.0), 
                             torch.add(tensor_ops.convert_to_tensor(1.0), 
                                     torch.divide(energy_var, energy_mean)))
 
-    return float(stability.item())
+    return stability.to(dtype=default_float) # Return torch scalar with correct dtype
 
-def compute_interference_strength(wave1: TensorLike, wave2: TensorLike) -> float:
+def compute_interference_strength(input_wave1: TensorLike, input_wave2: TensorLike) -> torch.Tensor:
     """
     Compute the interference strength between two wave signals.
 
+    Combines correlation and phase difference to quantify interference.
+    A value closer to 1 suggests strong constructive interference,
+    closer to -1 suggests strong destructive interference, and near 0
+    suggests low interference or incoherence.
+
     Args:
-        wave1: First wave signal
-        wave2: Second wave signal
+        input_wave1: The first input wave signal.
+        input_wave2: The second input wave signal.
 
     Returns:
-        Interference strength metric between 0 and 1
+        A PyTorch scalar tensor representing the interference strength metric.
     """
     from ember_ml.backend.torch.tensor import TorchTensor
     from ember_ml.backend.torch.math_ops import pi
     tensor_ops = TorchTensor()
-    wave1_tensor = tensor_ops.convert_to_tensor(wave1)
-    wave2_tensor = tensor_ops.convert_to_tensor(wave2)
+    wave1_tensor = tensor_ops.convert_to_tensor(input_wave1)
+    wave2_tensor = tensor_ops.convert_to_tensor(input_wave2)
 
     # Ensure waves are the same length
     min_length = min(wave1_tensor.shape[0], wave2_tensor.shape[0])
@@ -224,26 +216,31 @@ def compute_interference_strength(wave1: TensorLike, wave2: TensorLike) -> float
         torch.subtract(tensor_ops.convert_to_tensor(1.0), normalized_phase_diff)
     )
 
-    return float(interference_strength.item())
+    return interference_strength.to(dtype=default_float) # Return torch scalar with correct dtype
 
-def compute_phase_coherence(wave1: TensorLike, wave2: TensorLike, 
-                            freq_range: Optional[Tuple[float, float]] = None) -> float:
+def compute_phase_coherence(input_wave1: TensorLike, input_wave2: TensorLike,
+                            freq_range: Optional[Tuple[float, float]] = None) -> torch.Tensor:
     """
     Compute the phase coherence between two wave signals.
 
+    Calculates the consistency of the phase difference between two signals,
+    optionally within a specified frequency range. Uses circular statistics.
+    A value closer to 1 indicates high phase coherence.
+
     Args:
-        wave1: First wave signal
-        wave2: Second wave signal
-        freq_range: Optional frequency range to consider (min_freq, max_freq)
+        input_wave1: The first input wave signal.
+        input_wave2: The second input wave signal.
+        freq_range: Optional tuple (min_freq, max_freq) to filter frequencies
+                    before computing coherence.
 
     Returns:
-        Phase coherence value between 0 and 1
+        A PyTorch scalar tensor representing the phase coherence metric (0.0 to 1.0).
     """
     from ember_ml.backend.torch.tensor import TorchTensor
     from ember_ml.backend.torch.math_ops import pi
     tensor_ops = TorchTensor()
-    wave1_tensor = tensor_ops.convert_to_tensor(wave1)
-    wave2_tensor = tensor_ops.convert_to_tensor(wave2)
+    wave1_tensor = tensor_ops.convert_to_tensor(input_wave1)
+    wave2_tensor = tensor_ops.convert_to_tensor(input_wave2)
 
     # Ensure waves are the same length
     min_length = min(wave1_tensor.shape[0], wave2_tensor.shape[0])
@@ -284,25 +281,27 @@ def compute_phase_coherence(wave1: TensorLike, wave2: TensorLike,
         torch.square(torch.mean(complex_imag))
     ))
 
-    return float(coherence.item())
+    return coherence.to(dtype=default_float) # Return torch scalar with correct dtype
 
-def partial_interference(wave1: TensorLike, wave2: TensorLike, window_size: int = 100) -> torch.Tensor:
+def partial_interference(input_wave1: TensorLike, input_wave2: TensorLike, window_size: int = 100) -> torch.Tensor:
     """
     Compute the partial interference between two wave signals over sliding windows.
 
+    Calculates interference strength for overlapping windows of the signals.
+
     Args:
-        wave1: First wave signal
-        wave2: Second wave signal
-        window_size: Size of the sliding window
+        input_wave1: The first input wave signal.
+        input_wave2: The second input wave signal.
+        window_size: The size of the sliding window.
 
     Returns:
-        Array of interference values for each window
+        A PyTorch tensor containing the interference strength for each window.
     """
     from ember_ml.backend.torch.tensor import TorchTensor
     from ember_ml.backend.torch.math_ops import pi
     tensor_ops = TorchTensor()
-    wave1_tensor = tensor_ops.convert_to_tensor(wave1)
-    wave2_tensor = tensor_ops.convert_to_tensor(wave2)
+    wave1_tensor = tensor_ops.convert_to_tensor(input_wave1)
+    wave2_tensor = tensor_ops.convert_to_tensor(input_wave2)
 
     # Ensure waves are the same length
     min_length = min(wave1_tensor.shape[0], wave2_tensor.shape[0])
@@ -310,13 +309,16 @@ def partial_interference(wave1: TensorLike, wave2: TensorLike, window_size: int 
     wave2_tensor = wave2_tensor[:min_length]
 
     # Compute number of windows
-    num_windows = min_length - window_size + 1
+    num_windows = min_length - window_size + 1 # Python ops okay for range
     interference = []
 
     # Compute interference for each window
     for i in range(num_windows):
-        window1 = wave1_tensor[i:i + window_size]
-        window2 = wave2_tensor[i:i + window_size]
+        # Python ops okay for index calculation
+        start = i * window_size
+        end = start + window_size
+        window1 = wave1_tensor[start:end]
+        window2 = wave2_tensor[start:end]
 
         # Compute correlation
         window1_mean = torch.mean(window1)
@@ -354,13 +356,13 @@ def partial_interference(wave1: TensorLike, wave2: TensorLike, window_size: int 
 
     return tensor_ops.convert_to_tensor(interference)
 
-def fft(a: TensorLike, n: Optional[int] = None, axis: int = -1) -> torch.Tensor:
+def fft(input_array: TensorLike, output_length: Optional[int] = None, axis: int = -1) -> torch.Tensor:
     """
     One dimensional discrete Fourier Transform.
 
     Args:
-        a: Input array
-        n: Length of the transformed axis
+        input_array: Input array
+        output_length: Length of the transformed axis
         axis: Axis over which to compute the FFT
 
     Returns:
@@ -368,16 +370,16 @@ def fft(a: TensorLike, n: Optional[int] = None, axis: int = -1) -> torch.Tensor:
     """
     from ember_ml.backend.torch.tensor import TorchTensor
     tensor_ops = TorchTensor()
-    a_tensor = tensor_ops.convert_to_tensor(a)
-    return torch.fft.fft(a_tensor, n=n, dim=axis)
+    a_tensor = tensor_ops.convert_to_tensor(input_array)
+    return torch.fft.fft(a_tensor, n=output_length, dim=axis)
 
-def ifft(a: TensorLike, n: Optional[int] = None, axis: int = -1) -> torch.Tensor:
+def ifft(input_array: TensorLike, output_length: Optional[int] = None, axis: int = -1) -> torch.Tensor:
     """
     One dimensional inverse discrete Fourier Transform.
 
     Args:
-        a: Input array
-        n: Length of the transformed axis
+        input_array: Input array
+        output_length: Length of the transformed axis
         axis: Axis over which to compute the IFFT
 
     Returns:
@@ -385,17 +387,17 @@ def ifft(a: TensorLike, n: Optional[int] = None, axis: int = -1) -> torch.Tensor
     """
     from ember_ml.backend.torch.tensor import TorchTensor
     tensor_ops = TorchTensor()
-    a_tensor = tensor_ops.convert_to_tensor(a)
-    return torch.fft.ifft(a_tensor, n=n, dim=axis)
+    a_tensor = tensor_ops.convert_to_tensor(input_array)
+    return torch.fft.ifft(a_tensor, n=output_length, dim=axis)
 
-def fft2(a: TensorLike, s: Optional[Tuple[int, int]] = None, 
-            axes: Tuple[int, int] = (-2, -1)) -> torch.Tensor:
+def fft2(input_array: TensorLike, output_shape: Optional[Shape] = None,
+            axes: Axis = (-2, -1)) -> torch.Tensor:
     """
     Two dimensional discrete Fourier Transform.
 
     Args:
-        a: Input array
-        s: Shape of the transformed axes
+        input_array: Input array
+        output_shape: Shape of the transformed axes
         axes: Axes over which to compute the FFT2
 
     Returns:
@@ -403,17 +405,19 @@ def fft2(a: TensorLike, s: Optional[Tuple[int, int]] = None,
     """
     from ember_ml.backend.torch.tensor import TorchTensor
     tensor_ops = TorchTensor()
-    a_tensor = tensor_ops.convert_to_tensor(a)
-    return torch.fft.fft2(a_tensor, s=s, dim=axes)
+    a_tensor = tensor_ops.convert_to_tensor(input_array)
+    # PyTorch fft2 dim expects Tuple[int, ...]
+    current_axes = axes if isinstance(axes, tuple) else (axes,) if isinstance(axes, int) else (-2,-1)
+    return torch.fft.fft2(a_tensor, s=output_shape, dim=current_axes)
 
-def ifft2(a: TensorLike, s: Optional[Tuple[int, int]] = None, 
-            axes: Tuple[int, int] = (-2, -1)) -> torch.Tensor:
+def ifft2(input_array: TensorLike, output_shape: Optional[Shape] = None,
+            axes: Axis = (-2, -1)) -> torch.Tensor:
     """
     Two dimensional inverse discrete Fourier Transform.
 
     Args:
-        a: Input array
-        s: Shape of the transformed axes
+        input_array: Input array
+        output_shape: Shape of the transformed axes
         axes: Axes over which to compute the IFFT2
 
     Returns:
@@ -421,17 +425,19 @@ def ifft2(a: TensorLike, s: Optional[Tuple[int, int]] = None,
     """
     from ember_ml.backend.torch.tensor import TorchTensor
     tensor_ops = TorchTensor()
-    a_tensor = tensor_ops.convert_to_tensor(a)
-    return torch.fft.ifft2(a_tensor, s=s, dim=axes)
+    a_tensor = tensor_ops.convert_to_tensor(input_array)
+    # PyTorch ifft2 dim expects Tuple[int, ...]
+    current_axes = axes if isinstance(axes, tuple) else (axes,) if isinstance(axes, int) else (-2,-1)
+    return torch.fft.ifft2(a_tensor, s=output_shape, dim=current_axes)
 
-def fftn(a: TensorLike, s: Optional[Sequence[int]] = None, 
-            axes: Optional[Sequence[int]] = None) -> torch.Tensor:
+def fftn(input_array: TensorLike, output_shape: Optional[Shape] = None,
+            axes: Axis = None) -> torch.Tensor:
     """
     N-dimensional discrete Fourier Transform.
 
     Args:
-        a: Input array
-        s: Shape of the transformed axes
+        input_array: Input array
+        output_shape: Shape of the transformed axes
         axes: Axes over which to compute the FFTN
 
     Returns:
@@ -439,17 +445,19 @@ def fftn(a: TensorLike, s: Optional[Sequence[int]] = None,
     """
     from ember_ml.backend.torch.tensor import TorchTensor
     tensor_ops = TorchTensor()
-    a_tensor = tensor_ops.convert_to_tensor(a)
-    return torch.fft.fftn(a_tensor, s=s, dim=axes)
+    a_tensor = tensor_ops.convert_to_tensor(input_array)
+    # PyTorch fftn dim expects Optional[List[int]]
+    current_axes = list(axes) if isinstance(axes, Sequence) else [axes] if isinstance(axes, int) else None
+    return torch.fft.fftn(a_tensor, s=output_shape, dim=current_axes)
 
-def ifftn(a: TensorLike, s: Optional[Sequence[int]] = None, 
-            axes: Optional[Sequence[int]] = None) -> torch.Tensor:
+def ifftn(input_array: TensorLike, output_shape: Optional[Shape] = None,
+            axes: Axis = None) -> torch.Tensor:
     """
     N-dimensional inverse discrete Fourier Transform.
 
     Args:
-        a: Input array
-        s: Shape of the transformed axes
+        input_array: Input array
+        output_shape: Shape of the transformed axes
         axes: Axes over which to compute the IFFTN
 
     Returns:
@@ -457,16 +465,18 @@ def ifftn(a: TensorLike, s: Optional[Sequence[int]] = None,
     """
     from ember_ml.backend.torch.tensor import TorchTensor
     tensor_ops = TorchTensor()
-    a_tensor = tensor_ops.convert_to_tensor(a)
-    return torch.fft.ifftn(a_tensor, s=s, dim=axes)
+    a_tensor = tensor_ops.convert_to_tensor(input_array)
+    # PyTorch ifftn dim expects Optional[List[int]]
+    current_axes = list(axes) if isinstance(axes, Sequence) else [axes] if isinstance(axes, int) else None
+    return torch.fft.ifftn(a_tensor, s=output_shape, dim=current_axes)
 
-def rfft(a: TensorLike, n: Optional[int] = None, axis: int = -1) -> torch.Tensor:
+def rfft(input_array: TensorLike, output_length: Optional[int] = None, axis: int = -1) -> torch.Tensor:
     """
     One dimensional real discrete Fourier Transform.
 
     Args:
-        a: Input array (real)
-        n: Length of the transformed axis
+        input_array: Input array (real)
+        output_length: Length of the transformed axis
         axis: Axis over which to compute the RFFT
 
     Returns:
@@ -474,16 +484,16 @@ def rfft(a: TensorLike, n: Optional[int] = None, axis: int = -1) -> torch.Tensor
     """
     from ember_ml.backend.torch.tensor import TorchTensor
     tensor_ops = TorchTensor()
-    a_tensor = tensor_ops.convert_to_tensor(a)
-    return torch.fft.rfft(a_tensor, n=n, dim=axis)
+    a_tensor = tensor_ops.convert_to_tensor(input_array)
+    return torch.fft.rfft(a_tensor, n=output_length, dim=axis)
 
-def irfft(a: TensorLike, n: Optional[int] = None, axis: int = -1) -> torch.Tensor:
+def irfft(input_array: TensorLike, output_length: Optional[int] = None, axis: int = -1) -> torch.Tensor:
     """
     One dimensional inverse real discrete Fourier Transform.
 
     Args:
-        a: Input array
-        n: Length of the transformed axis
+        input_array: Input array
+        output_length: Length of the transformed axis
         axis: Axis over which to compute the IRFFT
 
     Returns:
@@ -491,17 +501,17 @@ def irfft(a: TensorLike, n: Optional[int] = None, axis: int = -1) -> torch.Tenso
     """
     from ember_ml.backend.torch.tensor import TorchTensor
     tensor_ops = TorchTensor()
-    a_tensor = tensor_ops.convert_to_tensor(a)
-    return torch.fft.irfft(a_tensor, n=n, dim=axis)
+    a_tensor = tensor_ops.convert_to_tensor(input_array)
+    return torch.fft.irfft(a_tensor, n=output_length, dim=axis)
 
-def rfft2(a: TensorLike, s: Optional[Tuple[int, int]] = None, 
-            axes: Tuple[int, int] = (-2, -1)) -> torch.Tensor:
+def rfft2(input_array: TensorLike, output_shape: Optional[Shape] = None,
+            axes: Axis = (-2, -1)) -> torch.Tensor:
     """
     Two dimensional real discrete Fourier Transform.
 
     Args:
-        a: Input array (real)
-        s: Shape of the transformed axes
+        input_array: Input array (real)
+        output_shape: Shape of the transformed axes
         axes: Axes over which to compute the RFFT2
 
     Returns:
@@ -509,17 +519,18 @@ def rfft2(a: TensorLike, s: Optional[Tuple[int, int]] = None,
     """
     from ember_ml.backend.torch.tensor import TorchTensor
     tensor_ops = TorchTensor()
-    a_tensor = tensor_ops.convert_to_tensor(a)
-    return torch.fft.rfft2(a_tensor, s=s, dim=axes)
+    a_tensor = tensor_ops.convert_to_tensor(input_array)
+    current_axes = axes if isinstance(axes, tuple) else (axes,) if isinstance(axes, int) else (-2,-1)
+    return torch.fft.rfft2(a_tensor, s=output_shape, dim=current_axes)
 
-def irfft2(a: TensorLike, s: Optional[Tuple[int, int]] = None, 
-            axes: Tuple[int, int] = (-2, -1)) -> torch.Tensor:
+def irfft2(input_array: TensorLike, output_shape: Optional[Shape] = None,
+            axes: Axis = (-2, -1)) -> torch.Tensor:
     """
     Two dimensional inverse real discrete Fourier Transform.
 
     Args:
-        a: Input array
-        s: Shape of the transformed axes
+        input_array: Input array
+        output_shape: Shape of the transformed axes
         axes: Axes over which to compute the IRFFT2
 
     Returns:
@@ -527,17 +538,18 @@ def irfft2(a: TensorLike, s: Optional[Tuple[int, int]] = None,
     """
     from ember_ml.backend.torch.tensor import TorchTensor
     tensor_ops = TorchTensor()
-    a_tensor = tensor_ops.convert_to_tensor(a)
-    return torch.fft.irfft2(a_tensor, s=s, dim=axes)
+    a_tensor = tensor_ops.convert_to_tensor(input_array)
+    current_axes = axes if isinstance(axes, tuple) else (axes,) if isinstance(axes, int) else (-2,-1)
+    return torch.fft.irfft2(a_tensor, s=output_shape, dim=current_axes)
 
-def rfftn(a: TensorLike, s: Optional[Sequence[int]] = None, 
-            axes: Optional[Sequence[int]] = None) -> torch.Tensor:
+def rfftn(input_array: TensorLike, output_shape: Optional[Shape] = None,
+            axes: Axis = None) -> torch.Tensor:
     """
     N-dimensional real discrete Fourier Transform.
 
     Args:
-        a: Input array (real)
-        s: Shape of the transformed axes
+        input_array: Input array (real)
+        output_shape: Shape of the transformed axes
         axes: Axes over which to compute the RFFTN
 
     Returns:
@@ -545,17 +557,18 @@ def rfftn(a: TensorLike, s: Optional[Sequence[int]] = None,
     """
     from ember_ml.backend.torch.tensor import TorchTensor
     tensor_ops = TorchTensor()
-    a_tensor = tensor_ops.convert_to_tensor(a)
-    return torch.fft.rfftn(a_tensor, s=s, dim=axes)
+    a_tensor = tensor_ops.convert_to_tensor(input_array)
+    current_axes = list(axes) if isinstance(axes, Sequence) else [axes] if isinstance(axes, int) else None
+    return torch.fft.rfftn(a_tensor, s=output_shape, dim=current_axes)
 
-def irfftn(a: TensorLike, s: Optional[Sequence[int]] = None, 
-            axes: Optional[Sequence[int]] = None) -> torch.Tensor:
+def irfftn(input_array: TensorLike, output_shape: Optional[Shape] = None,
+            axes: Axis = None) -> torch.Tensor:
     """
     N-dimensional inverse real discrete Fourier Transform.
 
     Args:
-        a: Input array
-        s: Shape of the transformed axes
+        input_array: Input array
+        output_shape: Shape of the transformed axes
         axes: Axes over which to compute the IRFFTN
 
     Returns:
@@ -563,306 +576,100 @@ def irfftn(a: TensorLike, s: Optional[Sequence[int]] = None,
     """
     from ember_ml.backend.torch.tensor import TorchTensor
     tensor_ops = TorchTensor()
-    a_tensor = tensor_ops.convert_to_tensor(a)
-    return torch.fft.irfftn(a_tensor, s=s, dim=axes)
+    a_tensor = tensor_ops.convert_to_tensor(input_array)
+    current_axes = list(axes) if isinstance(axes, Sequence) else [axes] if isinstance(axes, int) else None
+    return torch.fft.irfftn(a_tensor, s=output_shape, dim=current_axes)
 
 
-class TorchVectorOps:
+class TorchVectorOps: # Class methods updated to match module-level functions
     """PyTorch implementation of vector operations."""
 
-    def normalize_vector(self, vector: TensorLike) -> torch.Tensor:
-        """
-        Normalize a vector to unit length.
+    def normalize_vector(self, input_vector: TensorLike) -> torch.Tensor:
+        """Normalize an input vector to unit length (L2 norm)."""
+        return normalize_vector(input_vector)
 
-        Args:
-            vector: Input vector
-
-        Returns:
-            Normalized vector
-        """
-        return normalize_vector(vector)
-
-    def euclidean_distance(self, x: TensorLike, y: TensorLike) -> torch.Tensor:
-        """
-        Compute the Euclidean distance between two vectors.
-
-        Args:
-            x: First vector
-            y: Second vector
-
-        Returns:
-            Euclidean distance
-        """
-        return euclidean_distance(x, y)
+    def euclidean_distance(self, vector1: TensorLike, vector2: TensorLike) -> torch.Tensor:
+        """Compute the Euclidean (L2) distance between two vectors."""
+        return euclidean_distance(vector1, vector2)
     
-    def cosine_similarity(self, x: TensorLike, y: TensorLike) -> torch.Tensor:
-        """
-        Compute the cosine similarity between two vectors.
-
-        Args:
-            x: First vector
-            y: Second vector
-
-        Returns:
-            Cosine similarity between -1 and 1
-        """
-        return cosine_similarity(x, y)
+    def cosine_similarity(self, vector1: TensorLike, vector2: TensorLike) -> torch.Tensor:
+        """Compute the cosine similarity between two vectors."""
+        return cosine_similarity(vector1, vector2)
     
-    def exponential_decay(self, initial_value: TensorLike, decay_rate: TensorLike, time_step: TensorLike) -> torch.Tensor:
-        """
-        Compute exponential decay.
-
-        Args:
-            initial_value: Initial value
-            decay_rate: Decay rate
-            time_step: Time step
-
-        Returns:
-            Exponentially decayed value
-        """
+    def exponential_decay(self, initial_value: TensorLike, decay_rate: TensorLike, time_step: Optional[TensorLike] = None) -> torch.Tensor:
+        """Compute exponential decay. Supports uniform or index-based time."""
         return exponential_decay(initial_value, decay_rate, time_step)
     
-    def gaussian(self, x: TensorLike, mu: TensorLike = 0.0, sigma: TensorLike = 1.0) -> torch.Tensor:
-        """
-        Compute the Gaussian function.
-
-        Args:
-            x: Input tensor
-            mu: Mean
-            sigma: Standard deviation
-
-        Returns:
-            Gaussian function evaluated at x
-        """
-        return gaussian(x, mu, sigma)
     
-    def compute_energy_stability(self, wave: TensorLike, window_size: int = 100) -> float:
-        """
-        Compute the energy stability of a wave signal.
-
-        Args:
-            wave: Wave signal
-            window_size: Window size for stability computation
-
-        Returns:
-            Energy stability metric between 0 and 1
-        """
-        return compute_energy_stability(wave, window_size)
+    def compute_energy_stability(self, input_wave: TensorLike, window_size: int = 100) -> torch.Tensor:
+        """Compute the energy stability of a wave signal."""
+        return compute_energy_stability(input_wave, window_size)
     
-    def compute_interference_strength(self, wave1: TensorLike, wave2: TensorLike) -> float:
-        """
-        Compute the interference strength between two wave signals.
-
-        Args:
-            wave1: First wave signal
-            wave2: Second wave signal
-
-        Returns:
-            Interference strength metric between 0 and 1
-        """
-        return compute_interference_strength(wave1, wave2)
+    def compute_interference_strength(self, input_wave1: TensorLike, input_wave2: TensorLike) -> torch.Tensor:
+        """Compute the interference strength between two wave signals."""
+        return compute_interference_strength(input_wave1, input_wave2)
     
-    def compute_phase_coherence(self, wave1: TensorLike, wave2: TensorLike,
-                              freq_range: Optional[Tuple[float, float]] = None) -> float:
-        """
-        Compute the phase coherence between two wave signals.
-
-        Args:
-            wave1: First wave signal
-            wave2: Second wave signal
-            freq_range: Optional frequency range to consider (min_freq, max_freq)
-
-        Returns:
-            Phase coherence value between 0 and 1
-        """
-        return compute_phase_coherence(wave1, wave2, freq_range)
+    def compute_phase_coherence(self, input_wave1: TensorLike, input_wave2: TensorLike,
+                              freq_range: Optional[Tuple[float, float]] = None) -> torch.Tensor:
+        """Compute the phase coherence between two wave signals."""
+        return compute_phase_coherence(input_wave1, input_wave2, freq_range)
     
-    def partial_interference(self, wave1: TensorLike, wave2: TensorLike, window_size: int = 100) -> torch.Tensor:
-        """
-        Compute the partial interference between two wave signals over sliding windows.
-
-        Args:
-            wave1: First wave signal
-            wave2: Second wave signal
-            window_size: Size of the sliding window
-
-        Returns:
-            Array of interference values for each window
-        """
-        return partial_interference(wave1, wave2, window_size)
+    def partial_interference(self, input_wave1: TensorLike, input_wave2: TensorLike, window_size: int = 100) -> torch.Tensor:
+        """Compute the partial interference between two wave signals over sliding windows."""
+        return partial_interference(input_wave1, input_wave2, window_size)
     
-    def fft(self, a: TensorLike, n: Optional[int] = None, axis: int = -1) -> torch.Tensor:
-        """
-        One dimensional discrete Fourier Transform.
-
-        Args:
-            a: Input array
-            n: Length of the transformed axis
-            axis: Axis over which to compute the FFT
-
-        Returns:
-            The transformed array
-        """
-        return fft(a, n, axis)
+    def fft(self, input_array: TensorLike, output_length: Optional[int] = None, axis: int = -1) -> torch.Tensor:
+        """Compute the one-dimensional discrete Fourier Transform."""
+        return fft(input_array, output_length, axis)
     
-    def ifft(self, a: TensorLike, n: Optional[int] = None, axis: int = -1) -> torch.Tensor:
-        """
-        One dimensional inverse discrete Fourier Transform.
-
-        Args:
-            a: Input array
-            n: Length of the transformed axis
-            axis: Axis over which to compute the IFFT
-
-        Returns:
-            The inverse transformed array
-        """
-        return ifft(a, n, axis)
+    def ifft(self, input_array: TensorLike, output_length: Optional[int] = None, axis: int = -1) -> torch.Tensor:
+        """Compute the one-dimensional inverse discrete Fourier Transform."""
+        return ifft(input_array, output_length, axis)
     
-    def fft2(self, a: TensorLike, s: Optional[Tuple[int, int]] = None,
-            axes: Tuple[int, int] = (-2, -1)) -> torch.Tensor:
-        """
-        Two dimensional discrete Fourier Transform.
-
-        Args:
-            a: Input array
-            s: Shape of the transformed axes
-            axes: Axes over which to compute the FFT2
-
-        Returns:
-            The transformed array
-        """
-        return fft2(a, s, axes)
+    def fft2(self, input_array: TensorLike, output_shape: Optional[Shape] = None,
+            axes: Axis = (-2, -1)) -> torch.Tensor:
+        """Compute the two-dimensional discrete Fourier Transform."""
+        return fft2(input_array, output_shape, axes)
     
-    def ifft2(self, a: TensorLike, s: Optional[Tuple[int, int]] = None,
-            axes: Tuple[int, int] = (-2, -1)) -> torch.Tensor:
-        """
-        Two dimensional inverse discrete Fourier Transform.
-
-        Args:
-            a: Input array
-            s: Shape of the transformed axes
-            axes: Axes over which to compute the IFFT2
-
-        Returns:
-            The inverse transformed array
-        """
-        return ifft2(a, s, axes)
+    def ifft2(self, input_array: TensorLike, output_shape: Optional[Shape] = None,
+            axes: Axis = (-2, -1)) -> torch.Tensor:
+        """Compute the two-dimensional inverse discrete Fourier Transform."""
+        return ifft2(input_array, output_shape, axes)
     
-    def fftn(self, a: TensorLike, s: Optional[Sequence[int]] = None,
-            axes: Optional[Sequence[int]] = None) -> torch.Tensor:
-        """
-        N-dimensional discrete Fourier Transform.
-
-        Args:
-            a: Input array
-            s: Shape of the transformed axes
-            axes: Axes over which to compute the FFTN
-
-        Returns:
-            The transformed array
-        """
-        return fftn(a, s, axes)
+    def fftn(self, input_array: TensorLike, output_shape: Optional[Shape] = None,
+            axes: Axis = None) -> torch.Tensor:
+        """Compute the N-dimensional discrete Fourier Transform."""
+        return fftn(input_array, output_shape, axes)
     
-    def ifftn(self, a: TensorLike, s: Optional[Sequence[int]] = None,
-            axes: Optional[Sequence[int]] = None) -> torch.Tensor:
-        """
-        N-dimensional inverse discrete Fourier Transform.
-
-        Args:
-            a: Input array
-            s: Shape of the transformed axes
-            axes: Axes over which to compute the IFFTN
-
-        Returns:
-            The inverse transformed array
-        """
-        return ifftn(a, s, axes)
+    def ifftn(self, input_array: TensorLike, output_shape: Optional[Shape] = None,
+            axes: Axis = None) -> torch.Tensor:
+        """Compute the N-dimensional inverse discrete Fourier Transform."""
+        return ifftn(input_array, output_shape, axes)
     
-    def rfft(self, a: TensorLike, n: Optional[int] = None, axis: int = -1) -> torch.Tensor:
-        """
-        One dimensional real discrete Fourier Transform.
-
-        Args:
-            a: Input array (real)
-            n: Length of the transformed axis
-            axis: Axis over which to compute the RFFT
-
-        Returns:
-            The transformed array
-        """
-        return rfft(a, n, axis)
+    def rfft(self, input_array: TensorLike, output_length: Optional[int] = None, axis: int = -1) -> torch.Tensor:
+        """Compute the one-dimensional discrete Fourier Transform for real input."""
+        return rfft(input_array, output_length, axis)
     
-    def irfft(self, a: TensorLike, n: Optional[int] = None, axis: int = -1) -> torch.Tensor:
-        """
-        One dimensional inverse real discrete Fourier Transform.
-
-        Args:
-            a: Input array
-            n: Length of the transformed axis
-            axis: Axis over which to compute the IRFFT
-
-        Returns:
-            The inverse transformed array (real)
-        """
-        return irfft(a, n, axis)
+    def irfft(self, input_array: TensorLike, output_length: Optional[int] = None, axis: int = -1) -> torch.Tensor:
+        """Compute the one-dimensional inverse discrete Fourier Transform for real input."""
+        return irfft(input_array, output_length, axis)
     
-    def rfft2(self, a: TensorLike, s: Optional[Tuple[int, int]] = None,
-            axes: Tuple[int, int] = (-2, -1)) -> torch.Tensor:
-        """
-        Two dimensional real discrete Fourier Transform.
-
-        Args:
-            a: Input array (real)
-            s: Shape of the transformed axes
-            axes: Axes over which to compute the RFFT2
-
-        Returns:
-            The transformed array
-        """
-        return rfft2(a, s, axes)
+    def rfft2(self, input_array: TensorLike, output_shape: Optional[Shape] = None,
+            axes: Axis = (-2, -1)) -> torch.Tensor:
+        """Compute the two-dimensional discrete Fourier Transform for real input."""
+        return rfft2(input_array, output_shape, axes)
     
-    def irfft2(self, a: TensorLike, s: Optional[Tuple[int, int]] = None,
-            axes: Tuple[int, int] = (-2, -1)) -> torch.Tensor:
-        """
-        Two dimensional inverse real discrete Fourier Transform.
-
-        Args:
-            a: Input array
-            s: Shape of the transformed axes
-            axes: Axes over which to compute the IRFFT2
-
-        Returns:
-            The inverse transformed array (real)
-        """
-        return irfft2(a, s, axes)
+    def irfft2(self, input_array: TensorLike, output_shape: Optional[Shape] = None,
+            axes: Axis = (-2, -1)) -> torch.Tensor:
+        """Compute the two-dimensional inverse discrete Fourier Transform for real input."""
+        return irfft2(input_array, output_shape, axes)
     
-    def rfftn(self, a: TensorLike, s: Optional[Sequence[int]] = None,
-            axes: Optional[Sequence[int]] = None) -> torch.Tensor:
-        """
-        N-dimensional real discrete Fourier Transform.
-
-        Args:
-            a: Input array (real)
-            s: Shape of the transformed axes
-            axes: Axes over which to compute the RFFTN
-
-        Returns:
-            The transformed array
-        """
-        return rfftn(a, s, axes)
+    def rfftn(self, input_array: TensorLike, output_shape: Optional[Shape] = None,
+            axes: Axis = None) -> torch.Tensor:
+        """Compute the N-dimensional discrete Fourier Transform for real input."""
+        return rfftn(input_array, output_shape, axes)
     
-    def irfftn(self, a: TensorLike, s: Optional[Sequence[int]] = None,
-            axes: Optional[Sequence[int]] = None) -> torch.Tensor:
-        """
-        N-dimensional inverse real discrete Fourier Transform.
-
-        Args:
-            a: Input array
-            s: Shape of the transformed axes
-            axes: Axes over which to compute the IRFFTN
-
-        Returns:
-            The inverse transformed array (real)
-        """
-        return irfftn(a, s, axes)
+    def irfftn(self, input_array: TensorLike, output_shape: Optional[Shape] = None,
+            axes: Axis = None) -> torch.Tensor:
+        """Compute the N-dimensional inverse discrete Fourier Transform for real input."""
+        return irfftn(input_array, output_shape, axes)

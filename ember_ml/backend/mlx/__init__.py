@@ -110,7 +110,6 @@ from ember_ml.backend.mlx.vector_ops import (
     euclidean_distance,
     cosine_similarity,
     exponential_decay,
-    gaussian,
     fft,
     ifft,
     fft2,

@@ -190,24 +190,24 @@ class TestReductionOperations:
         x = arange(12).reshape((3, 4))
         
         # Test sum over all elements
-        y = ops.sum(x)
+        y = ops.stats.sum(x)
         assert np.isscalar(to_numpy(y)) or shape(y) == ()
-        assert ops.allclose(to_numpy(y), to_numpy(ops.sum(arange(12).reshape((3, 4)))))
+        assert ops.allclose(to_numpy(y), to_numpy(ops.stats.sum(arange(12).reshape((3, 4)))))
         
         # Test sum along axis 0
-        y = ops.sum(x, axis=0)
+        y = ops.stats.sum(x, axis=0)
         assert shape(y) == (4,)
-        assert ops.allclose(to_numpy(y), to_numpy(ops.sum(arange(12).reshape((3, 4)), axis=0)))
+        assert ops.allclose(to_numpy(y), to_numpy(ops.stats.sum(arange(12).reshape((3, 4)), axis=0)))
         
         # Test sum along axis 1
-        y = ops.sum(x, axis=1)
+        y = ops.stats.sum(x, axis=1)
         assert shape(y) == (3,)
-        assert ops.allclose(to_numpy(y), to_numpy(ops.sum(arange(12).reshape((3, 4)), axis=1)))
+        assert ops.allclose(to_numpy(y), to_numpy(ops.stats.sum(arange(12).reshape((3, 4)), axis=1)))
         
         # Test sum with keepdims
-        y = ops.sum(x, axis=0, keepdims=True)
+        y = ops.stats.sum(x, axis=0, keepdims=True)
         assert shape(y) == (1, 4)
-        assert ops.allclose(to_numpy(y), to_numpy(ops.sum(arange(12).reshape((3, 4)), axis=0, keepdims=True)))
+        assert ops.allclose(to_numpy(y), to_numpy(ops.stats.sum(arange(12).reshape((3, 4)), axis=0, keepdims=True)))
 
 class TestElementWiseOperations:
     """Tests for element-wise operations."""

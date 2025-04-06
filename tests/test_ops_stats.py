@@ -236,3 +236,39 @@ def test_stats_percentile(backend):
     assert ops.allclose(argsort_desc, expected_argsort_desc), f"{backend}: Argsort descending failed"
 
 # TODO: Add tests for percentile
+
+
+def test_stats_gaussian(backend):
+    """Tests stats.gaussian."""
+    ops.set_backend(backend)
+    vec = tensor.convert_to_tensor([-2.0, -1.0, 0.0, 1.0, 2.0])
+    mean = 0.0
+    std = 1.0
+    # Call using stats.gaussian now
+    result = stats.gaussian(vec, mu=mean, sigma=std)
+    # Expected: (1 / (sigma * sqrt(2 * pi))) * exp(-0.5 * ((x - mu) / sigma)^2)
+    # For mean=0, std=1: (1 / sqrt(2*pi)) * exp(-0.5 * x^2)
+    # Let's recalculate expected value using ops/stats for consistency
+    mean_tensor = tensor.convert_to_tensor(mean, dtype=tensor.get_dtype(vec))
+    std_tensor = tensor.convert_to_tensor(std, dtype=tensor.get_dtype(vec))
+
+    # Calculate: exp(-0.5 * ((vec - mean) / std)^2) part
+    term = ops.divide(ops.subtract(vec, mean_tensor), std_tensor)
+    exponent = ops.multiply(tensor.convert_to_tensor(-0.5, dtype=tensor.get_dtype(vec)), ops.square(term))
+    exp_part = ops.exp(exponent)
+
+    # Calculate: (1 / (sigma * sqrt(2 * pi))) part
+    # Need pi from math_ops
+    pi_tensor = tensor.convert_to_tensor(ops.pi, dtype=tensor.get_dtype(vec))
+    two_tensor = tensor.convert_to_tensor(2.0, dtype=tensor.get_dtype(vec))
+    sqrt_two_pi = ops.sqrt(ops.multiply(two_tensor, pi_tensor))
+    denominator_factor = ops.multiply(std_tensor, sqrt_two_pi)
+    # Handle potential division by zero if sigma is zero, though unlikely in test
+    inv_denominator = ops.divide(tensor.convert_to_tensor(1.0, dtype=tensor.get_dtype(vec)),
+                                 ops.add(denominator_factor, tensor.convert_to_tensor(1e-12))) # Add epsilon
+
+    expected = ops.multiply(inv_denominator, exp_part)
+
+    # Compare using ops.allclose
+    assert ops.allclose(result, expected, atol=1e-5), f"{backend}: Gaussian function failed"
+    assert tensor.shape(result) == tensor.shape(vec), f"{backend}: Gaussian function shape mismatch"

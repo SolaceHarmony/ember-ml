@@ -206,3 +206,18 @@ class NumpyStatsOps:
         """
         from ember_ml.backend.numpy.stats.ops import argsort as argsort_func
         return argsort_func(x, axis=axis, descending=descending)
+
+    def gaussian(self, input_value: TensorLike, mu: TensorLike = 0.0, sigma: TensorLike = 1.0) -> np.ndarray:
+        """
+        Compute the value of the Gaussian (normal distribution) function.
+
+        Args:
+            input_value: The input value(s).
+            mu: The mean (center) of the distribution. Defaults to 0.0.
+            sigma: The standard deviation (spread) of the distribution. Defaults to 1.0.
+
+        Returns:
+            The Gaussian function evaluated at the input value(s).
+        """
+        from ember_ml.backend.numpy.stats.ops.descriptive import gaussian as gaussian_func
+        return gaussian_func(input_value, mu=mu, sigma=sigma)

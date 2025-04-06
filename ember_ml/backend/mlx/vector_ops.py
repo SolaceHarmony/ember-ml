@@ -5,75 +5,79 @@ This module provides MLX implementations of vector operations.
 """
 
 import mlx.core as mx
-from typing import Optional, Tuple, Any, Sequence, List, Union
-
-from ember_ml.backend.mlx.types import TensorLike
+from typing import Optional, Tuple, Sequence, List, Union, Any # Keep Any for now
+from ember_ml.backend.mlx.types import TensorLike, Shape, Axis, default_float # Remove unused default_int
 
 # We avoid creating global instances to prevent circular imports
 # Each function will create its own instances when needed
 
 
-def normalize_vector(vector: TensorLike) -> mx.array:
+def normalize_vector(input_vector: TensorLike, axis: Optional[int] = None) -> mx.array:
     """
-    Normalize a vector to unit length.
+    Normalize an input vector or matrix to unit length (L2 norm).
+
+    If the vector's norm is zero, the original vector is returned.
 
     Args:
-        vector: Input vector
+        input_vector: The vector or matrix to normalize.
+        axis: Axis along which to normalize. If None, the entire input is normalized.
 
     Returns:
-        Normalized vector
+        The normalized vector or matrix as an MLX array.
     """
     # Create instances for each call to avoid circular imports
     from ember_ml.backend.mlx.tensor import MLXTensor
     tensor_ops = MLXTensor()
     
-    vector_tensor = tensor_ops.convert_to_tensor(vector)
-    norm = mx.linalg.norm(vector_tensor)
+    vector_tensor = tensor_ops.convert_to_tensor(input_vector)
+    norm = mx.linalg.norm(vector_tensor, axis=axis, keepdims=True)
 
     # Avoid division by zero
-    if norm > 0:
-        return mx.divide(vector_tensor, norm)
-    return vector_tensor
+    norm_safe = mx.maximum(norm, tensor_ops.convert_to_tensor(1e-8))
+    return mx.divide(vector_tensor, norm_safe)
 
 
-def euclidean_distance(x: TensorLike, y: TensorLike) -> mx.array:
+def euclidean_distance(vector1: TensorLike, vector2: TensorLike) -> mx.array:
     """
-    Compute the Euclidean distance between two vectors.
+    Compute the Euclidean (L2) distance between two vectors.
 
     Args:
-        x: First vector
-        y: Second vector
+        vector1: The first input vector.
+        vector2: The second input vector.
 
     Returns:
-        Euclidean distance
+        An MLX scalar representing the Euclidean distance.
     """
     # Create instances for each call to avoid circular imports
     from ember_ml.backend.mlx.tensor import MLXTensor
     tensor_ops = MLXTensor()
     
-    x_tensor = tensor_ops.convert_to_tensor(x)
-    y_tensor = tensor_ops.convert_to_tensor(y)
+    x_tensor = tensor_ops.convert_to_tensor(vector1)
+    y_tensor = tensor_ops.convert_to_tensor(vector2)
 
     return mx.sqrt(mx.sum(mx.square(mx.subtract(x_tensor, y_tensor))))
 
 
-def cosine_similarity(x: TensorLike, y: TensorLike) -> mx.array:
+def cosine_similarity(vector1: TensorLike, vector2: TensorLike) -> mx.array:
     """
     Compute the cosine similarity between two vectors.
 
+    Measures the cosine of the angle between two non-zero vectors.
+    Result ranges from -1 (exactly opposite) to 1 (exactly the same).
+
     Args:
-        x: First vector
-        y: Second vector
+        vector1: The first input vector.
+        vector2: The second input vector.
 
     Returns:
-        Cosine similarity between -1 and 1
+        An MLX scalar representing the cosine similarity.
     """
     # Create instances for each call to avoid circular imports
     from ember_ml.backend.mlx.tensor import MLXTensor
     tensor_ops = MLXTensor()
     
-    x_tensor = tensor_ops.convert_to_tensor(x)
-    y_tensor = tensor_ops.convert_to_tensor(y)
+    x_tensor = tensor_ops.convert_to_tensor(vector1)
+    y_tensor = tensor_ops.convert_to_tensor(vector2)
 
     dot_product = mx.sum(mx.multiply(x_tensor, y_tensor))
     norm_x = mx.sqrt(mx.sum(mx.square(x_tensor)))
@@ -81,17 +85,23 @@ def cosine_similarity(x: TensorLike, y: TensorLike) -> mx.array:
     return mx.divide(dot_product, mx.add(mx.multiply(norm_x, norm_y), tensor_ops.convert_to_tensor(1e-8)))
 
 
-def exponential_decay(initial_value: TensorLike, decay_rate: TensorLike, time_step: TensorLike) -> mx.array:
+def exponential_decay(initial_value: TensorLike, decay_rate: TensorLike, time_step: Optional[TensorLike] = None) -> mx.array:
     """
     Compute exponential decay.
 
+    If `time_step` is provided, applies uniform decay:
+        value = initial * exp(-rate * time_step)
+    If `time_step` is None, applies index-based decay to the input array:
+        value[i] = initial[i] * exp(-rate * i)
+
     Args:
-        initial_value: Initial value
-        decay_rate: Decay rate
-        time_step: Time step
+        initial_value: The starting value(s) (TensorLike).
+        decay_rate: The rate of decay (must be positive, TensorLike).
+        time_step: The elapsed time (TensorLike) for uniform decay,
+                   or None for index-based decay. Defaults to None.
 
     Returns:
-        Exponentially decayed value
+        The value(s) after exponential decay as an MLX array.
     """
     # Create instances for each call to avoid circular imports
     from ember_ml.backend.mlx.tensor import MLXTensor
@@ -99,70 +109,52 @@ def exponential_decay(initial_value: TensorLike, decay_rate: TensorLike, time_st
     
     initial_value_tensor = tensor_ops.convert_to_tensor(initial_value)
     decay_rate_tensor = tensor_ops.convert_to_tensor(decay_rate)
-    time_step_tensor = tensor_ops.convert_to_tensor(time_step)
+    if time_step is not None:
+        # Uniform time step decay
+        time_tensor = tensor_ops.convert_to_tensor(time_step)
+        decay_factor = mx.exp(mx.multiply(mx.negative(decay_rate_tensor), time_tensor))
+    else:
+        # Index-based decay
+        # Ensure indices have a compatible float type for multiplication
+        indices = mx.arange(initial_value_tensor.shape[0]).astype(default_float)
+        decay_factor = mx.exp(mx.multiply(mx.negative(decay_rate_tensor), indices))
 
-    return mx.multiply(initial_value_tensor, mx.exp(mx.multiply(mx.negative(decay_rate_tensor), time_step_tensor)))
-
-
-def gaussian(x: TensorLike, mu: TensorLike = 0.0, sigma: TensorLike = 1.0) -> mx.array:
-    """
-    Compute the Gaussian function.
-
-    Args:
-        x: Input tensor
-        mu: Mean
-        sigma: Standard deviation
-
-    Returns:
-        Gaussian function evaluated at x
-    """
-    # Create instances for each call to avoid circular imports
-    from ember_ml.backend.mlx.tensor import MLXTensor
-    from ember_ml.backend.mlx.math_ops import pi as math_pi
-    tensor_ops = MLXTensor()
-    
-    x_tensor = tensor_ops.convert_to_tensor(x)
-    mu_tensor = tensor_ops.convert_to_tensor(mu)
-    sigma_tensor = tensor_ops.convert_to_tensor(sigma)
-    half = tensor_ops.convert_to_tensor(0.5)
-    two = tensor_ops.convert_to_tensor(2.0)
-    pi_tensor = tensor_ops.convert_to_tensor(math_pi)
-
-    exponent = mx.multiply(
-        mx.negative(half),
-        mx.square(mx.divide(mx.subtract(x_tensor, mu_tensor), sigma_tensor))
-    )
-    denominator = mx.multiply(
-        sigma_tensor,
-        mx.multiply(mx.sqrt(two), mx.sqrt(pi_tensor))
-    )
-    return mx.divide(mx.exp(exponent), denominator)
+    return mx.multiply(initial_value_tensor, decay_factor)
 
 
-def compute_energy_stability(wave: TensorLike, window_size: int = 100) -> float:
+
+def compute_energy_stability(input_wave: TensorLike, window_size: int = 100) -> mx.array:
     """
     Compute the energy stability of a wave signal.
-    
+
+    Calculates stability based on the variance of energy across sliding windows.
+    A value closer to 1.0 indicates higher stability.
+
     Args:
-        wave: Wave signal
-        window_size: Window size for stability computation
+        input_wave: The input wave signal.
+        window_size: The size of the sliding window used for energy calculation.
 
     Returns:
-        Energy stability metric between 0 and 1
+        An MLX scalar representing the energy stability metric (0.0 to 1.0).
     """
     # Create instances for each call to avoid circular imports
     from ember_ml.backend.mlx.tensor import MLXTensor
     tensor_ops = MLXTensor()
     
-    wave_tensor = tensor_ops.convert_to_tensor(wave)
+    wave_tensor = tensor_ops.convert_to_tensor(input_wave)
     if len(wave_tensor.shape) == 0 or wave_tensor.shape[0] < window_size:
-        return 1.0  # Perfectly stable for short signals
+        return mx.array(1.0, dtype=default_float) # Return MLX scalar
 
     # Compute energy in windows
-    num_windows = wave_tensor.shape[0] // window_size
+    num_windows = mx.floor_divide(wave_tensor.shape[0], window_size) # Use mx.floor_divide
     energies: List[Union[float,Any]] = []
     
-    for i in range(num_windows):
+    # Convert num_windows MLX array to Python int for range()
+    # Convert num_windows MLX array to Python int for range()
+    # Use .item() as confirmed by CLI test and MLX convention
+    num_windows_item = num_windows.item()
+    # Mypy might still complain here due to static analysis limits
+    for i in range(num_windows_item):
         start = i * window_size
         end = start + window_size
         window = wave_tensor[start:end]
@@ -170,34 +162,38 @@ def compute_energy_stability(wave: TensorLike, window_size: int = 100) -> float:
         energies.append(energy.item())
 
     if len(energies) <= 1:
-        return 1.0
+        return mx.array(1.0, dtype=default_float) # Return MLX scalar
 
     energies_tensor = tensor_ops.convert_to_tensor(energies)
     energy_mean = mx.mean(energies_tensor)
     
     if energy_mean == 0:
-        return 1.0
+        return mx.array(1.0, dtype=default_float) # Return MLX scalar
 
     energy_var = mx.var(energies_tensor)
     stability = mx.divide(tensor_ops.convert_to_tensor(1.0), 
                         mx.add(tensor_ops.convert_to_tensor(1.0), 
                                 mx.divide(energy_var, energy_mean)))
 
-    # Safe conversion to float
-    stability_val = mx.array(stability).item()
-    return float(str(stability_val))
+    # Return as MLX scalar with default float type
+    return stability.astype(default_float)
 
 
-def compute_interference_strength(wave1: TensorLike, wave2: TensorLike) -> float:
+def compute_interference_strength(input_wave1: TensorLike, input_wave2: TensorLike) -> mx.array:
     """
     Compute the interference strength between two wave signals.
-    
+
+    Combines correlation and phase difference to quantify interference.
+    A value closer to 1 suggests strong constructive interference,
+    closer to -1 suggests strong destructive interference, and near 0
+    suggests low interference or incoherence.
+
     Args:
-        wave1: First wave signal
-        wave2: Second wave signal
-        
+        input_wave1: The first input wave signal.
+        input_wave2: The second input wave signal.
+
     Returns:
-        Interference strength metric between 0 and 1
+        An MLX scalar representing the interference strength metric.
     """
     # Create instances for each call to avoid circular imports
     from ember_ml.backend.mlx.tensor import MLXTensor
@@ -205,8 +201,8 @@ def compute_interference_strength(wave1: TensorLike, wave2: TensorLike) -> float
     tensor_ops = MLXTensor()
     
     # Convert to MLX tensors
-    wave1_tensor = tensor_ops.convert_to_tensor(wave1)
-    wave2_tensor = tensor_ops.convert_to_tensor(wave2)
+    wave1_tensor = tensor_ops.convert_to_tensor(input_wave1)
+    wave2_tensor = tensor_ops.convert_to_tensor(input_wave2)
 
     # Ensure waves are the same length
     min_length = min(wave1_tensor.shape[0], wave2_tensor.shape[0])
@@ -244,31 +240,35 @@ def compute_interference_strength(wave1: TensorLike, wave2: TensorLike) -> float
     # Compute interference strength
     interference_strength = mx.multiply(correlation, mx.subtract(tensor_ops.convert_to_tensor(1.0), normalized_phase_diff))
 
-    # Safe conversion to float
-    val = mx.array(interference_strength).item()
-    return float(str(val))
+    # Return as MLX scalar with default float type
+    return interference_strength.astype(default_float)
 
 
-def compute_phase_coherence(wave1: TensorLike, wave2: TensorLike, 
-                            freq_range: Optional[Tuple[float, float]] = None) -> float:
+def compute_phase_coherence(input_wave1: TensorLike, input_wave2: TensorLike,
+                            freq_range: Optional[Tuple[float, float]] = None) -> mx.array:
     """
     Compute the phase coherence between two wave signals.
-    
+
+    Calculates the consistency of the phase difference between two signals,
+    optionally within a specified frequency range. Uses circular statistics.
+    A value closer to 1 indicates high phase coherence.
+
     Args:
-        wave1: First wave signal
-        wave2: Second wave signal
-        freq_range: Optional frequency range to consider (min_freq, max_freq)
-        
+        input_wave1: The first input wave signal.
+        input_wave2: The second input wave signal.
+        freq_range: Optional tuple (min_freq, max_freq) to filter frequencies
+                    before computing coherence.
+
     Returns:
-        Phase coherence value between 0 and 1
+        An MLX scalar representing the phase coherence metric (0.0 to 1.0).
     """
     # Create instances for each call to avoid circular imports
     from ember_ml.backend.mlx.tensor import MLXTensor
     tensor_ops = MLXTensor()
     
     # Convert to MLX tensors
-    wave1_tensor = tensor_ops.convert_to_tensor(wave1)
-    wave2_tensor = tensor_ops.convert_to_tensor(wave2)
+    wave1_tensor = tensor_ops.convert_to_tensor(input_wave1)
+    wave2_tensor = tensor_ops.convert_to_tensor(input_wave2)
 
     # Ensure waves are the same length
     min_length = min(wave1_tensor.shape[0], wave2_tensor.shape[0])
@@ -302,22 +302,23 @@ def compute_phase_coherence(wave1: TensorLike, wave2: TensorLike,
     complex_imag = mx.sin(phase_diff)
     coherence = mx.sqrt(mx.add(mx.power(mx.mean(complex_real), 2), mx.power(mx.mean(complex_imag), 2)))
 
-    # Safe conversion to float
-    val = mx.array(coherence).item()
-    return float(str(val))
+    # Return as MLX scalar with default float type
+    return coherence.astype(default_float)
 
 
-def partial_interference(wave1: TensorLike, wave2: TensorLike, window_size: int = 100) -> mx.array:
+def partial_interference(input_wave1: TensorLike, input_wave2: TensorLike, window_size: int = 100) -> mx.array:
     """
     Compute the partial interference between two wave signals over sliding windows.
-    
+
+    Calculates interference strength for overlapping windows of the signals.
+
     Args:
-        wave1: First wave signal
-        wave2: Second wave signal
-        window_size: Size of the sliding window
-        
+        input_wave1: The first input wave signal.
+        input_wave2: The second input wave signal.
+        window_size: The size of the sliding window.
+
     Returns:
-        Array of interference values for each window
+        An MLX array containing the interference strength for each window.
     """
     # Create instances for each call to avoid circular imports
     from ember_ml.backend.mlx.tensor import MLXTensor
@@ -325,8 +326,8 @@ def partial_interference(wave1: TensorLike, wave2: TensorLike, window_size: int 
     tensor_ops = MLXTensor()
     
     # Convert to MLX tensors
-    wave1_tensor = tensor_ops.convert_to_tensor(wave1)
-    wave2_tensor = tensor_ops.convert_to_tensor(wave2)
+    wave1_tensor = tensor_ops.convert_to_tensor(input_wave1)
+    wave2_tensor = tensor_ops.convert_to_tensor(input_wave2)
 
     # Ensure waves are the same length
     min_length = min(wave1_tensor.shape[0], wave2_tensor.shape[0])
@@ -379,104 +380,17 @@ def partial_interference(wave1: TensorLike, wave2: TensorLike, window_size: int 
 
     return mx.array(result)
 
-def euclidean_distance(x: TensorLike, y: TensorLike) -> mx.array:
-    """
-    Compute the Euclidean distance between two vectors.
-
-    Args:
-        x: First vector
-        y: Second vector
-
-    Returns:
-        Euclidean distance
-    """
-    # Create instances for each call to avoid circular imports
-    from ember_ml.backend.mlx.tensor import MLXTensor
-    tensor_ops = MLXTensor()
-    x_tensor = tensor_ops.convert_to_tensor(x)
-    y_tensor = tensor_ops.convert_to_tensor(y)
-
-    return mx.sqrt(mx.sum(mx.square(mx.subtract(x_tensor, y_tensor))))
-
-def cosine_similarity(self, x: TensorLike, y: TensorLike) -> mx.array:
-    """
-    Compute the cosine similarity between two vectors.
-
-    Args:
-        x: First vector
-        y: Second vector
-
-    Returns:
-        Cosine similarity
-    """
-    # Create instances for each call to avoid circular imports
-    from ember_ml.backend.mlx.tensor import MLXTensor
-    tensor_ops = MLXTensor()
-    x_tensor = tensor_ops.convert_to_tensor(x)
-    y_tensor = tensor_ops.convert_to_tensor(y)
-
-    dot_product = mx.sum(mx.multiply(x_tensor, y_tensor))
-    norm_x = mx.sqrt(mx.sum(mx.square(x_tensor)))
-    norm_y = mx.sqrt(mx.sum(mx.square(y_tensor)))
-    return mx.divide(dot_product, mx.add(mx.multiply(norm_x, norm_y), 1e-8))
-
-def exponential_decay(initial_value: TensorLike, decay_rate: TensorLike, time_step: TensorLike) -> mx.array:
-    """
-    Compute exponential decay.
-
-    Args:
-        initial_value: Initial value
-        decay_rate: Decay rate
-        time_step: Time step
-
-    Returns:
-        Exponentially decayed value
-    """
-    # Create instances for each call to avoid circular imports
-    from ember_ml.backend.mlx.tensor import MLXTensor
-    tensor_ops = MLXTensor()
-    initial_value_tensor = tensor_ops.convert_to_tensor(initial_value)
-    decay_rate_tensor = tensor_ops.convert_to_tensor(decay_rate)
-    time_step_tensor = tensor_ops.convert_to_tensor(time_step)
-
-    return mx.multiply(initial_value_tensor, mx.exp(mx.multiply(mx.negative(decay_rate_tensor), time_step_tensor)))
-
-def gaussian(x: TensorLike, mu: TensorLike = 0.0, sigma: TensorLike = 1.0) -> mx.array:
-    """
-    Compute the Gaussian function.
-
-    Args:
-        x: Input tensor
-        mu: Mean
-        sigma: Standard deviation
-
-    Returns:
-        Gaussian function evaluated at x
-    """
-    # Create instances for each call to avoid circular imports
-    from ember_ml.backend.mlx.tensor import MLXTensor
-    from ember_ml.backend.mlx.math_ops import pi as math_pi
-    tensor_ops = MLXTensor()
-    x_tensor = tensor_ops.convert_to_tensor(x)
-    mu_tensor = tensor_ops.convert_to_tensor(mu)
-    sigma_tensor = tensor_ops.convert_to_tensor(sigma)
-
-    exponent = mx.multiply(
-        -0.5,
-        mx.square(mx.divide(mx.subtract(x_tensor, mu_tensor), sigma_tensor))
-    )
-    denominator = mx.multiply(
-        sigma_tensor,
-        mx.multiply(mx.sqrt(mx.array(2.0)), mx.sqrt(math_pi))
-    )
-    return mx.divide(mx.exp(exponent), denominator)
-def fft(a: TensorLike, n: Optional[int] = None, axis: int = -1) -> mx.array:
+# Note: Removing duplicate definition of euclidean_distance
+# Note: Duplicate definition removed by previous diff, assuming this is the intended one
+# Note: Removing duplicate definition of cosine_similarity
+# Note: Removing orphaned code block causing NameErrors
+def fft(input_array: TensorLike, output_length: Optional[int] = None, axis: int = -1) -> mx.array:
     """
     One dimensional discrete Fourier Transform.
     
     Args:
-        a: Input array
-        n: Length of the transformed axis
+        input_array: Input array
+        output_length: Length of the transformed axis
         axis: Axis over which to compute the FFT
         
     Returns:
@@ -486,17 +400,17 @@ def fft(a: TensorLike, n: Optional[int] = None, axis: int = -1) -> mx.array:
     from ember_ml.backend.mlx.tensor import MLXTensor
     tensor_ops = MLXTensor()
     
-    a_tensor = tensor_ops.convert_to_tensor(a)
-    return mx.fft.fft(a_tensor, n=n, axis=axis)
+    a_tensor = tensor_ops.convert_to_tensor(input_array)
+    return mx.fft.fft(a_tensor, n=output_length, axis=axis)
 
 
-def ifft(a: TensorLike, n: Optional[int] = None, axis: int = -1) -> mx.array:
+def ifft(input_array: TensorLike, output_length: Optional[int] = None, axis: int = -1) -> mx.array:
     """
     One dimensional inverse discrete Fourier Transform.
     
     Args:
-        a: Input array
-        n: Length of the transformed axis
+        input_array: Input array
+        output_length: Length of the transformed axis
         axis: Axis over which to compute the IFFT
         
     Returns:
@@ -506,17 +420,17 @@ def ifft(a: TensorLike, n: Optional[int] = None, axis: int = -1) -> mx.array:
     from ember_ml.backend.mlx.tensor import MLXTensor
     tensor_ops = MLXTensor()
     
-    a_tensor = tensor_ops.convert_to_tensor(a)
-    return mx.fft.ifft(a_tensor, n=n, axis=axis)
+    a_tensor = tensor_ops.convert_to_tensor(input_array)
+    return mx.fft.ifft(a_tensor, n=output_length, axis=axis)
 
 
-def fft2(a: TensorLike, s: Optional[Tuple[int, int]] = None, axes: Tuple[int, int] = (-2, -1)) -> mx.array:
+def fft2(input_array: TensorLike, output_shape: Optional[Shape] = None, axes: Axis = (-2, -1)) -> mx.array:
     """
     Two dimensional discrete Fourier Transform.
     
     Args:
-        a: Input array
-        s: Shape of the transformed axes
+        input_array: Input array
+        output_shape: Shape of the transformed axes
         axes: Axes over which to compute the FFT
         
     Returns:
@@ -526,23 +440,20 @@ def fft2(a: TensorLike, s: Optional[Tuple[int, int]] = None, axes: Tuple[int, in
     from ember_ml.backend.mlx.tensor import MLXTensor
     tensor_ops = MLXTensor()
     
-    a_tensor = tensor_ops.convert_to_tensor(a)
-
-    # MLX doesn't have direct fft2, so we implement it using sequential 1D FFTs
-    result = a_tensor
-    for axis in axes:
-        shape_i = s[axes.index(axis)] if s is not None else None
-        result = mx.fft.fft(result, n=shape_i, axis=axis)
-    return result
+    a_tensor = tensor_ops.convert_to_tensor(input_array)
+    
+    # Use native mx.fft.fft2
+    # Map output_shape -> s and axes -> axes
+    return mx.fft.fft2(a_tensor, s=output_shape, axes=axes)
 
 
-def ifft2(a: TensorLike, s: Optional[Tuple[int, int]] = None, axes: Tuple[int, int] = (-2, -1)) -> mx.array:
+def ifft2(input_array: TensorLike, output_shape: Optional[Shape] = None, axes: Axis = (-2, -1)) -> mx.array:
     """
     Two dimensional inverse discrete Fourier Transform.
     
     Args:
-        a: Input array
-        s: Shape of the transformed axes
+        input_array: Input array
+        output_shape: Shape of the transformed axes
         axes: Axes over which to compute the IFFT
         
     Returns:
@@ -552,23 +463,20 @@ def ifft2(a: TensorLike, s: Optional[Tuple[int, int]] = None, axes: Tuple[int, i
     from ember_ml.backend.mlx.tensor import MLXTensor
     tensor_ops = MLXTensor()
     
-    a_tensor = tensor_ops.convert_to_tensor(a)
+    a_tensor = tensor_ops.convert_to_tensor(input_array)
 
-    # MLX doesn't have direct ifft2, so we implement it using sequential 1D IFFTs
-    result = a_tensor
-    for axis in axes:
-        shape_i = s[axes.index(axis)] if s is not None else None
-        result = mx.fft.ifft(result, n=shape_i, axis=axis)
-    return result
+    # Use native mx.fft.ifft2
+    # Map output_shape -> s and axes -> axes
+    return mx.fft.ifft2(a_tensor, s=output_shape, axes=axes)
 
 
-def fftn(a: TensorLike, s: Optional[Sequence[int]] = None, axes: Optional[Sequence[int]] = None) -> mx.array:
+def fftn(input_array: TensorLike, output_shape: Optional[Shape] = None, axes: Axis = None) -> mx.array:
     """
     N-dimensional discrete Fourier Transform.
     
     Args:
-        a: Input array
-        s: Shape of the transformed axes
+        input_array: Input array
+        output_shape: Shape of the transformed axes
         axes: Axes over which to compute the FFT
         
     Returns:
@@ -578,27 +486,20 @@ def fftn(a: TensorLike, s: Optional[Sequence[int]] = None, axes: Optional[Sequen
     from ember_ml.backend.mlx.tensor import MLXTensor
     tensor_ops = MLXTensor()
     
-    a_tensor = tensor_ops.convert_to_tensor(a)
-
-    # If axes not specified, transform over all axes
-    if axes is None:
-        axes = tuple(range(a_tensor.ndim))
-
-    # MLX doesn't have direct fftn, so we implement it using sequential 1D FFTs
-    result = a_tensor
-    for i, axis in enumerate(axes):
-        shape_i = s[i] if s is not None else None
-        result = mx.fft.fft(result, n=shape_i, axis=axis)
-    return result
+    a_tensor = tensor_ops.convert_to_tensor(input_array)
+    
+    # Use native mx.fft.fftn
+    # Map output_shape -> s and axes -> axes
+    return mx.fft.fftn(a_tensor, s=output_shape, axes=axes)
 
 
-def ifftn(a: TensorLike, s: Optional[Sequence[int]] = None, axes: Optional[Sequence[int]] = None) -> mx.array:
+def ifftn(input_array: TensorLike, output_shape: Optional[Shape] = None, axes: Axis = None) -> mx.array:
     """
     N-dimensional inverse discrete Fourier Transform.
     
     Args:
-        a: Input array
-        s: Shape of the transformed axes
+        input_array: Input array
+        output_shape: Shape of the transformed axes
         axes: Axes over which to compute the IFFT
         
     Returns:
@@ -608,27 +509,20 @@ def ifftn(a: TensorLike, s: Optional[Sequence[int]] = None, axes: Optional[Seque
     from ember_ml.backend.mlx.tensor import MLXTensor
     tensor_ops = MLXTensor()
     
-    a_tensor = tensor_ops.convert_to_tensor(a)
+    a_tensor = tensor_ops.convert_to_tensor(input_array)
 
-    # If axes not specified, transform over all axes
-    if axes is None:
-        axes = tuple(range(a_tensor.ndim))
-
-    # MLX doesn't have direct ifftn, so we implement it using sequential 1D IFFTs
-    result = a_tensor
-    for i, axis in enumerate(axes):
-        shape_i = s[i] if s is not None else None
-        result = mx.fft.ifft(result, n=shape_i, axis=axis)
-    return result
+    # Use native mx.fft.ifftn
+    # Map output_shape -> s and axes -> axes
+    return mx.fft.ifftn(a_tensor, s=output_shape, axes=axes)
 
 
-def rfft(a: TensorLike, n: Optional[int] = None, axis: int = -1) -> mx.array:
+def rfft(input_array: TensorLike, output_length: Optional[int] = None, axis: int = -1) -> mx.array:
     """
     One dimensional discrete Fourier Transform for real input.
     
     Args:
-        a: Input array (real)
-        n: Length of the transformed axis
+        input_array: Input array (real)
+        output_length: Length of the transformed axis
         axis: Axis over which to compute the RFFT
         
     Returns:
@@ -638,25 +532,42 @@ def rfft(a: TensorLike, n: Optional[int] = None, axis: int = -1) -> mx.array:
     from ember_ml.backend.mlx.tensor import MLXTensor
     tensor_ops = MLXTensor()
     
-    a_tensor = tensor_ops.convert_to_tensor(a)
+    a_tensor = tensor_ops.convert_to_tensor(input_array)
     # MLX doesn't have direct rfft, so we implement it using regular fft
     # and taking only the non-redundant half
-    result = mx.fft.fft(a_tensor, n=n, axis=axis)
+    result = mx.fft.fft(a_tensor, n=output_length, axis=axis)
+    
+    # Restore MLX calculation for output size
     input_size = a_tensor.shape[axis]
-    output_size = (input_size if n is None else n) // 2 + 1
+    # Ensure addition uses mx.add for backend consistency
+    output_size = mx.add(mx.floor_divide((input_size if output_length is None else output_length), 2), mx.array(1))
+    output_size_item = output_size.item() # Get Python int size
 
-    slices = [slice(None)] * result.ndim
-    slices[axis] = slice(0, output_size)
-    return result[tuple(slices)]
+    # Construct arguments for mx.slice
+    start_indices = mx.array(0) # Start at index 0 along the specified axis
+    slice_axes = (axis,) # Specify the axis to slice
+    
+    # Determine the full slice_size tuple for all dimensions
+    slice_size_list = list(result.shape)
+    # Ensure axis is handled correctly if negative
+    actual_axis = axis if axis >= 0 else result.ndim + axis
+    if 0 <= actual_axis < result.ndim:
+        slice_size_list[actual_axis] = output_size_item
+    else:
+        raise ValueError(f"Invalid axis {axis} for tensor with {result.ndim} dimensions")
+    slice_size_tuple = tuple(slice_size_list)
+
+    # Use mx.slice instead of Python slice objects
+    return mx.slice(result, start_indices=start_indices, axes=slice_axes, slice_size=slice_size_tuple)
 
 
-def irfft(a: TensorLike, n: Optional[int] = None, axis: int = -1) -> mx.array:
+def irfft(input_array: TensorLike, output_length: Optional[int] = None, axis: int = -1) -> mx.array:
     """
     One dimensional inverse discrete Fourier Transform for real input.
     
     Args:
-        a: Input array
-        n: Length of the transformed axis
+        input_array: Input array
+        output_length: Length of the transformed axis
         axis: Axis over which to compute the IRFFT
         
     Returns:
@@ -666,12 +577,12 @@ def irfft(a: TensorLike, n: Optional[int] = None, axis: int = -1) -> mx.array:
     from ember_ml.backend.mlx.tensor import MLXTensor
     tensor_ops = MLXTensor()
     
-    a_tensor = tensor_ops.convert_to_tensor(a)
+    a_tensor = tensor_ops.convert_to_tensor(input_array)
 
     # Handle the size parameter
     input_shape = a_tensor.shape
-    if n is None:
-        n = 2 * (input_shape[axis] - 1)
+    if output_length is None:
+        output_length = 2 * (input_shape[axis] - 1)
 
     # Reconstruct conjugate symmetric Fourier components
     # Take advantage of conjugate symmetry: F(-f) = F(f)*
@@ -704,16 +615,16 @@ def irfft(a: TensorLike, n: Optional[int] = None, axis: int = -1) -> mx.array:
         full_fourier = a_tensor
 
     # Perform inverse FFT
-    return mx.real(mx.fft.ifft(full_fourier, n=n, axis=axis))
+    return mx.real(mx.fft.ifft(full_fourier, n=output_length, axis=axis))
 
 
-def rfft2(a: TensorLike, s: Optional[Tuple[int, int]] = None, axes: Tuple[int, int] = (-2, -1)) -> mx.array:
+def rfft2(input_array: TensorLike, output_shape: Optional[Shape] = None, axes: Axis = (-2, -1)) -> mx.array:
     """
     Two dimensional real discrete Fourier Transform.
     
     Args:
-        a: Input array (real)
-        s: Shape of the transformed axes
+        input_array: Input array (real)
+        output_shape: Shape of the transformed axes
         axes: Axes over which to compute the RFFT2
         
     Returns:
@@ -723,28 +634,20 @@ def rfft2(a: TensorLike, s: Optional[Tuple[int, int]] = None, axes: Tuple[int, i
     from ember_ml.backend.mlx.tensor import MLXTensor
     tensor_ops = MLXTensor()
     
-    a_tensor = tensor_ops.convert_to_tensor(a)
+    a_tensor = tensor_ops.convert_to_tensor(input_array)
 
-    # MLX doesn't have rfft2, so implement using sequential 1D rffts
-    result = a_tensor
-    for i, axis in enumerate(axes):
-        shape_i = s[i] if s is not None else None
-        if i == 0:
-            # First axis - use rfft to get real FFT
-            result = rfft(result, n=shape_i, axis=axis)
-        else:
-            # Second axis - use regular fft since data is already complex
-            result = mx.fft.fft(result, n=shape_i, axis=axis)
-    return result
+    # Use native mx.fft.rfft2
+    # Map output_shape -> s and axes -> axes
+    return mx.fft.rfft2(a_tensor, s=output_shape, axes=axes)
 
 
-def irfft2(a: TensorLike, s: Optional[Tuple[int, int]] = None, axes: Tuple[int, int] = (-2, -1)) -> mx.array:
+def irfft2(input_array: TensorLike, output_shape: Optional[Shape] = None, axes: Axis = (-2, -1)) -> mx.array:
     """
     Two dimensional inverse real discrete Fourier Transform.
     
     Args:
-        a: Input array
-        s: Shape of the transformed axes
+        input_array: Input array
+        output_shape: Shape of the transformed axes
         axes: Axes over which to compute the IRFFT2
         
     Returns:
@@ -754,28 +657,20 @@ def irfft2(a: TensorLike, s: Optional[Tuple[int, int]] = None, axes: Tuple[int, 
     from ember_ml.backend.mlx.tensor import MLXTensor
     tensor_ops = MLXTensor()
     
-    a_tensor = tensor_ops.convert_to_tensor(a)
+    a_tensor = tensor_ops.convert_to_tensor(input_array)
 
-    # MLX doesn't have irfft2, so implement using sequential 1D iffts
-    result = a_tensor
-    for i, axis in enumerate(reversed(axes)):
-        shape_i = s[-i-1] if s is not None else None
-        if i == 0:
-            # Last axis - use regular ifft since data is complex
-            result = mx.fft.ifft(result, n=shape_i, axis=axis)
-        else:
-            # First axis - use irfft to get real result
-            result = irfft(result, n=shape_i, axis=axis)
-    return result
+    # Use native mx.fft.irfft2
+    # Map output_shape -> s and axes -> axes
+    return mx.fft.irfft2(a_tensor, s=output_shape, axes=axes)
 
 
-def rfftn(a: TensorLike, s: Optional[Sequence[int]] = None, axes: Optional[Sequence[int]] = None) -> mx.array:
+def rfftn(input_array: TensorLike, output_shape: Optional[Shape] = None, axes: Axis = None) -> mx.array:
     """
     N-dimensional real discrete Fourier Transform.
     
     Args:
-        a: Input array (real)
-        s: Shape of the transformed axes
+        input_array: Input array (real)
+        output_shape: Shape of the transformed axes
         axes: Axes over which to compute the RFFTN
         
     Returns:
@@ -785,32 +680,20 @@ def rfftn(a: TensorLike, s: Optional[Sequence[int]] = None, axes: Optional[Seque
     from ember_ml.backend.mlx.tensor import MLXTensor
     tensor_ops = MLXTensor()
     
-    a_tensor = tensor_ops.convert_to_tensor(a)
+    a_tensor = tensor_ops.convert_to_tensor(input_array)
 
-    # If axes not specified, transform over all axes
-    if axes is None:
-        axes = tuple(range(a_tensor.ndim))
-
-    # MLX doesn't have rfftn, so implement using sequential 1D ffts
-    result = a_tensor
-    for i, axis in enumerate(axes):
-        shape_i = s[i] if s is not None else None
-        if i == 0:
-            # First axis - use rfft to get real FFT
-            result = rfft(result, n=shape_i, axis=axis)
-        else:
-            # Other axes - use regular fft since data is already complex
-            result = mx.fft.fft(result, n=shape_i, axis=axis)
-    return result
+    # Use native mx.fft.rfftn
+    # Map output_shape -> s and axes -> axes
+    return mx.fft.rfftn(a_tensor, s=output_shape, axes=axes)
 
 
-def irfftn(a: TensorLike, s: Optional[Sequence[int]] = None, axes: Optional[Sequence[int]] = None) -> mx.array:
+def irfftn(input_array: TensorLike, output_shape: Optional[Shape] = None, axes: Axis = None) -> mx.array:
     """
     N-dimensional inverse real discrete Fourier Transform.
     
     Args:
-        a: Input array
-        s: Shape of the transformed axes
+        input_array: Input array
+        output_shape: Shape of the transformed axes
         axes: Axes over which to compute the IRFFTN
         
     Returns:
@@ -820,321 +703,103 @@ def irfftn(a: TensorLike, s: Optional[Sequence[int]] = None, axes: Optional[Sequ
     from ember_ml.backend.mlx.tensor import MLXTensor
     tensor_ops = MLXTensor()
     
-    a_tensor = tensor_ops.convert_to_tensor(a)
+    a_tensor = tensor_ops.convert_to_tensor(input_array)
 
-    # If axes not specified, transform over all axes
-    if axes is None:
-        axes = tuple(range(a_tensor.ndim))
-
-    # MLX doesn't have irfftn, so implement using sequential 1D iffts
-    result = a_tensor
-    for i, axis in enumerate(reversed(axes)):
-        shape_i = s[-i-1] if s is not None else None
-        if i == 0:
-            # Last axis - use regular ifft since data is complex
-            result = mx.fft.ifft(result, n=shape_i, axis=axis)
-        else:
-            # Other axes - use irfft to get real result
-            result = irfft(result, n=shape_i, axis=axis)
-    return result
+    # Use native mx.fft.irfftn
+    # Map output_shape -> s and axes -> axes
+    return mx.fft.irfftn(a_tensor, s=output_shape, axes=axes)
 
 
-class MLXVectorOps:
+class MLXVectorOps: # Class methods updated to match module-level functions
     """MLX implementation of vector operations."""
 
-    def normalize_vector(self, vector: TensorLike) -> mx.array:
-        """
-        Normalize a vector to unit length.
+    def normalize_vector(self, input_vector: TensorLike) -> mx.array:
+        """Normalize an input vector to unit length (L2 norm)."""
+        return normalize_vector(input_vector)
 
-        Args:
-            vector: Input vector
-
-        Returns:
-            Normalized vector
-        """
-        return normalize_vector(vector)
-
-    def euclidean_distance(self, x: TensorLike, y: TensorLike) -> mx.array:
-        """
-        Compute the Euclidean distance between two vectors.
-
-        Args:
-            x: First vector
-            y: Second vector
-
-        Returns:
-            Euclidean distance
-        """
-        return euclidean_distance(x, y)
+    def euclidean_distance(self, vector1: TensorLike, vector2: TensorLike) -> mx.array:
+        """Compute the Euclidean (L2) distance between two vectors."""
+        return euclidean_distance(vector1, vector2)
     
-    def cosine_similarity(self, x: TensorLike, y: TensorLike) -> mx.array:
-        """
-        Compute the cosine similarity between two vectors.
-
-        Args:
-            x: First vector
-            y: Second vector
-
-        Returns:
-            Cosine similarity between -1 and 1
-        """
-        return cosine_similarity(x, y)
+    def cosine_similarity(self, vector1: TensorLike, vector2: TensorLike) -> mx.array:
+        """Compute the cosine similarity between two vectors."""
+        # Note: The module-level cosine_similarity had 'self' incorrectly, fixed here.
+        return cosine_similarity(vector1, vector2)
     
-    def exponential_decay(self, initial_value: TensorLike, decay_rate: TensorLike, time_step: TensorLike) -> mx.array:
-        """
-        Compute exponential decay.
-
-        Args:
-            initial_value: Initial value
-            decay_rate: Decay rate
-            time_step: Time step
-
-        Returns:
-            Exponentially decayed value
-        """
+    def exponential_decay(self, initial_value: TensorLike, decay_rate: TensorLike, time_step: Optional[TensorLike] = None) -> mx.array:
+        """Compute exponential decay. Supports uniform or index-based time."""
         return exponential_decay(initial_value, decay_rate, time_step)
     
-    def gaussian(self, x: TensorLike, mu: TensorLike = 0.0, sigma: TensorLike = 1.0) -> mx.array:
-        """
-        Compute the Gaussian function.
-
-        Args:
-            x: Input tensor
-            mu: Mean
-            sigma: Standard deviation
-
-        Returns:
-            Gaussian function evaluated at x
-        """
-        return gaussian(x, mu, sigma)
     
-    def compute_energy_stability(self, wave: TensorLike, window_size: int = 100) -> float:
-        """
-        Compute the energy stability of a wave signal.
-        
-        Args:
-            wave: Wave signal
-            window_size: Window size for stability computation
-
-        Returns:
-            Energy stability metric between 0 and 1
-        """
-        return compute_energy_stability(wave, window_size)
+    def compute_energy_stability(self, input_wave: TensorLike, window_size: int = 100) -> mx.array:
+        """Compute the energy stability of a wave signal."""
+        return compute_energy_stability(input_wave, window_size)
     
-    def compute_interference_strength(self, wave1: TensorLike, wave2: TensorLike) -> float:
-        """
-        Compute the interference strength between two wave signals.
-        
-        Args:
-            wave1: First wave signal
-            wave2: Second wave signal
-            
-        Returns:
-            Interference strength metric between 0 and 1
-        """
-        return compute_interference_strength(wave1, wave2)
+    def compute_interference_strength(self, input_wave1: TensorLike, input_wave2: TensorLike) -> mx.array:
+        """Compute the interference strength between two wave signals."""
+        return compute_interference_strength(input_wave1, input_wave2)
     
-    def compute_phase_coherence(self, wave1: TensorLike, wave2: TensorLike, 
-                              freq_range: Optional[Tuple[float, float]] = None) -> float:
-        """
-        Compute the phase coherence between two wave signals.
-        
-        Args:
-            wave1: First wave signal
-            wave2: Second wave signal
-            freq_range: Optional frequency range to consider (min_freq, max_freq)
-            
-        Returns:
-            Phase coherence value between 0 and 1
-        """
-        return compute_phase_coherence(wave1, wave2, freq_range)
+    def compute_phase_coherence(self, input_wave1: TensorLike, input_wave2: TensorLike,
+                              freq_range: Optional[Tuple[float, float]] = None) -> mx.array:
+        """Compute the phase coherence between two wave signals."""
+        return compute_phase_coherence(input_wave1, input_wave2, freq_range)
     
-    def partial_interference(self, wave1: TensorLike, wave2: TensorLike, window_size: int = 100) -> mx.array:
-        """
-        Compute the partial interference between two wave signals over sliding windows.
-        
-        Args:
-            wave1: First wave signal
-            wave2: Second wave signal
-            window_size: Size of the sliding window
-            
-        Returns:
-            Array of interference values for each window
-        """
-        return partial_interference(wave1, wave2, window_size)
+    def partial_interference(self, input_wave1: TensorLike, input_wave2: TensorLike, window_size: int = 100) -> mx.array:
+        """Compute the partial interference between two wave signals over sliding windows."""
+        return partial_interference(input_wave1, input_wave2, window_size)
     
-    def fft(self, a: TensorLike, n: Optional[int] = None, axis: int = -1) -> mx.array:
-        """
-        One dimensional discrete Fourier Transform.
-        
-        Args:
-            a: Input array
-            n: Length of the transformed axis
-            axis: Axis over which to compute the FFT
-            
-        Returns:
-            The transformed array
-        """
-        return fft(a, n, axis)
+    def fft(self, input_array: TensorLike, output_length: Optional[int] = None, axis: int = -1) -> mx.array:
+        """Compute the one-dimensional discrete Fourier Transform."""
+        return fft(input_array, output_length, axis)
     
-    def ifft(self, a: TensorLike, n: Optional[int] = None, axis: int = -1) -> mx.array:
-        """
-        One dimensional inverse discrete Fourier Transform.
-        
-        Args:
-            a: Input array
-            n: Length of the transformed axis
-            axis: Axis over which to compute the IFFT
-            
-        Returns:
-            The inverse transformed array
-        """
-        return ifft(a, n, axis)
+    def ifft(self, input_array: TensorLike, output_length: Optional[int] = None, axis: int = -1) -> mx.array:
+        """Compute the one-dimensional inverse discrete Fourier Transform."""
+        return ifft(input_array, output_length, axis)
     
-    def fft2(self, a: TensorLike, s: Optional[Tuple[int, int]] = None, 
-            axes: Tuple[int, int] = (-2, -1)) -> mx.array:
-        """
-        Two dimensional discrete Fourier Transform.
-        
-        Args:
-            a: Input array
-            s: Shape of the transformed axes
-            axes: Axes over which to compute the FFT
-            
-        Returns:
-            The transformed array
-        """
-        return fft2(a, s, axes)
+    def fft2(self, input_array: TensorLike, output_shape: Optional[Shape] = None,
+            axes: Axis = (-2, -1)) -> mx.array:
+        """Compute the two-dimensional discrete Fourier Transform."""
+        return fft2(input_array, output_shape, axes)
     
-    def ifft2(self, a: TensorLike, s: Optional[Tuple[int, int]] = None, 
-            axes: Tuple[int, int] = (-2, -1)) -> mx.array:
-        """
-        Two dimensional inverse discrete Fourier Transform.
-        
-        Args:
-            a: Input array
-            s: Shape of the transformed axes
-            axes: Axes over which to compute the IFFT
-            
-        Returns:
-            The inverse transformed array
-        """
-        return ifft2(a, s, axes)
+    def ifft2(self, input_array: TensorLike, output_shape: Optional[Shape] = None,
+            axes: Axis = (-2, -1)) -> mx.array:
+        """Compute the two-dimensional inverse discrete Fourier Transform."""
+        return ifft2(input_array, output_shape, axes)
     
-    def fftn(self, a: TensorLike, s: Optional[Sequence[int]] = None, 
-            axes: Optional[Sequence[int]] = None) -> mx.array:
-        """
-        N-dimensional discrete Fourier Transform.
-        
-        Args:
-            a: Input array
-            s: Shape of the transformed axes
-            axes: Axes over which to compute the FFT
-            
-        Returns:
-            The transformed array
-        """
-        return fftn(a, s, axes)
+    def fftn(self, input_array: TensorLike, output_shape: Optional[Shape] = None,
+            axes: Axis = None) -> mx.array:
+        """Compute the N-dimensional discrete Fourier Transform."""
+        return fftn(input_array, output_shape, axes)
     
-    def ifftn(self, a: TensorLike, s: Optional[Sequence[int]] = None, 
-            axes: Optional[Sequence[int]] = None) -> mx.array:
-        """
-        N-dimensional inverse discrete Fourier Transform.
-        
-        Args:
-            a: Input array
-            s: Shape of the transformed axes
-            axes: Axes over which to compute the IFFT
-            
-        Returns:
-            The inverse transformed array
-        """
-        return ifftn(a, s, axes)
+    def ifftn(self, input_array: TensorLike, output_shape: Optional[Shape] = None,
+            axes: Axis = None) -> mx.array:
+        """Compute the N-dimensional inverse discrete Fourier Transform."""
+        return ifftn(input_array, output_shape, axes)
     
-    def rfft(self, a: TensorLike, n: Optional[int] = None, axis: int = -1) -> mx.array:
-        """
-        One dimensional real discrete Fourier Transform.
-        
-        Args:
-            a: Input array (real)
-            n: Length of the transformed axis
-            axis: Axis over which to compute the RFFT
-            
-        Returns:
-            The transformed array
-        """
-        return rfft(a, n, axis)
+    def rfft(self, input_array: TensorLike, output_length: Optional[int] = None, axis: int = -1) -> mx.array:
+        """Compute the one-dimensional discrete Fourier Transform for real input."""
+        return rfft(input_array, output_length, axis)
     
-    def irfft(self, a: TensorLike, n: Optional[int] = None, axis: int = -1) -> mx.array:
-        """
-        One dimensional inverse real discrete Fourier Transform.
-        
-        Args:
-            a: Input array
-            n: Length of the transformed axis
-            axis: Axis over which to compute the IRFFT
-            
-        Returns:
-            The inverse transformed array (real)
-        """
-        return irfft(a, n, axis)
+    def irfft(self, input_array: TensorLike, output_length: Optional[int] = None, axis: int = -1) -> mx.array:
+        """Compute the one-dimensional inverse discrete Fourier Transform for real input."""
+        return irfft(input_array, output_length, axis)
     
-    def rfft2(self, a: TensorLike, s: Optional[Tuple[int, int]] = None, 
-            axes: Tuple[int, int] = (-2, -1)) -> mx.array:
-        """
-        Two dimensional real discrete Fourier Transform.
-        
-        Args:
-            a: Input array (real)
-            s: Shape of the transformed axes
-            axes: Axes over which to compute the RFFT2
-            
-        Returns:
-            The transformed array
-        """
-        return rfft2(a, s, axes)
+    def rfft2(self, input_array: TensorLike, output_shape: Optional[Shape] = None,
+            axes: Axis = (-2, -1)) -> mx.array:
+        """Compute the two-dimensional discrete Fourier Transform for real input."""
+        return rfft2(input_array, output_shape, axes)
     
-    def irfft2(self, a: TensorLike, s: Optional[Tuple[int, int]] = None, 
-            axes: Tuple[int, int] = (-2, -1)) -> mx.array:
-        """
-        Two dimensional inverse real discrete Fourier Transform.
-        
-        Args:
-            a: Input array
-            s: Shape of the transformed axes
-            axes: Axes over which to compute the IRFFT2
-            
-        Returns:
-            The inverse transformed array (real)
-        """
-        return irfft2(a, s, axes)
+    def irfft2(self, input_array: TensorLike, output_shape: Optional[Shape] = None,
+            axes: Axis = (-2, -1)) -> mx.array:
+        """Compute the two-dimensional inverse discrete Fourier Transform for real input."""
+        return irfft2(input_array, output_shape, axes)
     
-    def rfftn(self, a: TensorLike, s: Optional[Sequence[int]] = None, 
-            axes: Optional[Sequence[int]] = None) -> mx.array:
-        """
-        N-dimensional real discrete Fourier Transform.
-        
-        Args:
-            a: Input array (real)
-            s: Shape of the transformed axes
-            axes: Axes over which to compute the RFFTN
-            
-        Returns:
-            The transformed array
-        """
-        return rfftn(a, s, axes)
+    def rfftn(self, input_array: TensorLike, output_shape: Optional[Shape] = None,
+            axes: Axis = None) -> mx.array:
+        """Compute the N-dimensional discrete Fourier Transform for real input."""
+        return rfftn(input_array, output_shape, axes)
     
-    def irfftn(self, a: TensorLike, s: Optional[Sequence[int]] = None, 
-            axes: Optional[Sequence[int]] = None) -> mx.array:
-        """
-        N-dimensional inverse real discrete Fourier Transform.
-        
-        Args:
-            a: Input array
-            s: Shape of the transformed axes
-            axes: Axes over which to compute the IRFFTN
-            
-        Returns:
-            The inverse transformed array (real)
-        """
-        return irfftn(a, s, axes)
+    def irfftn(self, input_array: TensorLike, output_shape: Optional[Shape] = None,
+            axes: Axis = None) -> mx.array:
+        """Compute the N-dimensional inverse discrete Fourier Transform for real input."""
+        return irfftn(input_array, output_shape, axes)

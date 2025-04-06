@@ -200,17 +200,17 @@ def test_reduction_operations(backend_name, original_backend):
         t = tensor.convert_to_tensor([[1, 2, 3], [4, 5, 6]])
         
         # Test sum
-        result = ops.sum(t)
+        result = ops.stats.sum(t)
         assert ops.equal(result, tensor.convert_to_tensor(21))
         
         # Test sum along axis 0
-        result = ops.sum(t, axis=0)
+        result = ops.stats.sum(t, axis=0)
         assert tensor.shape(result) == (3,)
         expected = tensor.convert_to_tensor([5, 7, 9])
         assert ops.all(ops.equal(result, expected))
         
         # Test sum along axis 1
-        result = ops.sum(t, axis=1)
+        result = ops.stats.sum(t, axis=1)
         assert tensor.shape(result) == (2,)
         expected = tensor.convert_to_tensor([6, 15])
         assert ops.all(ops.equal(result, expected))

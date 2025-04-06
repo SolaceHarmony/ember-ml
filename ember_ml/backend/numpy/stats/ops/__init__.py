@@ -16,7 +16,8 @@ from ember_ml.backend.numpy.stats.ops.descriptive import (
     cumsum,
     argmax,
     sort,
-    argsort
+    argsort,
+    gaussian # Also include the newly added gaussian
 )
 
 __all__ = [
@@ -31,5 +32,6 @@ __all__ = [
     "cumsum",
     "argmax",
     "sort",
-    "argsort"
+    "argsort",
+    "gaussian" # Also include the newly added gaussian
 ]

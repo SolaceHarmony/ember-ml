@@ -11,6 +11,8 @@ from typing import Union, Sequence, Optional, Any
 from ember_ml.backend.mlx.types import TensorLike
 from ember_ml.backend.mlx.tensor import MLXTensor
 
+from ember_ml.backend.mlx.math_ops import pi as math_pi
+
 Tensor = MLXTensor()
 
 def median(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None, 
@@ -427,3 +429,35 @@ def argsort(x: TensorLike, axis: int = -1, descending: bool = False) -> mx.array
         return indices[tuple(idx_slice)]
     
     return indices
+
+
+def gaussian(input_value: TensorLike, mu: TensorLike = 0.0, sigma: TensorLike = 1.0) -> mx.array:
+    """
+    Compute the value of the Gaussian (normal distribution) function.
+
+    Formula: (1 / (sigma * sqrt(2 * pi))) * exp(-0.5 * ((x - mu) / sigma)^2)
+
+    Args:
+        input_value: The input value(s) (x).
+        mu: The mean (center) of the distribution. Defaults to 0.0.
+        sigma: The standard deviation (spread) of the distribution. Defaults to 1.0.
+
+    Returns:
+        The Gaussian function evaluated at the input value(s).
+    """
+    x_tensor = Tensor.convert_to_tensor(input_value)
+    mu_tensor = Tensor.convert_to_tensor(mu)
+    sigma_tensor = Tensor.convert_to_tensor(sigma)
+    half = Tensor.convert_to_tensor(0.5)
+    two = Tensor.convert_to_tensor(2.0)
+    pi_tensor = Tensor.convert_to_tensor(math_pi)
+
+    exponent = mx.multiply(
+        mx.negative(half),
+        mx.square(mx.divide(mx.subtract(x_tensor, mu_tensor), sigma_tensor))
+    )
+    denominator = mx.multiply(
+        sigma_tensor,
+        mx.multiply(mx.sqrt(two), mx.sqrt(pi_tensor))
+    )
+    return mx.divide(mx.exp(exponent), denominator)

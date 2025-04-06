@@ -61,6 +61,7 @@ from ember_ml.backend.torch.device_ops import TorchDeviceOps
 from ember_ml.backend.torch.io_ops import TorchIOOps
 from ember_ml.backend.torch.linearalg import TorchLinearAlgOps
 from ember_ml.backend.torch.stats import TorchStatsOps
+from ember_ml.backend.torch.vector_ops import TorchVectorOps
 
 
 # Import specific functions from math_ops
@@ -162,7 +163,6 @@ from ember_ml.backend.torch.vector_ops import (
     euclidean_distance,
     cosine_similarity,
     exponential_decay,
-    gaussian,
     compute_energy_stability,
     compute_interference_strength,
     compute_phase_coherence,

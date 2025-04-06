@@ -7,7 +7,7 @@ This module provides a class for processing data into multi-stride temporal repr
 from typing import Dict, List, Optional, Any
 from ember_ml import ops
 from ember_ml.nn.tensor import EmberTensor
-from ember_ml.features import fit, transform
+from ember_ml.nn.features import fit, transform
 from ember_ml.nn import tensor
 class TemporalStrideProcessor:
     """
@@ -209,7 +209,7 @@ class TemporalStrideProcessor:
         """
         if stride in self.pca_models:
             variance_ratio = self.pca_models[stride]["explained_variance_ratio"]
-            return EmberTensor(ops.sum(tensor.convert_to_tensor(variance_ratio)))
+            return EmberTensor(ops.stats.sum(tensor.convert_to_tensor(variance_ratio)))
         return None
     
     def get_feature_importance(self, stride: int) -> Optional[EmberTensor]:
@@ -226,6 +226,6 @@ class TemporalStrideProcessor:
             # Calculate feature importance as the sum of absolute component weights
             components = tensor.convert_to_tensor(self.pca_models[stride]["components"])
             abs_components = ops.abs(components)
-            importance = ops.sum(abs_components, axis=0)
+            importance = ops.stats.sum(abs_components, axis=0)
             return EmberTensor(importance)
         return None

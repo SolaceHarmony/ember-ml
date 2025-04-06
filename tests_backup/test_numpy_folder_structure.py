@@ -116,7 +116,7 @@ class TestNumPyFolderStructure:
         assert np.allclose(tensor.to_numpy(y), np.mean(np.arange(12).reshape((3, 4))))
 
         # Test sum
-        y = ops.sum(x)
+        y = ops.stats.sum(x)
         assert np.isscalar(tensor.to_numpy(y)) or tensor.shape(y) == ()
         assert np.allclose(tensor.to_numpy(y), np.sum(np.arange(12).reshape((3, 4))))
 

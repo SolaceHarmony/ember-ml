@@ -17,6 +17,7 @@ __all__ = [
     'NumpySolverOps',
     'NumpyIOOps',
     
+    'NumpyVectorOps',
     # Linear Algebra class
     'NumpyLinearAlgOps',
     
@@ -46,6 +47,13 @@ __all__ = [
     
     # I/O operations
     'save', 'load'
+    
+    # Vector operations
+    'fft', 'ifft', 'fft2', 'ifft2', 'fftn', 'ifftn',
+    'rfft', 'irfft', 'rfft2', 'irfft2', 'rfftn', 'irfftn',
+    'normalize_vector', 'compute_energy_stability', 'compute_interference_strength',
+    'compute_phase_coherence', 'partial_interference', 'euclidean_distance',
+    'cosine_similarity', 'exponential_decay', 'gaussian',
 ]
 
 # Import configuration variables
@@ -54,8 +62,6 @@ from ember_ml.backend.numpy.config import (
     DEFAULT_DTYPE
 )
 
-# Import tensor classes
-from ember_ml.backend.numpy.tensor import NumpyDType, NumpyTensor
 
 # Import all ops classes
 from ember_ml.backend.numpy.math_ops import NumpyMathOps
@@ -65,6 +71,7 @@ from ember_ml.backend.numpy.linearalg import NumpyLinearAlgOps
 from ember_ml.backend.numpy.io_ops import NumpyIOOps
 from ember_ml.backend.numpy.solver_ops import NumpySolverOps
 from ember_ml.backend.numpy.stats import NumpyStatsOps
+from ember_ml.backend.numpy.vector_ops import NumpyVectorOps
 
 # Import specific functions from math_ops
 from ember_ml.backend.numpy.math_ops import (
@@ -154,6 +161,31 @@ from ember_ml.backend.numpy.linearalg import (
 from ember_ml.backend.numpy.io_ops import (
     save,
     load
+)
+
+
+from ember_ml.backend.numpy.vector_ops import (
+
+    fft,
+    ifft,
+    fft2,
+    ifft2,
+    fftn,
+    ifftn,
+    rfft,
+    irfft,
+    rfft2,
+    irfft2,
+    rfftn,
+    irfftn,
+    normalize_vector,
+    compute_energy_stability,
+    compute_interference_strength,
+    compute_phase_coherence,
+    partial_interference,
+    euclidean_distance,
+    cosine_similarity,
+    exponential_decay
 )
 
 # Set power function

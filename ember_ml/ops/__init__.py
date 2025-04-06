@@ -210,7 +210,18 @@ partial_interference = lambda *args, **kwargs: vector_ops().partial_interference
 euclidean_distance = lambda *args, **kwargs: vector_ops().euclidean_distance(*args, **kwargs)
 cosine_similarity = lambda *args, **kwargs: vector_ops().cosine_similarity(*args, **kwargs)
 exponential_decay = lambda *args, **kwargs: vector_ops().exponential_decay(*args, **kwargs)
-gaussian = lambda *args, **kwargs: vector_ops().gaussian(*args, **kwargs)
+fft = lambda *args, **kwargs: vector_ops().fft(*args, **kwargs)
+ifft = lambda *args, **kwargs: vector_ops().ifft(*args, **kwargs)
+fft2 = lambda *args, **kwargs: vector_ops().fft2(*args, **kwargs)
+ifft2 = lambda *args, **kwargs: vector_ops().ifft2(*args, **kwargs)
+fftn = lambda *args, **kwargs: vector_ops().fftn(*args, **kwargs)
+ifftn = lambda *args, **kwargs: vector_ops().ifftn(*args, **kwargs)
+rfft = lambda *args, **kwargs: vector_ops().rfft(*args, **kwargs)
+irfft = lambda *args, **kwargs: vector_ops().irfft(*args, **kwargs)
+rfft2 = lambda *args, **kwargs: vector_ops().rfft2(*args, **kwargs)
+irfft2 = lambda *args, **kwargs: vector_ops().irfft2(*args, **kwargs)
+rfftn = lambda *args, **kwargs: vector_ops().rfftn(*args, **kwargs)
+irfftn = lambda *args, **kwargs: vector_ops().irfftn(*args, **kwargs)
 # Export all functions and classes
 __all__ = [
     # Classes
@@ -317,5 +328,17 @@ __all__ = [
     'cosine_similarity',
     'exponential_decay',
     'gaussian'
+    'fft',
+    'ifft',
+    'fft2',
+    'ifft2',
+    'fftn',
+    'ifftn',
+    'rfft',
+    'irfft',
+    'rfft2',
+    'irfft2',
+    'rfftn',
+    'irfftn',
     
 ]

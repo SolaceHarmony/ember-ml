@@ -56,7 +56,7 @@ def _find_ncomponents(
     elif isinstance(n_components, float) and 0 < n_components < 1.0:
         # Compute number of components that explain at least n_components of variance
         ratio_cumsum = ops.cumsum(explained_variance_ratio)
-        n_components = ops.add(ops.sum(ops.less(ratio_cumsum, n_components)), 1)
+        n_components = ops.add(ops.stats.sum(ops.less(ratio_cumsum, n_components)), 1)
     elif n_components == 'mle':
         # Minka's MLE for selecting number of components
         n_components = _infer_dimensions(explained_variance, n_samples)
@@ -93,13 +93,13 @@ def _infer_dimensions(explained_variance, n_samples):
                         ops.multiply(-0.5, n_samples),
                         ops.add(
                             ops.add(
-                                ops.sum(ops.log(explained_variance[:i+1])),
+                                ops.stats.sum(ops.log(explained_variance[:i+1])),
                                 ops.multiply(n_components - i - 1, ops.log(sigma2))
                             ),
                             ops.add(
                                 ops.divide(n_components - i - 1, n_components - i),
                                 ops.add(
-                                    ops.divide(ops.sum(explained_variance[:i+1]), sigma2),
+                                    ops.divide(ops.stats.sum(explained_variance[:i+1]), sigma2),
                                     ops.divide(ops.multiply(n_components - i - 1, sigma2), sigma2)
                                 )
                             )
@@ -110,7 +110,7 @@ def _infer_dimensions(explained_variance, n_samples):
             ll = tensor.tensor_scatter_nd_update(
                 ll,
                 [[i]],
-                [ops.multiply(-0.5, ops.multiply(n_samples, ops.sum(ops.log(explained_variance))))]
+                [ops.multiply(-0.5, ops.multiply(n_samples, ops.stats.sum(ops.log(explained_variance))))]
             )
     
     return ops.add(ops.argmax(ll), 1)
@@ -262,7 +262,7 @@ class PCA:
             U, S, V = svd(X_centered)
             # Explained variance
             explained_variance = ops.divide(ops.square(S), ops.subtract(self.n_samples_, 1))
-            total_var = ops.sum(explained_variance)
+            total_var = ops.stats.sum(explained_variance)
             explained_variance_ratio = ops.divide(explained_variance, total_var)
         elif svd_solver == "randomized":
             if n_components is None:
@@ -280,7 +280,7 @@ class PCA:
             )
             # Explained variance
             explained_variance = ops.divide(ops.square(S), ops.subtract(self.n_samples_, 1))
-            total_var = ops.divide(ops.sum(ops.square(X_centered)), ops.subtract(self.n_samples_, 1))
+            total_var = ops.divide(ops.stats.sum(ops.square(X_centered)), ops.subtract(self.n_samples_, 1))
             explained_variance_ratio = ops.divide(explained_variance, total_var)
         elif svd_solver == "covariance_eigh":
             # Compute covariance matrix
@@ -298,7 +298,7 @@ class PCA:
             eigenvals = ops.clip(eigenvals, min_value=0.0)
             # Compute equivalent variables to full SVD output
             explained_variance = eigenvals
-            total_var = ops.sum(explained_variance)
+            total_var = ops.stats.sum(explained_variance)
             explained_variance_ratio = ops.divide(explained_variance, total_var)
             S = ops.sqrt(ops.multiply(eigenvals, ops.subtract(self.n_samples_, 1)))
             V = tensor.transpose(eigenvecs)

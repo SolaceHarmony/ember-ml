@@ -158,8 +158,8 @@ print(f"Anomalous data scores: mean={ops.mean(anomalous_scores)}, std={ops.std(a
 normal_anomalies = detector.detect(normal_data)
 anomalous_anomalies = detector.detect(anomalous_data)
 
-print(f"Normal data anomalies: {ops.sum(normal_anomalies)}/{len(normal_data)}")
-print(f"Anomalous data anomalies: {ops.sum(anomalous_anomalies)}/{len(anomalous_data)}")
+print(f"Normal data anomalies: {ops.stats.sum(normal_anomalies)}/{len(normal_data)}")
+print(f"Anomalous data anomalies: {ops.stats.sum(anomalous_anomalies)}/{len(anomalous_data)}")
 ```
 
 ## Relationship with Other Modules

@@ -41,7 +41,7 @@ class TestMathOpsComparison:
             ("tan", lambda x: ops.tan(x)),
             ("abs", lambda x: ops.abs(x)),
             ("mean", lambda x: ops.mean(x)),
-            ("sum", lambda x: ops.sum(x)),
+            ("sum", lambda x: ops.stats.sum(x)),
         ]
         
         # Backends to test

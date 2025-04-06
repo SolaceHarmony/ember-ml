@@ -140,7 +140,7 @@ f = ops.divide(a, b)  # [0.25, 0.4, 0.5]
 g = ops.matmul(EmberTensor([[1, 2], [3, 4]]), EmberTensor([[5, 6], [7, 8]]))  # [[19, 22], [43, 50]]
 
 # Reduction operations
-sum_a = ops.sum(a)  # 6
+sum_a = ops.stats.sum(a)  # 6
 mean_a = ops.mean(a)  # 2.0
 max_a = ops.stats.max(a)  # 3
 min_a = ops.stats.min(a)  # 1

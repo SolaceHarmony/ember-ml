@@ -9,14 +9,13 @@ from typing import Dict, List, Optional, Tuple, Any, Union
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
-from ember_ml.features.common.pca_features import PCA
-from ember_ml.features import one_hot
+from ember_ml.nn.features.common.pca_features import PCA
+from ember_ml.nn.features import one_hot
 # Import ember_ml ops for backend-agnostic operations
 from ember_ml import ops
 from ember_ml.nn import tensor
 
-# Define pi constant (ops doesn't have pi)
-PI = 3.14159265358979323846
+
 from sklearn.pipeline import Pipeline
 
 
@@ -320,7 +319,7 @@ class ColumnFeatureExtractor:
             
             # Use ops with numpy arrays
             # Hour of day (0-23)
-            two_pi = ops.multiply(tensor.convert_to_tensor(2.0), tensor.convert_to_tensor(PI))
+            two_pi = ops.multiply(tensor.convert_to_tensor(2.0), tensor.convert_to_tensor(ops.pi))
             hour_tensor = tensor.convert_to_tensor(hour_array)
             result[f"{column}_sin_hour"] = ops.sin(ops.divide(ops.multiply(two_pi, hour_tensor), tensor.convert_to_tensor(23.0)))
             result[f"{column}_cos_hour"] = ops.cos(ops.divide(ops.multiply(two_pi, hour_tensor), tensor.convert_to_tensor(23.0)))
@@ -821,10 +820,10 @@ class TemporalColumnFeatureExtractor(ColumnFeatureExtractor):
             # Calculate numerator: sum((x - x_mean) * (y - y_mean))
             x_diff = ops.subtract(x_values, x_mean)
             y_diff = ops.subtract(window, y_mean)
-            numerator = ops.sum(ops.multiply(x_diff, y_diff))
+            numerator = ops.stats.sum(ops.multiply(x_diff, y_diff))
             
             # Calculate denominator: sum((x - x_mean)^2)
-            denominator = ops.sum(ops.square(x_diff))
+            denominator = ops.stats.sum(ops.square(x_diff))
             
             # Calculate slope: numerator / denominator
             slope = ops.divide(numerator, denominator)

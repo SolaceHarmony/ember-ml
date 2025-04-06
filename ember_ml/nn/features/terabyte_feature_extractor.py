@@ -1110,7 +1110,7 @@ class TerabyteTemporalStrideProcessor:
             components = backend_utils.convert_to_tensor_safe(self.pca_models[stride].components_)
             
             # Use ops module for all backends
-            importance = ops.sum(ops.abs(components), axis=0)
+            importance = ops.stats.sum(ops.abs(components), axis=0)
             
             # Convert to numpy for compatibility with pandas/sklearn
             return backend_utils.tensor_to_numpy_safe(importance)

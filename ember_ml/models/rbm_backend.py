@@ -253,7 +253,7 @@ class RBM:
         
         # Compute reconstruction error
         reconstruction_error = ops.mean(
-            ops.sum(ops.pow(ops.subtract(batch_data, neg_visible_probs), 2), axis=1)
+            ops.stats.sum(ops.pow(ops.subtract(batch_data, neg_visible_probs), 2), axis=1)
         )
         
         # Track state if enabled
@@ -410,7 +410,7 @@ class RBM:
         """
         data = tensor.convert_to_tensor(data)
         reconstructed = self.reconstruct(data)
-        squared_error = ops.sum(ops.pow(ops.subtract(data, reconstructed), 2), axis=1)
+        squared_error = ops.stats.sum(ops.pow(ops.subtract(data, reconstructed), 2), axis=1)
         
         if per_sample:
             return squared_error
@@ -432,7 +432,7 @@ class RBM:
         """
         data = tensor.convert_to_tensor(data)
         visible_bias_term = ops.dot(data, self.visible_bias)
-        hidden_term = ops.sum(
+        hidden_term = ops.stats.sum(
             ops.log(ops.add(1, ops.exp(ops.add(ops.dot(data, self.weights), self.hidden_bias)))),
             axis=1
         )

@@ -155,7 +155,7 @@ class TestEmberTensor:
         a = EmberTensor([[1, 2, 3], [4, 5, 6]])
         
         # Test sum using ops functions
-        b = EmberTensor(ops.sum(a.to_backend_tensor()))
+        b = EmberTensor(ops.stats.sum(a.to_backend_tensor()))
         assert isinstance(b, EmberTensor)
         assert b.numpy() == 21
         

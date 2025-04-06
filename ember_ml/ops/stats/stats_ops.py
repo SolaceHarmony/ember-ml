@@ -5,7 +5,7 @@ This module defines the abstract interface for statistical operations.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Optional, Tuple, Union, Sequence
+from typing import Any, Optional, Union, Sequence
 
 class StatsOps(ABC):
     """Abstract interface for statistical operations."""
@@ -200,5 +200,23 @@ class StatsOps(ABC):
             
         Returns:
             Indices that would sort the tensor
+        """
+        pass
+
+    # === Probability Distributions ===
+    @abstractmethod
+    def gaussian(self, input_value: Any, mu: Any = 0.0, sigma: Any = 1.0) -> Any:
+        """
+        Compute the value of the Gaussian (normal distribution) function.
+
+        Formula: (1 / (sigma * sqrt(2 * pi))) * exp(-0.5 * ((x - mu) / sigma)^2)
+
+        Args:
+            input_value: The input value(s).
+            mu: The mean (center) of the distribution. Defaults to 0.0.
+            sigma: The standard deviation (spread) of the distribution. Defaults to 1.0.
+
+        Returns:
+            The Gaussian function evaluated at the input value(s).
         """
         pass

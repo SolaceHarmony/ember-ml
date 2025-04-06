@@ -26,7 +26,7 @@ softmax = lambda x, axis=-1: ops.softmax(tensor.convert_to_tensor(x), axis=axis)
 def normalize(x, axis=-1):
     """Normalize a tensor along the specified axis."""
     x_tensor = tensor.convert_to_tensor(x)
-    norm = ops.sqrt(ops.sum(ops.square(x_tensor), axis=axis, keepdims=True))
+    norm = ops.sqrt(ops.stats.sum(ops.square(x_tensor), axis=axis, keepdims=True))
     return ops.divide(x_tensor, ops.add(norm, tensor.convert_to_tensor(1e-8)))
 
 def standardize(x, axis=-1):
@@ -40,15 +40,15 @@ def euclidean_distance(x, y):
     """Compute the Euclidean distance between two vectors."""
     x_tensor = tensor.convert_to_tensor(x)
     y_tensor = tensor.convert_to_tensor(y)
-    return ops.sqrt(ops.sum(ops.square(ops.subtract(x_tensor, y_tensor))))
+    return ops.sqrt(ops.stats.sum(ops.square(ops.subtract(x_tensor, y_tensor))))
 
 def cosine_similarity(x, y):
     """Compute the cosine similarity between two vectors."""
     x_tensor = tensor.convert_to_tensor(x)
     y_tensor = tensor.convert_to_tensor(y)
-    dot_product = ops.sum(ops.multiply(x_tensor, y_tensor))
-    norm_x = ops.sqrt(ops.sum(ops.square(x_tensor)))
-    norm_y = ops.sqrt(ops.sum(ops.square(y_tensor)))
+    dot_product = ops.stats.sum(ops.multiply(x_tensor, y_tensor))
+    norm_x = ops.sqrt(ops.stats.sum(ops.square(x_tensor)))
+    norm_y = ops.sqrt(ops.stats.sum(ops.square(y_tensor)))
     return ops.divide(dot_product, ops.add(ops.multiply(norm_x, norm_y), tensor.convert_to_tensor(1e-8)))
 
 def exponential_decay(initial_value, decay_rate, time_step):
@@ -102,7 +102,7 @@ def compute_energy_stability(wave, window_size: int = 100) -> float:
         start = ops.multiply(tensor.convert_to_tensor(i), tensor.convert_to_tensor(window_size))
         end = ops.add(start, tensor.convert_to_tensor(window_size))
         window = wave_tensor[start:end]
-        energy = ops.sum(ops.square(window))
+        energy = ops.stats.sum(ops.square(window))
         energies.append(tensor.item(energy))
     
     # Convert energies to tensor
@@ -151,10 +151,10 @@ def compute_interference_strength(wave1, wave2) -> float:
     wave1_centered = ops.subtract(wave1_tensor, wave1_mean)
     wave2_centered = ops.subtract(wave2_tensor, wave2_mean)
     
-    numerator = ops.sum(ops.multiply(wave1_centered, wave2_centered))
+    numerator = ops.stats.sum(ops.multiply(wave1_centered, wave2_centered))
     denominator = ops.sqrt(ops.multiply(
-        ops.sum(ops.square(wave1_centered)),
-        ops.sum(ops.square(wave2_centered))
+        ops.stats.sum(ops.square(wave1_centered)),
+        ops.stats.sum(ops.square(wave2_centered))
     ))
     
     correlation = ops.divide(numerator, ops.add(denominator, tensor.convert_to_tensor(1e-8)))
@@ -262,10 +262,10 @@ def partial_interference(wave1, wave2, window_size: int = 100):
         window1_centered = ops.subtract(window1, window1_mean)
         window2_centered = ops.subtract(window2, window2_mean)
         
-        numerator = ops.sum(ops.multiply(window1_centered, window2_centered))
+        numerator = ops.stats.sum(ops.multiply(window1_centered, window2_centered))
         denominator = ops.sqrt(ops.multiply(
-            ops.sum(ops.square(window1_centered)),
-            ops.sum(ops.square(window2_centered))
+            ops.stats.sum(ops.square(window1_centered)),
+            ops.stats.sum(ops.square(window2_centered))
         ))
         
         correlation = ops.divide(numerator, ops.add(denominator, tensor.convert_to_tensor(1e-8)))
