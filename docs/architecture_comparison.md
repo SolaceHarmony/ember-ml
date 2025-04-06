@@ -194,7 +194,7 @@ Key classes:
 
 - **Example**:
   ```python
-  self.weight = Parameter(ops.random_normal((input_size, hidden_size)))
+  self.weight = Parameter(tensor.random_normal((input_size, hidden_size)))
   self.bias = Parameter(tensor.zeros(hidden_size))
   ```
 

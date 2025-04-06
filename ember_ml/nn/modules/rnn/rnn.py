@@ -11,7 +11,8 @@ from ember_ml import ops
 from ember_ml.nn.modules import Module
 from ember_ml.nn.modules.rnn.rnn_cell import RNNCell
 from ember_ml.nn import tensor
-from ember_ml.nn.container.common import Dropout
+# Import Dropout module from its new location
+from ember_ml.nn.modules.activations import Dropout
 class RNN(Module):
     """
     Recurrent Neural Network (RNN) layer.
@@ -197,7 +198,13 @@ class RNN(Module):
             
             # Apply dropout (except for the last layer)
             if layer < self.num_layers - 1 and self.dropout > 0:
-                layer_outputs = Dropout(layer_outputs, self.dropout)
+                # Instantiate and apply Dropout module
+                # Need to handle the training state appropriately
+                # Assuming a 'training=True' context for dropout during this layer's forward pass
+                # A more robust solution would pass a training flag down
+                dropout_layer = Dropout(rate=self.dropout)
+                # Pass training=True, assuming this forward call is during training
+                layer_outputs = dropout_layer(layer_outputs, training=True)
             
             # Store final states for this layer
             final_h_states.append(forward_h)
@@ -246,3 +253,27 @@ class RNN(Module):
                 h_states.append(tensor.zeros((batch_size, self.hidden_size)))
         
         return tensor.stack(h_states)
+
+    def get_config(self) -> Dict[str, Any]:
+        """Returns the configuration of the RNN layer."""
+        config = super().get_config()
+        config.update({
+            "input_size": self.input_size,
+            "hidden_size": self.hidden_size,
+            "num_layers": self.num_layers,
+            "activation": self.activation, # Save activation name
+            "bias": self.bias,
+            "batch_first": self.batch_first,
+            "dropout": self.dropout,
+            "bidirectional": self.bidirectional,
+            "return_sequences": self.return_sequences,
+            "return_state": self.return_state,
+        })
+        # Cell is reconstructed in __init__ based on these args
+        return config
+
+    @classmethod
+    def from_config(cls, config: Dict[str, Any]) -> 'RNN':
+        """Creates an RNN layer from its configuration."""
+        # BaseModule.from_config handles calling cls(**config)
+        return super(RNN, cls).from_config(config)

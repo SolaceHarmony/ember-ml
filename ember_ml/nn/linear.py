@@ -8,7 +8,7 @@ This module provides a backend-agnostic implementation of a fully connected
 from typing import Optional, Union, Tuple
 
 from ember_ml import backend as K
-from ember_ml.nn.module import Module, Parameter
+from ember_ml.nn.modules import Module, Parameter
 
 class Linear(Module):
     """

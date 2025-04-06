@@ -7,10 +7,11 @@ from sklearn.preprocessing import StandardScaler
 from ember_ml import ops
 from ember_ml.nn import tensor
 from ember_ml.nn.tensor import EmberTensor
-from ember_ml.nn.wirings import AutoNCP
+from ember_ml.nn.modules import AutoNCP # Updated import path
 from ember_ml.nn.modules.rnn import CfC
 from ember_ml.nn.modules import Module
-from ember_ml.nn.container import Sequential, BatchNormalization, Dense
+from ember_ml.nn.container import Sequential, BatchNormalization
+from ember_ml.nn.modules import Dense
 
 def generate_log_data(num_logs=1000):
     """Generate synthetic Splunk-like log data with more pronounced anomaly patterns"""

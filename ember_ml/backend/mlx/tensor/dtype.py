@@ -20,10 +20,11 @@ class MLXDType:
         """Get the float32 data type."""
         return mx.float32
     
-    @property
-    def float64(self):
-        """Get the float64 data type."""
-        return mx.float64
+    # float64 property removed as MLX does not support it.
+    # @property
+    # def float64(self):
+    #     """Get the float64 data type."""
+    #     return mx.float64
     
     @property
     def int8(self):
@@ -95,7 +96,7 @@ class MLXDType:
         dtype_map = {
             mx.float16: 'float16',
             mx.float32: 'float32',
-            mx.float64: 'float64',
+            # mx.float64: 'float64', # Removed float64
             mx.int8: 'int8',
             mx.int16: 'int16',
             mx.int32: 'int32',
@@ -171,8 +172,8 @@ class MLXDType:
         # Map dtype names to MLX dtypes
         if dtype_name == 'float32':
             return mx.float32
-        elif dtype_name == 'float64':
-            return mx.float64
+        # elif dtype_name == 'float64': # Removed float64
+        #     return mx.float64
         elif dtype_name == 'int32':
             return mx.int32
         elif dtype_name == 'int64':

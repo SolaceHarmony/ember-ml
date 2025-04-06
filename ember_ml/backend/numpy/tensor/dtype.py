@@ -104,13 +104,17 @@ class NumpyDType:
             np.uint16: 'uint16',
             np.uint32: 'uint32',
             np.uint64: 'uint64',
-            np.bool_: 'bool'
+            np.bool_: 'bool_' # Standardize to bool_ to match EmberDType/Torch
         }
 
-        if dtype in dtype_map:
-            return dtype_map[dtype]
+        # Check using the underlying type (e.g., np.float32) from the dtype object
+        if hasattr(dtype, 'type') and dtype.type in dtype_map:
+            return dtype_map[dtype.type]
+        elif dtype in dtype_map: # Fallback for direct type objects if passed
+             return dtype_map[dtype]
         else:
-            raise ValueError(f"Cannot convert {dtype} to EmberDType")
+            # Add more detail to the error message
+            raise ValueError(f"Cannot convert NumPy dtype '{dtype}' (type: {type(dtype)}, underlying type: {getattr(dtype, 'type', 'N/A')}) to EmberDType string representation.")
     
     def validate_dtype(self, dtype: Optional[Any]) -> Optional[Any]:
         """

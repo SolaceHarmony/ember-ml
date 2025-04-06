@@ -6,13 +6,14 @@ circuit policies, where all neurons are connected to all other neurons.
 """
 
 import numpy as np
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Dict, Any # Added Dict, Any
 
 from ember_ml import ops
-from ember_ml.nn.wirings.wiring import Wiring
+# Use explicit path for clarity now it's moved
+from ember_ml.nn.modules.wiring.neuron_map import NeuronMap
 from ember_ml.nn import tensor
 
-class FullyConnectedWiring(Wiring):
+class FullyConnectedMap(NeuronMap): # Name is already correct
     """
     Fully connected wiring configuration.
     
@@ -38,10 +39,10 @@ class FullyConnectedWiring(Wiring):
             sparsity_level: Sparsity level for the connections (default: 0.0)
             seed: Random seed for reproducibility
         """
-        # Don't pass input_dim to the parent class to avoid conflicts
-        super().__init__(units, output_dim, None, sparsity_level, seed)
-        # Store input_dim for later use
-        self._stored_input_dim = input_dim
+        # Pass input_dim to the parent class
+        super().__init__(units, output_dim, input_dim, sparsity_level, seed)
+        # Also store input_dim for later use
+        self._init_input_dim = input_dim
     
     def build(self, input_dim=None) -> Tuple:
         """
@@ -109,5 +110,18 @@ class FullyConnectedWiring(Wiring):
         input_mask = tensor.to_numpy(input_mask)
         recurrent_mask = tensor.to_numpy(recurrent_mask)
         output_mask = tensor.to_numpy(output_mask)
-        
+
+        self._built = True # Mark map as built
         return input_mask, recurrent_mask, output_mask
+        
+    def get_config(self) -> Dict[str, Any]:
+        """Returns the configuration of the FullyConnectedMap."""
+        # Get base config (units, output_dim, sparsity_level, seed)
+        config = super().get_config()
+        # The input_dim is already saved by the parent class
+        return config
+
+# from_config can rely on base NeuronMap implementation
+# Base NeuronMap methods should suffice.
+# The __init__ method was already adjusted correctly.
+        # _stored_input_dim is no longer needed if we rely on parent's self.input_dim

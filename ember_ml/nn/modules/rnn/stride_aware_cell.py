@@ -12,7 +12,7 @@ import numpy as np
 from ember_ml import ops
 from ember_ml.nn import tensor
 from ember_ml.nn.modules import Module, Parameter
-from ember_ml.initializers import glorot_uniform
+from ember_ml.nn.initializers import glorot_uniform # Corrected import path
 
 class StrideAwareCell(Module):
     """

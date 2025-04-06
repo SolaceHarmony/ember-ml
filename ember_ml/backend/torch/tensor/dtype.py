@@ -101,7 +101,7 @@ class TorchDType:
         elif dtype == torch.int64:
             return 'int64'
         elif dtype == torch.bool:
-            return 'bool'
+            return 'bool_' # Standardize to bool_ to match EmberDType/NumPy
         elif dtype == torch.int8:
             return 'int8'
         elif dtype == torch.int16:
@@ -115,6 +115,63 @@ class TorchDType:
             return dtype
         else:
             raise ValueError(f"Cannot convert {dtype} to EmberDType")
+    def validate_dtype(self, dtype: Union[Any, str, None]) -> Optional[torch.dtype]:
+        """
+        Validate and convert dtype to Torch format.
+
+        Args:
+            dtype: Input dtype to validate (EmberDType, torch.dtype, str, or None).
+
+        Returns:
+            Validated torch.dtype object or None.
+
+        Raises:
+            ValueError: If the dtype is invalid or cannot be converted.
+        """
+        if dtype is None:
+            return None
+
+        # 1. Handle EmberDType instances
+        if (hasattr(dtype, '__class__') and
+            hasattr(dtype.__class__, '__name__') and
+            dtype.__class__.__name__ == 'EmberDType'):
+            backend_dtype_val = getattr(dtype, '_backend_dtype', None)
+            if isinstance(backend_dtype_val, torch.dtype):
+                return backend_dtype_val  # Already correct torch.dtype
+            elif isinstance(backend_dtype_val, str):
+                try:
+                    # Attempt conversion from string representation inside EmberDType
+                    return self.from_dtype_str(backend_dtype_val)
+                except ValueError as e:
+                    # If conversion fails, raise an error clearly indicating the source
+                    raise ValueError(f"Invalid _backend_dtype string '{backend_dtype_val}' in EmberDType {dtype}: {e}") from e
+            else:
+                # If _backend_dtype is not torch.dtype or str (e.g., None, other type)
+                 raise ValueError(f"Invalid _backend_dtype '{backend_dtype_val}' (type: {type(backend_dtype_val)}) in EmberDType {dtype}")
+
+        # 2. Handle direct torch.dtype instances
+        # Also check known torch types explicitly in case isinstance fails for some reason
+        if isinstance(dtype, torch.dtype) or dtype in [
+            torch.float16, torch.float32, torch.float64,
+            torch.int8, torch.int16, torch.int32, torch.int64,
+            torch.uint8, torch.bool
+        ]:
+            # Ensure we return the actual torch.dtype object
+            if not isinstance(dtype, torch.dtype):
+                 pass # Assume 'dtype' is the correct torch.dtype object here
+            return dtype  # type: ignore[return-value]
+
+        # 3. Handle string representations
+        if isinstance(dtype, str):
+            try:
+                return self.from_dtype_str(dtype)
+            except ValueError as e:
+                raise ValueError(f"Invalid dtype string: '{dtype}': {e}") from e
+
+        # 4. If none of the above match, raise an error
+        raise ValueError(f"Unsupported dtype type: {type(dtype)}, value: {dtype}")
+
+
     
     def from_dtype_str(self, dtype: Union[Any, str, None]) -> Optional[torch.dtype]:
         """

@@ -479,8 +479,8 @@ class RBMFeatureOptimizer:
             features = ops.concatenate(features, axis=1)
             
         # Ensure all values are in [0,1] for RBMs
-        features_min = ops.min(features, axis=0, keepdims=True)
-        features_max = ops.max(features, axis=0, keepdims=True)
+        features_min = ops.stats.min(features, axis=0, keepdims=True)
+        features_max = ops.stats.max(features, axis=0, keepdims=True)
         features_range = ops.subtract(features_max, features_min)
         features_range = ops.maximum(features_range, ops.convert_to_tensor(1e-8))
         
@@ -494,7 +494,7 @@ class RBMFeatureOptimizer:
             # For binary RBMs, we need to ensure all values are binary
             threshold = settings.get('binarization_threshold', 0.5)
             binary_features = ops.greater(normalized, ops.convert_to_tensor(threshold))
-            binary_features = ops.cast(binary_features, 'float32')
+            binary_features = tensor.cast(binary_features, 'float32')
             
             return binary_features, {
                 'normalization': {

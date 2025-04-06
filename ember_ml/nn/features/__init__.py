@@ -5,21 +5,20 @@ This module provides feature extraction and transformation operations that abstr
 machine learning library implementations.
 """
 
-import os
 import importlib
-from typing import Optional, Dict, Any, Type
+from typing import Dict, Any, Type
 
 # Import interfaces
-from ember_ml.features.interfaces import PCAInterface, StandardizeInterface, NormalizeInterface
-from ember_ml.features.interfaces.tensor_features import TensorFeaturesInterface
+from ember_ml.nn.features.interfaces import PCAInterface, StandardizeInterface, NormalizeInterface
+from ember_ml.nn.features.interfaces.tensor_features import TensorFeaturesInterface
+from ember_ml.nn.features import PCA # Import the common PCA implementation
 
 # Import implementations
-from ember_ml.features.common.pca_features import PCA
 
 # Use backend directly
 from ember_ml.backend import get_backend, set_backend, get_backend_module
 
-_CURRENT_INSTANCES = {}
+_CURRENT_INSTANCES: Dict[Type, Any] = {}
 
 def get_features():
     """Get the current features implementation name."""
@@ -72,7 +71,7 @@ def _get_features_instance(features_class: Type):
             _CURRENT_INSTANCES[features_class] = features_class_impl()
         except (ImportError, AttributeError):
             # If backend-specific implementation not found, use common implementation
-            common_module = importlib.import_module('ember_ml.features.common')
+            common_module = importlib.import_module('ember_ml.nn.features.common')
             class_name = features_class.__name__[:-9]  # Remove 'Interface' suffix
             features_class_impl = getattr(common_module, class_name)
             _CURRENT_INSTANCES[features_class] = features_class_impl()

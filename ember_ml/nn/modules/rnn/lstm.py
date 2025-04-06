@@ -252,3 +252,27 @@ class LSTM(Module):
                 c_states.append(tensor.zeros((batch_size, self.hidden_size)))
         
         return (tensor.stack(h_states), tensor.stack(c_states))
+
+    def get_config(self) -> Dict[str, Any]:
+        """Returns the configuration of the LSTM layer."""
+        config = super().get_config()
+        config.update({
+            "input_size": self.input_size,
+            "hidden_size": self.hidden_size,
+            "num_layers": self.num_layers,
+            "bias": self.bias,
+            "batch_first": self.batch_first,
+            "dropout": self.dropout,
+            "bidirectional": self.bidirectional,
+            "return_sequences": self.return_sequences,
+            "return_state": self.return_state,
+        })
+        # Note: We don't save the cell configs directly, as they are reconstructed
+        # based on the layer's parameters in __init__.
+        return config
+
+    @classmethod
+    def from_config(cls, config: Dict[str, Any]) -> 'LSTM':
+        """Creates an LSTM layer from its configuration."""
+        # BaseModule.from_config handles calling cls(**config)
+        return super(LSTM, cls).from_config(config)

@@ -122,3 +122,61 @@ class Sequential(Module):
         
         module_str = ",\n  ".join(repr(module) for module in self._modules.values())
         return f"Sequential(\n  {module_str}\n)"
+
+    def get_config(self) -> Dict[str, Any]:
+        """Returns the configuration of the Sequential container."""
+        config = super().get_config()
+        modules_config = []
+        # Use self._modules directly to preserve order and names
+        for name, module in self._modules.items():
+            module_config = module.get_config()
+            module_config['class_name'] = module.__class__.__name__
+            # Store name used in the OrderedDict if needed for reconstruction order/naming
+            module_config['registered_name'] = name
+            modules_config.append(module_config)
+        config['modules'] = modules_config
+        return config
+
+    @classmethod
+    def from_config(cls, config: Dict[str, Any]) -> 'Sequential':
+        """Creates a Sequential container from its configuration."""
+        modules_config = config.pop("modules", [])
+
+        # Import necessary module classes dynamically based on class_name
+        # This requires a robust way to map class names to actual classes
+        # For now, assume common ones might be imported or use importlib
+        import importlib
+        from ember_ml.nn import modules as nn_modules # Access point for layers/cells/activations/maps
+
+        reconstructed_modules = OrderedDict()
+        for module_config in modules_config:
+            class_name = module_config.pop('class_name')
+            registered_name = module_config.pop('registered_name') # Get the original name/key
+
+            # Find the class object
+            module_class = None
+            try:
+                 # Check if it's directly available via nn.modules (which exports many things)
+                 module_class = getattr(nn_modules, class_name)
+            except AttributeError:
+                 # If not found directly, try importing dynamically from subpackages
+                 # This part is complex and might need refinement based on final structure
+                 subpackages = ['rnn', 'activations', 'wiring', 'container'] # Add other relevant subpackages
+                 for subpackage in subpackages:
+                     try:
+                         mod = importlib.import_module(f"ember_ml.nn.modules.{subpackage}")
+                         if hasattr(mod, class_name):
+                             module_class = getattr(mod, class_name)
+                             break
+                     except (ImportError, AttributeError):
+                         continue
+                 if module_class is None:
+                      raise ImportError(f"Could not find module class '{class_name}' for deserialization.")
+
+            # Reconstruct the module using its from_config
+            module_instance = module_class.from_config(module_config)
+            reconstructed_modules[registered_name] = module_instance
+
+        # Create Sequential instance using the reconstructed OrderedDict
+        instance = cls(reconstructed_modules)
+        return instance

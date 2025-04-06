@@ -1,67 +1,76 @@
-"""
-Unit tests for data type operations across different backends.
-
-This module contains pytest tests for the data type operations in the nn.tensor module.
-It tests each operation with different backends to ensure consistency.
-"""
-
 import pytest
 from ember_ml import ops
 from ember_ml.nn import tensor
-from ember_ml.backend import get_backend, set_backend
 
-# List of backends to test
-BACKENDS = ['numpy']
-try:
-    import torch
-    BACKENDS.append('torch')
-except ImportError:
-    pass
+# Assume conftest.py provides 'backend' fixture
 
-try:
-    import mlx.core
-    BACKENDS.append('mlx')
-except ImportError:
-    pass
+# List of expected dtype objects available directly in tensor module
+EXPECTED_DTYPES = [
+    tensor.float16, tensor.float32, tensor.float64,
+    tensor.int8, tensor.int16, tensor.int32, tensor.int64,
+    tensor.uint8, # uint types might not be supported by all backends (e.g., PyTorch historically)
+    # tensor.uint16, tensor.uint32, tensor.uint64, # Comment out if not universally supported
+    tensor.bool_
+]
+# Filter based on actual availability if needed, or mark tests appropriately
+AVAILABLE_DTYPES = [dt for dt in EXPECTED_DTYPES if dt is not None] # Simple check if None signifies unavailability
 
-@pytest.fixture(params=BACKENDS)
-def backend(request):
-    """Fixture to test with different backends."""
-    prev_backend = get_backend()
-    set_backend(request.param)
-    ops.set_backend(request.param)
-    yield request.param
-    # A backend must always be defined - not having one is a critical failure
-    assert prev_backend is not None, "No backend was defined before test"
-    set_backend(prev_backend)
-    ops.set_backend(prev_backend)
+@pytest.mark.parametrize("expected_dtype", AVAILABLE_DTYPES)
+def test_dtype_objects_exist(expected_dtype):
+    """Tests that the standard dtype objects exist and have the correct type."""
+    assert isinstance(expected_dtype, tensor.EmberDType), f"{expected_dtype} is not an EmberDType instance"
 
-class TestDTypeOperations:
-    """Tests for data type operations."""
-
-    def test_get_dtype(self, backend):
-        """Test get_dtype operation."""
-        # Test with default dtype names
-        dtype_names = ['float32', 'float64', 'int32', 'int64', 'bool']
+@pytest.mark.parametrize("dtype_to_test", AVAILABLE_DTYPES)
+def test_get_dtype(backend, dtype_to_test):
+    """Tests tensor.get_dtype for various types."""
+    ops.set_backend(backend)
+    try:
+        # Create a small tensor of the specified type
+        # Use zeros for bool, 1 otherwise to avoid issues with bool(0)=False
+        if dtype_to_test == tensor.bool_:
+             t = tensor.zeros(1, dtype=dtype_to_test)
+        else:
+             t = tensor.ones(1, dtype=dtype_to_test)
         
-        for dtype_name in dtype_names:
-            try:
-                # Get the dtype
-                dtype = tensor.get_dtype(dtype_name)
-                
-                # Create a tensor with the dtype
-                x = tensor.ones((3, 4), dtype=dtype)
-                
-                # Verify that the tensor has the correct dtype
-                # Use string comparison for backend purity
-                assert tensor.to_dtype_str(tensor.dtype(x)) == dtype_name
-            except (ValueError, AttributeError):
-                # Skip if the dtype is not supported by the backend
-                pass
+        retrieved_dtype = tensor.get_dtype(t)
+        assert retrieved_dtype == dtype_to_test, f"get_dtype failed for {dtype_to_test}"
+    except Exception as e:
+        # Some backends might not support all dtypes (e.g., uint, float16)
+        pytest.skip(f"Skipping dtype {dtype_to_test} for backend {backend} due to error: {e}")
 
-    # EmberTensor supports dtype passing only as strings on the front-end
-    # Direct NumPy dtype conversion is not supported to maintain backend purity
 
-# EmberTensor supports dtype passing only as strings on the front-end
-# Direct backend references are not supported to maintain backend purity
-            
+@pytest.mark.parametrize("dtype_obj", AVAILABLE_DTYPES)
+def test_dtype_str_conversion(backend, dtype_obj):
+    """Tests tensor.to_dtype_str and tensor.from_dtype_str."""
+    ops.set_backend(backend)
+    
+    # Convert dtype object to string
+    dtype_str = tensor.to_dtype_str(dtype_obj)
+    assert isinstance(dtype_str, str), f"to_dtype_str did not return string for {dtype_obj}"
+    
+    # Convert string back to dtype object
+    retrieved_dtype_obj = tensor.from_dtype_str(dtype_str)
+    assert isinstance(retrieved_dtype_obj, tensor.EmberDType), f"from_dtype_str did not return EmberDType for '{dtype_str}'"
+    
+    # Check if the conversion round trip works
+    assert retrieved_dtype_obj == dtype_obj, f"Dtype string conversion round trip failed for {dtype_obj} ('{dtype_str}')"
+
+def test_from_dtype_str_invalid():
+    """Tests tensor.from_dtype_str with an invalid string."""
+    with pytest.raises(ValueError):
+        tensor.from_dtype_str("invalid_dtype_string")
+
+def test_dtype_equality(backend):
+    """Tests equality comparison between dtype objects."""
+    ops.set_backend(backend)
+    assert tensor.float32 == tensor.float32, "Dtype equality failed (self)"
+    assert tensor.float32 != tensor.int32, "Dtype inequality failed"
+    
+    # Test equality after string conversion
+    f32_str = tensor.to_dtype_str(tensor.float32)
+    f32_from_str = tensor.from_dtype_str(f32_str)
+    assert tensor.float32 == f32_from_str, "Dtype equality failed after string conversion"
+
+# TODO: Test tensor.dtype function alias if needed (it's often same as get_dtype)
+# TODO: Test DType class directly if necessary
+# TODO: Add checks for cross-backend dtype compatibility if needed

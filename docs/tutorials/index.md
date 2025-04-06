@@ -6,6 +6,7 @@ This section contains step-by-step tutorials for using Ember ML.
 
 - [Getting Started](getting_started.md): Installation and basic usage
 - [Feature Extraction Basics](feature_extraction_basics.md): Introduction to feature extraction
+- [Statistical Operations](statistical_operations.md): Working with statistical functions
 
 ## Coming Soon
 

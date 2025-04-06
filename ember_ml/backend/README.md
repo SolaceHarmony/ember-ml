@@ -128,7 +128,7 @@ ember_ml achieves backend agnosticism through the use of the `ops` module, which
 from ember_ml import ops
 
 # Create a tensor
-x = ops.random_normal((3, 4))
+x = tensor.random_normal((3, 4))
 
 # Perform operations
 y = ops.matmul(x, ops.transpose(x))
@@ -204,8 +204,8 @@ from ember_ml import ops
 eh.set_backend('torch')
 
 # Create tensors
-x = ops.random_normal((3, 4))
-y = ops.random_normal((4, 5))
+x = tensor.random_normal((3, 4))
+y = tensor.random_normal((4, 5))
 
 # Perform operations
 z = ops.matmul(x, y)
@@ -230,8 +230,8 @@ eh.auto_select_backend()
 print(f"Selected backend: {eh.get_backend()}")
 
 # Create tensors
-x = ops.random_normal((3, 4))
-y = ops.random_normal((4, 5))
+x = tensor.random_normal((3, 4))
+y = tensor.random_normal((4, 5))
 
 # Perform operations
 z = ops.matmul(x, y)
@@ -258,7 +258,7 @@ eh.set_backend('torch')
 backend = eh.get_backend()
 
 # Create a tensor
-x = ops.random_normal((3, 4))
+x = tensor.random_normal((3, 4))
 
 # Convert to a backend-specific tensor
 if backend.name == 'torch':

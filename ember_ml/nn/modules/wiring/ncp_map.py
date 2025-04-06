@@ -9,10 +9,11 @@ from typing import Optional, Tuple, List, Dict, Any
 
 from ember_ml.nn import tensor
 
-from ember_ml.nn.wirings.wiring import Wiring
+# Already imports NeuronMap correctly
+from ember_ml.nn.modules.wiring.neuron_map import NeuronMap # Explicit path
 from ember_ml.nn.tensor import EmberTensor, int32, zeros, ones, random_uniform
 
-class NCPWiring(Wiring):
+class NCPMap(NeuronMap): # Name is already correct
     """
     Neural Circuit Policy (NCP) wiring configuration.
     
@@ -179,6 +180,7 @@ class NCPWiring(Wiring):
         # Convert the list to a tensor
         recurrent_mask = EmberTensor(recurrent_mask_list, dtype=int32)
         
+        self._built = True # Mark map as built
         return input_mask, recurrent_mask, output_mask
     
     def get_config(self) -> Dict[str, Any]:
@@ -203,7 +205,7 @@ class NCPWiring(Wiring):
         return config
     
     @classmethod
-    def from_config(cls, config: Dict[str, Any]) -> 'NCPWiring':
+    def from_config(cls, config: Dict[str, Any]) -> 'NCPMap': # Update return type hint
         """
         Create an NCP wiring configuration from a configuration dictionary.
         

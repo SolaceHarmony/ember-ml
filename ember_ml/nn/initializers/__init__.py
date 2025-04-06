@@ -17,8 +17,9 @@ All initializers maintain numerical stability and proper scaling
 while preserving backend independence.
 """
 
-from ember_ml.initializers.glorot import glorot_uniform, glorot_normal, orthogonal
-from ember_ml.initializers.binomial import BinomialInitializer, binomial
+# Use relative imports for files within the same package
+from .glorot import glorot_uniform, glorot_normal, orthogonal
+from .binomial import BinomialInitializer, binomial
 
 __all__ = [
     'glorot_uniform',

@@ -8,7 +8,7 @@ which is a type of recurrent neural network cell that operates in continuous tim
 from typing import Optional, List, Dict, Any, Union, Tuple
 
 from ember_ml import ops
-from ember_ml.initializers import glorot_uniform, orthogonal
+from ember_ml.nn.initializers import glorot_uniform, orthogonal # Updated initializer path
 from ember_ml.nn.modules import Module, Parameter
 from ember_ml.nn.modules.module_cell import ModuleCell
 from ember_ml.nn import tensor
@@ -24,10 +24,7 @@ class CfCCell(ModuleCell):
         input_size: int,
         hidden_size: int,
         mode: str = "default",
-        backbone_activation: str = "tanh",
-        backbone_units: int = 128,
-        backbone_layers: int = 1,
-        backbone_dropout: float = 0.0,
+        # Unused backbone parameters removed
         sparsity_mask = None,
         time_scale_factor: float = 1.0,
         activation: str = "tanh",
@@ -46,10 +43,7 @@ class CfCCell(ModuleCell):
             input_size: Size of the input
             hidden_size: Size of the hidden state
             mode: Mode of operation ("default", "pure", or "no_gate")
-            backbone_activation: Activation function for the backbone
-            backbone_units: Number of units in the backbone
-            backbone_layers: Number of layers in the backbone
-            backbone_dropout: Dropout rate for the backbone
+            # Unused backbone parameters removed from docstring
             sparsity_mask: Mask for sparse connections
             time_scale_factor: Factor to scale the time constant
             activation: Activation function for the output
@@ -72,10 +66,7 @@ class CfCCell(ModuleCell):
         
         # Store parameters
         self.mode = mode
-        self.backbone_activation = backbone_activation
-        self.backbone_units = backbone_units
-        self.backbone_layers = backbone_layers
-        self.backbone_dropout = backbone_dropout
+        # Unused backbone attribute assignments removed
         self.sparsity_mask = sparsity_mask
         self.time_scale_factor = time_scale_factor
         self.recurrent_activation = recurrent_activation
@@ -106,7 +97,7 @@ class CfCCell(ModuleCell):
     def _initialize_weights(self):
         """Initialize the weights for the cell."""
         # Input weights
-        self.kernel = Parameter(tensor.zeros((self.units, self.units * 4)))
+        self.kernel = Parameter(tensor.zeros((self.input_size, self.hidden_size * 4))) # Use input_size and hidden_size
         
         # Recurrent weights
         self.recurrent_kernel = Parameter(tensor.zeros((self.units, self.units * 4)))
@@ -120,7 +111,7 @@ class CfCCell(ModuleCell):
         
         # Initialize weights
         if self.kernel_initializer == "glorot_uniform":
-            self.kernel.data = glorot_uniform((self.units, self.units * 4))
+            self.kernel.data = glorot_uniform((self.input_size, self.hidden_size * 4)) # Use input_size and hidden_size
         
         if self.recurrent_initializer == "orthogonal":
             self.recurrent_kernel.data = orthogonal((self.units, self.units * 4))
@@ -213,3 +204,25 @@ class CfCCell(ModuleCell):
         h = tensor.zeros((batch_size, self.units))
         t = tensor.zeros((batch_size, self.units))
         return [h, t]
+
+    def get_config(self) -> Dict[str, Any]:
+        """Returns the configuration of the CfC cell."""
+        # Get config from ModuleCell (input_size, hidden_size, activation, use_bias)
+        config = super().get_config()
+        # Add CfCCell specific args
+        config.update({
+            "mode": self.mode,
+            # Unused backbone parameters removed from config
+            # sparsity_mask is complex/stateful, likely skip serialization
+            # "sparsity_mask": ???,
+            "time_scale_factor": self.time_scale_factor,
+            "recurrent_activation": self.recurrent_activation,
+            "kernel_initializer": self.kernel_initializer,
+            "recurrent_initializer": self.recurrent_initializer,
+            "bias_initializer": self.bias_initializer,
+            "mixed_memory": self.mixed_memory,
+        })
+        return config
+
+    # from_config can likely rely on ModuleCell's implementation
+    # if sparsity_mask doesn't need special handling during reconstruction.

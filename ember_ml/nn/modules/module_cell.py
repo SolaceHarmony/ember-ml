@@ -5,7 +5,7 @@ This module provides the ModuleCell abstract base class, which defines
 the interface for all cell types in ember_ml.
 """
 
-from typing import Optional, List, Dict, Any, Union, Tuple, TypeVar
+from typing import List, Union, TypeVar, Dict, Any # Add Dict, Any
 
 from ember_ml import ops
 import ember_ml.nn.tensor as tensor
@@ -87,3 +87,17 @@ class ModuleCell(Module):
         else:
             # Handle list state sizes
             return [tensor.zeros((batch_size, size)) for size in self.state_size]
+
+    def get_config(self) -> Dict[str, Any]:
+        """Returns the configuration of the cell."""
+        config = super().get_config() # Get base config if any
+        config.update({
+            "input_size": self.input_size,
+            "hidden_size": self.hidden_size,
+            "activation": self.activation_name, # Save name, not function object
+            "use_bias": self.use_bias,
+        })
+        return config
+
+    # from_config can likely rely on the base Module implementation
+    # as long as get_config saves all __init__ args correctly.

@@ -72,7 +72,7 @@ class RBMModule(Module):
         self.learning_rate = learning_rate
         
         # Initialize weights and biases as Parameters
-        self.weights = Parameter(ops.random_normal((n_visible, n_hidden), scale=0.01))
+        self.weights = Parameter(tensor.random_normal((n_visible, n_hidden), scale=0.01))
         self.visible_bias = Parameter(tensor.zeros(n_visible))
         self.hidden_bias = Parameter(tensor.zeros(n_hidden))
         
@@ -119,13 +119,13 @@ class LiquidNetworkModule(Module):
         )
         
         # Input projection
-        self.input_projection = ops.nn.Dense(
+        self.input_projection = nn.modules.activations.Dense(
             units=input_dim,
             input_shape=(input_dim,)
         )
         
         # Output projection
-        self.output_projection = ops.nn.Dense(
+        self.output_projection = nn.modules.activations.Dense(
             units=output_dim,
             input_shape=(self.ncp_cell.output_size,)
         )
@@ -191,7 +191,7 @@ class MotorNeuronModule(Module):
         self.adaptive_threshold = adaptive_threshold
         
         # Output projection
-        self.output_projection = ops.nn.Dense(
+        self.output_projection = nn.modules.activations.Dense(
             units=1,
             input_shape=(input_dim,),
             activation="sigmoid"
@@ -199,7 +199,7 @@ class MotorNeuronModule(Module):
         
         # Adaptive threshold
         if adaptive_threshold:
-            self.threshold_projection = ops.nn.Dense(
+            self.threshold_projection = nn.modules.activations.Dense(
                 units=1,
                 input_shape=(input_dim,),
                 activation="sigmoid",
@@ -217,7 +217,7 @@ class MotorNeuronModule(Module):
             threshold = ops.full_like(output, self.threshold)
             
         # Generate trigger
-        trigger = ops.cast(output > threshold, tensor.float32)
+        trigger = tensor.cast(output > threshold, tensor.float32)
         
         return output, trigger, threshold
 ```
@@ -362,7 +362,7 @@ def train_liquid_network(liquid_network, features, targets, validation_data=None
     
     for epoch in range(epochs):
         # Shuffle data
-        indices = ops.random.permutation(len(features))
+        indices = tensor.random_permutation(len(features))
         features_shuffled = ops.gather(features, indices)
         targets_shuffled = ops.gather(targets, indices)
         

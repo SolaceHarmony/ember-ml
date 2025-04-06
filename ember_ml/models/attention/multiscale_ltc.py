@@ -7,7 +7,7 @@ from ember_ml import ops
 from ember_ml.nn import tensor
 from ember_ml.nn.tensor import EmberTensor, zeros, ones, reshape, concatenate, to_numpy, convert_to_tensor
 from ember_ml.nn.tensor import float32, shape, cast, arange, stack, pad, full
-from ember_ml.nn.wirings import AutoNCP
+from ember_ml.nn.modules import AutoNCP # Updated import path
 from ember_ml.nn.modules.rnn.stride_aware_cell import StrideAwareCell
 from ember_ml.nn.modules.rnn.rnn import RNN
 from ember_ml.initializers import glorot_uniform
@@ -269,8 +269,8 @@ def visualize_multiscale_dynamics(model, test_inputs, test_y, stride_perspective
         ax1.scatter(to_numpy(test_y_tensor), to_numpy(predictions), alpha=0.5)
         
         # Get min and max values for the diagonal line
-        min_val = min(ops.min(test_y_tensor).item(), ops.min(predictions).item())
-        max_val = max(ops.max(test_y_tensor).item(), ops.max(predictions).item())
+        min_val = min(ops.stats.min(test_y_tensor).item(), ops.stats.min(predictions).item())
+        max_val = max(ops.stats.max(test_y_tensor).item(), ops.stats.max(predictions).item())
         ax1.plot([min_val, max_val], [min_val, max_val], 'r--')
     
     ax1.set_title("Prediction vs. Actual")

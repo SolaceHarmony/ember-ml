@@ -54,7 +54,7 @@ class Normalize:
         elif norm == "l2":
             self.norms_ = ops.sqrt(ops.sum(ops.square(X_tensor), axis=axis, keepdims=True))
         elif norm == "max":
-            self.norms_ = ops.max(ops.abs(X_tensor), axis=axis, keepdims=True)
+            self.norms_ = ops.stats.max(ops.abs(X_tensor), axis=axis, keepdims=True)
         else:
             raise ValueError(f"Unsupported norm: {norm}")
         

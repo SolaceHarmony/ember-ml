@@ -185,3 +185,6 @@ backups/thea-vulnerabilities-and-healing.md
 tests/test_ops_tensor_results.txt
 tests/test_ops_tensor_results.txt
 tests/test_ops_tensor_results.txt
+outputs/
+examples/rbm/telemetry_data.csv
+telemetry_data.csv

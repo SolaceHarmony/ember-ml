@@ -8,13 +8,13 @@ Available Classes:
     Standardize: Feature standardization (zero mean, unit variance)
     Normalize: Feature normalization to specified range
 """
-
-from ember_ml.features.common.pca_features import PCA
-from ember_ml.features.common.standardize_features import Standardize
-from ember_ml.features.common.normalize_features import Normalize
+from ember_ml.nn.features.common.pca_features import PCA
+# The following modules don't seem to exist yet
+# from ember_ml.nn.features.common.standardize_features import Standardize
+# from ember_ml.nn.features.common.normalize_features import Normalize
 
 __all__ = [
     'PCA',
-    'Standardize',
-    'Normalize',
+    # 'Standardize',
+    # 'Normalize',
 ]

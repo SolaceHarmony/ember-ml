@@ -12,7 +12,8 @@ import time
 from datetime import datetime
 
 # Import our modules
-from ember_ml.models.rbm import RestrictedBoltzmannMachine
+from ember_ml.nn import tensor
+from ember_ml.models.rbm import RBMModule, train_rbm, save_rbm, load_rbm
 from ember_ml.visualization.rbm_visualizer import RBMVisualizer
 
 
@@ -159,39 +160,60 @@ def main():
     
     # Initialize RBM
     print("\nInitializing RBM...")
-    rbm = RestrictedBoltzmannMachine(
+    rbm = RBMModule(
         n_visible=100,
         n_hidden=20,
         learning_rate=0.01,
         momentum=0.5,
         weight_decay=0.0001,
-        batch_size=10,
-        use_binary_states=False,
-        track_states=True
+        use_binary_states=False
     )
     
     # Train RBM
     print("\nTraining RBM...")
     start_time = time.time()
-    rbm.train(
-        data=train_data,
+    
+    # Convert to generator for train_rbm
+    def data_generator(data, batch_size=10):
+        """Convert data to a generator yielding batches."""
+        import numpy as np
+        from ember_ml.nn import tensor
+        n_samples = len(data)
+        indices = np.random.permutation(n_samples)
+        for i in range(0, n_samples, batch_size):
+            batch_indices = indices[i:i+batch_size]
+            if len(batch_indices) == 0:
+                continue
+            batch = data[batch_indices]
+            # Return numpy array directly, the training function will convert it
+            yield batch
+    
+    # Train the RBM using the train_rbm function
+    training_errors = train_rbm(
+        rbm=rbm,
+        data_generator=data_generator(train_data),
         epochs=50,
         k=1,
-        validation_data=val_data,
-        early_stopping_patience=5,
-        verbose=True
+        validation_data=tensor.convert_to_tensor(val_data, dtype=tensor.float32) if val_data is not None else None,
+        early_stopping_patience=5
     )
+    
+    # Print training errors to show progress
+    print(f"Training errors: {[float(err) for err in training_errors]}")
+    
     training_time = time.time() - start_time
     print(f"Training completed in {training_time:.2f} seconds")
     
-    # Print RBM summary
-    print("\nRBM Summary:")
-    print(rbm.summary())
+    # Print RBM info
+    print("\nRBM Info:")
+    print(f"Visible units: {rbm.n_visible}")
+    print(f"Hidden units: {rbm.n_hidden}")
+    print(f"Learning rate: {rbm.learning_rate}")
     
     # Save the model
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     model_path = f"outputs/models/rbm_toy_data_{timestamp}.npy"
-    rbm.save(model_path)
+    save_rbm(rbm, model_path)
     
     # Initialize visualizer
     visualizer = RBMVisualizer()
@@ -234,34 +256,38 @@ def main():
     
     # Initialize RBM for image data
     print("\nInitializing RBM for image data...")
-    image_rbm = RestrictedBoltzmannMachine(
+    image_rbm = RBMModule(
         n_visible=100,  # 10x10 pixels
         n_hidden=25,
         learning_rate=0.01,
         momentum=0.5,
         weight_decay=0.0001,
-        batch_size=10,
-        use_binary_states=False,
-        track_states=True
+        use_binary_states=False
     )
+    
+    # Print training errors to show progress
+    print(f"Training errors: {[float(err) for err in training_errors]}")
     
     # Train RBM on image data
     print("\nTraining RBM on image data...")
     start_time = time.time()
-    image_rbm.train(
-        data=train_image_data,
+    
+    # Train the RBM using the train_rbm function
+    training_errors = train_rbm(
+        rbm=image_rbm,
+        data_generator=data_generator(train_image_data),
         epochs=50,
         k=1,
-        validation_data=val_image_data,
-        early_stopping_patience=5,
-        verbose=True
+        validation_data=tensor.convert_to_tensor(val_image_data, dtype=tensor.float32) if val_image_data is not None else None,
+        early_stopping_patience=5
     )
+    
     training_time = time.time() - start_time
     print(f"Training completed in {training_time:.2f} seconds")
     
     # Save the model
     model_path = f"outputs/models/rbm_image_data_{timestamp}.npy"
-    image_rbm.save(model_path)
+    save_rbm(image_rbm, model_path)
     
     # Plot reconstructions with image reshaping
     print("\nPlotting image reconstructions...")

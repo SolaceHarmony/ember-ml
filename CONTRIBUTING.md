@@ -64,7 +64,7 @@ def process_data(data):
 
 ### Using Proper Type Handling
 
-Use ops.cast() with appropriate dtype instead of Python's built-in type conversion:
+Use tensor.cast() with appropriate dtype instead of Python's built-in type conversion:
 
 ```python
 # ✅ CORRECT

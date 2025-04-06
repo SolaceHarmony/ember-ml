@@ -342,7 +342,7 @@ class TestRandomOps:
     def test_random_normal(self, setup_numpy_backend):
         """Test random_normal function."""
         r_ops = tensor
-        x = r_ops.random_normal((2, 3))
+        x = r_tensor.random_normal((2, 3))
         assert x.shape == (2, 3)
     
     def test_random_uniform(self, setup_numpy_backend):

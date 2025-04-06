@@ -7,10 +7,11 @@ for all wiring configurations.
 
 from typing import Optional, Tuple, Dict, Any
 from ember_ml import ops
+from ember_ml.ops import stats  # Import stats module for sum operation
 from ember_ml.nn.tensor import EmberTensor, int32, convert_to_tensor
 from ember_ml.nn.tensor.common import zeros, copy
 
-class Wiring:
+class NeuronMap: # Renamed from Wiring
     """
     Base class for all wiring configurations.
     
@@ -39,7 +40,8 @@ class Wiring:
         """
         self.units = units
         self.output_dim = output_dim if output_dim is not None else units
-        self.input_dim = input_dim if input_dim is not None else units
+        # Store input_dim if provided, otherwise leave it None until build()
+        self.input_dim = input_dim
         self.sparsity_level = sparsity_level
         self.seed = seed
         
@@ -51,6 +53,7 @@ class Wiring:
         # Initialize adjacency matrices
         self.adjacency_matrix = zeros([units, units], dtype=int32)
         self.sensory_adjacency_matrix = None
+        self._built = False # Track build status
         
     def build(self, input_dim=None) -> Tuple[EmberTensor, EmberTensor, EmberTensor]:
         """
@@ -88,7 +91,7 @@ class Wiring:
         Returns:
             True if the wiring is built, False otherwise
         """
-        return self.input_dim is not None
+        return self._built
     
     def get_input_mask(self) -> Optional[EmberTensor]:
         """
@@ -146,6 +149,7 @@ class Wiring:
         return {
             "units": self.units,
             "output_dim": self.output_dim,
+            # Ensure we save the actual input_dim, even if it's None initially
             "input_dim": self.input_dim,
             "sparsity_level": self.sparsity_level,
             "seed": self.seed
@@ -182,12 +186,12 @@ class Wiring:
     @property
     def synapse_count(self):
         """Counts the number of synapses between internal neurons of the model"""
-        return ops.sum(ops.abs(self.adjacency_matrix))
+        return stats.sum(ops.abs(self.adjacency_matrix))
     
     @property
     def sensory_synapse_count(self):
         """Counts the number of synapses from the inputs (sensory neurons) to the internal neurons of the model"""
-        return ops.sum(ops.abs(self.sensory_adjacency_matrix)) if self.sensory_adjacency_matrix is not None else 0
+        return stats.sum(ops.abs(self.sensory_adjacency_matrix)) if self.sensory_adjacency_matrix is not None else 0
     
     def add_synapse(self, src, dest, polarity):
         """
@@ -260,7 +264,7 @@ class Wiring:
         self.sensory_adjacency_matrix[src, dest] = polarity
     
     @classmethod
-    def from_config(cls, config: Dict[str, Any]) -> 'Wiring':
+    def from_config(cls, config: Dict[str, Any]) -> 'NeuronMap': # Updated return type hint
         """
         Create a wiring configuration from a configuration dictionary.
         

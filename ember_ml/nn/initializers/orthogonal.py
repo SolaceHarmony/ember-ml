@@ -1,9 +1,10 @@
 """Orthogonal initializer."""
 
 from typing import Sequence
-from ember_ml.core import backend as K
+from ember_ml import ops
+from ember_ml.nn import tensor # Import tensor for type hint
 
-def orthogonal(shape: Sequence[int], gain: float = 1.0) -> K.TensorLike:
+def orthogonal(shape: Sequence[int], gain: float = 1.0) -> tensor.EmberTensor: # Use EmberTensor type hint
     """
     Generate a (semi-)orthogonal matrix or tensor.
 
@@ -21,4 +22,5 @@ def orthogonal(shape: Sequence[int], gain: float = 1.0) -> K.TensorLike:
         ValueError: If shape has less than 2 dimensions.
     """
     # Dispatch to the backend-specific implementation
-    return K.backend_factory().initializers.orthogonal(shape, gain=gain)
+    # Call ops directly
+    return ops.orthogonal(shape, gain=gain)

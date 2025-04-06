@@ -5,9 +5,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
 from ember_ml import ops
-from ember_ml.nn.wirings import AutoNCP
+from ember_ml.nn.modules import AutoNCP # Updated import path
 from ember_ml.nn.modules.rnn import CfC
-from ember_ml.nn import Module, Sequential
+from ember_ml.nn import Module, Sequential, container
 
 # --------------------------
 # 📊 Telemetry Data Pipeline
@@ -58,7 +58,7 @@ class LiquidNeuralNetwork:
         
     def _build_model(self):
         # Fast timescale layer for immediate feature detection
-        wiring_fast = wirings.AutoNCP(
+        wiring_fast = AutoNCP(
             units=self.model_size,
             output_size=self.model_size // 4,
             sparsity_level=0.5
@@ -71,7 +71,7 @@ class LiquidNeuralNetwork:
         )
         
         # Medium timescale layer for pattern recognition
-        wiring_med = wirings.AutoNCP(
+        wiring_med = AutoNCP(
             units=self.model_size // 2,
             output_size=self.model_size // 8,
             sparsity_level=0.4
@@ -84,7 +84,7 @@ class LiquidNeuralNetwork:
         )
         
         # Slow timescale layer for trend analysis
-        wiring_slow = wirings.AutoNCP(
+        wiring_slow = AutoNCP(
             units=self.model_size // 4,
             output_size=self.model_size // 16,
             sparsity_level=0.3
@@ -147,7 +147,7 @@ class MultiScaleMonitor(keras.callbacks.Callback):
             ltc_layers = [layer for layer in self.model.layers if isinstance(layer, CfC)]
             if ltc_layers:
                 layer_outputs = []
-                inputs = keras.layers.Input(shape=self.model.input_shape[1:])
+                inputs = Input(shape=self.model.input_shape[1:])
                 x = inputs
                 for layer in ltc_layers:
                     x = layer(x)
@@ -166,8 +166,8 @@ class MultiScaleMonitor(keras.callbacks.Callback):
                     layer_outputs = [layer_outputs]
                 
                 for i, output in enumerate(layer_outputs):
-                    logs[f'ltc_{i}_output_mean'] = float(tf.reduce_mean(output))
-                    logs[f'ltc_{i}_output_std'] = float(tf.math.reduce_std(output))
+                    logs[f'ltc_{i}_output_mean'] = float(tensor.reduce_mean(output))
+                    logs[f'ltc_{i}_output_std'] = float(tensor.reduce_std(output))
             except Exception as e:
                 print(f"Warning: Error computing layer statistics: {str(e)}")
 

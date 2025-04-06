@@ -12,15 +12,15 @@ import os
 import time
 from datetime import datetime
 
-# Import our modules from neural_lib
-from neural_lib import (
+# Import modules from ember_ml
+from ember_ml.nn.features.generic_feature_extraction import (
     GenericCSVLoader,
     GenericTypeDetector,
     GenericFeatureEngineer,
-    TemporalStrideProcessor,
-    RBMBasedAnomalyDetector,
-    RBMVisualizer
+    TemporalStrideProcessor
 )
+from ember_ml.models.rbm_anomaly_detector import RBMBasedAnomalyDetector
+from ember_ml.visualization.rbm_visualizer import RBMVisualizer
 
 
 def generate_telemetry_data(n_samples=1000, n_features=10, anomaly_fraction=0.05):
@@ -129,7 +129,7 @@ def main():
     
     # Get numeric features for anomaly detection
     numeric_features = column_types.get('numeric', [])
-    numeric_features = [col for col in numeric_features if col != 'anomaly']  # Exclude anomaly label
+    # No need to exclude 'anomaly' as it's now in categorical columns, not numeric
     
     if not numeric_features:
         print("No numeric features available for anomaly detection")
@@ -137,10 +137,21 @@ def main():
     
     # Extract features
     features_df = df_engineered[numeric_features]
+    # After one-hot encoding, 'anomaly' column is replaced with 'anomaly_0' and 'anomaly_1' columns
+    # Find the anomaly columns
+    anomaly_cols = [col for col in df_engineered.columns if col.startswith('anomaly_')]
     
-    # Split data into normal and anomalous
-    normal_indices = df_engineered['anomaly'] == 0
-    anomaly_indices = df_engineered['anomaly'] == 1
+    if not anomaly_cols:
+        print("Error: Could not find anomaly columns after feature engineering")
+        return
+    
+    print(f"Found anomaly columns: {anomaly_cols}")
+    
+    # Split data into normal and anomalous based on one-hot encoded columns
+    # 'anomaly_0' corresponds to normal samples (0)
+    # 'anomaly_1' corresponds to anomalous samples (1)
+    normal_indices = df_engineered['anomaly_0'] == 1.0
+    anomaly_indices = df_engineered['anomaly_1'] == 1.0
     
     normal_features = features_df[normal_indices].values
     anomaly_features = features_df[anomaly_indices].values
@@ -155,7 +166,7 @@ def main():
     # Initialize RBM-based anomaly detector
     print("\nInitializing RBM-based anomaly detector...")
     detector = RBMBasedAnomalyDetector(
-        n_hidden=5,
+        n_hidden=20,  # Increased from 5 to 20 for a deeper network
         learning_rate=0.01,
         momentum=0.5,
         weight_decay=0.0001,
@@ -171,9 +182,9 @@ def main():
     detector.fit(
         X=train_features,
         validation_data=val_features,
-        epochs=30,
+        epochs=100,  # Increased from 30 to 100 to ensure convergence
         k=1,
-        early_stopping_patience=5,
+        early_stopping_patience=10,  # Increased patience for better convergence
         verbose=True
     )
     training_time = time.time() - start_time
@@ -218,6 +229,9 @@ def main():
     
     # Initialize visualizer
     visualizer = RBMVisualizer()
+    # Plot convergence analysis
+    print("\nPlotting convergence analysis...")
+    visualizer.plot_convergence(detector.rbm, show=True)
     
     # Plot training curve
     print("\nPlotting training curve...")
@@ -225,6 +239,7 @@ def main():
     
     # Plot weight matrix
     print("\nPlotting weight matrix...")
+    visualizer.plot_weight_matrix(detector.rbm, show=True)
     visualizer.plot_weight_matrix(detector.rbm, show=True)
     
     # Plot reconstructions
@@ -255,6 +270,82 @@ def main():
     # Animate dreaming
     print("\nAnimating dreaming process...")
     visualizer.animate_dreaming(detector.rbm, n_steps=50, show=True)
+    
+    # Categorize anomalies
+    print("\nCategorizing anomalies...")
+    category_labels, cluster_info = detector.categorize_anomalies(
+        test_features,
+        anomaly_flags=predicted_anomalies,
+        max_clusters=5,
+        min_samples_per_cluster=3
+    )
+    
+    # Count samples in each category
+    unique_categories, category_counts = np.unique(category_labels[category_labels >= 0], return_counts=True)
+    print(f"Found {len(unique_categories)} anomaly categories:")
+    for cat_id, count in zip(unique_categories, category_counts):
+        print(f"  Category {cat_id}: {count} samples")
+    
+    # Plot anomaly categories
+    print("\nPlotting anomaly categories...")
+    visualizer.plot_anomaly_categories(
+        detector.rbm,
+        test_features,
+        category_labels,
+        cluster_info,
+        feature_names=numeric_features,
+        show=True
+    )
+    
+    # Get normal data for comparison
+    normal_indices = np.where(predicted_anomalies == 0)[0]
+    normal_data = test_features[normal_indices]
+    
+    # Plot detailed statistical distributions for each category
+    print("\nPlotting anomaly category statistics...")
+    visualizer.plot_anomaly_category_statistics(
+        test_features,
+        normal_data,
+        category_labels,
+        cluster_info,
+        feature_names=numeric_features,
+        show=True
+    )
+    
+    # Generate pandas-friendly tables with category statistics
+    print("\nGenerating category statistics tables...")
+    tables_dir = "outputs/tables"
+    os.makedirs(tables_dir, exist_ok=True)
+    
+    category_dfs = visualizer.generate_category_statistics_tables(
+        test_features,
+        normal_data,
+        category_labels,
+        cluster_info,
+        feature_names=numeric_features,
+        save_dir=tables_dir,
+        save=True
+    )
+    
+    # Print summary information from the tables
+    print("\nCategory Statistics Summary:")
+    print(category_dfs['summary'].to_string(index=False))
+    
+    # For each category, print the top 3 most anomalous features by Z-score
+    for cat_id, df in category_dfs.items():
+        if cat_id != 'summary':
+            category_num = cat_id.split('_')[1]
+            print(f"\nTop features for Category {category_num} (by Z-score):")
+            print(df[['Feature', 'Z_Score', 'Category_Mean', 'Normal_Mean']].head(3).to_string(index=False))
+    
+    # Plot feature-hidden correlations
+    print("\nPlotting feature-hidden correlations...")
+    visualizer.plot_feature_hidden_correlations(
+        detector.rbm,
+        test_features,
+        feature_names=numeric_features,
+        show=True
+    )
     
     print("\nExample completed successfully!")
 

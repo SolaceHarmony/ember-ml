@@ -8,11 +8,12 @@ which is a simple recurrent neural network cell.
 from typing import Optional, List, Dict, Any, Union, Tuple
 
 from ember_ml import ops
-from ember_ml.initializers import glorot_uniform, orthogonal
-from ember_ml.nn.modules import Module, Parameter
+from ember_ml.nn.initializers import glorot_uniform, orthogonal # Updated initializer path
+from ember_ml.nn.modules import Parameter # Module removed
+from ember_ml.nn.modules.module_cell import ModuleCell # Import ModuleCell
 from ember_ml.nn import tensor
 
-class RNNCell(Module):
+class RNNCell(ModuleCell): # Inherit from ModuleCell
     """
     Basic Recurrent Neural Network (RNN) cell.
     
@@ -37,18 +38,24 @@ class RNNCell(Module):
             bias: Whether to use bias
             **kwargs: Additional keyword arguments
         """
-        super().__init__(**kwargs)
+        # Call ModuleCell's init
+        super().__init__(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            activation=activation, # ModuleCell accepts activation name
+            use_bias=bias, # ModuleCell accepts use_bias
+            **kwargs
+        )
         self.input_size = input_size
         self.hidden_size = hidden_size
-        self.activation = activation
-        self.use_bias = bias
+        # self.input_size, self.hidden_size, self.activation_name, self.use_bias
+        # are set by parent init. self.activation (function) is also set by parent.
         
         # Initialize weights
         self._initialize_weights()
         
         # State size: [hidden_state]
-        self.state_size = [self.hidden_size]
-        self.output_size = self.hidden_size
+        # state_size and output_size properties are inherited from ModuleCell
     
     def _initialize_weights(self):
         """Initialize the weights for the cell."""
@@ -121,3 +128,14 @@ class RNNCell(Module):
         """
         h = tensor.zeros((batch_size, self.hidden_size))
         return [h]
+
+    def get_config(self) -> Dict[str, Any]:
+        """Returns the configuration of the RNN cell."""
+        # Get config from ModuleCell (input_size, hidden_size, activation, use_bias)
+        config = super().get_config()
+        # RNNCell __init__ takes activation and use_bias.
+        # ModuleCell saves activation_name as 'activation' and boolean as 'use_bias'.
+        # All necessary args are already saved by parent get_config.
+        return config
+
+    # from_config can rely on ModuleCell's implementation

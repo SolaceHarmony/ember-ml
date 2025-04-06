@@ -63,8 +63,8 @@ def calculate_statistics(tensor_var):
     std_val = ops.sqrt(variance)
     
     # Min and max
-    min_val = ops.min(tensor_var)
-    max_val = ops.max(tensor_var)
+    min_val = ops.stats.min(tensor_var)
+    max_val = ops.stats.max(tensor_var)
     
     # Convert to Python native types only at the end to avoid precision loss
     # Use the backend's native conversion method

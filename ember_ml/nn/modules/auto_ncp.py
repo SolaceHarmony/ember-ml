@@ -8,7 +8,7 @@ around the NCP class that automatically configures the wiring.
 from typing import Optional, Dict, Any
 
 from ember_ml.nn.modules.ncp import NCP
-from ember_ml.nn.wirings.ncp_wiring import NCPWiring
+from ember_ml.nn.modules.wiring import NCPMap # Import from wiring subpackage
 
 class AutoNCP(NCP):
     """
@@ -69,19 +69,19 @@ class AutoNCP(NCP):
         motor_fanin = max(int(command_neurons * density_level), 1)
         
         # Create the wiring
-        wiring = NCPWiring(
+        wiring = NCPMap( # Use renamed NCPMap
             inter_neurons=inter_neurons,
             motor_neurons=output_size,
             sensory_neurons=0,  # No sensory neurons in AutoNCP
             sparsity_level=sparsity_level,
             seed=seed,
-            input_dim=units,  # Set input_dim to match units
+            # input_dim will be inferred later during build
             units=units,  # Set units explicitly
         )
         
         # Initialize the NCP module
         super().__init__(
-            wiring=wiring,
+            neuron_map=wiring,
             activation=activation,
             use_bias=use_bias,
             kernel_initializer=kernel_initializer,
@@ -90,11 +90,9 @@ class AutoNCP(NCP):
             dtype=dtype,
         )
         
-        # Store the AutoNCP-specific parameters
-        self.units = units
-        self.output_size = output_size
-        self.sparsity_level = sparsity_level
-        self.seed = seed
+        # The parameters are already stored in the neuron_map (wiring)
+        # We don't need to duplicate them as direct attributes
+        # These can be accessed via self.neuron_map.units, self.neuron_map.output_dim, etc.
     
     def get_config(self) -> Dict[str, Any]:
         """
@@ -104,16 +102,17 @@ class AutoNCP(NCP):
             Dictionary containing the configuration
         """
         config = super().get_config()
+        # Get values from neuron_map instead of direct attributes
         config.update({
-            "units": self.units,
-            "output_size": self.output_size,
-            "sparsity_level": self.sparsity_level,
-            "seed": self.seed,
+            "units": self.neuron_map.units,
+            "output_size": self.neuron_map.output_dim,
+            "sparsity_level": self.neuron_map.sparsity_level,
+            "seed": self.neuron_map.seed,
         })
         return config
     
     @classmethod
-    def from_config(cls, config: Dict[str, Any]) -> 'AutoNCP':
+    def from_config(cls, config: Dict[str, Any]) -> 'AutoNCP': # Return type is correct (AutoNCP Layer)
         """
         Create an AutoNCP module from a configuration dictionary.
         
@@ -123,9 +122,13 @@ class AutoNCP(NCP):
         Returns:
             AutoNCP module
         """
-        # Remove the wiring-related parameters from the config
+        # Remove the wiring-related parameters and neuron_map from the config
         config.pop("wiring", None)
         config.pop("wiring_class", None)
+        config.pop("neuron_map", None)
+        
+        # Remove input_size to avoid duplicate parameter errors
+        config.pop("input_size", None)
         
         # Create the AutoNCP module
         return cls(**config)

@@ -580,15 +580,15 @@ class ColumnPCAFeatureExtractor(ColumnFeatureExtractor):
                 dtype=tensor.int32
             )
             # Use tensor.minimum or construct minimum manually
-            # First approach: create a tensor array with both values and use ops.min
+            # First approach: create a tensor array with both values and use ops.stats.min
             candidates1 = tensor.stack([n_components, tensor.convert_to_tensor(10)])
-            n_components = ops.min(candidates1, axis=0)
+            n_components = ops.stats.min(candidates1, axis=0)
             
             # For the second calculation
             one_tensor = tensor.convert_to_tensor(1)
             samples_minus_one = ops.subtract(tensor.convert_to_tensor(X.shape[0]), one_tensor)
             candidates2 = tensor.stack([n_components, samples_minus_one])
-            n_components = ops.min(candidates2, axis=0)
+            n_components = ops.stats.min(candidates2, axis=0)
             # Convert to tensor.int32 type first, then to Python scalar
             n_components = tensor.cast(n_components, tensor.int32)
             n_components = tensor.to_numpy(n_components).item()
@@ -803,8 +803,8 @@ class TemporalColumnFeatureExtractor(ColumnFeatureExtractor):
         # Calculate standard deviation
         result[f"{column}_window_std"] = ops.sqrt(variances)
         
-        result[f"{column}_window_min"] = ops.min(windows_array, axis=1)
-        result[f"{column}_window_max"] = ops.max(windows_array, axis=1)
+        result[f"{column}_window_min"] = ops.stats.min(windows_array, axis=1)
+        result[f"{column}_window_max"] = ops.stats.max(windows_array, axis=1)
         
         # Trend features - use ops for polyfit-like functionality
         # Create x values (0, 1, 2, ..., window_size-1)

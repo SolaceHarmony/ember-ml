@@ -69,7 +69,7 @@ When completing code, you maintain these principles:
 - Provide comprehensive type annotations
 - Use proper return type hints
 - Avoid precision-reducing casts
-- Use dtype constants from ops.dtypes
+- Use dtype constants from nn.tensor.dtypes
 
 ### Documentation
 - Write Google-style docstrings for all functions
@@ -99,7 +99,7 @@ def process_data(x: tensor.Tensor) -> tensor.Tensor:
         Normalized and processed tensor
     """
     x = tensor.convert_to_tensor(x)
-    return ops.divide(x, ops.cast(255.0, x.dtype))
+    return ops.divide(x, tensor.cast(255.0, x.dtype))
 ```
 
 ## Natural Operation

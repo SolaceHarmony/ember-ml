@@ -23,10 +23,12 @@ All components maintain strict backend independence through the ops abstraction.
 """
 
 from ember_ml.nn.modulation import DopamineState, DopamineModulator
-from ember_ml.nn.specialized import LTCNeuronWithAttention
+from ember_ml.nn.attention import LTCNeuronWithAttention
 
 from ember_ml.nn.modules import Module, Parameter, BaseModule
-from ember_ml.nn.wirings import Wiring, FullyConnectedWiring, RandomWiring, NCPWiring, NCP, AutoNCP
+# Import wiring classes from their new location in modules
+# Import using new names from modules (which re-exports from modules.wiring)
+from ember_ml.nn.modules import NeuronMap, FullyConnectedMap, RandomMap, NCPMap, NCP, AutoNCP
 from ember_ml.nn.container import Sequential
 from ember_ml.nn.tensor import TensorInterface, EmberTensor
 from ember_ml.nn.modules.rnn import RNN, LSTM, GRU, RNNCell, LSTMCell, GRUCell, StrideAware, StrideAwareCfC, StrideAwareCell
@@ -39,10 +41,11 @@ __all__ = [
     'Sequential',
     'NCP',
     'AutoNCP',
-    'Wiring',
-    'FullyConnectedWiring',
-    'RandomWiring',
-    'NCPWiring',
+    # Use new NeuronMap names
+    'NeuronMap',
+    'FullyConnectedMap',
+    'RandomMap',
+    'NCPMap',
     'TensorInterface',
     'EmberTensor',
     'LTCNeuronWithAttention',

@@ -20,6 +20,9 @@ __all__ = [
     # Linear Algebra class
     'NumpyLinearAlgOps',
     
+    # Stats class
+    'NumpyStatsOps',
+    
     # Math operations
     'add', 'subtract', 'multiply', 'divide', 'matmul', 'dot',
     'mean', 'sum', 'max', 'min', 'exp', 'log', 'log10', 'log2',
@@ -61,6 +64,7 @@ from ember_ml.backend.numpy.device_ops import NumpyDeviceOps
 from ember_ml.backend.numpy.linearalg import NumpyLinearAlgOps
 from ember_ml.backend.numpy.io_ops import NumpyIOOps
 from ember_ml.backend.numpy.solver_ops import NumpySolverOps
+from ember_ml.backend.numpy.stats import NumpyStatsOps
 
 # Import specific functions from math_ops
 from ember_ml.backend.numpy.math_ops import (

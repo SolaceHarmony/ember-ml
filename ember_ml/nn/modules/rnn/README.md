@@ -350,7 +350,7 @@ rnn_model = Sequential([
 ])
 
 # Generate some data
-x = ops.random_normal((32, 10, 5))  # (batch_size, sequence_length, features)
+x = tensor.random_normal((32, 10, 5))  # (batch_size, sequence_length, features)
 
 # Forward pass
 y_cfc = cfc_model(x)

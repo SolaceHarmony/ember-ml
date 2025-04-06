@@ -332,7 +332,7 @@ class NumpyTensor:
         Returns:
             Tensor with new data type
         """
-        from ember_ml.backend.numpy.tensor.tensor.casting import cast as cast_func
+        from ember_ml.backend.numpy.tensor.ops.casting import cast as cast_func
         return cast_func(data, dtype)
     
     def random_normal(self, shape: Shape, mean: float = 0.0, stddev: float = 1.0,

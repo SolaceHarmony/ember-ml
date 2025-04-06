@@ -8,9 +8,10 @@ to create and train a continuous-time recurrent neural network.
 import matplotlib.pyplot as plt
 
 from ember_ml import ops
-from ember_ml.nn.wirings import AutoNCP
+from ember_ml.nn.modules import AutoNCP # Updated import path
 from ember_ml.nn.modules.rnn import CfC, WiredCfCCell
-from ember_ml.nn import Module, Sequential, tensor
+from ember_ml.nn.modules.wiring import FullyConnectedMap # Add import for FullyConnectedMap
+from ember_ml.nn import Sequential, tensor
 from ember_ml.training import Optimizer, Loss
 
 def generate_sine_wave_data(num_samples=1000, seq_length=100, num_features=1):
@@ -142,7 +143,7 @@ def main():
     print("\nCreating standard CfC model...")
     standard_model = Sequential([
         CfC(
-            units=32,
+            cell_or_map=FullyConnectedMap(units=32, input_dim=1),
             time_scale_factor=1.0,
             activation="tanh",
             recurrent_activation="sigmoid",

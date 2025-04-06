@@ -12,9 +12,11 @@ from ember_ml.nn.tensor.interfaces.dtype import DTypeInterface  # noqa
 # Import directly from common implementation
 from ember_ml.nn.tensor.common import EmberTensor  # noqa
 from ember_ml.nn.tensor.common.dtypes import (  # noqa
-    EmberDType, DType, dtype,
+    EmberDType, DType, dtype as dtype_instance, # Alias the instance import
     get_dtype, to_dtype_str, from_dtype_str
 )
+# Import the dtype *function* separately to ensure it's available
+from ember_ml.nn.tensor.common import dtype # noqa
 # Import dtype objects directly from dtypes.py
 from ember_ml.nn.tensor.common.dtypes import (  # noqa
     float32, float64, int32, int64, bool_,
@@ -27,8 +29,8 @@ from ember_ml.nn.tensor.common import (  # noqa
     zeros_like, ones_like, full, full_like,
     reshape, transpose, concatenate, stack, split,
     expand_dims, squeeze, tile, gather, scatter, tensor_scatter_nd_update,
-    slice, slice_update, cast, copy, var, pad,
-    sort, argsort, to_numpy, item, shape,
+    slice, slice_update, cast, copy, pad,
+    to_numpy, item, shape,
     random_uniform, random_normal, maximum,
     random_bernoulli, random_gamma, random_exponential, random_poisson,
     random_categorical, random_permutation, shuffle, set_seed, get_seed
@@ -86,7 +88,8 @@ __all__ = [
     'EmberTensor',
     'EmberDType',
     'DType',
-    'dtype',
+    'dtype', # This should now correctly refer to the function
+    # 'dtype_instance' is not typically part of the public API, so omit from __all__
     
     # Tensor constructor
     'array',
@@ -97,8 +100,8 @@ __all__ = [
     'zeros_like', 'ones_like', 'full', 'full_like',
     'reshape', 'transpose', 'concatenate', 'stack', 'split',
     'expand_dims', 'squeeze', 'tile', 'gather', 'scatter', 'tensor_scatter_nd_update',
-    'slice', 'slice_update', 'cast', 'copy', 'var', 'pad',
-    'sort', 'argsort', 'to_numpy', 'item', 'shape', 'dtype',
+    'slice', 'slice_update', 'cast', 'copy', 'pad',
+    'to_numpy', 'item', 'shape', 'dtype',
     'random_uniform', 'random_normal', 'maximum',
     'random_bernoulli', 'random_gamma', 'random_exponential', 'random_poisson',
     'random_categorical', 'random_permutation', 'shuffle', 'set_seed', 'get_seed',

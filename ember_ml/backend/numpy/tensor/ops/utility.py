@@ -72,11 +72,12 @@ def _convert_input(x: TensorLike) -> Any:
             raise ValueError(f"Parameter object does not have a 'data' attribute: {x}")
 
     # Handle Python scalars (0D tensors)
-    if isinstance(x, (int, float, bool)):
+    # Handle Python scalars (0D tensors), excluding NumPy scalars which are handled below
+    if isinstance(x, (int, float, bool)) and not isinstance(x, np.number):
         try:
             return np.array(x)
         except Exception as e:
-            raise ValueError(f"Cannot convert scalar {type(x)} to NumPy array: {e}")
+            raise ValueError(f"Cannot convert Python scalar {type(x)} to NumPy array: {e}")
 
     # Handle Python sequences (potential 1D or higher tensors) recursively
     if isinstance(x, (list, tuple)):
@@ -93,12 +94,16 @@ def _convert_input(x: TensorLike) -> Any:
         except Exception as e:
             raise ValueError(f"Cannot convert sequence {type(x)} to NumPy array: {e}")
 
-    # Handle NumPy scalar types
-    if np.isscalar(x):
+    # Handle NumPy scalar types explicitly
+    if isinstance(x, np.number):
         return np.array(x)
 
-    # For any other type, reject it
-    raise ValueError(f"Cannot convert {type(x)} to NumPy array. Only int, float, bool, list, tuple, numpy scalar types, numpy.ndarray, and NumpyTensor are supported.")
+    # Fallback for other scalar types recognized by numpy (e.g., np.bool_)
+    if np.isscalar(x):
+         return np.array(x)
+
+    # For any other type, reject it with a more detailed message
+    raise ValueError(f"Cannot convert {type(x)} to NumPy array. Supported types: Python scalars (int, float, bool), sequences (list, tuple), NumPy scalars/arrays, EmberTensor, Parameter.")
 
 
 

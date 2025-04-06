@@ -154,7 +154,7 @@ Update the imports and method calls:
 # Before
 from ember_ml import ops
 from ember_ml.nn.tensor import EmberTensor
-from ember_ml.ops.dtypes import EmberDtype
+from ember_ml.nn.tensor.dtypes import EmberDtype
 from ember_ml.nn.wirings.wiring import Wiring
 
 class RandomWiring(Wiring):
@@ -162,7 +162,7 @@ class RandomWiring(Wiring):
     def build(self):
         # ...
         # Create random masks
-        input_mask = ops.cast(
+        input_mask = tensor.cast(
             ops.random_uniform((self.input_dim,)) >= self.sparsity_level,
             tensor.int32
         )

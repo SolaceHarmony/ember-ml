@@ -6,17 +6,17 @@ from typing import Optional
 from abc import ABC, abstractmethod
 
 from ember_ml import ops
-from ember_ml.nn.tensor import EmberTensor as Tensor
+from ember_ml.nn.tensor import EmberTensor
 from ember_ml.nn.tensor import float32, shape, full_like, expand_dims, arange, transpose, full_like
 from ember_ml.nn.tensor import concatenate, cast, tile, reshape
 from ember_ml.nn.modules import Module
 from ember_ml.nn.linear import Linear
 from ember_ml.nn.container import Dropout
-
-convert_to_tensor = Tensor().convert_to_tensor
+from ember_ml.nn import tensor
+# Removed problematic global assignment
 
 # Constants
-NINF = convert_to_tensor([(-1.0e38,)],float32)  # Approximation of negative infinity
+NINF = tensor.convert_to_tensor([(-1.0e38,)],float32)  # Approximation of negative infinity
 
 class BaseAttention(Module, ABC):
     """Abstract base class for attention mechanisms."""
@@ -27,10 +27,10 @@ class BaseAttention(Module, ABC):
     
     @abstractmethod
     def forward(self,
-                query: Tensor,
-                key: Tensor,
-                value: Tensor,
-                mask: Optional[Tensor] = None) -> Tensor:
+                query: EmberTensor,
+                key: EmberTensor,
+                value: EmberTensor,
+                mask: Optional[EmberTensor] = None) -> EmberTensor:
         """
         Compute attention mechanism.
 
@@ -46,7 +46,7 @@ class BaseAttention(Module, ABC):
         pass
     
     @abstractmethod
-    def get_attention_weights(self) -> Optional[Tensor]:
+    def get_attention_weights(self) -> Optional[EmberTensor]:
         """
         Get last computed attention weights.
 
@@ -59,7 +59,7 @@ class AttentionMask:
     """Utility class for creating attention masks."""
     
     @staticmethod
-    def create_padding_mask(lengths: Tensor, max_len: int) -> Tensor:
+    def create_padding_mask(lengths: EmberTensor, max_len: int) -> EmberTensor:
         """
         Create padding mask from sequence lengths.
 
@@ -78,7 +78,7 @@ class AttentionMask:
         return mask
     
     @staticmethod
-    def create_causal_mask(seq_len: int) -> Tensor:
+    def create_causal_mask(seq_len: int) -> EmberTensor:
         """
         Create causal (triangular) mask.
 
@@ -96,7 +96,7 @@ class AttentionMask:
         return cast(ops.less_equal(col_indices, row_indices), float32)
     
     @staticmethod
-    def create_window_mask(seq_len: int, window_size: int) -> Tensor:
+    def create_window_mask(seq_len: int, window_size: int) -> EmberTensor:
         """
         Create sliding window mask.
 
@@ -119,7 +119,7 @@ class AttentionScore:
     """Utility class for computing attention scores."""
     
     @staticmethod
-    def dot_product(query: Tensor, key: Tensor) -> Tensor:
+    def dot_product(query: EmberTensor, key: EmberTensor) -> EmberTensor:
         """
         Compute dot product attention scores.
 
@@ -133,9 +133,9 @@ class AttentionScore:
         return ops.matmul(query, transpose(key, axes=(-2, -1)))
     
     @staticmethod
-    def scaled_dot_product(query: Tensor,
-                          key: Tensor,
-                          scale: float) -> Tensor:
+    def scaled_dot_product(query: EmberTensor,
+                          key: EmberTensor,
+                          scale: float) -> EmberTensor:
         """
         Compute scaled dot product attention scores.
 
@@ -149,14 +149,14 @@ class AttentionScore:
         """
         return ops.divide(
             ops.matmul(query, transpose(key, axes=(-2, -1))),
-            convert_to_tensor(scale)
+            tensor.convert_to_tensor(scale)
         )
     
     @staticmethod
-    def additive(query: Tensor,
-                 key: Tensor,
-                 weight: Tensor,
-                 bias: Optional[Tensor] = None) -> Tensor:
+    def additive(query: EmberTensor,
+                 key: EmberTensor,
+                 weight: EmberTensor,
+                 bias: Optional[EmberTensor] = None) -> EmberTensor:
         """
         Compute additive attention scores.
 
@@ -212,14 +212,14 @@ class AttentionLayer(BaseAttention):
         self.query = Linear(query_dim, hidden_dim)
         self.key = Linear(key_dim, hidden_dim)
         self.value = Linear(value_dim, hidden_dim)
-        self.scale = ops.sqrt(convert_to_tensor(hidden_dim))
+        self.scale = ops.sqrt(tensor.convert_to_tensor(hidden_dim))
         self._attention_weights = None
         
     def forward(self,
-                query: Tensor,
-                key: Tensor,
-                value: Tensor,
-                mask: Optional[Tensor] = None) -> Tensor:
+                query: EmberTensor,
+                key: EmberTensor,
+                value: EmberTensor,
+                mask: Optional[EmberTensor] = None) -> EmberTensor:
         """
         Compute attention-weighted output.
 
@@ -250,7 +250,7 @@ class AttentionLayer(BaseAttention):
         
         return output
     
-    def get_attention_weights(self) -> Optional[Tensor]:
+    def get_attention_weights(self) -> Optional[EmberTensor]:
         """Get last computed attention weights."""
         return self._attention_weights
 
@@ -292,10 +292,10 @@ class MultiHeadAttention(BaseAttention):
         self._attention_weights = None
         
     def forward(self,
-                query: Tensor,
-                key: Tensor,
-                value: Tensor,
-                mask: Optional[Tensor] = None) -> Tensor:
+                query: EmberTensor,
+                key: EmberTensor,
+                value: EmberTensor,
+                mask: Optional[EmberTensor] = None) -> EmberTensor:
         """
         Compute multi-head attention.
 
@@ -312,7 +312,7 @@ class MultiHeadAttention(BaseAttention):
         query_len = shape(query)[1]
         key_len = shape(key)[1]
         
-        scaling = ops.sqrt(convert_to_tensor(self.head_dim))
+        scaling = ops.sqrt(tensor.convert_to_tensor(self.head_dim))
         
         # Linear projections and reshape
         q = self.q_proj(query)
@@ -350,7 +350,7 @@ class MultiHeadAttention(BaseAttention):
         
         return attn_output
     
-    def get_attention_weights(self) -> Optional[Tensor]:
+    def get_attention_weights(self) -> Optional[EmberTensor]:
         """Get last computed attention weights."""
         return self._attention_weights
 

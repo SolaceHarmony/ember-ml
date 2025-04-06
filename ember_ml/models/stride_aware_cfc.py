@@ -12,7 +12,7 @@ from ember_ml import ops
 from ember_ml.nn import tensor
 from ember_ml.nn.modules import Module
 from ember_ml.nn.modules.rnn import CfC, LSTMCell
-from ember_ml.nn.wirings import AutoNCP
+from ember_ml.nn.modules import AutoNCP # Updated import path
 
 def create_liquid_network_with_motor_neuron(
     input_dim: int,
@@ -248,7 +248,7 @@ class LiquidNetworkWithMotorNeuron(Module):
         # Input projection
         self.input_projection = self.add_module(
             "input_projection",
-            ops.nn.Dense(
+            nn.modules.activations.Dense(
                 units=cell.units,
                 input_shape=(input_dim,)
             )
@@ -257,7 +257,7 @@ class LiquidNetworkWithMotorNeuron(Module):
         # Output projection
         self.output_projection = self.add_module(
             "output_projection",
-            ops.nn.Dense(
+            nn.modules.activations.Dense(
                 units=output_dim,
                 input_shape=(cell.units,)
             )
@@ -277,7 +277,7 @@ class LiquidNetworkWithMotorNeuron(Module):
         if mixed_memory:
             self.memory_gate = self.add_module(
                 "memory_gate",
-                ops.nn.Dense(
+                nn.modules.activations.Dense(
                     units=cell.units,
                     input_shape=(cell.units,),
                     activation="sigmoid"
@@ -368,7 +368,7 @@ class MotorNeuron(Module):
         # Output projection
         self.output_projection = self.add_module(
             "output_projection",
-            ops.nn.Dense(
+            nn.modules.activations.Dense(
                 units=1,
                 input_shape=(input_dim,),
                 activation="sigmoid"
@@ -379,7 +379,7 @@ class MotorNeuron(Module):
         if adaptive_threshold:
             self.threshold_projection = self.add_module(
                 "threshold_projection",
-                ops.nn.Dense(
+                nn.modules.activations.Dense(
                     units=1,
                     input_shape=(input_dim,),
                     activation="sigmoid",
@@ -444,7 +444,7 @@ class LSTMGatedLiquidNetwork(Module):
         # Input projection for CfC
         self.cfc_input_projection = self.add_module(
             "cfc_input_projection",
-            ops.nn.Dense(
+            nn.modules.activations.Dense(
                 units=cfc_cell.units,
                 input_shape=(input_dim,)
             )
@@ -453,7 +453,7 @@ class LSTMGatedLiquidNetwork(Module):
         # Input projection for LSTM
         self.lstm_input_projection = self.add_module(
             "lstm_input_projection",
-            ops.nn.Dense(
+            nn.modules.activations.Dense(
                 units=lstm_cell.units,
                 input_shape=(input_dim,)
             )
@@ -462,7 +462,7 @@ class LSTMGatedLiquidNetwork(Module):
         # Output projection
         self.output_projection = self.add_module(
             "output_projection",
-            ops.nn.Dense(
+            nn.modules.activations.Dense(
                 units=output_dim,
                 input_shape=(cfc_cell.units + lstm_cell.units,)
             )
@@ -471,7 +471,7 @@ class LSTMGatedLiquidNetwork(Module):
         # Gating mechanism
         self.gate = self.add_module(
             "gate",
-            ops.nn.Dense(
+            nn.modules.activations.Dense(
                 units=cfc_cell.units,
                 input_shape=(lstm_cell.units,),
                 activation="sigmoid"
@@ -569,7 +569,7 @@ class MultiStrideLiquidNetwork(Module):
         for stride, cell in cells.items():
             self.input_projections[stride] = self.add_module(
                 f"input_projection_{stride}",
-                ops.nn.Dense(
+                nn.modules.activations.Dense(
                     units=cell.units,
                     input_shape=(input_dim,)
                 )
@@ -579,7 +579,7 @@ class MultiStrideLiquidNetwork(Module):
         total_units = sum(cell.units for cell in cells.values())
         self.output_projection = self.add_module(
             "output_projection",
-            ops.nn.Dense(
+            nn.modules.activations.Dense(
                 units=output_dim,
                 input_shape=(total_units,)
             )

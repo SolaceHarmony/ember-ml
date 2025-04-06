@@ -1,7 +1,7 @@
 """PyTorch tensor utility operations."""
 
 import torch
-import numpy
+import numpy as np # Use standard alias for clarity, though we avoid direct calls
 from typing import Union, Optional, Sequence, Any, List, Tuple
 
 from ember_ml.backend.torch.tensor.dtype import TorchDType
@@ -49,26 +49,43 @@ def _convert_input(x: TensorLike, no_scalars = False) -> Any:
     if (hasattr(x, '__class__') and
         x.__class__.__module__ == 'numpy' and
         x.__class__.__name__ == 'ndarray'):
+        # Use x.copy() to avoid potential memory sharing issues if the numpy array is modified later
         return torch.from_numpy(x.copy())
 
-    # Handle Python scalars (0D tensors)
-    if not no_scalars and isinstance(x, (int, float, bool)):
+    # Handle NumPy scalar types using hasattr to avoid isinstance
+    if (hasattr(x, 'item') and # Check for item method common to numpy scalars
+        hasattr(x, '__class__') and
+        hasattr(x.__class__, '__module__') and
+        x.__class__.__module__ == 'numpy'):
+        try:
+            # Convert NumPy scalar to its Python equivalent, then to tensor
+            return torch.tensor(x.item())
+        except Exception as e:
+             raise ValueError(f"Cannot convert NumPy scalar {type(x)} to torch.Tensor: {e}")
+
+    # Handle Python scalars (int, float, bool), EXCLUDING NumPy scalars handled above
+    is_python_scalar = isinstance(x, (int, float, bool))
+    is_numpy_scalar = (hasattr(x, 'item') and hasattr(x, '__class__') and hasattr(x.__class__, '__module__') and x.__class__.__module__ == 'numpy')
+
+    if not no_scalars and is_python_scalar and not is_numpy_scalar:
         try:
             return torch.tensor(x)
         except Exception as e:
-            raise ValueError(f"Cannot convert scalar {type(x)} to torch.Tensor: {e}")
+            raise ValueError(f"Cannot convert Python scalar {type(x)} to torch.Tensor: {e}")
 
     # Handle Python sequences (potential 1D or higher tensors) recursively
     if isinstance(x, (list, tuple)):
         try:
            
+            # Convert sequences, which might contain mixed types including other tensors or arrays
+            # PyTorch's torch.tensor handles lists/tuples of numbers well.
             return torch.tensor(x)
         except Exception as e:
-            raise ValueError(f"Cannot convert sequence {type(x)} to torch.Tensor: {e}")
+            # Add more context to the error
+            raise ValueError(f"Cannot convert sequence {type(x)} to torch.Tensor. Content: {str(x)[:100]}... Error: {e}")
 
-
-    # For any other type, reject it
-    raise ValueError(f"Cannot convert {type(x)} to torch.Tensor. Only int, float, bool, list, tuple, numpy.ndarray, TorchTensor and EmberTensor are supported.")
+    # For any other type, reject it with a corrected list of supported types
+    raise ValueError(f"Cannot convert {type(x)} to torch.Tensor. Supported types: Python scalars/sequences, NumPy scalars/arrays, TorchTensor, EmberTensor, Parameter.")
 
 
 def convert_to_torch_tensor(data: Any, dtype: Optional[Any] = None, device: Optional[str] = None) -> torch.Tensor:
@@ -92,7 +109,7 @@ def convert_to_torch_tensor(data: Any, dtype: Optional[Any] = None, device: Opti
 
     return tensor
 
-def to_numpy(data: TensorLike) -> Optional[numpy.ndarray]:
+def to_numpy(data: TensorLike) -> Optional[np.ndarray]:
     """
     Convert a PyTorch tensor to a NumPy array.
     
@@ -126,9 +143,12 @@ def item(data: TensorLike) -> Union[int, float, bool]:
     Returns:
         The scalar value
     """
-    if isinstance(data, torch.Tensor):
-        return data.item()
-    return data
+    # Ensure data is a torch tensor first
+    tensor_torch = convert_to_torch_tensor(data)
+    # Check if the tensor is scalar before calling item()
+    if tensor_torch.numel() != 1:
+         raise ValueError("item() can only be called on scalar tensors (tensors with one element)")
+    return tensor_torch.item()
 
 def shape(data: TensorLike) -> Shape:
     """

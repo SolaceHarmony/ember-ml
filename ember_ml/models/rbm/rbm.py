@@ -10,7 +10,7 @@ import ember_ml.nn as nn
 from ember_ml.nn.tensor import random_uniform
 from ember_ml.nn import tensor
 from ember_ml.nn.container import Linear
-from ember_ml.nn.activations import Sigmoid
+from ember_ml.nn.modules import Sigmoid # Updated import path
 from typing import Optional, Tuple, List, Dict, Any, Union, Callable
 
 class RestrictedBoltzmannMachine(nn.Module):
@@ -142,9 +142,9 @@ class RestrictedBoltzmannMachine(nn.Module):
         hidden_activations = ops.matmul(visible, tensor.transpose(self.weights)) + self.hidden_bias
         
         if self.hidden_type == 'binary':
-            hidden_term = -ops.sum(ops.log(1 + ops.exp(hidden_activations)), axis=1)  # softplus
+            hidden_term = -ops.stats.sum(ops.log(1 + ops.exp(hidden_activations)), axis=1)  # softplus
         else:  # gaussian
-            hidden_term = -0.5 * ops.sum(hidden_activations * hidden_activations, axis=1)
+            hidden_term = -0.5 * ops.stats.sum(hidden_activations * hidden_activations, axis=1)
         
         return visible_term + hidden_term
     
@@ -270,7 +270,7 @@ def train_rbm(rbm: RestrictedBoltzmannMachine,
             
             # In a real implementation, we would update weights here
             # For now, we'll just compute the loss
-            loss = ops.mean(ops.subtract(positive_free_energy, negative_free_energy))
+            loss = ops.stats.mean(ops.subtract(positive_free_energy, negative_free_energy))
             
             epoch_loss += loss
         

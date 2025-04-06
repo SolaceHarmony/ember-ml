@@ -283,7 +283,7 @@ The modules use the `ops` module for all tensor operations, which delegates to t
 from ember_ml import ops
 
 # Create a tensor
-tensor = ops.random_normal((10, 10))
+tensor = tensor.random_normal((10, 10))
 
 # Perform operations
 result = ops.matmul(tensor, tensor)

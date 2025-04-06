@@ -442,18 +442,21 @@ class TensorInterface(ABC):
         """
         pass
     
+    
+    
+    
     @abstractmethod
-    def var(self, x: Any, axis: Optional[Union[int, Sequence[int]]] = None, keepdims: bool = False) -> Any:
+    def slice(self, x: Any, starts: Sequence[int], sizes: Sequence[int]) -> Any:
         """
-        Compute the variance of a tensor along specified axes.
+        Extract a slice from a tensor.
         
         Args:
             x: Input tensor
-            axis: Axis or axes along which to compute the variance
-            keepdims: Whether to keep the reduced dimensions
+            starts: Starting indices for each dimension
+            sizes: Size of the slice in each dimension. A value of -1 means "all remaining elements in this dimension"
             
         Returns:
-            Variance of the tensor
+            Sliced tensor
         """
         pass
     
@@ -484,21 +487,6 @@ class TensorInterface(ABC):
             
         Returns:
             Indices that would sort the tensor
-        """
-        pass
-    
-    @abstractmethod
-    def slice(self, x: Any, starts: Sequence[int], sizes: Sequence[int]) -> Any:
-        """
-        Extract a slice from a tensor.
-        
-        Args:
-            x: Input tensor
-            starts: Starting indices for each dimension
-            sizes: Size of the slice in each dimension. A value of -1 means "all remaining elements in this dimension"
-            
-        Returns:
-            Sliced tensor
         """
         pass
     

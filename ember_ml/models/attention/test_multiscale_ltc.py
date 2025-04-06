@@ -8,7 +8,7 @@ from ember_ml.attention.multiscale_ltc import (
     visualize_feature_extraction,
     visualize_multiscale_dynamics
 )
-from ember_ml.nn.wirings import AutoNCP
+from ember_ml.nn.modules import AutoNCP # Updated import path
 
 
 def generate_synthetic_data(num_samples=1000, num_features=10, seed=42):

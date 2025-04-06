@@ -139,65 +139,6 @@ class MathOps(ABC):
         """
         pass
     
-    @abstractmethod
-    def mean(self, x: Any, axis: Optional[Union[int, Sequence[int]]] = None, keepdims: bool = False) -> Any:
-        """
-        Compute the mean of a tensor along specified axes.
-        
-        Args:
-            x: Input tensor
-            axis: Axis or axes along which to compute the mean
-            keepdims: Whether to keep the reduced dimensions
-            
-        Returns:
-            Mean of the tensor
-        """
-        pass
-    
-    @abstractmethod
-    def sum(self, x: Any, axis: Optional[Union[int, Sequence[int]]] = None, keepdims: bool = False) -> Any:
-        """
-        Compute the sum of a tensor along specified axes.
-        
-        Args:
-            x: Input tensor
-            axis: Axis or axes along which to compute the sum
-            keepdims: Whether to keep the reduced dimensions
-            
-        Returns:
-            Sum of the tensor
-        """
-        pass
-    
-    @abstractmethod
-    def max(self, x: Any, axis: Optional[Union[int, Sequence[int]]] = None, keepdims: bool = False) -> Any:
-        """
-        Compute the maximum of a tensor along specified axes.
-        
-        Args:
-            x: Input tensor
-            axis: Axis or axes along which to compute the maximum
-            keepdims: Whether to keep the reduced dimensions
-            
-        Returns:
-            Maximum of the tensor
-        """
-        pass
-    
-    @abstractmethod
-    def min(self, x: Any, axis: Optional[Union[int, Sequence[int]]] = None, keepdims: bool = False) -> Any:
-        """
-        Compute the minimum of a tensor along specified axes.
-        
-        Args:
-            x: Input tensor
-            axis: Axis or axes along which to compute the minimum
-            keepdims: Whether to keep the reduced dimensions
-            
-        Returns:
-            Minimum of the tensor
-        """
-        pass
     
     @abstractmethod
     def exp(self, x: Any) -> Any:
@@ -330,21 +271,6 @@ class MathOps(ABC):
         """
         pass
         
-    @abstractmethod
-    def argmax(self, x: Any, axis: Optional[int] = None, keepdims: bool = False) -> Any:
-        """
-        Return the indices of the maximum values along the specified axis.
-        
-        Args:
-            x: Input tensor
-            axis: Axis along which to find maximum values. If None, the argmax of
-                the flattened array is returned.
-            keepdims: If True, the reduced axes are kept as dimensions with size one.
-            
-        Returns:
-            Indices of the maximum values along the specified axis.
-        """
-        pass
     
     @abstractmethod
     def clip(self, x: Any, min_val: Union[float, Any], max_val: Union[float, Any]) -> Any:
@@ -360,6 +286,7 @@ class MathOps(ABC):
             Clipped tensor
         """
         pass
+
     
     @abstractmethod
     def sin(self, x: Any) -> Any:
@@ -494,6 +421,7 @@ class MathOps(ABC):
         """
         pass
     
+
     @abstractmethod
     def gradient(self, f: Any, *varargs, axis: Optional[Union[int, Sequence[int]]] = None,
                 edge_order: int = 1) -> Union[Any, Sequence[Any]]:
@@ -518,19 +446,6 @@ class MathOps(ABC):
         """
         pass
     
-    @abstractmethod
-    def cumsum(self, x: Any, axis: Optional[int] = None) -> Any:
-        """
-        Compute the cumulative sum of a tensor along a specified axis.
-        
-        Args:
-            x: Input tensor
-            axis: Axis along which to compute the cumulative sum
-            
-        Returns:
-            Tensor with cumulative sums
-        """
-        pass
     
     @abstractmethod
     def eigh(self, a: Any) -> Tuple[Any, Any]:
@@ -559,16 +474,3 @@ class MathOps(ABC):
         """
         pass
 
-    @abstractmethod
-    def sort(self, x: Any, axis: int = -1) -> Any:
-        """
-        Sort a tensor along a specified axis.
-        
-        Args:
-            x: Input tensor
-            axis: Axis along which to sort
-            
-        Returns:
-            Sorted tensor
-        """
-        pass

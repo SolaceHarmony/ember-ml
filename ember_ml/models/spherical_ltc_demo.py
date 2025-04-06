@@ -3,7 +3,8 @@
 import torch
 import matplotlib.pyplot as plt
 import numpy as np
-from ember_ml.core import (
+# Updated import path for Spherical LTC components
+from ember_ml.nn.modules.rnn.spherical_ltc import (
     SphericalLTCConfig,
     SphericalLTCChain
 )

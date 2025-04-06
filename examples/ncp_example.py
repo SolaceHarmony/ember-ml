@@ -9,9 +9,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from ember_ml import ops
-from ember_ml.nn.wirings import NCPWiring, FullyConnectedWiring, RandomWiring
+from ember_ml.nn.modules import NCPWiring # Updated import path
 from ember_ml.nn.modules import NCP, AutoNCP
-from ember_ml.nn import Module, Sequential, tensor
+from ember_ml.nn import tensor
 
 def main():
     """Run the NCP example."""

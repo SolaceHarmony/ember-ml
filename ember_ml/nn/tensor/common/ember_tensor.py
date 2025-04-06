@@ -16,7 +16,7 @@ from ember_ml.nn.tensor.common import (
     _convert_to_backend_tensor, to_numpy, item, shape, dtype, zeros, ones, zeros_like, ones_like,
     eye, arange, linspace, full, full_like, reshape, transpose, concatenate, stack, split,
     expand_dims, squeeze, tile, gather, scatter, tensor_scatter_nd_update, slice, slice_update,
-    cast, copy, var, pad, sort, argsort, maximum, random_normal, random_uniform,
+    cast, copy, pad, maximum, random_normal, random_uniform,
     random_bernoulli, random_gamma, random_exponential, random_poisson,
     random_categorical, random_permutation, shuffle, set_seed, get_seed, tolist
 )
@@ -589,23 +589,6 @@ class EmberTensor(TensorInterface):
         tensor = copy(x)
         return tensor
     
-    def var(self, x: Any, axis: Optional[Union[int, Sequence[int]]] = None, keepdims: bool = False) -> Any:
-        """
-        Compute the variance of a tensor along specified axes.
-        
-        Args:
-            x: Input tensor
-            axis: Axis or axes along which to compute the variance
-            keepdims: Whether to keep the reduced dimensions
-            
-        Returns:
-            Variance of the tensor
-        """
-        if isinstance(x, EmberTensor):
-            x = x.to_backend_tensor()
-        tensor = var(x, axis, keepdims)
-        return tensor
-    
     def sort(self, x: Any, axis: int = -1, descending: bool = False) -> Any:
         """
         Sort a tensor along a specified axis.
@@ -620,8 +603,23 @@ class EmberTensor(TensorInterface):
         """
         if isinstance(x, EmberTensor):
             x = x.to_backend_tensor()
-        tensor = sort(x, axis, descending)
-        return tensor
+            
+        # Use the backend's sort function
+        from ember_ml.backend import get_backend_module
+        backend = get_backend_module()
+        if hasattr(backend, 'Tensor') and hasattr(backend.Tensor, 'sort'):
+            tensor_ops = backend.Tensor()
+            tensor = tensor_ops.sort(x, axis, descending)
+            return tensor
+        else:
+            # Fallback implementation
+            import numpy as np
+            x_np = to_numpy(x)
+            if descending:
+                result = np.sort(x_np, axis=axis)[::-1]
+            else:
+                result = np.sort(x_np, axis=axis)
+            return _convert_to_backend_tensor(result)
     
     def argsort(self, x: Any, axis: int = -1, descending: bool = False) -> Any:
         """
@@ -637,8 +635,23 @@ class EmberTensor(TensorInterface):
         """
         if isinstance(x, EmberTensor):
             x = x.to_backend_tensor()
-        tensor = argsort(x, axis, descending)
-        return tensor
+            
+        # Use the backend's argsort function
+        from ember_ml.backend import get_backend_module
+        backend = get_backend_module()
+        if hasattr(backend, 'Tensor') and hasattr(backend.Tensor, 'argsort'):
+            tensor_ops = backend.Tensor()
+            tensor = tensor_ops.argsort(x, axis, descending)
+            return tensor
+        else:
+            # Fallback implementation
+            import numpy as np
+            x_np = to_numpy(x)
+            if descending:
+                result = np.argsort(x_np, axis=axis)[::-1]
+            else:
+                result = np.argsort(x_np, axis=axis)
+            return _convert_to_backend_tensor(result)
     
     def slice(self, x: Any, starts: Sequence[int], sizes: Sequence[int]) -> Any:
         """

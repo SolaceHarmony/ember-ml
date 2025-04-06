@@ -5,13 +5,15 @@ This module provides an implementation of the LTC layer,
 which wraps an LTCCell to create a recurrent layer.
 """
 
-from typing import Optional, List, Dict, Any, Union, Tuple
+from typing import Dict, Any
 
 import numpy as np
 from ember_ml import ops
-from ember_ml.initializers.glorot import glorot_uniform, orthogonal
+# Updated initializer import path
+from ember_ml.nn.initializers import glorot_uniform, orthogonal
 from ember_ml.nn.modules import Module
-from ember_ml.nn.wirings import Wiring, FullyConnectedWiring as FullyConnected
+# Updated wiring import paths
+from ember_ml.nn.modules.wiring import NeuronMap # Use renamed base class
 from ember_ml.nn.modules.rnn.ltc_cell import LTCCell
 from ember_ml.nn import tensor
 
@@ -24,8 +26,7 @@ class LTC(Module):
     
     def __init__(
         self,
-        input_size: int,
-        units,
+        neuron_map: NeuronMap,
         return_sequences: bool = True,
         batch_first: bool = True,
         mixed_memory: bool = False,
@@ -40,8 +41,8 @@ class LTC(Module):
         Initialize the LTC layer.
         
         Args:
-            input_size: Number of input features
-            units: Wiring (Wiring instance) or integer representing the number of (fully-connected) hidden units
+            neuron_map: NeuronMap instance defining the connectivity structure
+                        (input dimensions will be derived from the first input tensor)
             return_sequences: Whether to return the full sequence or just the last output
             batch_first: Whether the batch or time dimension is the first (0-th) dimension
             mixed_memory: Whether to augment the RNN by a memory-cell to help learn long-term dependencies
@@ -54,22 +55,23 @@ class LTC(Module):
         """
         super().__init__(**kwargs)
         
-        self.input_size = input_size
-        self.wiring_or_units = units
+        # Store the map for reference/config
+        self.neuron_map = neuron_map
         self.batch_first = batch_first
         self.return_sequences = return_sequences
         self.mixed_memory = mixed_memory
         
-        # Create wiring if units is an integer
-        if isinstance(units, Wiring):
-            wiring = units
-        else:
-            wiring = FullyConnected(units)
+        # Validate that neuron_map is actually a NeuronMap instance
+        if not isinstance(neuron_map, NeuronMap):
+            raise TypeError("neuron_map must be a NeuronMap instance")
+            
+        # Set input_size from neuron_map.input_dim if the map is already built
+        # Otherwise, it will be set during the first forward pass
+        self.input_size = getattr(neuron_map, 'input_dim', None)
         
         # Create LTC cell
         self.rnn_cell = LTCCell(
-            wiring=wiring,
-            in_features=input_size,
+            neuron_map=neuron_map,
             input_mapping=input_mapping,
             output_mapping=output_mapping,
             ode_unfolds=ode_unfolds,
@@ -77,11 +79,14 @@ class LTC(Module):
             implicit_param_constraints=implicit_param_constraints
         )
         
-        self._wiring = wiring
+        # Store the map internally for property access
+        self._neuron_map = neuron_map
         
         # Create memory cell if using mixed memory
-        if self.mixed_memory:
-            self.memory_cell = self._create_memory_cell(input_size, self.state_size)
+        # If input_size is not available yet, memory cell creation will be deferred
+        self.memory_cell = None
+        if self.mixed_memory and self.input_size is not None:
+            self.memory_cell = self._create_memory_cell(self.input_size, self.state_size)
     
     def _create_memory_cell(self, input_size, state_size):
         """Create a memory cell for mixed memory mode."""
@@ -155,15 +160,15 @@ class LTC(Module):
     
     @property
     def state_size(self):
-        return self._wiring.units
+        return self._neuron_map.units
     
     @property
     def sensory_size(self):
-        return self._wiring.input_dim
+        return self._neuron_map.input_dim
     
     @property
     def motor_size(self):
-        return self._wiring.output_dim
+        return self._neuron_map.output_dim
     
     @property
     def output_size(self):
@@ -171,12 +176,19 @@ class LTC(Module):
     
     @property
     def synapse_count(self):
-        return np.sum(np.abs(self._wiring.adjacency_matrix))
+        # Use ops/tensor for calculations, avoid numpy
+        # Ensure adjacency_matrix is a tensor first
+        adj_matrix_tensor = tensor.convert_to_tensor(self._neuron_map.adjacency_matrix)
+        return tensor.sum(tensor.abs(adj_matrix_tensor))
     
     @property
     def sensory_synapse_count(self):
-        matrix = np.asarray(self._wiring.sensory_adjacency_matrix)
-        return float(np.sum(np.abs(matrix)))
+        # Use ops/tensor for calculations, avoid numpy
+        sensory_matrix_tensor = tensor.convert_to_tensor(self._neuron_map.sensory_adjacency_matrix)
+        # sum result might be a 0-dim tensor, convert to float if necessary
+        sum_val = tensor.sum(tensor.abs(sensory_matrix_tensor))
+        # Use item() to get Python scalar
+        return float(tensor.item(sum_val))
     
     def forward(self, inputs, initial_state=None, timespans=None):
         """
@@ -195,6 +207,19 @@ class LTC(Module):
         is_batched = len(tensor.shape(inputs)) == 3
         batch_dim = 0 if self.batch_first else 1
         seq_dim = 1 if self.batch_first else 0
+        
+        # Build or update neuron_map if needed based on input dimensions
+        feature_dim = 2  # Assuming (batch, seq, features) or (seq, batch, features)
+        input_features = tensor.shape(inputs)[feature_dim]
+        
+        # If input_size is not set or the map isn't built, build it now
+        if self.input_size is None or not self.neuron_map.is_built():
+            self.neuron_map.build(input_features)
+            self.input_size = self.neuron_map.input_dim
+            
+            # Create memory cell now if using mixed memory and it wasn't created during init
+            if self.mixed_memory and self.memory_cell is None:
+                self.memory_cell = self._create_memory_cell(self.input_size, self.state_size)
         
         # Handle non-batched inputs
         if not is_batched:
@@ -287,3 +312,87 @@ class LTC(Module):
             return (h_state, c_state)
         else:
             return h_state
+    
+    def get_config(self) -> Dict[str, Any]:
+        """Returns the configuration of the LTC layer."""
+        config = super().get_config()
+        
+        # Save the cell's config
+        cell_config = self.rnn_cell.get_config()
+        
+        # Save layer's direct __init__ args
+        config.update({
+            # Don't save input_size as it's derived from the neuron_map
+            # Save the neuron_map config
+            "neuron_map": self.neuron_map.get_config(),
+            "neuron_map_class": self.neuron_map.__class__.__name__,
+            # Save other layer args
+            "return_sequences": self.return_sequences,
+            "batch_first": self.batch_first,
+            "mixed_memory": self.mixed_memory,
+            # Save cell args directly in the layer config
+            "input_mapping": self.rnn_cell._input_mapping,
+            "output_mapping": self.rnn_cell._output_mapping,
+            "ode_unfolds": self.rnn_cell._ode_unfolds,
+            "epsilon": self.rnn_cell._epsilon,
+            "implicit_param_constraints": self.rnn_cell._implicit_param_constraints,
+            # Also save cell config and class name
+            "cell_config": cell_config,
+            "cell_class_name": self.rnn_cell.__class__.__name__
+        })
+        return config
+    
+    @classmethod
+    def from_config(cls, config: Dict[str, Any]) -> 'LTC':
+        """Creates an LTC layer from its configuration."""
+        # First handle the cell config
+        cell_config = config.pop("cell_config", None)
+        cell_class_name = config.pop("cell_class_name", "LTCCell")
+        
+        # Handle backward compatibility with old configs that used input_size or neuron_map_or_units
+        # This ensures older models can still be loaded
+        from ember_ml.nn.modules.wiring import FullyConnectedMap
+        
+        # Handle old input_size parameter (needed for backward compatibility)
+        old_input_size = config.pop("input_size", None)
+        
+        # Handle old neuron_map_or_units parameter
+        if "neuron_map_or_units" in config and "neuron_map" not in config:
+            map_or_units = config.pop("neuron_map_or_units")
+            if isinstance(map_or_units, dict):
+                # It was a map config
+                config["neuron_map"] = map_or_units
+                if "class_name" not in config["neuron_map"]:
+                    config["neuron_map_class"] = "FullyConnectedMap"
+            elif isinstance(map_or_units, int):
+                # It was an integer (units)
+                # Create a FullyConnectedMap config
+                config["neuron_map"] = {"units": map_or_units}
+                config["neuron_map_class"] = "FullyConnectedMap"
+                
+        # If we have old_input_size, make sure it's included in the map config
+        # This ensures the map will be built correctly
+        if old_input_size is not None and "neuron_map" in config and isinstance(config["neuron_map"], dict):
+            config["neuron_map"]["input_dim"] = old_input_size
+        
+        # Reconstruct the NeuronMap
+        if "neuron_map" in config and isinstance(config["neuron_map"], dict):
+            map_config = config.pop("neuron_map")
+            map_class_name = config.pop("neuron_map_class", "NeuronMap")
+            
+            from ember_ml.nn.modules.wiring import NeuronMap, NCPMap, FullyConnectedMap, RandomMap
+            neuron_map_class_map = {
+                "NeuronMap": NeuronMap,
+                "NCPMap": NCPMap,
+                "FullyConnectedMap": FullyConnectedMap,
+                "RandomMap": RandomMap,
+            }
+            map_class_obj = neuron_map_class_map.get(map_class_name)
+            if map_class_obj is None:
+                raise ImportError(f"Unknown NeuronMap class '{map_class_name}' specified in config.")
+            
+            # Reconstruct map and put object back into config
+            config['neuron_map'] = map_class_obj.from_config(map_config)
+        
+        # Let the BaseModule.from_config handle calling cls(**config)
+        return super(LTC, cls).from_config(config)

@@ -18,6 +18,7 @@ __all__ = [
     'TorchLinearAlgOps',
     'TorchFeatureOps',
     'TorchVectorOps',
+    'TorchStatsOps',
     
     # Math operations
     'add', 'subtract', 'multiply', 'divide', 'matmul', 'dot',
@@ -59,6 +60,7 @@ from ember_ml.backend.torch.comparison_ops import TorchComparisonOps
 from ember_ml.backend.torch.device_ops import TorchDeviceOps
 from ember_ml.backend.torch.io_ops import TorchIOOps
 from ember_ml.backend.torch.linearalg import TorchLinearAlgOps
+from ember_ml.backend.torch.stats import TorchStatsOps
 
 
 # Import specific functions from math_ops

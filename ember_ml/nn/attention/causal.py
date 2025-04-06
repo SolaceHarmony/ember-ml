@@ -11,8 +11,8 @@ from ember_ml.nn.tensor import full_like, copy, ones_like, reshape, shape, zeros
 from ember_ml.nn.tensor import item, int32, concatenate
 from ember_ml.nn.linear import Linear
 from ember_ml.nn.container import Sequential, Dropout
-from ember_ml.nn.activations import Tanh
-from ember_ml.attention.base import BaseAttention
+from ember_ml.nn.modules import Tanh # Updated import path
+from ember_ml.nn.attention.base import BaseAttention
 
 # Type aliases
 Tensor = EmberTensor
@@ -454,7 +454,7 @@ class CausalAttention(BaseAttention):
         causal_input = concatenate([current_state, prediction_error])
         causal_features = self.causal_proj(causal_input)
         one = convert_to_tensor(1.0)
-        prediction_accuracy = ops.subtract(one, ops.min(
+        prediction_accuracy = ops.subtract(one, ops.stats.min(
             ops.norm(prediction_error),
             one
         ))

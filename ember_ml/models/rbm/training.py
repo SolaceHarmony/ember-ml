@@ -53,12 +53,12 @@ def contrastive_divergence_step(rbm, batch_data, k=1):
         ops.subtract(pos_associations, neg_associations),
         tensor.convert_to_tensor(batch_size, dtype=tensor.float32)
     )
-    visible_bias_gradient = ops.mean(ops.subtract(batch_data, neg_visible_states), axis=0)
-    hidden_bias_gradient = ops.mean(ops.subtract(pos_hidden_probs, neg_hidden_probs), axis=0)
+    visible_bias_gradient = ops.stats.mean(ops.subtract(batch_data, neg_visible_states), axis=0)
+    hidden_bias_gradient = ops.stats.mean(ops.subtract(pos_hidden_probs, neg_hidden_probs), axis=0)
     
     # Compute reconstruction error
-    reconstruction_error = ops.mean(
-        ops.sum(ops.square(ops.subtract(batch_data, neg_visible_probs)), axis=1)
+    reconstruction_error = ops.stats.mean(
+        ops.stats.sum(ops.square(ops.subtract(batch_data, neg_visible_probs)), axis=1)
     )
     
     return (weights_gradient, visible_bias_gradient, hidden_bias_gradient), reconstruction_error

@@ -8,9 +8,11 @@ which is a type of recurrent neural network cell that can learn long-term depend
 from typing import Optional, List, Dict, Any, Union, Tuple
 
 from ember_ml import ops
-from ember_ml.nn.modules import Module, Parameter
+from ember_ml.nn.modules import Parameter # Module removed
+from ember_ml.nn.modules.module_cell import ModuleCell
+from ember_ml.nn import initializers # Import initializers
 from ember_ml.nn import tensor
-class LSTMCell(Module):
+class LSTMCell(ModuleCell): # Inherit from ModuleCell
     """
     Long Short-Term Memory (LSTM) cell.
     
@@ -21,7 +23,7 @@ class LSTMCell(Module):
         self,
         input_size: int,
         hidden_size: int,
-        bias: bool = True,
+        use_bias: bool = True, # Match ModuleCell arg name
         **kwargs
     ):
         """
@@ -30,20 +32,27 @@ class LSTMCell(Module):
         Args:
             input_size: Number of input features
             hidden_size: Number of hidden units
-            bias: Whether to use bias
+            use_bias: Whether to use bias
             **kwargs: Additional keyword arguments
         """
-        super().__init__(**kwargs)
+        # Call ModuleCell's init with explicitly provided use_bias
+        super().__init__(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            use_bias=use_bias,
+            **kwargs
+        )
         self.input_size = input_size
         self.hidden_size = hidden_size
-        self.use_bias = bias
+        # self.input_size and self.hidden_size are set by parent init
+        # self.use_bias is set by parent init
         
         # Initialize weights
         self._initialize_weights()
         
         # State size: [hidden_state, cell_state]
-        self.state_size = [self.hidden_size, self.hidden_size]
-        self.output_size = self.hidden_size
+        # state_size and output_size properties are inherited from ModuleCell
+        # No need to set them explicitly here unless overriding
     
     def _initialize_weights(self):
         """Initialize the weights for the cell."""
@@ -54,12 +63,15 @@ class LSTMCell(Module):
         self.recurrent_kernel = Parameter(tensor.zeros((self.hidden_size, self.hidden_size * 4)))
         
         # Bias
+        # Use self.use_bias set by parent
         if self.use_bias:
             self.bias = Parameter(tensor.zeros((self.hidden_size * 4,)))
+        else:
+            self.bias = None # Ensure bias is None if not used
         
-        # Initialize weights
-        self.input_kernel.data = ops.glorot_uniform((self.input_size, self.hidden_size * 4))
-        self.recurrent_kernel.data = ops.orthogonal((self.hidden_size, self.hidden_size * 4))
+        # Initialize weights using functions from initializers module
+        self.input_kernel.data = initializers.glorot_uniform((self.input_size, self.hidden_size * 4))
+        self.recurrent_kernel.data = initializers.orthogonal((self.hidden_size, self.hidden_size * 4))
         
         if self.use_bias:
             # Initialize forget gate bias to 1.0 for better gradient flow
@@ -94,7 +106,7 @@ class LSTMCell(Module):
         # Compute gates
         z = ops.matmul(inputs, self.input_kernel)
         z = ops.add(z, ops.matmul(h_prev, self.recurrent_kernel))
-        if self.use_bias:
+        if self.use_bias and self.bias is not None:
             z = ops.add(z, self.bias)
         
         # Split into gates
@@ -128,3 +140,37 @@ class LSTMCell(Module):
         h = tensor.zeros((batch_size, self.hidden_size))
         c = tensor.zeros((batch_size, self.hidden_size))
         return [h, c]
+
+    def get_config(self) -> Dict[str, Any]:
+        """Returns the configuration of the LSTM cell."""
+        # Get config from ModuleCell (input_size, hidden_size, activation, use_bias)
+        config = super().get_config()
+        # LSTMCell doesn't add new args to config beyond what ModuleCell handles
+        # We might want to remove activation if it's not used/configurable in LSTMCell
+        config.pop('activation', None)
+        
+        # Ensure use_bias is correctly saved with the actual value used
+        config['use_bias'] = self.use_bias
+        
+        return config
+
+    @classmethod
+    def from_config(cls, config: Dict[str, Any]) -> 'LSTMCell':
+        """Creates an LSTM cell from its configuration."""
+        # ModuleCell saves 'use_bias', __init__ expects 'use_bias'
+        # The base from_config should handle this mapping correctly via **config
+        if 'bias' in config and 'use_bias' not in config:
+             config['use_bias'] = config.pop('bias') # Map if old key was used
+
+        # Remove activation if present, as LSTMCell doesn't use it in init
+        config.pop('activation', None)
+        
+        # Make sure use_bias is properly passed and not overridden
+        use_bias = config.get('use_bias', True)
+        
+        # Create a new instance with the extracted config
+        return cls(
+            input_size=config['input_size'],
+            hidden_size=config['hidden_size'],
+            use_bias=use_bias
+        )

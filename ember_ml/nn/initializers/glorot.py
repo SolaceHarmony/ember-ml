@@ -89,7 +89,9 @@ def orthogonal(shape: Tuple[int, ...], gain: float = 1.0, dtype: Optional[Any] =
         col = a[:, i:i+1]
         
         # Compute the norm
-        norm = ops.sqrt(ops.sum(ops.square(col)))
+        # Import the stats module for the sum operation
+        from ember_ml.ops import stats
+        norm = ops.sqrt(stats.sum(ops.square(col)))
         
         # Add a small epsilon to avoid division by zero
         norm = ops.add(norm, 1e-8)

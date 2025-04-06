@@ -3,7 +3,7 @@
 from typing import Any, Optional, Sequence, Tuple, Union
 
 import mlx.core as mx
-
+import numpy as np # Use standard alias for clarity, though we avoid direct calls
 from ember_ml.backend.mlx.tensor.dtype import MLXDType
 from ember_ml.backend.mlx.types import TensorLike, DType
 
@@ -79,13 +79,27 @@ def _convert_input(x: TensorLike) -> Any:
         x.__class__.__module__ == 'numpy' and
         x.__class__.__name__ == 'ndarray'):
         return mx.array(x)
-        
-    # Handle Python scalars (0D tensors)
-    if isinstance(x, (int, float, bool)):
+
+    # Handle NumPy scalar types using hasattr
+    if (hasattr(x, 'item') and # Check for item method common to numpy scalars
+        hasattr(x, '__class__') and
+        hasattr(x.__class__, '__module__') and
+        x.__class__.__module__ == 'numpy'):
+        try:
+            # Convert NumPy scalar to its Python equivalent, then to MLX array
+            return mx.array(x.item())
+        except Exception as e:
+             raise ValueError(f"Cannot convert NumPy scalar {type(x)} to MLX array: {e}")
+
+    # Handle Python scalars (int, float, bool), EXCLUDING NumPy scalars handled above
+    is_python_scalar = isinstance(x, (int, float, bool))
+    is_numpy_scalar = (hasattr(x, 'item') and hasattr(x, '__class__') and hasattr(x.__class__, '__module__') and x.__class__.__module__ == 'numpy')
+
+    if is_python_scalar and not is_numpy_scalar:
         try:
             return mx.array(x)
         except Exception as e:
-            raise ValueError(f"Cannot convert scalar {x} to MLX array: {e}")
+            raise ValueError(f"Cannot convert Python scalar {type(x)} to MLX array: {e}")
     
     # Handle Python sequences (potential 1D or higher tensors) recursively
     if isinstance(x, (list, tuple)):
@@ -102,12 +116,8 @@ def _convert_input(x: TensorLike) -> Any:
        except Exception as e:
             raise ValueError(f"Cannot convert sequence {type(x)} to MLX array: {e}")
 
-    # Handle MLX scalar types (check ndim instead of non-existent isscalar)
-    if isinstance(x, mx.array) and x.ndim == 0:
-        return x # It's already an MLX scalar array
-
-    # For any other type, reject it
-    raise ValueError(f"Cannot convert {type(x)} to MLX array. Only int, float, bool, list, tuple, numpy.ndarray, MLXTensor, and EmberTensor are supported.")
+    # For any other type, reject it with a corrected list of supported types
+    raise ValueError(f"Cannot convert {type(x)} to MLX array. Supported types: Python scalars/sequences, NumPy scalars/arrays, MLXTensor, EmberTensor, Parameter.")
 def convert_to_mlx_tensor(data: TensorLike, dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
     """
     Convert input to MLX array.

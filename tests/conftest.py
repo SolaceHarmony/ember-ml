@@ -54,6 +54,34 @@ def available_backends():
     return backends
 
 
+# Renamed fixture from any_backend to backend to match test usage
+@pytest.fixture(params=['numpy', 'torch', 'mlx'])
+def backend(request): # Renamed function argument
+    """Parametrize tests with all available backends."""
+    backend_name = request.param
+    
+    # Skip if backend is not available
+    if backend_name == 'torch':
+        try:
+            import torch
+        except ImportError:
+            pytest.skip("PyTorch not available")
+    elif backend_name == 'mlx':
+        try:
+            import mlx.core
+        except ImportError:
+            pytest.skip("MLX not available")
+    
+    # Set backend
+    original_backend = get_backend()
+    set_backend(backend_name)
+    
+    yield backend_name # Yield the backend name string
+    
+    # Restore original backend
+    set_backend(original_backend or 'numpy')  # Default to numpy if None
+
+
 @pytest.fixture
 def random_seed():
     """Set random seed for reproducibility."""

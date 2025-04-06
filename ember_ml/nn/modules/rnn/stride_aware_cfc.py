@@ -5,13 +5,14 @@ This module provides implementations of StrideAwareWiredCfCCell and StrideAwareC
 which are specialized recurrent neural network components for multi-timescale processing.
 """
 
-from typing import Union, Optional
+from typing import Union, Optional, Dict, Any # Added Dict, Any
 
 from ember_ml import ops
 from ember_ml.nn import tensor
-from ember_ml.nn.modules import Module, Parameter
-from ember_ml.nn.wirings import Wiring
-from ember_ml.initializers import glorot_uniform, orthogonal, BinomialInitializer
+from ember_ml.nn.modules import Parameter # Module removed, inheriting from ModuleWiredCell instead
+from ember_ml.nn.modules.wiring import NeuronMap # Use renamed base class
+from ember_ml.nn.modules.module_wired_cell import ModuleWiredCell # Import parent class
+from ember_ml.nn.initializers import glorot_uniform, orthogonal, BinomialInitializer
 
 # LeCun improved tanh activation
 def lecun_tanh(x):
@@ -29,7 +30,7 @@ def lecun_tanh(x):
     return ops.multiply(amplitude, ops.tanh(ops.multiply(scale_factor, x)))
 
 
-class StrideAwareWiredCfCCell(Module):
+class StrideAwareWiredCfCCell(ModuleWiredCell): # Inherit from ModuleWiredCell
     """
     Stride-Aware Wired CfC Cell.
     
@@ -50,7 +51,7 @@ class StrideAwareWiredCfCCell(Module):
     
     def __init__(
             self,
-            wiring: Wiring,
+            neuron_map: NeuronMap, # Corrected type hint and name
             stride_length: int = 1,
             time_scale_factor: float = 1.0,
             fully_recurrent: bool = True,
@@ -64,7 +65,7 @@ class StrideAwareWiredCfCCell(Module):
         Initialize the Stride-Aware Wired CfC cell.
         
         Args:
-            wiring: Wiring configuration (e.g., AutoNCP)
+            neuron_map: NeuronMap configuration object
             stride_length: Length of stride for time-scaling
             time_scale_factor: Factor to scale the time constant
             fully_recurrent: Whether to use full recurrent connections
@@ -74,19 +75,37 @@ class StrideAwareWiredCfCCell(Module):
             backbone_layers: Number of layers in the backbone
             **kwargs: Additional keyword arguments
         """
-        super().__init__(**kwargs)
-        self.wiring = wiring
+        # Call ModuleWiredCell's __init__
+        # ModuleWiredCell needs input_size, which is wiring.input_dim
+        # ModuleWiredCell calls ModuleCell init, passing wiring.units as hidden_size
+        # Pass input_size and neuron_map to ModuleWiredCell parent
+        # ModuleWiredCell will handle building map if needed and calling ModuleCell init
+        # Handle the case where neuron_map is an AutoNCP instance that doesn't have is_built()
+        input_size = None
+        if hasattr(neuron_map, 'is_built') and neuron_map.is_built():
+            input_size = neuron_map.input_dim
+        
+        super().__init__(
+            input_size=input_size,
+            neuron_map=neuron_map,
+            mode=mode,
+            # Pass other relevant kwargs up
+            **kwargs
+        )
+        # If map wasn't built, ModuleWiredCell's init would have failed earlier,
+        # or it needs to handle deferred building based on first forward pass.
+        # Assuming ModuleWiredCell handles build correctly based on input_size.
+        # self.wiring is set by parent init
+        # self.input_size, self.hidden_size (units) are set by parent init
         self.stride_length = stride_length
         self.time_scale_factor = time_scale_factor
         self.fully_recurrent = fully_recurrent
-        self.mode = mode
-        self._activation = activation  # Store for serialization
+        # self.mode is set by parent init
+        self.activation = activation # Store the actual function
+        self._activation = activation # Keep for serialization if needed, or serialize name
         self.backbone_units = backbone_units
         self.backbone_layers = backbone_layers
-
-        self.units = wiring.units
-        self.input_dim = wiring.input_dim
-        self.output_dim = wiring.output_dim
+        # self.units, self.input_dim, self.output_dim are available via self.wiring or parent properties like self.hidden_size, self.input_size, self.output_size
 
         self.activation = activation
         
@@ -98,15 +117,20 @@ class StrideAwareWiredCfCCell(Module):
     def _initialize_weights(self):
         """Initialize the weights for the cell with wiring constraints."""
         # Get input dimension from wiring
-        input_dim = self.wiring.input_dim
+        # Access input_dim via parent property, which gets it from neuron_map
+        # Access input_dim via the map stored in the parent class
+        # Access input_dim via parent property, which gets it from neuron_map
+        input_dim = self.input_size
         
         # Input weights
         self.kernel = Parameter(tensor.zeros((input_dim, self.backbone_units)))
         self.kernel.data = glorot_uniform((input_dim, self.backbone_units))
         
         # Recurrent weights
-        self.recurrent_kernel = Parameter(tensor.zeros((self.units, self.backbone_units)))
-        self.recurrent_kernel.data = orthogonal((self.units, self.backbone_units))
+        # Get units from neuron_map instead of trying to access self.units
+        units = self.neuron_map.units
+        self.recurrent_kernel = Parameter(tensor.zeros((units, self.backbone_units)))
+        self.recurrent_kernel.data = orthogonal((units, self.backbone_units))
         
         # Backbone weights (multiple layers)
         self.backbone_kernels = []
@@ -120,37 +144,53 @@ class StrideAwareWiredCfCCell(Module):
             self.backbone_biases.append(backbone_bias)
         
         # Output projection
-        self.backbone_out = Parameter(tensor.zeros((self.backbone_units, self.units)))
-        self.backbone_out.data = glorot_uniform((self.backbone_units, self.units))
+        # Get units from neuron_map instead of trying to access self.units
+        units = self.neuron_map.units
+        self.backbone_out = Parameter(tensor.zeros((self.backbone_units, units)))
+        self.backbone_out.data = glorot_uniform((self.backbone_units, units))
         
         # Time gate weights
-        self.time_kernel = Parameter(tensor.zeros((1, self.units)))
+        self.time_kernel = Parameter(tensor.zeros((1, units)))
         
         # Biases
         self.bias = Parameter(tensor.zeros((self.backbone_units,)))
-        self.recurrent_bias = Parameter(tensor.zeros((self.units,)))
+        # Get units from neuron_map instead of trying to access self.units
+        units = self.neuron_map.units
+        self.recurrent_bias = Parameter(tensor.zeros((units,)))
         
         # Gate weights (for default and pure modes)
         if self.mode != "no_gate":
-            self.gate_kernel = Parameter(tensor.zeros((input_dim, self.units)))
-            self.gate_kernel.data = glorot_uniform((input_dim, self.units))
+            # Get units from neuron_map instead of trying to access self.units
+            units = self.neuron_map.units
+            self.gate_kernel = Parameter(tensor.zeros((input_dim, units)))
+            self.gate_kernel.data = glorot_uniform((input_dim, units))
             
-            self.gate_recurrent_kernel = Parameter(tensor.zeros((self.units, self.units)))
-            self.gate_recurrent_kernel.data = orthogonal((self.units, self.units))
+            self.gate_recurrent_kernel = Parameter(tensor.zeros((units, units)))
+            self.gate_recurrent_kernel.data = orthogonal((units, units))
             
-            self.gate_bias = Parameter(tensor.ones((self.units,)))  # Initialize with ones for open gates
+            # Get units from neuron_map instead of trying to access self.units
+            units = self.neuron_map.units
+            self.gate_bias = Parameter(tensor.ones((units,)))  # Initialize with ones for open gates
         
         # Sparsity masks
-        sparsity = self.wiring.sparsity_level
+        # Access sparsity via the map stored in the parent class
+        # Access sparsity via the map stored in the parent class
+        # Access sparsity level via the map stored in parent
+        # Access sparsity level via the map stored in parent
+        sparsity = self.neuron_map.sparsity_level
         # Use float32 dtype for masks to ensure compatibility with all backends
         mask_dtype = 'float32'
         self.input_mask = Parameter(BinomialInitializer(probability=sparsity, seed=42)((input_dim,), dtype=mask_dtype))
         self.input_mask.requires_grad = False  # Not trainable
         
-        self.recurrent_mask = Parameter(BinomialInitializer(probability=sparsity, seed=43)((self.units, self.units), dtype=mask_dtype))
+        # Get units from neuron_map instead of trying to access self.units
+        units = self.neuron_map.units
+        self.recurrent_mask = Parameter(BinomialInitializer(probability=sparsity, seed=43)((units, units), dtype=mask_dtype))
         self.recurrent_mask.requires_grad = False  # Not trainable
         
-        self.output_mask = Parameter(BinomialInitializer(probability=sparsity, seed=44)((self.units,), dtype=mask_dtype))
+        # Get units from neuron_map instead of trying to access self.units
+        units = self.neuron_map.units
+        self.output_mask = Parameter(BinomialInitializer(probability=sparsity, seed=44)((units,), dtype=mask_dtype))
         self.output_mask.requires_grad = False  # Not trainable
 
     def _compute_time_scaling(self, inputs, kwargs):
@@ -178,7 +218,9 @@ class StrideAwareWiredCfCCell(Module):
         """
         # Initialize states if not provided
         if states is None:
-            h_prev = tensor.zeros((tensor.shape(inputs)[0], self.units))
+            # Get units from neuron_map instead of trying to access self.units
+            units = self.neuron_map.units
+            h_prev = tensor.zeros((tensor.shape(inputs)[0], units))
         else:
             h_prev = states[0]
         
@@ -187,8 +229,11 @@ class StrideAwareWiredCfCCell(Module):
         
         # Apply wiring masks
         # Extract data from Parameter objects to avoid dtype inference issues
-        input_mask_data = self.input_mask.data if hasattr(self.input_mask, 'data') else self.input_mask
-        recurrent_mask_data = self.recurrent_mask.data if hasattr(self.recurrent_mask, 'data') else self.recurrent_mask
+        # Access masks via the neuron_map property inherited from ModuleWiredCell/BaseModule?
+        # Or are they intended to be direct attributes set by _initialize_weights?
+        # Assuming they are direct attributes set by _initialize_weights for now.
+        input_mask_data = self.input_mask.data # Assume Parameter object
+        recurrent_mask_data = self.recurrent_mask.data # Assume Parameter object
         
         # Use string dtypes for consistent behavior across backends
         float_dtype = 'float32'
@@ -199,7 +244,14 @@ class StrideAwareWiredCfCCell(Module):
         
         # Apply masks
         masked_inputs = ops.multiply(inputs, input_mask_tensor)
-        masked_h_prev = ops.multiply(h_prev, recurrent_mask_tensor)
+        
+        # Handle broadcasting for recurrent_mask_tensor (shape 8,8) with h_prev (shape batch_size,8)
+        # We need to reshape the mask to apply it correctly across the batch dimension
+        batch_size = tensor.shape(h_prev)[0]
+        
+        # Apply the mask using matmul instead of element-wise multiply
+        # This handles the batch dimension correctly
+        masked_h_prev = ops.matmul(h_prev, recurrent_mask_tensor)
         
         # Backbone computation
         x = ops.add(ops.matmul(masked_inputs, self.kernel), self.bias)
@@ -246,7 +298,7 @@ class StrideAwareWiredCfCCell(Module):
         
         # Apply output mask
         # Extract data from Parameter objects to avoid dtype inference issues
-        output_mask_data = self.output_mask.data if hasattr(self.output_mask, 'data') else self.output_mask
+        output_mask_data = self.output_mask.data # Assume Parameter object
         
         # Use string dtypes for consistent behavior across backends
         output_mask_tensor = tensor.cast(output_mask_data, dtype='float32')
@@ -254,548 +306,96 @@ class StrideAwareWiredCfCCell(Module):
         
         return output, [h_new]
 
-    def get_config(self):
-        """
-        Get configuration for serialization.
-        
-        Returns:
-            Configuration dictionary
-        """
-        config = {
-            "wiring": self.wiring.get_config() if hasattr(self.wiring, 'get_config') else None,
+    def get_config(self) -> Dict[str, Any]:
+        """Returns the configuration of the StrideAwareWiredCfC cell."""
+        # Get config from ModuleWiredCell (map config, map class, mode, etc.)
+        config = super().get_config()
+        # Add StrideAware specific args from __init__
+        config.update({
             "stride_length": self.stride_length,
             "time_scale_factor": self.time_scale_factor,
             "fully_recurrent": self.fully_recurrent,
-            "mode": self.mode,
-            "activation": self._activation,  # Store for serialization
+            # Save activation name/identifier
+            # Check if self._activation holds the object or name
+            "activation": self._activation if isinstance(self._activation, str) else getattr(self._activation, '__name__', str(self._activation)),
             "backbone_units": self.backbone_units,
             "backbone_layers": self.backbone_layers,
-        }
+        })
+        # Remove args from parent configs if they aren't direct __init__ args for this class
+        config.pop('hidden_size', None)
+        config.pop('input_size', None)
+        config.pop('use_bias', None)
+        # Activation name saved above might override parent's, which is fine
+
         return config
-
     @classmethod
-    def from_config(cls, config):
-        """
-        Create a StrideAwareWiredCfCCell from a configuration dictionary.
+    def from_config(cls, config: Dict[str, Any]) -> 'StrideAwareWiredCfCCell':
+        """Creates a StrideAwareWiredCfC cell from its configuration."""
+        # Handle activation reconstruction: config has name/repr, __init__ needs function
+        activation_config = config.get('activation')
+        if activation_config == 'lecun_tanh': # Simple check for this specific case
+             from .stride_aware_cfc import lecun_tanh # Import locally
+             config['activation'] = lecun_tanh
+        elif isinstance(activation_config, str):
+             try:
+                 config['activation'] = ops.get_activation(activation_config)
+             except ValueError:
+                 pass # Keep string, assume __init__ handles it or adjust later
+
+        # Clean up the config for proper reconstruction
+        # Remove input_size from config to avoid duplicate parameter error
+        input_size = config.pop('input_size', None)
         
-        Args:
-            config: Configuration dictionary
+        # Check if neuron_map needs reconstruction
+        neuron_map = config.get('neuron_map')
+        if isinstance(neuron_map, dict):
+            # Import NeuronMap classes
+            from ember_ml.nn.modules.wiring import NeuronMap
+            from ember_ml.nn.modules.wiring.fully_connected_map import FullyConnectedMap
+            from ember_ml.nn.modules.wiring.ncp_map import NCPMap
+            from ember_ml.nn.modules.wiring.random_map import RandomMap
             
-        Returns:
-            StrideAwareWiredCfCCell instance
-        """
-        wiring_config = config.pop("wiring")
-        from ember_ml.nn import wirings  # Import from ember_ml.nn
+            # Get the map class
+            map_class_name = neuron_map.pop('class_name', 'FullyConnectedMap')
+            map_classes = {
+                'NeuronMap': NeuronMap,
+                'FullyConnectedMap': FullyConnectedMap,
+                'NCPMap': NCPMap,
+                'RandomMap': RandomMap
+            }
+            
+            map_cls = map_classes.get(map_class_name)
+            if map_cls:
+                config['neuron_map'] = map_cls.from_config(neuron_map)
         
-        # Get the wiring class from the class name
-        wiring_class_name = wiring_config.get("class_name", "Wiring")
-        wiring_class = getattr(wirings, wiring_class_name)
-        
-        # Get the wiring config
-        wiring_params = wiring_config.get("config", {})
-        
-        # Ensure units is provided
-        if "units" not in wiring_params:
-            wiring_params["units"] = 8  # Default value
-        
-        # Create the wiring from the config
-        wiring = wiring_class(**wiring_params)
-        
-        # Create the cell
-        return cls(wiring=wiring, **config)
+        # Create a new instance using a direct approach
+        try:
+            # Don't pass input_size in kwargs to avoid duplicate parameter error
+            return cls(**config)
+        except Exception as e:
+            # If there's an error in direct instantiation, try the parent approach
+            # but make sure to clean the config again
+            config.pop('input_size', None)  # Ensure input_size is removed
+            return super(StrideAwareWiredCfCCell, cls).from_config(config)
 
-    @property
-    def state_size(self):
-        return self.units
 
-    @property
-    def input_size(self):
-        return self.input_dim
-
-    @property
-    def output_size(self):
-        return self.output_dim
-        
     def get_initial_state(self, batch_size=1):
         """
         Get the initial state for the cell.
-        
+
         Args:
             batch_size: Batch size
-            
+
         Returns:
             Initial state
         """
-        h = tensor.zeros((batch_size, self.units))
+        # Get units from neuron_map
+        units = self.neuron_map.units
+        h = tensor.zeros((batch_size, units))
         return [h]
 
-
-class StrideAwareCfC(Module):
-    """
-    Stride-Aware Continuous-time Fully Connected (CfC) layer.
-    
-    This layer implements a continuous-time recurrent neural network
-    with closed-form solution for the hidden state dynamics,
-    specialized for multi-timescale processing.
-    
-    Args:
-        units: Number of units or a Wiring object
-        stride_length: Length of stride for time-scaling
-        time_scale_factor: Factor to scale the time constant
-        mixed_memory: Whether to use mixed memory
-        mode: Mode of operation ("default", "pure", or "no_gate")
-        activation: Activation function for the output
-        backbone_units: Number of units in the backbone
-        backbone_layers: Number of layers in the backbone
-        backbone_dropout: Dropout rate for the backbone
-        fully_recurrent: Whether to use full recurrent connections
-        return_sequences: Whether to return the full sequence
-        return_state: Whether to return the state
-    """
-    
-    def __init__(
-        self,
-        units_or_cell: Union[int, Wiring, StrideAwareWiredCfCCell],
-        stride_length: int = 1,
-        time_scale_factor: float = 1.0,
-        mixed_memory: bool = False,
-        mode: str = "default",
-        activation = lecun_tanh,
-        backbone_units: Optional[int] = None,
-        backbone_layers: Optional[int] = None,
-        backbone_dropout: Optional[float] = None,
-        fully_recurrent: bool = True,
-        return_sequences: bool = False,
-        return_state: bool = False,
-        **kwargs
-    ):
-        """
-        Initialize the StrideAwareCfC layer.
-        
-        Args:
-            units_or_cell: Number of units, a Wiring object, or a StrideAwareWiredCfCCell
-            stride_length: Length of stride for time-scaling
-            time_scale_factor: Factor to scale the time constant
-            mixed_memory: Whether to use mixed memory
-            mode: Mode of operation ("default", "pure", or "no_gate")
-            activation: Activation function for the output
-            backbone_units: Number of units in the backbone
-            backbone_layers: Number of layers in the backbone
-            backbone_dropout: Dropout rate for the backbone
-            fully_recurrent: Whether to use full recurrent connections
-            return_sequences: Whether to return the full sequence
-            return_state: Whether to return the state
-            **kwargs: Additional keyword arguments
-        """
-        super().__init__(**kwargs)
-        
-        # Store parameters
-        self.stride_length = stride_length
-        self.time_scale_factor = time_scale_factor
-        self.mixed_memory = mixed_memory
-        self.mode = mode
-        self._activation = activation
-        self.backbone_units = backbone_units or 128
-        self.backbone_layers = backbone_layers or 1
-        self.backbone_dropout = backbone_dropout or 0.0
-        self.fully_recurrent = fully_recurrent
-        self.return_sequences = return_sequences
-        self.return_state = return_state
-        
-        # Create the cell
-        if isinstance(units_or_cell, StrideAwareWiredCfCCell):
-            # Use the provided cell directly
-            self.cell = units_or_cell
-        elif isinstance(units_or_cell, Wiring):
-            if any([backbone_units, backbone_layers, backbone_dropout]):
-                raise ValueError("Cannot use backbone parameters with a Wiring object.")
-            self.cell = StrideAwareWiredCfCCell(
-                wiring=units_or_cell,
-                stride_length=stride_length,
-                time_scale_factor=time_scale_factor,
-                fully_recurrent=fully_recurrent,
-                mode=mode,
-                activation=activation,
-                backbone_units=128,
-                backbone_layers=1
-            )
-        else:
-            # Create a simple CfC cell without wiring
-            self.cell = self._create_simple_cfc_cell(
-                units_or_cell,
-                stride_length=stride_length,
-                time_scale_factor=time_scale_factor,
-                mode=mode,
-                activation=activation,
-                backbone_units=self.backbone_units,
-                backbone_layers=self.backbone_layers,
-                backbone_dropout=self.backbone_dropout
-            )
-        
-        # Add mixed memory if requested
-        if mixed_memory:
-            self.cell = self._create_mixed_memory_cell(self.cell)
-    
-    def _create_simple_cfc_cell(self, units, **kwargs):
-        """Create a simple CfC cell without wiring."""
-        # This would be a simplified version of StrideAwareWiredCfCCell
-        # that doesn't use wiring but still has the same functionality
-        # For now, we'll just use the StrideAwareWiredCfCCell with a default wiring
-        from ember_ml.nn.wirings import FullyConnectedWiring
-        wiring = FullyConnectedWiring(units=units, output_dim=units, input_dim=units)
-        return StrideAwareWiredCfCCell(wiring=wiring, **kwargs)
-    
-    def _create_mixed_memory_cell(self, cell):
-        """Create a mixed memory cell that wraps the given cell."""
-        # This would be a wrapper around the cell that adds mixed memory
-        # For now, we'll just return the cell as is
-        return cell
-    
-    def forward(self, inputs, initial_state=None, **kwargs):
-        """
-        Forward pass through the layer.
-        
-        Args:
-            inputs: Input tensor
-            initial_state: Initial state
-            **kwargs: Additional keyword arguments
-            
-        Returns:
-            Output tensor or tuple of (output, state) if return_state is True
-        """
-        # Process the sequence
-        batch_size = tensor.shape(inputs)[0]
-        time_steps = tensor.shape(inputs)[1]
-        
-        # Initialize state if not provided
-        if initial_state is None:
-            state = [tensor.zeros((batch_size, self.cell.units))]
-        else:
-            state = initial_state
-        
-        # Process each time step
-        outputs = []
-        for t in range(time_steps):
-            # Get input at time t
-            x_t = inputs[:, t, :]
-            
-            # Process with cell
-            output, state = self.cell.forward(x_t, state, **kwargs)
-            
-            # Store output
-            outputs.append(output)
-        
-        # Stack outputs
-        if self.return_sequences:
-            outputs = tensor.stack(outputs, axis=1)
-        else:
-            outputs = outputs[-1]
-        
-        # Return output and state if requested
-        if self.return_state:
-            return outputs, state
-        else:
-            return outputs
+    # Removed duplicated get_config and from_config methods
 
 
-    def get_config(self):
-        """
-        Get configuration for serialization.
-        
-        Returns:
-            Configuration dictionary
-        """
-        config = {
-            "stride_length": self.stride_length,
-            "time_scale_factor": self.time_scale_factor,
-            "mixed_memory": self.mixed_memory,
-            "mode": self.mode,
-            "activation": self._activation,
-            "backbone_units": self.backbone_units,
-            "backbone_layers": self.backbone_layers,
-            "backbone_dropout": self.backbone_dropout,
-            "fully_recurrent": self.fully_recurrent,
-            "return_sequences": self.return_sequences,
-            "return_state": self.return_state,
-        }
-        
-        # If the cell has a wiring, save its config
-        if hasattr(self.cell, 'wiring'):
-            config["units_or_cell"] = self.cell.wiring.get_config() if hasattr(self.cell.wiring, 'get_config') else None
-        else:
-            # Otherwise, save the cell's units
-            config["units_or_cell"] = getattr(self.cell, 'units', 8)
-        
-        return config
-
-    @classmethod
-    def from_config(cls, config):
-        """
-        Create a StrideAwareCfC from a configuration dictionary.
-        
-        Args:
-            config: Configuration dictionary
-            
-        Returns:
-            StrideAwareCfC instance
-        """
-        config_copy = config.copy()
-        
-        # Handle wiring configuration
-        if isinstance(config_copy.get("units_or_cell"), dict):
-            # It's a wiring config
-            from ember_ml.nn import wirings
-            
-            # Get the wiring class from the class name
-            wiring_class_name = config_copy["units_or_cell"].get("class_name", "Wiring")
-            wiring_class = getattr(wirings, wiring_class_name)
-            
-            # Get the wiring config
-            wiring_params = config_copy["units_or_cell"].get("config", {})
-            
-            # Ensure units is provided
-            if "units" not in wiring_params:
-                wiring_params["units"] = 8  # Default value
-            
-            # Create the wiring from the config
-            units_or_cell = wiring_class(**wiring_params)
-            del config_copy["units_or_cell"]
-        else:
-            # It's a simple integer
-            units_or_cell = config_copy.pop("units_or_cell", 8)
-        
-        # Remove backbone parameters if units_or_cell is a Wiring object
-        if isinstance(units_or_cell, Wiring):
-            config_copy.pop('backbone_units', None)
-            config_copy.pop('backbone_layers', None)
-            config_copy.pop('backbone_dropout', None)
-        
-        # Create the layer
-        return cls(units_or_cell, **config_copy)
-
-# NOTE: This function is for visualization purposes only and is not used in the core functionality.
-# It's acceptable to use NumPy here because:
-# 1. The visualization function is not part of the core functionality
-# 2. It's only used for debugging and demonstration purposes
-# 3. The visualization libraries (matplotlib) require NumPy arrays
-# The core functionality of the module uses the ops abstraction layer as required.
-def visualize_stride_temporal_dynamics(time_steps=100, stride_lengths=[1, 3, 5],
-                                        units=16, input_dim=3, seed=42):
-    """
-    Visualizes how different stride lengths affect the temporal dynamics in CfC neurons.
-
-    This visualization creates a rigorous analysis of:
-    1. State evolution trajectories across different temporal scales
-    2. Information retention characteristics as function of stride length
-    3. Comparative phase space analysis of multi-timescale representations
-
-    Args:
-        time_steps: Total number of time steps to simulate
-        stride_lengths: List of stride lengths to compare
-        units: Number of hidden units in each CfC cell
-        input_dim: Input dimensionality
-        seed: Random seed for reproducibility
-    """
-    # Import visualization libraries
-    # These imports are only used for visualization and not for core functionality
-    import matplotlib.pyplot as plt
-    import numpy as np
-    from matplotlib.gridspec import GridSpec
-    from ember_ml.nn import wirings
-    
-    try:
-        from mpl_toolkits.mplot3d import Axes3D  # For 3D plotting
-    except ImportError:
-        Axes3D = None  # If not available, we'll skip 3D plotting
-
-    # Set seeds for reproducibility
-    np.random.seed(seed)
-    tensor.set_seed(seed)
-
-    # Create a simple wiring for each stride cell
-    from ember_ml.nn.wirings import AutoNCP
-    wiring = AutoNCP(units=units, output_size=units//4, sparsity_level=0.5)
-
-    # Generate synthetic input sequence with temporal structure
-    # Using sinusoidal patterns with varying frequencies to test multi-scale dynamics
-    t = np.linspace(0, 4*np.pi, time_steps)
-    frequencies = [1.0, 2.0, 0.5]
-    input_signals = []
-    for freq in frequencies[:input_dim]:
-        signal = np.sin(freq * t) + 0.1 * np.random.randn(time_steps)
-        input_signals.append(signal)
-    input_sequence = np.stack(input_signals, axis=1).astype(np.float32)
-
-    # Create cells for each stride length
-    stride_cells = {}
-    for stride in stride_lengths:
-        # Use the properly implemented StrideAwareWiredCfCCell
-        cell = StrideAwareWiredCfCCell(
-            wiring=wiring,
-            stride_length=stride,
-            time_scale_factor=1.0,
-            mode="default"
-        )
-        stride_cells[stride] = cell
-    
-    # Initialize states for each cell
-    states = {stride: [tensor.zeros((1, units))] for stride in stride_lengths}
-
-    # Track state evolution for each stride
-    state_evolution = {stride: tensor.zeros((time_steps, units)) for stride in stride_lengths}
-
-    # Process sequence through each stride-specific cell
-    for t_idx in range(time_steps):
-        x_t = input_sequence[t_idx:t_idx+1]
-        x_t = tensor.convert_to_tensor(x_t)
-
-        for stride, cell in stride_cells.items():
-            # Only process input at stride-specific intervals
-            if t_idx % stride == 0:
-                # Ensure states have the right shape for the cell
-                current_state = states[stride][0]
-                # Add batch dimension if needed
-                if len(tensor.shape(current_state)) == 1:
-                    current_state = tensor.reshape(current_state, [1, -1])
-                    states[stride] = [current_state]
-
-                output, new_state = cell.forward(x_t, states[stride], time=1.0)
-                states[stride] = new_state
-
-            # Record state at every time step for all cells
-            # Ensure we're getting a numpy array with the right shape
-            state_array = states[stride][0]  # Already a tensor
-            if len(tensor.shape(state_array)) > 1:
-                state_array = state_array[0]
-            state_evolution[stride] = tensor.tensor_scatter_nd_update(
-                state_evolution[stride],
-                tensor.stack([[t_idx]], axis=0),
-                tensor.expand_dims(state_array, axis=0)
-            )
-
-    # Convert tensors to NumPy for visualization
-    state_evolution_np = {}
-    for stride, states in state_evolution.items():
-        state_evolution_np[stride] = states.numpy() if hasattr(states, 'numpy') else states
-
-    # === CREATE MULTI-PANEL ANALYTICAL VISUALIZATION ===
-    fig = plt.figure(figsize=(16, 12))
-    gs = GridSpec(3, 4, figure=fig)
-
-    # 1. Time series evolution of key state components
-    ax1 = fig.add_subplot(gs[0, :])
-    neurons_to_plot = min(3, units)  # Plot first few neurons
-
-    for stride, states in state_evolution_np.items():
-        for n in range(neurons_to_plot):
-            ax1.plot(states[:, n], label=f"Stride {stride}, Neuron {n}")
-
-    ax1.set_title("Temporal Evolution of Neuronal States Across Strides", fontsize=14)
-    ax1.set_xlabel("Time Step", fontsize=12)
-    ax1.set_ylabel("Activation", fontsize=12)
-    ax1.legend(loc="upper right", fontsize=10)
-    ax1.grid(True, alpha=0.3)
-
-    # 2. State space trajectories (3D phase plot)
-    if units >= 3 and Axes3D is not None:
-        ax2 = fig.add_subplot(gs[1, :2], projection='3d')
-
-        for stride, states in state_evolution_np.items():
-            ax2.plot(
-                states[:, 0],
-                states[:, 1],
-                states[:, 2],
-                label=f"Stride {stride}"
-            )
-            # Mark start and end points
-            ax2.scatter([states[0, 0]], [states[0, 1]], [states[0, 2]],
-                        color='green', marker='o', label="_start" if stride > stride_lengths[0] else "Start")
-            ax2.scatter([states[-1, 0]], [states[-1, 1]], [states[-1, 2]],
-                        color='red', marker='o', label="_end" if stride > stride_lengths[0] else "End")
-
-        ax2.set_title("Phase Space Trajectory", fontsize=14)
-        ax2.set_xlabel("State Dimension 1", fontsize=10)
-        ax2.set_ylabel("State Dimension 2", fontsize=10)
-        # set_zlabel is a valid method for 3D axes, but Pylance doesn't recognize it
-        # This is fine because we're only using it when Axes3D is available
-        if hasattr(ax2, 'set_zlabel'):
-            ax2.set_zlabel("State Dimension 3", fontsize=10)  # type: ignore
-        ax2.legend(loc="upper right", fontsize=10)
-
-    # 3. Information retention analysis
-    ax3 = fig.add_subplot(gs[1, 2:])
-
-    # Calculate state change rates for each stride
-    change_rates = {}
-    for stride, states in state_evolution_np.items():
-        # Compute L2 norm of state differences
-        diffs = np.linalg.norm(states[1:] - states[:-1], axis=1)
-        change_rates[stride] = diffs
-
-    for stride, rates in change_rates.items():
-        rate_smoothed = np.convolve(rates, np.ones(5)/5, mode='valid')
-        ax3.plot(rate_smoothed, label=f"Stride {stride}")
-
-    ax3.set_title("State Change Magnitude Over Time", fontsize=14)
-    ax3.set_xlabel("Time Step", fontsize=12)
-    ax3.set_ylabel("L2 Norm of State Δ", fontsize=12)
-    ax3.legend(loc="upper right", fontsize=10)
-    ax3.grid(True, alpha=0.3)
-
-    # 4. Input sensitivity analysis - how different strides respond to input features
-    input_idx = np.arange(0, time_steps, max(stride_lengths))
-    ax4 = fig.add_subplot(gs[2, :2])
-
-    # Plot input signals
-    for i in range(input_dim):
-        ax4.plot(input_sequence[:, i], '--', alpha=0.5, label=f"Input {i}")
-
-    # Overlay vertical lines at each stride's sampling points
-    for stride in stride_lengths:
-        for idx in range(0, time_steps, stride):
-            ax4.axvline(x=idx, color=f'C{stride_lengths.index(stride)}',
-                        linestyle=':', alpha=0.3)
-
-    ax4.set_title("Input Signals with Stride Sampling Points", fontsize=14)
-    ax4.set_xlabel("Time Step", fontsize=12)
-    ax4.set_ylabel("Input Value", fontsize=12)
-    ax4.legend(loc="upper right", fontsize=10)
-    ax4.grid(True, alpha=0.3)
-
-    # 5. Spectral analysis - frequency domain comparison
-    ax5 = fig.add_subplot(gs[2, 2:])
-
-    for stride, states in state_evolution_np.items():
-        # Take FFT of first few neurons and average
-        fft_magnitudes = []
-        for n in range(min(5, units)):
-            fft = np.abs(np.fft.rfft(states[:, n]))
-            fft_magnitudes.append(fft)
-
-        avg_fft = np.mean(np.array(fft_magnitudes), axis=0)  # Corrected line
-        freqs = np.fft.rfftfreq(time_steps)
-
-        ax5.plot(freqs, avg_fft, label=f"Stride {stride}")
-
-    ax5.set_title("Frequency Domain Analysis", fontsize=14)
-    ax5.set_xlabel("Frequency", fontsize=12)
-    ax5.set_ylabel("Magnitude", fontsize=12)
-    ax5.legend(loc="upper right", fontsize=10)
-    ax5.set_xlim(0, 0.5)  # Only show meaningful frequency range
-    ax5.grid(True, alpha=0.3)
-
-    # Add title and adjust layout
-    fig.suptitle(
-        f"Multi-scale CfC Temporal Dynamics Analysis\n"
-        f"Comparing Stride Lengths: {stride_lengths}",
-        fontsize=16
-    )
-    fig.tight_layout(rect=(0, 0.03, 1, 0.97))
-
-    return fig
-
-if __name__ == "__main__":
-    # Import matplotlib here for the main block
-    import matplotlib.pyplot as plt
-    fig = visualize_stride_temporal_dynamics()
-    plt.show()
+# StrideAwareCfC class definition removed and placed in stride_aware_cfc_layer.py
+# Visualization function and main block removed and placed in examples/rnn/stride_aware_cfc_visualization.py

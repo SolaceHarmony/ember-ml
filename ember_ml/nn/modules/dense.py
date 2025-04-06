@@ -5,12 +5,20 @@ This module provides a backend-agnostic implementation of a dense (fully connect
 layer that works with any backend (NumPy, PyTorch, MLX).
 """
 
-from typing import Optional, Union, Tuple, Any, Callable
+from typing import Optional, Any, Dict # Removed Union, Tuple, Callable
 
 from ember_ml import ops
 from ember_ml.nn.modules import Module, Parameter
 from ember_ml.nn import tensor
 class Dense(Module):
+    # Explicitly type hint attributes for clarity and type checking
+    input_dim: int
+    units: int
+    activation: Optional[str]
+    use_bias: bool
+    kernel: Parameter
+    bias: Optional[Parameter] # Crucial for mypy when use_bias=False
+
     """
     Dense (fully connected) layer.
     
@@ -18,26 +26,45 @@ class Dense(Module):
     
     Attributes:
         units: Dimensionality of the output space
-        activation: Activation function to use
-        kernel: Weight matrix
-        bias: Bias vector
-        initialized: Whether the layer has been initialized
+        activation: Activation function to use.
+        use_bias: Whether the layer uses a bias vector.
+        input_dim: Dimensionality of the input space (derived from first input).
+        kernel: Parameter # Weight matrix (Parameter).
+        bias: Optional[Parameter] # Bias vector (Parameter, if use_bias is True).
     """
     
-    def __init__(self, units: int, activation: Optional[str] = None):
+    def __init__(self, input_dim: int, units: int, activation: Optional[str] = None, use_bias: bool = True):
         """
         Initialize a dense layer.
-        
+
         Args:
-            units: Dimensionality of the output space
-            activation: Activation function to use
+            input_dim: Dimensionality of the input space.
+            units: Dimensionality of the output space.
+            activation: Activation function to use (e.g., 'relu', 'tanh').
+            use_bias: Whether the layer uses a bias vector.
         """
         super().__init__()
+        self.input_dim = input_dim
         self.units = units
         self.activation = activation
-        self.kernel = None
-        self.bias = None
-        self.initialized = False
+        self.use_bias = use_bias
+
+        # Initialize weights using Glorot uniform initialization
+        # Use ops for backend agnosticism
+        denominator = ops.add(tensor.convert_to_tensor(self.input_dim), tensor.convert_to_tensor(self.units))
+        sqrt_val = ops.sqrt(ops.divide(tensor.convert_to_tensor(6.0), denominator))
+        self.kernel = Parameter(
+            tensor.random_uniform(
+                (self.input_dim, self.units),
+                minval=-sqrt_val,
+                maxval=sqrt_val
+            )
+        )
+
+        if self.use_bias:
+            self.bias = Parameter(tensor.zeros((self.units,)))
+        else:
+            self.bias = None
     
     def forward(self, x: Any) -> Any:
         """
@@ -52,19 +79,12 @@ class Dense(Module):
         # Get input shape
         input_shape = tensor.shape(x)
         
-        # Initialize parameters if not already done
-        if not self.initialized:
-            # Last dimension is the input dimension
-            input_dim = input_shape[-1]
-            
-            # Initialize weights and bias using Glorot uniform initialization
-            self.kernel = Parameter(tensor.random_uniform(
-                (input_dim, self.units),
-                minval=-ops.sqrt(6.0 / (input_dim + self.units)),
-                maxval=ops.sqrt(6.0 / (input_dim + self.units))
-            ))
-            self.bias = Parameter(tensor.zeros((self.units,)))
-            self.initialized = True
+        # Validate input shape
+        if input_shape[-1] != self.input_dim:
+            raise ValueError(
+                f"Input dimension mismatch. Expected {self.input_dim}, "
+                f"but received input with shape {input_shape}"
+            )
         
         # Reshape input if needed
         original_shape = input_shape
@@ -73,7 +93,10 @@ class Dense(Module):
             x = tensor.reshape(x, (-1, input_shape[-1]))
         
         # Linear transformation
-        output = ops.add(ops.matmul(x, self.kernel), self.bias)
+        # Linear transformation
+        output = ops.matmul(x, self.kernel.data) # Use Parameter's data
+        if self.bias is not None:
+            output = ops.add(output, self.bias.data) # Use Parameter's data
         
         # Apply activation if specified
         if self.activation is not None:
@@ -93,11 +116,26 @@ class Dense(Module):
         
         # Reshape output if needed
         if len(original_shape) > 2:
-            output_shape = list(original_shape[:-1]) + [self.units]
+            output_shape = list(original_shape[:-1])
+            output_shape.append(self.units) # Avoid '+' operator for list concatenation
             output = tensor.reshape(output, output_shape)
         
         return output
     
     def __repr__(self) -> str:
         """Return a string representation of the layer."""
-        return f"Dense(units={self.units}, activation={self.activation})"
+        return (f"Dense(input_dim={self.input_dim}, units={self.units}, "
+                f"activation={self.activation}, use_bias={self.use_bias})")
+
+    def get_config(self) -> Dict[str, Any]:
+        """Returns the configuration of the Dense layer."""
+        config = super().get_config()
+        config.update({
+            "input_dim": self.input_dim,
+            "units": self.units,
+            "activation": self.activation,
+            "use_bias": self.use_bias,
+        })
+        return config
+
+    # from_config can rely on BaseModule implementation

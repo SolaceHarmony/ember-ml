@@ -7,7 +7,7 @@ This module defines the abstract interfaces for feature extraction and transform
 from abc import ABC, abstractmethod
 from typing import Optional, Dict, Any, Union
 
-from ember_ml.features.interfaces.tensor_features import TensorFeaturesInterface
+from ember_ml.nn.features.interfaces.tensor_features import TensorFeaturesInterface
 
 
 class PCAInterface(ABC):

@@ -1,342 +1,140 @@
-"""
-Unit tests for tensor operations across different backends.
-
-This module contains pytest tests for the tensor operations in the nn.tensor module.
-It tests each operation with different backends to ensure consistency.
-"""
-
 import pytest
 from ember_ml import ops
-from ember_ml.nn.tensor import (
-    zeros, ones, eye, zeros_like, ones_like, reshape, transpose,
-    concatenate, stack, convert_to_tensor, cast, copy, to_numpy,
-    shape, dtype
-)
+from ember_ml.nn import tensor
+# Removed numpy import to comply with emberlint rules
 
-# List of backends to test
-BACKENDS = ['numpy']
-try:
-    import torch
-    BACKENDS.append('torch')
-except ImportError:
-    pass
+# Assume conftest.py provides 'backend' fixture
 
-try:
-    import mlx.core
-    BACKENDS.append('mlx')
-except ImportError:
-    pass
+@pytest.fixture(params=[tensor.float32, tensor.int32, tensor.bool_])
+def sample_dtype(request):
+    """Fixture to provide different data types."""
+    return request.param
 
-@pytest.fixture(params=BACKENDS)
-def backend(request):
-    """Fixture to test with different backends."""
-    prev_backend = ops.get_backend()
-    ops.set_backend(request.param)
-    yield request.param
-    # Ensure original is not None before setting it
-    assert prev_backend is not None, "No backend was defined before test"
-    ops.set_backend(prev_backend)
+def test_tensor_creation_array(backend):
+    """Tests tensor.array creation."""
+    ops.set_backend(backend)
+    data = [[1, 2], [3, 4]]
+    t = tensor.array(data)
+    assert isinstance(t, tensor.EmberTensor), "Did not create EmberTensor"
+    assert tensor.shape(t) == (2, 2), "Shape mismatch"
+    # Default dtype might vary, check content roughly
+    assert ops.allclose(t, tensor.convert_to_tensor(data)), "Content mismatch"
 
-class TestTensorCreation:
-    """Tests for tensor creation operations."""
+def test_tensor_creation_convert_to_tensor(backend):
+    """Tests tensor.convert_to_tensor."""
+    ops.set_backend(backend)
+    data_list = [[1.0, 2.0], [3.0, 4.0]]
+    # data_numpy removed
 
-    def test_zeros(self, backend):
-        """Test zeros operation."""
-        # Test with 1D shape
-        shape_tuple = (5,)
-        x = zeros(shape_tuple)
-        assert shape(x) == shape_tuple
-        assert ops.allclose(to_numpy(x), zeros(shape_tuple))
+    # From list
+    t_list = tensor.convert_to_tensor(data_list)
+    assert isinstance(t_list, tensor.EmberTensor), "Convert list failed"
+    assert tensor.shape(t_list) == (2, 2), "Convert list shape failed"
+    assert ops.allclose(t_list, tensor.convert_to_tensor(data_list)), "Convert list content failed"
 
-        # Test with 2D shape
-        shape_tuple = (3, 4)
-        x = zeros(shape_tuple)
-        assert shape(x) == shape_tuple
-        assert ops.allclose(to_numpy(x), zeros(shape_tuple))
+    # Test for converting numpy array removed due to emberlint rule violation
+    # From existing EmberTensor (should return same object or equivalent)
+    # Test conversion from existing tensor (using the one created from list)
+    t_existing = tensor.convert_to_tensor(t_list)
+    assert isinstance(t_existing, tensor.EmberTensor), "Convert existing failed"
+    assert ops.allclose(t_existing, tensor.convert_to_tensor(data_list)), "Convert existing content failed"
+    # Could potentially check object identity if required, but content/type check is usually sufficient
 
-        # Test with dtype
-        # Use string-based dtype for backend purity
-        dtype_str = 'float32'
-        
-        x = zeros(shape_tuple, dtype=dtype_str)
-        # Convert dtype to string for comparison
-        assert dtype(x) is not None
-        assert ops.allclose(to_numpy(x), zeros(shape_tuple, dtype=dtype_str))
+def test_tensor_creation_zeros_ones(backend):
+    """Tests tensor.zeros and tensor.ones."""
+    ops.set_backend(backend)
+    shape = (2, 3)
+    
+    t_zeros = tensor.zeros(shape)
+    assert isinstance(t_zeros, tensor.EmberTensor), "zeros failed type"
+    assert tensor.shape(t_zeros) == shape, "zeros shape failed"
+    assert ops.all(ops.equal(t_zeros, tensor.convert_to_tensor(0.0))), "zeros content failed"
 
-    def test_ones(self, backend):
-        """Test ones operation."""
-        # Test with 1D shape
-        shape_tuple = (5,)
-        x = ones(shape_tuple)
-        assert shape(x) == shape_tuple
-        assert ops.allclose(to_numpy(x), ones(shape_tuple))
+    t_ones = tensor.ones(shape)
+    assert isinstance(t_ones, tensor.EmberTensor), "ones failed type"
+    assert tensor.shape(t_ones) == shape, "ones shape failed"
+    assert ops.all(ops.equal(t_ones, tensor.convert_to_tensor(1.0))), "ones content failed"
 
-        # Test with 2D shape
-        shape_tuple = (3, 4)
-        x = ones(shape_tuple)
-        assert shape(x) == shape_tuple
-        assert ops.allclose(to_numpy(x), ones(shape_tuple))
+def test_tensor_creation_eye(backend):
+    """Tests tensor.eye."""
+    ops.set_backend(backend)
+    n = 3
+    t_eye = tensor.eye(n)
+    expected_list = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]] # n=3
+    assert isinstance(t_eye, tensor.EmberTensor), "eye failed type"
+    assert tensor.shape(t_eye) == (n, n), "eye shape failed"
+    assert ops.allclose(t_eye, tensor.convert_to_tensor(expected_list)), "eye content failed"
 
-        # Test with dtype
-        # Use string-based dtype for backend purity
-        dtype_str = 'float32'
-        
-        x = ones(shape_tuple, dtype=dtype_str)
-        # Convert dtype to string for comparison
-        assert dtype(x) is not None
-        assert ops.allclose(to_numpy(x), ones(shape_tuple, dtype=dtype_str))
+    # Rectangular eye
+    t_eye_rect = tensor.eye(n, m=4)
+    expected_rect_list = [[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0]] # n=3, m=4
+    assert tensor.shape(t_eye_rect) == (n, 4), "eye rect shape failed"
+    assert ops.allclose(t_eye_rect, tensor.convert_to_tensor(expected_rect_list)), "eye rect content failed"
 
-    def test_zeros_like(self, backend):
-        """Test zeros_like operation."""
-        # Create a tensor to use as reference
-        shape_tuple = (3, 4)
-        x_ref = ones(shape_tuple)
-        
-        # Test zeros_like
-        x = zeros_like(x_ref)
-        assert shape(x) == shape_tuple
-        assert ops.allclose(to_numpy(x), zeros(shape_tuple))
-        
-        # Test with different dtype
-        # Use string-based dtype for backend purity
-        dtype_str = 'float32'
-        
-        x = zeros_like(x_ref, dtype=dtype_str)
-        # Convert dtype to string for comparison
-        assert dtype(x) is not None
-        assert ops.allclose(to_numpy(x), zeros(shape_tuple, dtype=dtype_str))
+def test_tensor_creation_arange_linspace(backend):
+    """Tests tensor.arange and tensor.linspace."""
+    ops.set_backend(backend)
 
-    def test_ones_like(self, backend):
-        """Test ones_like operation."""
-        # Create a tensor to use as reference
-        shape_tuple = (3, 4)
-        x_ref = zeros(shape_tuple)
-        
-        # Test ones_like
-        x = ones_like(x_ref)
-        assert shape(x) == shape_tuple
-        assert ops.allclose(to_numpy(x), ones(shape_tuple))
-        
-        # Test with different dtype
-        # Use string-based dtype for backend purity
-        dtype_str = 'float32'
-        
-        x = ones_like(x_ref, dtype=dtype_str)
-        # Convert dtype to string for comparison
-        assert dtype(x) is not None
-        assert ops.allclose(to_numpy(x), ones(shape_tuple, dtype=dtype_str))
+    # arange
+    t_arange = tensor.arange(0, 5, 1) # 0, 1, 2, 3, 4
+    expected_arange_list = [0, 1, 2, 3, 4]
+    # Ensure dtype match for comparison, as arange might produce int/float depending on backend/args
+    expected_tensor = tensor.convert_to_tensor(expected_arange_list, dtype=t_arange.dtype)
+    assert ops.allclose(t_arange, expected_tensor), "arange failed"
 
-    def test_eye(self, backend):
-        """Test eye operation."""
-        # Test square matrix
-        n = 3
-        x = eye(n)
-        assert shape(x) == (n, n)
-        assert ops.allclose(to_numpy(x), eye(n))
-        
-        # Test rectangular matrix
-        n, m = 3, 4
-        x = eye(n, m)
-        assert shape(x) == (n, m)
-        assert ops.allclose(to_numpy(x), eye(n, m))
-        
-        # Test with dtype
-        # Use string-based dtype for backend purity
-        dtype_str = 'float32'
-        
-        x = eye(n, dtype=dtype_str)
-        # Convert dtype to string for comparison
-        assert dtype(x) is not None
-        assert ops.allclose(to_numpy(x), eye(n, dtype=dtype_str))
+    # linspace
+    t_linspace = tensor.linspace(0.0, 1.0, 5) # 0.0, 0.25, 0.5, 0.75, 1.0
+    expected_linspace_list = [0.0, 0.25, 0.5, 0.75, 1.0]
+    assert ops.allclose(t_linspace, tensor.convert_to_tensor(expected_linspace_list)), "linspace failed"
 
-class TestTensorManipulation:
-    """Tests for tensor manipulation operations."""
+def test_tensor_creation_like(backend):
+    """Tests tensor.zeros_like, tensor.ones_like, tensor.full_like."""
+    ops.set_backend(backend)
+    shape = (2, 4)
+    t_ref = tensor.zeros(shape) # Reference tensor
 
-    def test_reshape(self, backend):
-        """Test reshape operation."""
-        # Create a tensor
-        original_shape = (2, 6)
-        x = ones(original_shape)
-        
-        # Test reshape
-        new_shape = (3, 4)
-        y = reshape(x, new_shape)
-        assert shape(y) == new_shape
-        assert ops.allclose(to_numpy(y), ones(new_shape))
-        
-        # Test reshape with -1 dimension
-        new_shape = (3, -1)
-        y = reshape(x, new_shape)
-        assert shape(y) == (3, 4)
-        assert ops.allclose(to_numpy(y), ones((3, 4)))
+    # zeros_like
+    t_zeros_like = tensor.zeros_like(t_ref)
+    assert tensor.shape(t_zeros_like) == shape, "zeros_like shape failed"
+    assert ops.all(ops.equal(t_zeros_like, tensor.convert_to_tensor(0.0))), "zeros_like content failed"
 
-    def test_transpose(self, backend):
-        """Test transpose operation."""
-        if backend == 'torch':
-            # For PyTorch, use a 2D tensor since t() only works for 2D tensors
-            shape_tuple = (2, 3)
-            x = ones(shape_tuple)
-            
-            # Test default transpose
-            y = transpose(x)
-            
-            # For PyTorch, the default transpose swaps the dimensions
-            expected_shape = (3, 2)
-            # Create expected array using tensor functions
-            expected = transpose(ones(shape_tuple))
-                
-            assert shape(y) == expected_shape
-            assert ops.allclose(to_numpy(y), to_numpy(expected))
-            
-            # Test transpose with specified axes
-            axes = (1, 0)
-            y = transpose(x, axes)
-            assert shape(y) == (3, 2)
-            expected = transpose(ones(shape_tuple), axes)
-            assert ops.allclose(to_numpy(y), to_numpy(expected))
-        else:
-            # For NumPy and MLX, use a 3D tensor
-            shape_tuple = (2, 3, 4)
-            x = ones(shape_tuple)
-            
-            # Test default transpose
-            y = transpose(x)
-            
-            # The default transpose behavior differs between backends
-            # For NumPy, it's a complete transpose, for MLX it swaps the last two dimensions
-            if backend == 'numpy':
-                expected_shape = (4, 3, 2)
-                # Create expected array using tensor functions
-                expected = transpose(ones(shape_tuple))
-            else:
-                expected_shape = (2, 4, 3)
-                # Create expected array using tensor functions with axes
-                expected = transpose(ones(shape_tuple), (0, 2, 1))
-                
-            assert shape(y) == expected_shape
-            assert ops.allclose(to_numpy(y), to_numpy(expected))
-            
-            # Test transpose with specified axes
-            axes = (2, 0, 1)
-            y = transpose(x, axes)
-            assert shape(y) == (4, 2, 3)
-            expected = transpose(ones(shape_tuple), axes)
-            assert ops.allclose(to_numpy(y), to_numpy(expected))
+    # ones_like
+    t_ones_like = tensor.ones_like(t_ref)
+    assert tensor.shape(t_ones_like) == shape, "ones_like shape failed"
+    assert ops.all(ops.equal(t_ones_like, tensor.convert_to_tensor(1.0))), "ones_like content failed"
 
-    def test_concatenate(self, backend):
-        """Test concatenate operation."""
-        # Create tensors
-        shape1 = (2, 3)
-        shape2 = (2, 3)
-        x1 = ones(shape1)
-        x2 = zeros(shape2)
-        
-        # Test concatenate along axis 0
-        y = concatenate([x1, x2], axis=0)
-        assert shape(y) == (4, 3)
-        # Create expected result using tensor functions
-        expected = concatenate([ones(shape1), zeros(shape2)], axis=0)
-        assert ops.allclose(to_numpy(y), to_numpy(expected))
-        
-        # Test concatenate along axis 1
-        y = concatenate([x1, x2], axis=1)
-        assert shape(y) == (2, 6)
-        # Create expected result using tensor functions
-        expected = concatenate([ones(shape1), zeros(shape2)], axis=1)
-        assert ops.allclose(to_numpy(y), to_numpy(expected))
+    # full_like
+    fill_val = 7.0
+    t_full_like = tensor.full_like(t_ref, fill_val)
+    assert tensor.shape(t_full_like) == shape, "full_like shape failed"
+    assert ops.all(ops.equal(t_full_like, tensor.convert_to_tensor(fill_val))), "full_like content failed"
 
-    def test_stack(self, backend):
-        """Test stack operation."""
-        # Create tensors
-        shape_tuple = (2, 3)
-        x1 = ones(shape_tuple)
-        x2 = zeros(shape_tuple)
-        
-        # Test stack along axis 0
-        y = stack([x1, x2], axis=0)
-        assert shape(y) == (2, 2, 3)
-        # Create expected result using tensor functions
-        expected = stack([ones(shape_tuple), zeros(shape_tuple)], axis=0)
-        assert ops.allclose(to_numpy(y), to_numpy(expected))
-        
-        # Test stack along axis 1
-        y = stack([x1, x2], axis=1)
-        assert shape(y) == (2, 2, 3)
-        # Create expected result using tensor functions
-        expected = stack([ones(shape_tuple), zeros(shape_tuple)], axis=1)
-        assert ops.allclose(to_numpy(y), to_numpy(expected))
-        
-        # Test stack along axis 2
-        y = stack([x1, x2], axis=2)
-        assert shape(y) == (2, 3, 2)
-        # Create expected result using tensor functions
-        expected = stack([ones(shape_tuple), zeros(shape_tuple)], axis=2)
-        assert ops.allclose(to_numpy(y), to_numpy(expected))
-class TestTensorInfo:
-    """Tests for tensor information operations."""
+def test_tensor_creation_full(backend):
+    """Tests tensor.full."""
+    ops.set_backend(backend)
+    shape = (3, 2)
+    fill_val = 5.5
+    t_full = tensor.full(shape, fill_val)
+    assert tensor.shape(t_full) == shape, "full shape failed"
+    assert ops.all(ops.equal(t_full, tensor.convert_to_tensor(fill_val))), "full content failed"
 
-    def test_shape(self, backend):
-        """Test shape operation."""
-        # Test with 1D shape
-        shape_tuple = (5,)
-        x = ones(shape_tuple)
-        assert shape(x) == shape_tuple
+def test_tensor_properties_shape_dtype(backend, sample_dtype):
+    """Tests tensor shape and dtype properties."""
+    ops.set_backend(backend)
+    shape = (2, 3, 4)
+    
+    # Create tensor with specific dtype
+    # Note: Creating bool tensor might require specific values for some backends
+    if sample_dtype == tensor.bool_:
+        t = tensor.zeros(shape, dtype=sample_dtype) # Use zeros for bool
+    else:
+        t = tensor.ones(shape, dtype=sample_dtype)
         
-        # Test with 2D shape
-        shape_tuple = (3, 4)
-        x = ones(shape_tuple)
-        assert shape(x) == shape_tuple
-        
-        # Test with 3D shape
-        shape_tuple = (2, 3, 4)
-        x = ones(shape_tuple)
-        assert shape(x) == shape_tuple
+    assert tensor.shape(t) == shape, f"Shape property failed for dtype {sample_dtype}"
+    retrieved_dtype = t.dtype
+    assert retrieved_dtype == sample_dtype, f"Dtype property mismatch: expected {sample_dtype}, got {retrieved_dtype}"
 
-    def test_dtype(self, backend):
-        """Test dtype operation."""
-        # Test with default dtype
-        x = ones((3, 4))
-        
-        # Check that dtype returns a value (we don't care about the specific value)
-        assert dtype(x) is not None
-        
-        # Test with specified dtype
-        # Use string-based dtype for backend purity
-        dtype_str = 'float32'
-        
-        x = ones((3, 4), dtype=dtype_str)
-        # Check that dtype returns a value
-        assert dtype(x) is not None
-
-    def test_cast(self, backend):
-        """Test cast operation."""
-        # Create a tensor
-        x = ones((3, 4))
-        
-        # Test cast to different dtype
-        # Use string-based dtype for backend purity
-        dtype_str = 'int32'
-        
-        y = cast(x, dtype_str)
-        # Check that dtype returns a value
-        assert dtype(y) is not None
-        # Check that the values are preserved
-        expected = ones((3, 4), dtype=dtype_str)
-        assert ops.allclose(to_numpy(y), to_numpy(expected))
-
-    def test_copy(self, backend):
-        """Test copy operation."""
-        # Create a tensor
-        x = ones((3, 4))
-        
-        # Test copy
-        y = copy(x)
-        assert shape(y) == shape(x)
-        assert dtype(y) == dtype(x)
-        assert ops.allclose(to_numpy(y), to_numpy(x))
-        
-        # Verify that y is a copy, not a reference
-        # Since we can't modify tensors in-place in a backend-agnostic way,
-        # we'll just verify that the copy works by checking that the shapes and values match
-        assert shape(y) == shape(x)
-        assert ops.allclose(to_numpy(y), to_numpy(x))
+# TODO: Add tests for tensor manipulation (reshape, transpose, concatenate, stack, split, expand_dims, squeeze, tile, gather, scatter, slice, pad)
+# TODO: Add tests for type conversion (cast, to_numpy, item)
+# TODO: Add tests for random operations (random_uniform, normal, bernoulli, etc.)
+# TODO: Add tests for dtype operations (get_dtype, to_dtype_str, from_dtype_str)

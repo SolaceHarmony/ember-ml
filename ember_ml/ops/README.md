@@ -25,8 +25,8 @@ The `ops` module delegates operations to the current backend, making it possible
 from ember_ml import ops
 
 # Create tensors
-x = ops.random_normal((3, 4))
-y = ops.random_normal((4, 5))
+x = tensor.random_normal((3, 4))
+y = tensor.random_normal((4, 5))
 
 # Perform operations
 z = ops.matmul(x, y)
@@ -107,8 +107,8 @@ from ember_ml import ops
 eh.set_backend('torch')
 
 # Create tensors
-x = ops.random_normal((3, 4))
-y = ops.random_normal((4, 5))
+x = tensor.random_normal((3, 4))
+y = tensor.random_normal((4, 5))
 
 # Perform operations
 z = ops.matmul(x, y)
@@ -136,12 +136,12 @@ hidden_size = 20
 output_size = 5
 
 # Create random input
-x = ops.random_normal((batch_size, input_size))
+x = tensor.random_normal((batch_size, input_size))
 
 # Create random weights and biases
-w1 = ops.random_normal((input_size, hidden_size))
+w1 = tensor.random_normal((input_size, hidden_size))
 b1 = tensor.zeros((hidden_size,))
-w2 = ops.random_normal((hidden_size, output_size))
+w2 = tensor.random_normal((hidden_size, output_size))
 b2 = tensor.zeros((output_size,))
 
 # Forward pass
@@ -178,7 +178,7 @@ def custom_activation(x, alpha=0.1):
 eh.set_backend('torch')
 
 # Create a tensor
-x = ops.random_normal((3, 4))
+x = tensor.random_normal((3, 4))
 
 # Apply the custom activation
 y = custom_activation(x)

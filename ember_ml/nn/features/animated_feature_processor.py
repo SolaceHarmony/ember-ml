@@ -297,7 +297,7 @@ class AnimatedFeatureProcessor:
                             max_val_tensor = tensor.convert_to_tensor(7.0, dtype=tensor.float32, device=self.device)
                         else:
                             # Add 1 using ops.add and ensure float
-                            comp_max = ops.max(comp_tensor)
+                            comp_max = ops.stats.max(comp_tensor)
                             max_val_tensor = ops.add(
                                 comp_max,
                                 tensor.ones((), dtype=tensor.dtype(comp_max), device=self.device)
@@ -863,8 +863,8 @@ class AnimatedFeatureProcessor:
             Normalized tensor
         """
         # Get min and max values
-        min_val = ops.min(data)
-        max_val = ops.max(data)
+        min_val = ops.stats.min(data)
+        max_val = ops.stats.max(data)
         
         # Calculate range
         data_range = ops.subtract(max_val, min_val)

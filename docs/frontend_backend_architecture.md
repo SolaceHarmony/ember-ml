@@ -53,7 +53,7 @@ def normalize_data(x: tensor.Tensor) -> tensor.Tensor:
         Normalized tensor with values in [0, 1]
     """
     x = tensor.convert_to_tensor(x)
-    return ops.divide(x, ops.cast(255.0, x.dtype))
+    return ops.divide(x, tensor.cast(255.0, x.dtype))
 ```
 
 #### 3. Feature Extraction Pattern
@@ -123,11 +123,11 @@ def scatter_mean(values: tensor.Tensor, indices: tensor.Tensor,
     indices = tensor.convert_to_tensor(indices)
     
     # First compute sum
-    sum_result = ops.scatter(values, indices, dim_size, "add")
+    sum_result = tensor.scatter(values, indices, dim_size, "add")
     
     # Then compute count using ones
     ones = tensor.ones_like(values)
-    count = ops.scatter(ones, indices, dim_size, "add")
+    count = tensor.scatter(ones, indices, dim_size, "add")
     
     # Avoid division by zero
     count = ops.where(count == 0, tensor.ones_like(count), count)
@@ -176,7 +176,7 @@ def scatter_example(data: tensor.Tensor, indices: tensor.Tensor) -> tensor.Tenso
     """
     data = tensor.convert_to_tensor(data)
     indices = tensor.convert_to_tensor(indices)
-    return ops.scatter(data, indices, aggr="add")
+    return tensor.scatter(data, indices, aggr="add")
 ```
 
 #### 2. Wave Processing
@@ -281,7 +281,7 @@ def test_backend_equivalence():
     # Test with each backend
     for backend in ["numpy", "torch", "mlx"]:
         ops.set_backend(backend)
-        result = ops.scatter(x, tensor.array([0, 1, 0]))
+        result = tensor.scatter(x, tensor.array([0, 1, 0]))
         # Results should match within numerical precision
 ```
 
@@ -292,12 +292,12 @@ def test_scatter_edge_cases():
     # Empty tensor case
     empty = tensor.array([])
     indices = tensor.array([], dtype=tensor.int32)
-    result = ops.scatter(empty, indices)
+    result = tensor.scatter(empty, indices)
     
     # Large dimension case
     large = tensor.ones((10000,))
     sparse_indices = tensor.array([0, 9999])
-    result = ops.scatter(large, sparse_indices)
+    result = tensor.scatter(large, sparse_indices)
 ```
 
 ### 3. Type Safety Verification

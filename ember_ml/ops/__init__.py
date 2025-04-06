@@ -5,11 +5,16 @@ This module provides operations that abstract machine learning library
 scalar operations. Tensor operations ONLY EXIST in ember_ml.nn.tensor and backend.*.tensor.*. The only exception is tensor compatibility with arithmetic.
 """
 
-from typing import Type
+from typing import Type, Dict
+from abc import ABC
 
 # Import interfaces
-#from ember_ml.ops import MathOps, DeviceOps, ComparisonOps
-#from ember_ml.ops import IOOps, LossOps, VectorOps
+from ember_ml.ops.math_ops import MathOps
+from ember_ml.ops.device_ops import DeviceOps
+from ember_ml.ops.comparison_ops import ComparisonOps
+from ember_ml.ops.io_ops import IOOps
+from ember_ml.ops.loss_ops import LossOps
+from ember_ml.ops.vector_ops import VectorOps
 #from ember_ml.ops.linearalg import LinearAlgOps
 
 # Import specific operations from interfaces
@@ -19,12 +24,12 @@ from ember_ml.ops.comparison_ops import *
 from ember_ml.ops.io_ops import *
 from ember_ml.ops.loss_ops import *
 from ember_ml.ops.vector_ops import *
-from ember_ml.ops.feature_ops import *
+# Stats is imported directly by users, not through ops, similar to linearalg
 
 # Use backend directly
 from ember_ml.backend import get_backend, set_backend, get_backend_module
 
-_CURRENT_INSTANCES = {}
+_CURRENT_INSTANCES: Dict[Type[ABC], ABC] = {}
 
 def get_ops():
     """Get the current ops implementation name."""
@@ -69,8 +74,6 @@ def _get_ops_instance(ops_class: Type):
             class_name = f"{class_name_prefix}MathOps"
         elif ops_class == DeviceOps:
             class_name = f"{class_name_prefix}DeviceOps"
-        elif ops_class == FeatureOps:
-            class_name = f"{class_name_prefix}FeatureOps"
         elif ops_class == ComparisonOps:
             class_name = f"{class_name_prefix}ComparisonOps"
         elif ops_class == IOOps:
@@ -101,10 +104,6 @@ def comparison_ops() -> ComparisonOps:
     """Get comparison operations."""
     return _get_ops_instance(ComparisonOps)
 
-def feature_ops() -> FeatureOps:
-    """Get feature operations."""
-    return _get_ops_instance(FeatureOps)
-
 def io_ops() -> IOOps:
     """Get I/O operations."""
     return _get_ops_instance(IOOps)
@@ -126,11 +125,6 @@ gather = lambda *args, **kwargs: math_ops().gather(*args, **kwargs)
 floor_divide = lambda *args, **kwargs: math_ops().floor_divide(*args, **kwargs)
 dot = lambda *args, **kwargs: math_ops().dot(*args, **kwargs)
 matmul = lambda *args, **kwargs: math_ops().matmul(*args, **kwargs)
-mean = lambda *args, **kwargs: math_ops().mean(*args, **kwargs)
-sum = lambda *args, **kwargs: math_ops().sum(*args, **kwargs)
-max = lambda *args, **kwargs: math_ops().max(*args, **kwargs)
-argmax = lambda *args, **kwargs: math_ops().argmax(*args, **kwargs)
-min = lambda *args, **kwargs: math_ops().min(*args, **kwargs)
 exp = lambda *args, **kwargs: math_ops().exp(*args, **kwargs)
 log = lambda *args, **kwargs: math_ops().log(*args, **kwargs)
 log10 = lambda *args, **kwargs: math_ops().log10(*args, **kwargs)
@@ -153,7 +147,6 @@ softplus = lambda *args, **kwargs: math_ops().softplus(*args, **kwargs)
 relu = lambda *args, **kwargs: math_ops().relu(*args, **kwargs)
 softmax = lambda *args, **kwargs: math_ops().softmax(*args, **kwargs)
 gradient = lambda *args, **kwargs: math_ops().gradient(*args, **kwargs)
-cumsum = lambda *args, **kwargs: math_ops().cumsum(*args, **kwargs)
 eigh = lambda *args, **kwargs: math_ops().eigh(*args, **kwargs)
 pi = math_ops().pi
 
@@ -252,11 +245,6 @@ __all__ = [
     'dot',
     'matmul',
     'gather',
-    'mean',
-    'sum',
-    'max',
-    'argmax',
-    'min',
     'exp',
     'log',
     'log10',
@@ -279,7 +267,6 @@ __all__ = [
     'relu',
     'softmax',
     'gradient',
-    'cumsum',
     'eigh',
     'eigh',
     
@@ -289,13 +276,6 @@ __all__ = [
     'get_available_devices',
     'memory_usage',
     'memory_info',
-    
-    # Feature operations
-    'pca',
-    'transform',
-    'inverse_transform',
-    'standardize',
-    'normalize',
     
     # Comparison operations
     'equal',

@@ -9,10 +9,11 @@ from typing import Optional, Tuple
 
 from ember_ml import ops
 from ember_ml.nn.tensor import EmberTensor, int32, random_uniform, cast
-from ember_ml.nn.wirings.wiring import Wiring
+# Use explicit path for clarity now it's moved
+from ember_ml.nn.modules.wiring.neuron_map import NeuronMap
 from ember_ml.nn import tensor
 
-class RandomWiring(Wiring):
+class RandomMap(NeuronMap): # Name is already correct
     """
     Random wiring configuration.
     
@@ -71,5 +72,6 @@ class RandomWiring(Wiring):
             random_uniform((self.units,)) >= self.sparsity_level,
             dtype=int32
         )
-        
+
+        self._built = True # Mark map as built
         return input_mask, recurrent_mask, output_mask

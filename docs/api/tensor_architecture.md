@@ -115,7 +115,7 @@ For proper typing to work correctly:
 Each tensor operation is implemented as a standalone function first, with the class methods being thin wrappers that call these functions.
 
 ```python
-# In ember_ml/backend/{backend_name}/tensor/ops/casting.py
+# In ember_ml/backend/{backend_name}/tensor/tensor.casting.py
 def cast(tensor_obj, data, dtype):
     """
     Cast a tensor to a different data type.
@@ -149,7 +149,7 @@ def cast(self, data, dtype):
     Returns:
         Cast tensor
     """
-    from ember_ml.backend.{backend_name}.tensor.ops.casting import cast as cast_func
+    from ember_ml.backend.{backend_name}.tensor.tensor.casting import cast as cast_func
     return cast_func(self, data, dtype)
 ```
 

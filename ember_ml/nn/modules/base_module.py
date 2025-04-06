@@ -7,7 +7,6 @@ that work with any backend (NumPy, PyTorch, MLX).
 The BaseModule class is the base class for all neural network modules in ember_ml.
 """
 
-import inspect
 from collections import OrderedDict
 from typing import Dict, Iterator, Optional, Set, Tuple, Union, Any, List
 
@@ -56,6 +55,7 @@ class BaseModule:
         self._modules = OrderedDict()
         self._buffers = OrderedDict()
         self.training = True
+        self.built = False # Flag for deferred build
     
     def forward(self, *args, **kwargs):
         """
@@ -64,13 +64,57 @@ class BaseModule:
         This method should be overridden by all subclasses.
         """
         raise NotImplementedError("Subclasses must implement forward method")
-    
+
+    def build(self, input_shape):
+        """
+        Creates the layer's weights.
+
+        This method should be overridden by subclasses that need to create
+        weights based on the shape of the input tensor. The framework calls
+        this method automatically before the first `forward` pass.
+
+        Args:
+            input_shape: A shape tuple (or list of tuples) reporting the
+                         shape of the input tensor(s).
+        """
+        # Base implementation does nothing. Subclasses override this.
+        # Subclasses should set self.built = True if they implement build.
+        # However, the main built flag is set in __call__.
+        pass
+
     def __call__(self, *args, **kwargs):
         """
-        Call the module on inputs.
-        
-        This method calls the forward method and handles any pre/post processing.
+        Call the module on inputs, handling deferred build.
+
+        This method calls the forward method after ensuring the module is built.
         """
+        # Check if built, and if inputs are provided to trigger build
+        if not self.built and args:
+            # Determine input shape from the first argument primarily
+            # Assumes the first argument is the main input tensor or a tuple/list of them
+            # More complex input structures might need custom handling in __call__ overrides
+            if isinstance(args[0], (list, tuple)):
+                 # Handle multiple inputs - pass list/tuple of shapes
+                 try:
+                     input_shape = [tensor.shape(inp) for inp in args[0]]
+                     # Convert list of tuples to tuple of tuples if needed, or handle as list
+                     input_shape = tuple(input_shape) if len(input_shape) > 1 else input_shape[0]
+                 except Exception as e:
+                     raise ValueError(f"Could not determine input shape from list/tuple input {args[0]}: {e}")
+
+            else:
+                 # Assume single input tensor
+                 try:
+                     input_shape = tensor.shape(args[0])
+                 except Exception as e:
+                     raise ValueError(f"Could not determine input shape from input {args[0]}: {e}")
+
+            # Call the build method
+            self.build(input_shape)
+            # Mark as built AFTER the build method completes successfully
+            self.built = True
+
+        # Execute the forward pass
         return self.forward(*args, **kwargs)
     
     def register_parameter(self, name: str, param: Optional[Parameter]) -> None:
@@ -308,3 +352,41 @@ class BaseModule:
         for param in self.parameters():
             if param.grad is not None:
                 param.grad = tensor.zeros_like(param.grad)
+
+    def get_config(self) -> Dict[str, Any]:
+        """Returns the configuration of the module.
+
+        Subclasses should override this method to return a dictionary
+        containing the arguments needed to reconstruct the module.
+
+        Returns:
+            A dictionary containing the module's configuration.
+        """
+        # Base implementation returns an empty dict.
+        # Subclasses should call super().get_config() and update the dict.
+        return {}
+
+    @classmethod
+    def from_config(cls, config: Dict[str, Any]) -> 'BaseModule':
+        """Creates a module from its configuration.
+
+        This method is the reverse of get_config().
+
+        Args:
+            config: A Python dictionary containing the configuration of the module.
+
+        Returns:
+            A module instance.
+        """
+        # Simple base implementation assumes config directly maps to __init__ args.
+        # Subclasses might need to override this if reconstruction is more complex
+        # (e.g., reconstructing nested modules/maps first).
+        # We remove 'class_name' if present, as it's often added during saving.
+        config.pop('class_name', None)
+        try:
+            return cls(**config)
+        except Exception as e:
+            raise TypeError(
+                f"Error when creating {cls.__name__} from config: {config}\n"
+                f"Exception: {e}"
+            )

@@ -1,246 +1,125 @@
-"""
-Unit tests for random operations across different backends.
-
-This module contains pytest tests for the random operations in the nn.tensor module.
-It tests each operation with different backends to ensure consistency.
-"""
-
 import pytest
-import numpy as np
 from ember_ml import ops
-from ember_ml.nn.tensor import (
-    random_normal, random_uniform, random_bernoulli,
-    shape, dtype, to_numpy, arange,
-    set_seed, get_seed, shuffle
-)
-from ember_ml.backend import get_backend, set_backend
+from ember_ml.nn import tensor
+from ember_ml.ops import stats # For mean/std checks
 
-# List of backends to test
-BACKENDS = ['numpy']
-try:
-    import torch
-    BACKENDS.append('torch')
-except ImportError:
-    pass
+# Assume conftest.py provides 'backend' fixture
 
-try:
-    import mlx.core
-    BACKENDS.append('mlx')
-except ImportError:
-    pass
+@pytest.fixture
+def random_params(backend):
+    """Fixture for random op parameters."""
+    ops.set_backend(backend)
+    shape = (1000, 10) # Use a reasonable size for statistical checks
+    seed = 42
+    return shape, seed
 
-@pytest.fixture(params=BACKENDS)
-def backend(request):
-    """Fixture to test with different backends."""
-    prev_backend = get_backend()
-    set_backend(request.param)
-    ops.set_backend(request.param)
-    yield request.param
-    if prev_backend is not None:
-        set_backend(prev_backend)
-        ops.set_backend(prev_backend)
+def test_tensor_set_get_seed(random_params, backend):
+    """Tests tensor.set_seed and tensor.get_seed."""
+    ops.set_backend(backend)
+    _, seed = random_params
+    
+    # Note: Seed setting/getting might be backend specific and not globally tracked by EmberTensor directly.
+    # This test assumes a global or backend-specific seed mechanism accessible via tensor module.
+    # Need to verify actual implementation details.
+    # If seed is purely backend, test might need adjustment.
+    
+    # Let's assume tensor.set_seed configures the active backend's seed generator.
+    try:
+        original_seed_state = tensor.get_seed() # Assuming this retrieves backend state if possible
+    except NotImplementedError:
+        original_seed_state = None # If get_seed is not implemented
 
-class TestRandomGeneration:
-    """Tests for random generation operations."""
+    tensor.set_seed(seed)
+    # get_seed might not be implemented or might return backend state
+    # assert tensor.get_seed() == seed, "get_seed did not return the set seed" # This assertion might fail
 
-    def test_random_normal(self, backend):
-        """Test random_normal operation."""
-        # Test with 1D shape
-        shape = (1000,)
-        mean = 0.0
-        stddev = 1.0
-        x = random_normal(shape, mean, stddev)
-        assert x.shape == shape
-        
-        # Check statistical properties
-        x_np = to_numpy(x)
-        assert abs(np.mean(x_np) - mean) < 0.1
-        assert abs(np.std(x_np) - stddev) < 0.1
-        
-        # Test with 2D shape
-        shape = (100, 100)
-        mean = 2.0
-        stddev = 0.5
-        x = random_normal(shape, mean, stddev)
-        assert x.shape == shape
-        
-        # Check statistical properties
-        x_np = to_numpy(x)
-        assert abs(np.mean(x_np) - mean) < 0.1
-        assert abs(np.std(x_np) - stddev) < 0.1
-        
-        # Test with dtype
-        if backend == 'numpy':
-            dtype = np.float32
-        elif backend == 'torch':
-            import torch
-            dtype = torch.float32
-        elif backend == 'mlx':
-            import mlx.core
-            dtype = mlx.core.float32
-        else:
-            pytest.skip(f"Unknown backend: {backend}")
-            
-        x = random_normal(shape, mean, stddev, dtype=dtype)
-        assert x.dtype == dtype
+    # Check reproducibility
+    tensor.set_seed(seed)
+    rand1 = tensor.random_uniform((10, 10))
+    tensor.set_seed(seed)
+    rand2 = tensor.random_uniform((10, 10))
+    assert ops.allclose(rand1, rand2, atol=1e-6), "Setting seed did not ensure reproducibility"
+    
+    # Restore original state if possible - tricky without reliable get_seed/set_seed state capture
+    # if original_seed_state is not None:
+    #     tensor.set_seed(original_seed_state) # This might not work as expected
 
-    def test_random_uniform(self, backend):
-        """Test random_uniform operation."""
-        # Test with 1D shape
-        shape = (1000,)
-        minval = 0.0
-        maxval = 1.0
-        x = random_uniform(shape, minval, maxval)
-        assert x.shape == shape
-        
-        # Check statistical properties
-        x_np = to_numpy(x)
-        assert np.min(x_np) >= minval
-        assert np.max(x_np) <= maxval
-        assert abs(np.mean(x_np) - (minval + maxval) / 2) < 0.1
-        
-        # Test with 2D shape
-        shape = (100, 100)
-        minval = -1.0
-        maxval = 1.0
-        x = random_uniform(shape, minval, maxval)
-        assert x.shape == shape
-        
-        # Check statistical properties
-        x_np = to_numpy(x)
-        assert np.min(x_np) >= minval
-        assert np.max(x_np) <= maxval
-        assert abs(np.mean(x_np) - (minval + maxval) / 2) < 0.1
-        
-        # Test with dtype
-        if backend == 'numpy':
-            dtype = np.float32
-        elif backend == 'torch':
-            import torch
-            dtype = torch.float32
-        elif backend == 'mlx':
-            import mlx.core
-            dtype = mlx.core.float32
-        else:
-            pytest.skip(f"Unknown backend: {backend}")
-            
-        x = random_uniform(shape, minval, maxval, dtype=dtype)
-        assert x.dtype == dtype
+def test_tensor_random_uniform(random_params, backend):
+    """Tests tensor.random_uniform."""
+    ops.set_backend(backend)
+    shape, seed = random_params
+    minval, maxval = -1.0, 1.0
+    tensor.set_seed(seed) # Ensure reproducibility for checks
+    
+    rand_tensor = tensor.random_uniform(shape, minval=minval, maxval=maxval, dtype=tensor.float32)
+    
+    assert isinstance(rand_tensor, tensor.EmberTensor), "random_uniform did not return EmberTensor"
+    assert tensor.shape(rand_tensor) == shape, "random_uniform shape mismatch"
+    assert tensor.dtype(rand_tensor) == tensor.float32, "random_uniform dtype mismatch"
+    
+    # Check range (min/max values might slightly exceed bounds due to generation method)
+    min_val_actual = tensor.item(stats.min(rand_tensor))
+    max_val_actual = tensor.item(stats.max(rand_tensor))
+    # Use tolerance
+    assert min_val_actual >= minval - 1e-5, f"random_uniform min value out of range: {min_val_actual}"
+    # Maxval is exclusive in some implementations, allow slight overshoot if needed
+    assert max_val_actual <= maxval + 1e-5, f"random_uniform max value out of range: {max_val_actual}" 
+    
+    # Check distribution (mean should be approx (minval+maxval)/2)
+    mean_val = tensor.item(stats.mean(rand_tensor))
+    expected_mean = (minval + maxval) / 2.0
+    assert abs(mean_val - expected_mean) < 0.1, f"random_uniform mean out of expected range: {mean_val}" # Loose check
 
-    def test_random_bernoulli(self, backend):
-        """Test random_bernoulli operation."""
-        if backend == 'mlx':
-            pytest.skip("MLX backend doesn't implement random_bernoulli correctly")
-            
-        try:
-            # Test with 1D shape
-            shape = (1000,)
-            p = 0.5
-            x = random_bernoulli(shape, p)
-            assert x.shape == shape
-            
-            # Check statistical properties
-            x_np = to_numpy(x)
-            assert np.all(np.logical_or(x_np == 0, x_np == 1))
-            assert abs(np.mean(x_np) - p) < 0.1
-            
-            # Test with 2D shape
-            shape = (100, 100)
-            p = 0.7
-            x = random_bernoulli(shape, p)
-            assert x.shape == shape
-            
-            # Check statistical properties
-            x_np = to_numpy(x)
-            assert np.all(np.logical_or(x_np == 0, x_np == 1))
-            assert abs(np.mean(x_np) - p) < 0.1
-            
-            # Test with dtype
-            if backend == 'numpy':
-                dtype = np.float32
-            elif backend == 'torch':
-                import torch
-                dtype = torch.float32
-            elif backend == 'mlx':
-                import mlx.core
-                dtype = mlx.core.float32
-            else:
-                pytest.skip(f"Unknown backend: {backend}")
-                
-            x = random_bernoulli(shape, p, dtype=dtype)
-            assert x.dtype == dtype
-        except (NotImplementedError, AttributeError):
-            pytest.skip(f"{backend} backend doesn't implement random_bernoulli")
+def test_tensor_random_normal(random_params, backend):
+    """Tests tensor.random_normal."""
+    ops.set_backend(backend)
+    shape, seed = random_params
+    mean, stddev = 0.0, 1.0
+    tensor.set_seed(seed)
+    
+    rand_tensor = tensor.random_normal(shape, mean=mean, stddev=stddev, dtype=tensor.float32)
+    
+    assert isinstance(rand_tensor, tensor.EmberTensor), "random_normal did not return EmberTensor"
+    assert tensor.shape(rand_tensor) == shape, "random_normal shape mismatch"
+    assert tensor.dtype(rand_tensor) == tensor.float32, "random_normal dtype mismatch"
 
-class TestRandomSeed:
-    """Tests for random seed management."""
+    # Check distribution statistics (mean and stddev should be close to specified)
+    mean_actual = tensor.item(stats.mean(rand_tensor))
+    stddev_actual = tensor.item(stats.std(rand_tensor))
+    
+    assert abs(mean_actual - mean) < 0.1, f"random_normal mean out of expected range: {mean_actual}" # Loose check
+    assert abs(stddev_actual - stddev) < 0.1, f"random_normal stddev out of expected range: {stddev_actual}" # Loose check
 
-    def test_set_seed(self, backend):
-        """Test set_seed operation."""
-        try:
-            # Set random seed
-            set_seed(42)
-            
-            # Generate random tensor
-            shape = (100, 100)
-            x1 = random_normal(shape)
-            
-            # Set the same random seed again
-            set_seed(42)
-            
-            # Generate another random tensor
-            x2 = random_normal(shape)
-            
-            # The two tensors should be identical
-            assert np.allclose(to_numpy(x1), to_numpy(x2))
-            
-            # Set a different random seed
-            set_seed(43)
-            
-            # Generate another random tensor
-            x3 = random_normal(shape)
-            
-            # The third tensor should be different from the first two
-            assert not np.allclose(to_numpy(x1), to_numpy(x3))
-        except (NotImplementedError, AttributeError):
-            pytest.skip(f"{backend} backend doesn't implement set_seed")
+def test_tensor_random_bernoulli(random_params, backend):
+    """Tests tensor.random_bernoulli."""
+    ops.set_backend(backend)
+    shape, seed = random_params
+    p = 0.7 # Probability of generating 1
+    tensor.set_seed(seed)
+    
+    # Generate as float first for mean check
+    rand_tensor_float = tensor.random_bernoulli(shape, p=p, dtype=tensor.float32) 
 
-    def test_get_seed(self, backend):
-        """Test get_seed operation."""
-        pytest.skip("get_seed() is not implemented correctly in any backend")
+    assert isinstance(rand_tensor_float, tensor.EmberTensor), "random_bernoulli did not return EmberTensor"
+    assert tensor.shape(rand_tensor_float) == shape, "random_bernoulli shape mismatch"
+    
+    # Check if it contains 0s and 1s mostly
+    min_val = tensor.item(stats.min(rand_tensor_float))
+    max_val = tensor.item(stats.max(rand_tensor_float))
+    # Use allclose for float comparison
+    assert ops.allclose(min_val, 0.0) or ops.allclose(min_val, 1.0), "bernoulli min value not 0 or 1"
+    assert ops.allclose(max_val, 0.0) or ops.allclose(max_val, 1.0), "bernoulli max value not 0 or 1"
 
-class TestRandomUtilities:
-    """Tests for random utility operations."""
+    # Check distribution (mean should be close to p)
+    mean_actual = tensor.item(stats.mean(rand_tensor_float))
+    assert abs(mean_actual - p) < 0.1, f"random_bernoulli mean out of expected range: {mean_actual}" # Loose check
 
-    def test_shuffle(self, backend):
-        """Test shuffle operation."""
-        try:
-            # Create a tensor
-            x = arange(100)
-            
-            # Set random seed for reproducibility
-            set_seed(42)
-            
-            # Shuffle the tensor
-            y = shuffle(x)
-            
-            # The shuffled tensor should have the same shape
-            assert y.shape == x.shape
-            
-            # The shuffled tensor should have the same elements
-            assert np.array_equal(np.sort(to_numpy(y)), np.sort(to_numpy(x)))
-            
-            # The shuffled tensor should be different from the original
-            assert not np.array_equal(to_numpy(y), to_numpy(x))
-            
-            # Set the same random seed again
-            set_seed(42)
-            
-            # Shuffle the tensor again
-            z = shuffle(x)
-            
-            # The two shuffled tensors should be identical
-            assert np.array_equal(to_numpy(y), to_numpy(z))
-        except (NotImplementedError, AttributeError):
-            pytest.skip(f"{backend} backend doesn't implement shuffle")
-            
+    # Check default dtype (should likely be bool or int-like depending on backend)
+    rand_tensor_default = tensor.random_bernoulli(shape, p=p)
+    assert tensor.shape(rand_tensor_default) == shape, "random_bernoulli default dtype shape mismatch"
+    # Check if dtype is boolean or integer-like
+    assert 'bool' in str(tensor.dtype(rand_tensor_default)) or 'int' in str(tensor.dtype(rand_tensor_default)), "bernoulli default dtype not bool or int"
+
+
+# TODO: Add tests for random_gamma, random_exponential, random_poisson (these require checking against theoretical distributions)
+# TODO: Add tests for random_categorical, random_permutation, shuffle

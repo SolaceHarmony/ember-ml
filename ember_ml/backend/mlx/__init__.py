@@ -20,6 +20,7 @@ from ember_ml.backend.mlx.device_ops import MLXDeviceOps
 from ember_ml.backend.mlx.linearalg import MLXLinearAlgOps
 from ember_ml.backend.mlx.io_ops import MLXIOOps
 from ember_ml.backend.mlx.vector_ops import MLXVectorOps
+from ember_ml.backend.mlx.stats import MLXStatsOps
 
 # Import specific functions from math_ops
 from ember_ml.backend.mlx.math_ops import (
@@ -140,6 +141,8 @@ __all__ = [
     'MLXLinearAlgOps',
     'MLXIOOps',
     'MLXVectorOps',
+    'MLXStatsOps',
+    'MLXStatsOps',
 
     # Tensor classes
     'MLXDType',

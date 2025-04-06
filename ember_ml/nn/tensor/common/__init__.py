@@ -98,11 +98,8 @@ def dtype(data):
     return backend_dtype(data)
 cast = lambda *args, **kwargs: _get_tensor_ops().cast(*args, **kwargs)
 copy = lambda *args, **kwargs: _get_tensor_ops().copy(*args, **kwargs)
-var = lambda *args, **kwargs: _get_tensor_ops().var(*args, **kwargs)
 pad = lambda *args, **kwargs: _get_tensor_ops().pad(*args, **kwargs)
 item = lambda *args, **kwargs: _get_tensor_ops().item(*args, **kwargs)
-sort = lambda *args, **kwargs: _get_tensor_ops().sort(*args, **kwargs)
-argsort = lambda *args, **kwargs: _get_tensor_ops().argsort(*args, **kwargs)
 to_numpy = lambda *args, **kwargs: _get_tensor_ops().to_numpy(*args, **kwargs)
 tolist = lambda *args, **kwargs: _get_tensor_ops().tolist(*args, **kwargs)
 random_uniform = lambda *args, **kwargs: _get_tensor_ops().random_uniform(*args, **kwargs)
@@ -156,11 +153,8 @@ __all__ = [
     'dtype',
     'cast',
     'copy',
-    'var',
     'pad',
     'item',
-    'sort',
-    'argsort',
     'to_numpy',
     'tolist',
     'random_uniform',

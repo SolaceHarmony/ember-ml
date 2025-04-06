@@ -290,22 +290,30 @@ def diag(x: TensorLike, k: int = 0) -> torch.Tensor:
         
         # Extract the diagonal
         # Use torch.greater_equal for comparison
-        is_non_negative = torch.greater_equal(torch.tensor(k), torch.tensor(0))
+        # Create scalar tensors using item() method to avoid warnings
+        k_tensor = torch.tensor(k, dtype=torch.int32)
+        zero_tensor = torch.tensor(0, dtype=torch.int32)
+        is_non_negative = torch.greater_equal(k_tensor, zero_tensor)
         
         for i in range(int(diag_len)):
-            # Create a copy of the result
-            result_copy = torch.tensor(result)
+            # Create a copy of the result using clone().detach() instead of torch.tensor()
+            result_copy = result.clone().detach()
+            
+            # Create scalar tensor once for this iteration
+            i_tensor = torch.tensor(i, dtype=torch.int32)
             
             # Use torch.where to conditionally select the indices
             row = torch.where(is_non_negative,
-                          torch.tensor(i),
-                          torch.subtract(torch.tensor(i), torch.tensor(k)))
+                          i_tensor,
+                          torch.subtract(i_tensor, k_tensor))
             col = torch.where(is_non_negative,
-                          torch.add(torch.tensor(i), torch.tensor(k)),
-                          torch.tensor(i))
+                          torch.add(i_tensor, k_tensor),
+                          i_tensor)
             
             # Update the element directly
-            result_copy.index_copy_(0, torch.tensor([i]), x_array[i, i].unsqueeze(0))            
+            # Create index tensor properly to avoid warnings
+            idx_tensor = torch.tensor([i], dtype=torch.int64)
+            result_copy.index_copy_(0, idx_tensor, x_array[i, i].unsqueeze(0))
             result = result_copy
                 
         return result

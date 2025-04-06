@@ -117,7 +117,7 @@ class MotorNeuronModule(Module):
         self.adaptive_threshold = adaptive_threshold
         
         # Output projection
-        self.output_projection = ops.nn.Dense(
+        self.output_projection = nn.modules.activations.Dense(
             units=1,
             input_shape=(input_dim,),
             activation="sigmoid"
@@ -125,7 +125,7 @@ class MotorNeuronModule(Module):
         
         # Adaptive threshold
         if adaptive_threshold:
-            self.threshold_projection = ops.nn.Dense(
+            self.threshold_projection = nn.modules.activations.Dense(
                 units=1,
                 input_shape=(input_dim,),
                 activation="sigmoid",
@@ -153,7 +153,7 @@ class MotorNeuronModule(Module):
             threshold = ops.full_like(output, self.threshold)
         
         # Generate trigger
-        trigger = ops.cast(output > threshold, tensor.float32)
+        trigger = tensor.cast(output > threshold, tensor.float32)
         
         return output, trigger, threshold
 ```
@@ -212,13 +212,13 @@ class NCPLiquidNetworkModule(BaseLiquidNetworkModule):
         )
         
         # Input projection
-        self.input_projection = ops.nn.Dense(
+        self.input_projection = nn.modules.activations.Dense(
             units=input_dim,
             input_shape=(input_dim,)
         )
         
         # Output projection
-        self.output_projection = ops.nn.Dense(
+        self.output_projection = nn.modules.activations.Dense(
             units=output_dim,
             input_shape=(units,)
         )
@@ -232,7 +232,7 @@ class NCPLiquidNetworkModule(BaseLiquidNetworkModule):
         
         # Mixed memory
         if mixed_memory:
-            self.memory_gate = ops.nn.Dense(
+            self.memory_gate = nn.modules.activations.Dense(
                 units=units,
                 input_shape=(units,),
                 activation="sigmoid"
@@ -360,25 +360,25 @@ class LSTMGatedLiquidNetworkModule(BaseLiquidNetworkModule):
         )
         
         # Input projection for NCP
-        self.ncp_input_projection = ops.nn.Dense(
+        self.ncp_input_projection = nn.modules.activations.Dense(
             units=input_dim,
             input_shape=(input_dim,)
         )
         
         # Input projection for LSTM
-        self.lstm_input_projection = ops.nn.Dense(
+        self.lstm_input_projection = nn.modules.activations.Dense(
             units=input_dim,
             input_shape=(input_dim,)
         )
         
         # Output projection
-        self.output_projection = ops.nn.Dense(
+        self.output_projection = nn.modules.activations.Dense(
             units=output_dim,
             input_shape=(ncp_units + lstm_units,)
         )
         
         # Gating mechanism
-        self.gate = ops.nn.Dense(
+        self.gate = nn.modules.activations.Dense(
             units=ncp_units,
             input_shape=(lstm_units,),
             activation="sigmoid"
@@ -511,14 +511,14 @@ class MultiStrideLiquidNetworkModule(BaseLiquidNetworkModule):
             )
             
             # Input projection
-            self.input_projections[stride] = ops.nn.Dense(
+            self.input_projections[stride] = nn.modules.activations.Dense(
                 units=input_dim,
                 input_shape=(input_dim,)
             )
         
         # Output projection
         total_units = len(stride_perspectives) * units_per_stride
-        self.output_projection = ops.nn.Dense(
+        self.output_projection = nn.modules.activations.Dense(
             units=output_dim,
             input_shape=(total_units,)
         )
@@ -751,7 +751,7 @@ def train_liquid_network(
     
     for epoch in range(epochs):
         # Shuffle data
-        indices = ops.random.permutation(tensor.shape(features)[0])
+        indices = tensor.random_permutation(tensor.shape(features)[0])
         features_shuffled = ops.gather(features, indices)
         targets_shuffled = ops.gather(targets, indices)
         

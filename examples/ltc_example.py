@@ -8,8 +8,9 @@ to create and train a biologically-inspired continuous-time recurrent neural net
 import matplotlib.pyplot as plt
 
 from ember_ml import ops
-from ember_ml.nn.wirings import AutoNCP
+from ember_ml.nn.modules import AutoNCP # Updated import path
 from ember_ml.nn.modules.rnn import LTC, LTCCell
+from ember_ml.nn.modules.wiring import FullyConnectedMap # Add import for FullyConnectedMap
 from ember_ml.nn import Module, Sequential, tensor
 from ember_ml.training import Optimizer, Loss
 
@@ -142,8 +143,7 @@ def main():
     print("\nCreating standard LTC model...")
     standard_model = Sequential([
         LTC(
-            input_size=1,
-            units=32,
+            neuron_map=FullyConnectedMap(units=32, input_dim=1),
             return_sequences=True,
             mixed_memory=True,
             ode_unfolds=6
@@ -176,8 +176,7 @@ def main():
     
     wired_model = Sequential([
         LTC(
-            input_size=1,
-            units=wiring,
+            neuron_map=wiring,
             return_sequences=True,
             mixed_memory=True,
             ode_unfolds=6

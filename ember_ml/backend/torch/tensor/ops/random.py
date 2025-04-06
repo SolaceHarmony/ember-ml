@@ -74,8 +74,18 @@ def random_uniform(shape: Shape, minval: float = 0.0, maxval: float = 1.0,
     rand_tensor = torch.rand(shape_list, device=device)
     
     # Scale to the desired range
-    range_tensor = torch.tensor(maxval, device=device)
-    min_tensor = torch.tensor(minval, device=device)
+    # Handle minval and maxval properly to avoid warnings
+    # If they're already tensors, use clone().detach(), otherwise convert to tensors
+    if isinstance(maxval, torch.Tensor):
+        range_tensor = maxval.clone().detach().to(device)
+    else:
+        range_tensor = torch.tensor(maxval, device=device)
+        
+    if isinstance(minval, torch.Tensor):
+        min_tensor = minval.clone().detach().to(device)
+    else:
+        min_tensor = torch.tensor(minval, device=device)
+        
     range_diff = torch.sub(range_tensor, min_tensor)
     
     # Scale and shift

@@ -142,8 +142,8 @@ g = ops.matmul(EmberTensor([[1, 2], [3, 4]]), EmberTensor([[5, 6], [7, 8]]))  # 
 # Reduction operations
 sum_a = ops.sum(a)  # 6
 mean_a = ops.mean(a)  # 2.0
-max_a = ops.max(a)  # 3
-min_a = ops.min(a)  # 1
+max_a = ops.stats.max(a)  # 3
+min_a = ops.stats.min(a)  # 1
 ```
 
 ### Reshaping and Manipulation
@@ -562,7 +562,7 @@ for epoch in range(epochs):
 # Evaluate on test set
 test_predictions = model(test_X)
 test_loss = ops.binary_cross_entropy(test_predictions, test_y).item()
-test_accuracy = ops.mean(ops.cast(ops.round(test_predictions) == test_y, 'float32')).item()
+test_accuracy = ops.mean(tensor.cast(ops.round(test_predictions) == test_y, 'float32')).item()
 print(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.4f}")
 ```
 
