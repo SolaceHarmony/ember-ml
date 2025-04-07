@@ -1,74 +1,25 @@
 """
 Statistical operations module.
 
-This module provides operations for statistical analysis of tensors.
+This module dynamically aliases functions from the active backend
+(NumPy, PyTorch, MLX) to provide a consistent `stats.*` interface.
+It handles backend switching by updating these aliases.
 """
 
-from typing import Type
-from ember_ml.ops.stats.stats_ops import StatsOps
+import importlib
+import sys
+import os
+from typing import List, Optional, Callable, Any
 
-_CURRENT_INSTANCES = {}
+# Import backend control functions
+from ember_ml.backend import (
+    get_backend,
+    set_backend as original_set_backend, # Import original set_backend
+    get_backend_module
+)
 
-def _load_ops_module():
-    """Load the current ops module."""
-    from ember_ml.backend import get_backend_module
-    return get_backend_module()
-
-def _get_ops_instance(ops_class: Type):
-    """Get an instance of the specified ops class."""
-    global _CURRENT_INSTANCES
-
-    if ops_class not in _CURRENT_INSTANCES:
-        module = _load_ops_module()
-
-        # Get the backend directly
-        from ember_ml.backend import get_backend
-        backend = get_backend()
-
-        # Get the ops class name based on the current implementation
-        if backend == 'numpy':
-            class_name_prefix = 'Numpy'
-        elif backend == 'torch':
-            class_name_prefix = 'Torch'
-        elif backend == 'mlx':
-            class_name_prefix = 'MLX'
-        else:
-            raise ValueError(f"Unknown ops implementation: {backend}")
-
-        # Get the class name
-        if ops_class == StatsOps:
-            class_name = f"{class_name_prefix}StatsOps"
-        else:
-            raise ValueError(f"Unknown ops class: {ops_class}")
-
-        # Get the class and create an instance
-        ops_class_impl = getattr(module, class_name)
-        _CURRENT_INSTANCES[ops_class] = ops_class_impl()
-
-    return _CURRENT_INSTANCES[ops_class]
-
-def stats_ops():
-    """Get the stats ops implementation for the current backend."""
-    return _get_ops_instance(StatsOps)
-
-# Expose all statistical operations through lambda functions
-mean = lambda *args, **kwargs: stats_ops().mean(*args, **kwargs)
-var = lambda *args, **kwargs: stats_ops().var(*args, **kwargs)
-median = lambda *args, **kwargs: stats_ops().median(*args, **kwargs)
-std = lambda *args, **kwargs: stats_ops().std(*args, **kwargs)
-percentile = lambda *args, **kwargs: stats_ops().percentile(*args, **kwargs)
-max = lambda *args, **kwargs: stats_ops().max(*args, **kwargs)
-min = lambda *args, **kwargs: stats_ops().min(*args, **kwargs)
-sum = lambda *args, **kwargs: stats_ops().sum(*args, **kwargs)
-cumsum = lambda *args, **kwargs: stats_ops().cumsum(*args, **kwargs)
-argmax = lambda *args, **kwargs: stats_ops().argmax(*args, **kwargs)
-sort = lambda *args, **kwargs: stats_ops().sort(*args, **kwargs)
-argsort = lambda *args, **kwargs: stats_ops().argsort(*args, **kwargs)
-gaussian = lambda *args, **kwargs: stats_ops().gaussian(*args, **kwargs)
-
-
-# Define exports
-__all__ = [
+# Master list of statistical functions expected to be aliased
+_STATS_OPS_LIST = [
     'mean',
     'var',
     'median',
@@ -82,5 +33,62 @@ __all__ = [
     'sort',
     'argsort',
     'gaussian',
-
 ]
+
+# Placeholder for functions that will be dynamically loaded
+for _op_name in _STATS_OPS_LIST:
+    if _op_name not in globals(): # Avoid overwriting built-ins initially
+        globals()[_op_name] = None
+    # Built-ins like max, min, sum, sort will be overwritten
+def get_stats_module():
+    """Imports the activation functions from the active backend module."""
+    # This function is not used in this module but can be used for testing purposes
+    # or to ensure that the backend module is imported correctly.
+    # Reload the backend module to ensure the latest version is use
+    module_name = get_backend_module().__name__ + '.stats'
+    module = importlib.import_module(module_name)
+    return module
+
+# Keep track of the currently aliased backend for stats
+_aliased_backend_stats: Optional[str] = None
+
+def _update_stats_aliases():
+    """Dynamically updates this module's namespace with backend stats functions."""
+    global _aliased_backend_stats
+    backend_name = get_backend()
+
+    if backend_name == _aliased_backend_stats:
+        return
+
+    backend_module = get_stats_module()
+    current_module = sys.modules[__name__]
+    missing_ops = []
+
+    for func_name in _STATS_OPS_LIST:
+        try:
+            backend_function = getattr(backend_module, func_name)
+            setattr(current_module, func_name, backend_function)
+            globals()[func_name] = backend_function # Update globals too
+        except AttributeError:
+            setattr(current_module, func_name, None)
+            globals()[func_name] = None
+            missing_ops.append(func_name)
+
+    if missing_ops:
+        print(f"Warning: Backend '{backend_name}' does not implement the following stats ops: {', '.join(missing_ops)}")
+    _aliased_backend_stats = backend_name
+
+# --- Define set_backend for this module to trigger alias updates ---
+# This ensures that if the backend is changed elsewhere, this module's aliases
+# are updated *when this module is next imported or used*.
+# However, to ensure immediate update upon external set_backend call,
+# the main ops.__init__.py set_backend needs to trigger this.
+# Reverting to the simpler model where ops.set_backend handles everything.
+# We will remove this custom set_backend and rely on ops.__init__.py
+
+# --- Initial alias setup ---
+_init_backend_name_stats = get_backend() # Ensure backend is determined
+_update_stats_aliases() # Populate aliases on first import
+
+# --- Define __all__ ---
+__all__ = _STATS_OPS_LIST

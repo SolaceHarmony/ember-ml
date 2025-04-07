@@ -122,7 +122,7 @@ class TorchTensor:
         Returns:
             PyTorch tensor
         """
-        from ember_ml.backend.torch.tensor.ops.utility import convert_to_torch_tensor as convert_to_tensor_func
+        from ember_ml.backend.torch.tensor.ops.utility import _convert_to_tensor as convert_to_tensor_func
         return convert_to_tensor_func(data, dtype, device)
 
     def slice(self, data: TensorLike, starts: Sequence[int], sizes: Sequence[int]) -> torch.Tensor:

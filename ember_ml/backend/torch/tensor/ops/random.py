@@ -120,9 +120,9 @@ def random_binomial(shape: Shape, p: float = 0.5,
     if isinstance(shape, int):
         shape = (shape,)
     
-    if device is None:
-        from ember_ml.backend.torch.config import DEFAULT_DEVICE
-        device = DEFAULT_DEVICE
+    # Device handling is now managed implicitly by PyTorch operations
+    # based on the device of input tensors or the default device context.
+    # We remove the explicit check and reliance on DEFAULT_DEVICE.
     
     # Generate random values
     result = torch.bernoulli(torch.full(shape, p, device=device))
@@ -157,9 +157,7 @@ def random_gamma(shape: Shape, alpha: float = 1.0, beta: float = 1.0,
     if isinstance(shape, int):
         shape = (shape,)
     
-    if device is None:
-        from ember_ml.backend.torch.config import DEFAULT_DEVICE
-        device = DEFAULT_DEVICE
+    # Device handling is now managed implicitly
     
     # PyTorch's gamma distribution uses rate parameter (1/beta)
     one_tensor = torch.tensor(1.0, device=device)
@@ -206,9 +204,7 @@ def random_exponential(shape: Shape, scale: float = 1.0,
     if isinstance(shape, int):
         shape = (shape,)
     
-    if device is None:
-        from ember_ml.backend.torch.config import DEFAULT_DEVICE
-        device = DEFAULT_DEVICE
+    # Device handling is now managed implicitly
     
     # Generate uniform random values
     u = torch.rand(shape, device=device)
@@ -253,9 +249,7 @@ def random_poisson(shape: Shape, lam: float = 1.0,
     if isinstance(shape, int):
         shape = (shape,)
     
-    if device is None:
-        from ember_ml.backend.torch.config import DEFAULT_DEVICE
-        device = DEFAULT_DEVICE
+    # Device handling is now managed implicitly
     
     # Create a tensor filled with the rate parameter
     rate_tensor = torch.full(shape, lam, device=device)
@@ -291,14 +285,12 @@ def random_categorical(data: TensorLike, num_samples: int,
     # Convert to PyTorch tensor if needed
     from ember_ml.backend.torch.tensor import TorchTensor
     tensor_ops = TorchTensor()
-    logits_tensor = tensor_ops.convert_to_tensor(data)
+    logits_tensor = tensor_ops.convert_to_tensor(data) # convert_to_tensor now handles the device
     
-    if device is None:
-        from ember_ml.backend.torch.config import DEFAULT_DEVICE
-        device = DEFAULT_DEVICE
-    else:
-        # Move to the specified device
-        logits_tensor = logits_tensor.to(device=device)
+    # Device handling is now managed implicitly by convert_to_tensor and subsequent ops
+    # If a device was explicitly passed, convert_to_tensor would have moved it.
+    # If not, it would use the default device from get_device().
+    # We remove the explicit 'else' block for moving the tensor.
     
     # Convert to probabilities
     probs = torch.softmax(logits_tensor, dim=-1)
@@ -326,9 +318,7 @@ def random_permutation(data: Union[int, TensorLike],
     Returns:
         Tensor with random permutation
     """
-    if device is None:
-        from ember_ml.backend.torch.config import DEFAULT_DEVICE
-        device = DEFAULT_DEVICE
+    # Device handling is now managed implicitly
     
     torch_dtype = None
     if dtype is not None:

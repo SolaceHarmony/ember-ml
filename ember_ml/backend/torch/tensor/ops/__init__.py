@@ -4,205 +4,83 @@ PyTorch tensor operations.
 This module provides standalone functions for tensor operations using the PyTorch backend.
 These functions can be called directly or through the TorchTensor class methods.
 """
-# Import configuration variables
-from ember_ml.backend.torch.config import (
-    DEFAULT_DEVICE,
-    DEFAULT_DTYPE
+# Import functions defined within this directory (ops) using absolute paths
+from ember_ml.backend.torch.tensor.ops.casting import cast
+from ember_ml.backend.torch.tensor.ops.creation import (
+    zeros, ones, eye, zeros_like, ones_like, full, full_like, arange, linspace
 )
-
-# Import tensor classes
-from ember_ml.backend.torch.tensor import TorchDType, TorchTensor
-
-# We'll use lazy imports for ops classes to avoid circular imports
-def get_torch_math_ops():
-    from ember_ml.backend.torch.math_ops import TorchMathOps
-    return TorchMathOps
-
-def get_torch_comparison_ops():
-    from ember_ml.backend.torch.comparison_ops import TorchComparisonOps
-    return TorchComparisonOps
-
-def get_torch_device_ops():
-    from ember_ml.backend.torch.device_ops import TorchDeviceOps
-    return TorchDeviceOps
-
-def get_torch_io_ops():
-    from ember_ml.backend.torch.io_ops import TorchIOOps
-    return TorchIOOps
-
-def get_torch_linearalg_ops():
-    from ember_ml.backend.torch.linearalg import TorchLinearAlgOps
-    return TorchLinearAlgOps
-
-# Import specific functions from math_ops
-from ember_ml.backend.torch.math_ops import (
-    add,
-    subtract,
-    multiply,
-    divide,
-    matmul,
-    dot,
-    mean,
-    sum,
-    max,
-    min,
-    exp,
-    log,
-    log10,
-    log2,
-    pow,
-    sqrt,
-    square,
-    abs,
-    sign,
-    sin,
-    cos,
-    tan,
-    sinh,
-    cosh,
-    tanh,
-    sigmoid,
-    relu,
-    softmax,
-    clip,
-    var,
-    negative,
-    mod,
-    floor_divide,
-    sort,
-    gradient,
-    cumsum,
-    eigh
+from ember_ml.backend.torch.tensor.ops.manipulation import (
+    reshape, transpose, concatenate, stack, split, expand_dims, squeeze, tile, pad
 )
-
-
-# Import specific functions from comparison_ops
-from ember_ml.backend.torch.comparison_ops import (
-    equal,
-    not_equal,
-    less,
-    less_equal,
-    greater,
-    greater_equal,
-    logical_and,
-    logical_or,
-    logical_not,
-    logical_xor,
-    allclose,
-    isclose,
-    all,
-    where
+from ember_ml.backend.torch.tensor.ops.indexing import (
+    slice_tensor, slice_update, gather, tensor_scatter_nd_update, scatter
+    # Note: scatter_* helpers might be internal to indexing.py
 )
-
-# Import specific functions from device_ops
-from ember_ml.backend.torch.device_ops import (
-    to_device,
-    get_device,
-    get_available_devices,
-    memory_usage,
-    memory_info,
-    synchronize,
-    set_default_device,
-    get_default_device,
-    is_available
+from ember_ml.backend.torch.tensor.ops.utility import (
+    to_numpy, item, shape, dtype, copy, var, sort, argsort, maximum
 )
-
-# Import specific functions from io_ops
-from ember_ml.backend.torch.io_ops import (
-    save,
-    load
+from ember_ml.backend.torch.tensor.ops.random import (
+    random_normal, random_uniform, random_binomial, random_gamma, random_exponential,
+    random_poisson, random_categorical, random_permutation, shuffle, set_seed, get_seed
 )
-
-# Set power function
-power = pow
 
 # Define the list of symbols to export
+# Export all functions imported above, preserving formatting
 __all__ = [
-    # Configuration variables
-    'DEFAULT_DEVICE',
-    'DEFAULT_DTYPE',
+    # Casting operations
+    'cast',
 
-    # Ops classes getters
-    'get_torch_math_ops',
-    'get_torch_comparison_ops',
-    'get_torch_device_ops',
-    'get_torch_io_ops',
-    'get_torch_linearalg_ops',
+    # Creation operations
+    'zeros',
+    'ones',
+    'eye',
+    'zeros_like',
+    'ones_like',
+    'full',
+    'full_like',
+    'arange',
+    'linspace',
 
-    # Tensor classes
-    'TorchDType',
-    'TorchTensor',
+    # Manipulation operations
+    'reshape',
+    'transpose',
+    'concatenate',
+    'stack',
+    'split',
+    'expand_dims',
+    'squeeze',
+    'tile',
+    'pad',
 
-    # Math operations
-    'add',
-    'subtract',
-    'multiply',
-    'divide',
-    'matmul',
-    'dot',
-    'mean',
-    'sum',
-    'max',
-    'min',
-    'exp',
-    'log',
-    'log10',
-    'log2',
-    'pow',
-    'sqrt',
-    'square',
-    'abs',
-    'sign',
-    'sin',
-    'cos',
-    'tan',
-    'sinh',
-    'cosh',
-    'tanh',
-    'sigmoid',
-    'relu',
-    'softmax',
-    'clip',
+    # Indexing operations
+    'slice_tensor',
+    'slice_update',
+    'gather',
+    'tensor_scatter_nd_update',
+    'scatter',
+
+    # Utility operations
+    'convert_to_torch_tensor',
+    'to_numpy',
+    'item',
+    'shape',
+    'dtype',
+    'copy',
     'var',
-    'negative',
-    'mod',
-    'floor_divide',
     'sort',
-    'gradient',
-    'cumsum',
-    'eigh',
-    
-    # Comparison operations
-    'equal',
-    'not_equal',
-    'less',
-    'less_equal',
-    'greater',
-    'greater_equal',
-    'logical_and',
-    'logical_or',
-    'logical_not',
-    'logical_xor',
-    'allclose',
-    'isclose',
-    'all',
-    'where',
-    
-    # Device operations
-    'to_device',
-    'get_device',
-    'get_available_devices',
-    'memory_usage',
-    'memory_info',
-    'synchronize',
-    'set_default_device',
-    'get_default_device',
-    'is_available',
-    
-    # IO operations
-    'save',
-    'load',
-    
-    # Additional operations
-    'power'
+    'argsort',
+    'maximum',
+
+    # Random operations
+    'random_normal',
+    'random_uniform',
+    'random_binomial',
+    'random_gamma',
+    'random_exponential',
+    'random_poisson',
+    'random_categorical',
+    'random_permutation',
+    'shuffle',
+    'set_seed',
+    'get_seed',
 ]

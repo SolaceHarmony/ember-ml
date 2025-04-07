@@ -4,17 +4,38 @@ NumPy statistical operations for ember_ml.
 This module provides NumPy implementations of statistical operations.
 """
 
-from ember_ml.backend.numpy.stats.stats_ops import NumpyStatsOps
-from ember_ml.backend.numpy.stats.ops import (
+from ember_ml.backend.numpy.stats.descriptive import ( # Import from moved file
     # Descriptive statistics
     median,
     std,
-    percentile
+    percentile,
+    mean,
+    median,
+    std,
+    percentile,
+    var,
+    max,
+    min,
+    sum,
+    cumsum,
+    argmax,
+    sort,
+    argsort,
+    gaussian,
 )
 
 __all__ = [
-    "NumpyStatsOps",
+    "mean",
+    "var",
     "median",
     "std",
-    "percentile"
+    "percentile",
+    "max",
+    "min",
+    "sum",
+    "cumsum",
+    "argmax",
+    "sort",
+    "argsort",
+    "gaussian",
 ]

@@ -52,7 +52,6 @@ __all__ = [
     'scatter',
     
     # Utility operations
-    'convert_to_numpy_tensor',
     'to_numpy',
     'item',
     'shape',

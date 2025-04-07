@@ -1,208 +1,151 @@
 """
 NumPy device operations for ember_ml.
-
-This module provides NumPy implementations of device operations.
 """
 
 import numpy as np
-from typing import Optional, Union, List, Any, Sequence, Dict
-
-# Type aliases
-ArrayLike = Union[np.ndarray, float, int, list, tuple]
-Shape = Union[int, Sequence[int]]
-DType = Union[np.dtype, str, None]
-
-# Import from config
-from ember_ml.backend.numpy.config import DEFAULT_DEVICE
-
-# Import from tensor_ops
-from ember_ml.backend.numpy.tensor import NumpyTensor, NumpyDType
-
-# Convert to tensor
-convert_to_tensor = NumpyTensor().convert_to_tensor
-dtype = NumpyDType()
-
-# Try to import psutil for memory info
-try:
-    import psutil
-    HAVE_PSUTIL = True
-except ImportError:
-    HAVE_PSUTIL = False
+from typing import Any, Optional, List, Dict
+from ember_ml.backend.numpy.types import TensorLike # Use TensorLike from numpy types
 
 
-def to_device(x: ArrayLike, device: str) -> np.ndarray:
+# Module-level variable for default device (always 'cpu' for numpy)
+_default_device = 'cpu'
+
+def get_device(tensor: Optional[Any] = None) -> str:
     """
-    Move a NumPy array to the specified device.
-    
+    Get the device ('cpu' for NumPy).
+
     Args:
-        x: Input array
-        device: Target device (ignored for NumPy backend)
-        
-    Returns:
-        NumPy array (unchanged)
-    """
-    # NumPy doesn't have device concept, so just return the array
-    return convert_to_tensor(x)
+        tensor: Ignored for NumPy backend.
 
-
-def get_device(x: ArrayLike) -> str:
-    """
-    Get the device of a NumPy array.
-    
-    Args:
-        x: Input array
-        
     Returns:
-        Device of the array (always 'cpu' for NumPy backend)
+        Always returns 'cpu'.
     """
     return 'cpu'
+
+def set_device(device: Any) -> None:
+    """
+    Set the device (ignored for NumPy).
+
+    Args:
+        device: Ignored for NumPy backend.
+
+    Raises:
+        ValueError: If the device is not 'cpu'.
+    """
+    if str(device).lower() != 'cpu':
+        raise ValueError("NumPy backend only supports 'cpu' device")
+    # No actual device setting is needed for NumPy
+
+def to_device(x: TensorLike, device: str) -> np.ndarray:
+    """
+    Move a tensor to the specified device (returns input for NumPy).
+
+    Args:
+        x: Input tensor (NumPy array)
+        device: Target device (must be 'cpu')
+
+    Returns:
+        The original NumPy array if device is 'cpu'.
+
+    Raises:
+        ValueError: If the target device is not 'cpu'.
+    """
+    set_device(device) # Validate device
+    # NumPy arrays are always on CPU, so just return the input
+    # Ensure input is converted if needed
+    
+    return x
+
+
 
 
 def get_available_devices() -> List[str]:
     """
-    Get a list of available devices.
-    
+    Get a list of available devices (always ['cpu'] for NumPy).
+
     Returns:
-        List of available devices (always ['cpu'] for NumPy backend)
+        List containing only 'cpu'.
     """
     return ['cpu']
 
 
-def memory_usage(device: Optional[str] = None) -> float:
-    """
-    Get the memory usage of the specified device.
-    
-    Args:
-        device: Device to get memory usage for (default: current device)
-        
-    Returns:
-        Memory usage in bytes
-    """
-    if device is not None and device != 'cpu':
-        raise ValueError(f"NumPy backend only supports 'cpu' device, got {device}")
-    
-    if HAVE_PSUTIL:
-        # Get system memory usage
-        import psutil
-        mem = psutil.virtual_memory()
-        return mem.used
-    else:
-        return 0.0
-
-
-def memory_info(device: Optional[str] = None) -> Dict[str, Any]:
-    """
-    Get memory information for the specified device.
-    
-    Args:
-        device: Device to get memory information for (default: current device)
-        
-    Returns:
-        Dictionary containing memory information
-    """
-    if device is not None and device != 'cpu':
-        raise ValueError(f"NumPy backend only supports 'cpu' device, got {device}")
-    
-    if HAVE_PSUTIL:
-        # Get system memory information
-        import psutil  # Import psutil locally when needed
-        mem = psutil.virtual_memory()
-        
-        return {
-            'total': mem.total,
-            'available': mem.available,
-            'used': mem.used,
-            'percent': mem.percent
-        }
-    else:
-        return {
-            'total': 0,
-            'available': 0,
-            'used': 0,
-            'percent': 0
-        }
-
-
-def synchronize(device: Optional[str] = None) -> None:
-    """
-    Synchronize the specified device.
-    
-    Args:
-        device: Device to synchronize (default: current device)
-    """
-    # NumPy is synchronous, so this is a no-op
-    pass
-
-
 def set_default_device(device: str) -> None:
     """
-    Set the default device for tensor operations.
-    
+    Set the default device (ignored for NumPy, but validates).
+
     Args:
-        device: Default device
+        device: Default device (must be 'cpu').
+
+    Raises:
+        ValueError: If the device is not 'cpu'.
     """
-    if device != 'cpu':
-        raise ValueError(f"NumPy backend only supports 'cpu' device, got {device}")
+    global _default_device
+    set_device(device) # Validate
+    _default_device = 'cpu' # It can only ever be cpu
 
 
 def get_default_device() -> str:
     """
-    Get the default device for tensor operations.
-    
+    Get the default device (always 'cpu' for NumPy).
+
     Returns:
-        Default device
+        Always returns 'cpu'.
     """
-    return DEFAULT_DEVICE
+    return _default_device
 
 
-def is_available(device_type: str) -> bool:
+def is_available(device: str) -> bool:
     """
-    Check if a device type is available.
-    
+    Check if the specified device is available ('cpu' is always available for NumPy).
+
     Args:
-        device_type: Device type to check
-        
+        device: Device to check.
+
     Returns:
-        True if the device type is available, False otherwise
+        True if the device is 'cpu', False otherwise.
     """
-    return device_type == 'cpu'
+    return str(device).lower() == 'cpu'
 
 
-class NumpyDeviceOps:
-    """NumPy implementation of device operations."""
-    
-    def to_device(self, x, device):
-        """Move a tensor to the specified device."""
-        return to_device(x, device)
-    
-    def get_device(self, x):
-        """Get the device of a tensor."""
-        return get_device(x)
-    
-    def get_available_devices(self):
-        """Get a list of available devices."""
-        return get_available_devices()
-    
-    def memory_usage(self, device=None):
-        """Get the memory usage of the specified device."""
-        return memory_usage(device)
-    
-    def memory_info(self, device=None):
-        """Get memory information for the specified device."""
-        return memory_info(device)
-    
-    def synchronize(self, device=None):
-        """Synchronize the specified device."""
-        synchronize(device)
-    
-    def set_default_device(self, device):
-        """Set the default device for tensor operations."""
-        set_default_device(device)
-    
-    def get_default_device(self):
-        """Get the default device for tensor operations."""
-        return get_default_device()
-    
-    def is_available(self, device_type):
-        """Check if a device type is available."""
-        return is_available(device_type)
+def memory_usage(device: Optional[str] = None) -> Dict[str, int]:
+    """
+    Get memory usage information (returns zeros for NumPy/CPU).
+
+    Args:
+        device: Ignored for NumPy backend (must be 'cpu').
+
+    Returns:
+        Dictionary with all memory values set to 0.
+    """
+    if device is not None:
+        set_device(device) # Validate
+    # Basic memory info isn't readily available for CPU via numpy alone
+    return {'allocated': 0, 'reserved': 0, 'free': 0, 'total': 0}
+
+
+def memory_info(device: Optional[str] = None) -> Dict[str, int]:
+    """
+    Get memory information (returns zeros for NumPy/CPU).
+
+    Args:
+        device: Ignored for NumPy backend (must be 'cpu').
+
+    Returns:
+        Dictionary with all memory values set to 0.
+    """
+    return memory_usage(device)
+
+
+def synchronize(device: Optional[str] = None) -> None:
+    """
+    Synchronize the specified device (no-op for NumPy/CPU).
+
+    Args:
+        device: Ignored for NumPy backend (must be 'cpu').
+    """
+    if device is not None:
+        set_device(device) # Validate
+    # No synchronization needed for NumPy CPU operations
+    pass
+
+# Removed the NumpyDeviceOps class

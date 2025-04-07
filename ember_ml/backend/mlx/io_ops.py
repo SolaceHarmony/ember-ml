@@ -8,9 +8,8 @@ import os
 import mlx.core as mx
 from typing import Any, Optional
 from ember_ml.backend.mlx.types import TensorLike
-from ember_ml.backend.mlx.tensor import MLXTensor
-
-Tensor = MLXTensor()
+# Removed top-level import and instantiation of MLXTensor
+# from ember_ml.backend.mlx.tensor import MLXTensor
 
 
 def save(filepath: str, obj: TensorLike, allow_pickle: Optional[bool] = None) -> None:
@@ -25,7 +24,10 @@ def save(filepath: str, obj: TensorLike, allow_pickle: Optional[bool] = None) ->
     Returns:
         None
     """
-    tensor = Tensor.convert_to_tensor(obj)
+    # Lazy load MLXTensor inside the function
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    tensor_ops = MLXTensor()
+    tensor = tensor_ops.convert_to_tensor(obj)
 
     # Create directory if it doesn't exist
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
@@ -47,32 +49,4 @@ def load(filepath: str, allow_pickle: bool = True) -> Any:
     # Load from file using MLX
     return mx.load(filepath)
 
-class MLXIOOps:
-    """MLX implementation of I/O operations."""
-    
-    def save(self, filepath: str, obj: TensorLike, allow_pickle: Optional[bool]) -> None:
-        """
-        Save a tensor or dictionary of tensors to a file.
-        
-        Args:
-            filepath: Path to save the object to
-            obj: Tensor or dictionary of tensors to save
-            allow_pickle: Whether to allow saving objects that can't be saved directly
-            
-        Returns:
-            None
-        """
-        save(filepath, obj)
-    
-    def load(self, filepath: str, allow_pickle: Optional[bool] = None) -> Any:
-        """
-        Load a tensor or dictionary of tensors from a file.
-        
-        Args:
-            filepath: Path to load the object from
-            allow_pickle: Whether to allow loading objects that can't be loaded directly
-            
-        Returns:
-            Loaded tensor or dictionary of tensors
-        """
-        return load(filepath)
+# Removed MLXIOOps class as it's redundant with standalone functions

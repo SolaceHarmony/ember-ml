@@ -11,7 +11,7 @@ from typing import Dict, Any, Type
 # Import interfaces
 from ember_ml.nn.features.interfaces import PCAInterface, StandardizeInterface, NormalizeInterface
 from ember_ml.nn.features.interfaces.tensor_features import TensorFeaturesInterface
-from ember_ml.nn.features import PCA # Import the common PCA implementation
+from .common.pca_features import PCA # Import the common PCA implementation
 
 # Import implementations
 

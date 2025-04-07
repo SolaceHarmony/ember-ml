@@ -123,26 +123,32 @@ def slice_update(tensor: TensorLike, slices: TensorLike, updates: Optional[Tenso
     tensor_array = Tensor.convert_to_tensor(tensor)
 
     # Handle different types for slices
-    if isinstance(slices, slice):
-        # If it's already a slice object, use it directly
+    if isinstance(slices, py_slice): # Use imported py_slice
+        # If it's a standard Python slice object, use it directly
         indices_tuple = slices
     elif isinstance(slices, (int, np.integer)):
         # Handle single integer index
         indices_tuple = (int(slices),)
+    elif isinstance(slices, np.ndarray) and slices.dtype == bool:
+        # Handle boolean mask directly
+        indices_tuple = slices # NumPy supports boolean array indexing
     else:
-        # Attempt conversion for list/array-like indices
+        # Attempt conversion for list/array-like integer indices
         try:
             slices_array = Tensor.convert_to_tensor(slices)
+            # Ensure integer type for indexing
+            if not np.issubdtype(slices_array.dtype, np.integer):
+                 raise TypeError(f"Index array must be integer type, got {slices_array.dtype}")
             indices_list = slices_array.tolist()
             # Handle nested lists for multi-dimensional indexing if necessary
             if isinstance(indices_list, list) and indices_list and isinstance(indices_list[0], list):
                  indices_tuple = tuple(map(tuple, indices_list))
             elif isinstance(indices_list, list): # Handle flat list of indices
                  indices_tuple = tuple(indices_list)
-            else: # Handle scalar index case after conversion
-                 indices_tuple = (indices_list,)
-        except ValueError:
-            raise TypeError(f"Unsupported slice/index type for NumPy backend: {type(slices)}")
+            else: # Handle scalar index case after conversion? Seems redundant
+                 indices_tuple = (indices_list,) # Convert scalar to tuple index
+        except (ValueError, TypeError) as e: # Catch TypeError too
+            raise TypeError(f"Unsupported slice/index type for NumPy backend: {type(slices)} - {e}")
 
     if updates is None:
         # Perform slicing

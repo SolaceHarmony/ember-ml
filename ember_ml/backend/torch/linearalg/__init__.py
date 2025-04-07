@@ -1,22 +1,14 @@
-from ember_ml.backend.torch.linearalg.linearalg_ops import TorchLinearAlgOps
-from ember_ml.backend.torch.linearalg.ops import (
-    norm, 
-    inv,
-    solve,
-    eig,
-    eigvals,
-    qr,
-    det,
-    cholesky,
-    lstsq,
-    svd,
-    diag,
-    diagonal
-)
+"""PyTorch linear algebra operations for ember_ml."""
+
+from ember_ml.backend.torch.linearalg.decomp_ops import qr, svd, cholesky
+from ember_ml.backend.torch.linearalg.inverses_ops import inv
+from ember_ml.backend.torch.linearalg.matrix_ops import det, norm, diag, diagonal
+from ember_ml.backend.torch.linearalg.solvers_ops import solve, lstsq # eig, eigvals moved
+from ember_ml.backend.torch.linearalg.decomp_ops import eig, eigvals # Import from correct file
 
 __all__ = [
-    "TorchLinearAlgOps",
-    "norm", 
+    # Functions exported from submodules
+    "norm",
     "inv",
     "solve",
     "eig",

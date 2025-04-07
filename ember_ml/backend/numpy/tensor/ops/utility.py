@@ -5,11 +5,10 @@ from typing import Any, Optional, Sequence, Tuple, Union
 import numpy as np
 
 from ember_ml.backend.numpy.tensor.dtype import NumpyDType
-from ember_ml.backend.numpy.types import TensorLike, DType
+from ember_ml.backend.numpy.types import TensorLike, Shape, default_int, default_float
 
-DTypeHandler = NumpyDType()
 
-def _convert_input(x: TensorLike) -> Any:
+def _convert_input(x: TensorLike, no_scalars = False) -> Any:
     """
     Convert input to NumPy array.
     
@@ -36,6 +35,8 @@ def _convert_input(x: TensorLike) -> Any:
     """
     # Check for NumPy arrays by type name rather than direct import
     if (hasattr(x, '__class__') and
+        hasattr(x.__class__, '__module__') and
+
         x.__class__.__module__ == 'numpy' and
         x.__class__.__name__ == 'ndarray'):
         return x
@@ -45,17 +46,12 @@ def _convert_input(x: TensorLike) -> Any:
         hasattr(x.__class__, '__name__') and
         x.__class__.__name__ == 'NumpyTensor'):
         return x._tensor
-        
+
     # Handle EmberTensor objects - return underlying tensor
     if (hasattr(x, '__class__') and
         hasattr(x.__class__, '__name__') and
         x.__class__.__name__ == 'EmberTensor'):
         if hasattr(x, '_tensor'):
-            from ember_ml.nn.tensor.common.dtypes import EmberDType
-            if isinstance(x._dtype, EmberDType):
-                dtype_from_ember = x._dtype._backend_dtype
-                if dtype_from_ember is not None:
-                    x._tensor = x._tensor.astype(dtype_from_ember)
             return x._tensor
         else:
             raise ValueError(f"EmberTensor does not have a '_tensor' attribute: {x}")
@@ -71,9 +67,28 @@ def _convert_input(x: TensorLike) -> Any:
         else:
             raise ValueError(f"Parameter object does not have a 'data' attribute: {x}")
 
-    # Handle Python scalars (0D tensors)
-    # Handle Python scalars (0D tensors), excluding NumPy scalars which are handled below
+     # Handle NumPy scalar types using hasattr to avoid isinstance
+    if (hasattr(x, 'item') and # Check for item method common to numpy scalars
+        hasattr(x, '__class__') and
+        hasattr(x.__class__, '__module__') and
+        x.__class__.__module__ == 'numpy'):
+        try:
+            # Convert NumPy scalar to its Python equivalent, then to tensor
+            return np.array(x.item())
+        except Exception as e:
+             raise ValueError(f"Cannot convert NumPy scalar {type(x)} to Numpy array: {e}")
+
     if isinstance(x, (int, float, bool)) and not isinstance(x, np.number):
+        try:
+            return np.array(x)
+        except Exception as e:
+            raise ValueError(f"Cannot convert Python scalar {type(x)} to NumPy array: {e}")
+
+    # Handle Python scalars (int, float, bool), EXCLUDING NumPy scalars handled above
+    is_python_scalar = isinstance(x, (int, float, bool))
+    is_numpy_scalar = (hasattr(x, 'item') and hasattr(x, '__class__') and hasattr(x.__class__, '__module__') and x.__class__.__module__ == 'numpy')
+
+    if not no_scalars and is_python_scalar and not is_numpy_scalar:
         try:
             return np.array(x)
         except Exception as e:
@@ -82,32 +97,20 @@ def _convert_input(x: TensorLike) -> Any:
     # Handle Python sequences (potential 1D or higher tensors) recursively
     if isinstance(x, (list, tuple)):
         try:
-            # Check if it's a nested sequence (2D or higher)
-            if x and isinstance(x[0], (list, tuple)):
-                # Handle potential jagged arrays by ensuring consistent dimensions
-                shapes = [len(item) for item in x if isinstance(item, (list, tuple))]
-                if len(set(shapes)) > 1:
-                    # Jagged array - warn but proceed
-                    import warnings
-                    warnings.warn(f"Converting jagged array with inconsistent shapes: {shapes}")
-            return np.array([_convert_input(item) for item in x])
+           
+            # Convert sequences, which might contain mixed types including other tensors or arrays
+            # NumPy's np.array handles lists/tuples of numbers well.
+            return np.array(x)
         except Exception as e:
-            raise ValueError(f"Cannot convert sequence {type(x)} to NumPy array: {e}")
+            # Add more context to the error
+            raise ValueError(f"Cannot convert sequence {type(x)} to Numpy Tensor. Content: {str(x)[:100]}... Error: {e}")
 
-    # Handle NumPy scalar types explicitly
-    if isinstance(x, np.number):
-        return np.array(x)
-
-    # Fallback for other scalar types recognized by numpy (e.g., np.bool_)
-    if np.isscalar(x):
-         return np.array(x)
-
-    # For any other type, reject it with a more detailed message
-    raise ValueError(f"Cannot convert {type(x)} to NumPy array. Supported types: Python scalars (int, float, bool), sequences (list, tuple), NumPy scalars/arrays, EmberTensor, Parameter.")
+    # For any other type, reject it with a corrected list of supported types
+    raise ValueError(f"Cannot convert {type(x)} to Numpy Tensor. Supported types: Python scalars/sequences, NumPy scalars/arrays, EmberTensor, Parameter.")
 
 
 
-def convert_to_numpy_tensor(data: TensorLike, dtype: Optional[DType] = None, device: Optional[str] = None) -> np.ndarray:
+def _convert_to_tensor(data: TensorLike, dtype: Optional[Any] = None, device: Optional[str] = None) -> np.ndarray: # Renamed
     """
     Convert input to NumPy array.
     
@@ -126,19 +129,43 @@ def convert_to_numpy_tensor(data: TensorLike, dtype: Optional[DType] = None, dev
         NumPy array
     """
     tensor = _convert_input(data)
+
+    # Determine the target device
+    target_device = device
+    if target_device is None:
+        # Use the backend's get_device
+        from ember_ml.backend.numpy.device_ops import get_device
+        target_device = get_device()
+
+    # Apply dtype if provided
+    # Apply dtype if provided or infer default
+    target_dtype = None
     if dtype is not None:
-        numpy_dtype = DTypeHandler.validate_dtype(dtype)
-        if numpy_dtype is not None:
-            tensor = tensor.astype(numpy_dtype)
-    
-    # Ensure proper dimensionality
-    # If data is a scalar but we need a 0-dim tensor, reshape accordingly
-    if isinstance(data, (int, float, bool)) and tensor.ndim > 0:
-        tensor = np.reshape(tensor, ())
-        
+        # Validate the provided dtype
+        from ember_ml.backend.numpy.tensor.ops.casting import _validate_dtype # Import helper
+        target_dtype = _validate_dtype(dtype)
+    else:
+        # Infer default dtype if none provided
+        if np.issubdtype(tensor.dtype, np.integer):
+            target_dtype = default_int
+        elif np.issubdtype(tensor.dtype, np.floating):
+             # Only cast floats to default_float if they aren't already float64
+             if tensor.dtype != np.float64:
+                 target_dtype = default_float
+             # else: keep float64
+        # Keep other types (bool, complex) as they are unless specified
+
+    # Perform casting only if a valid target_dtype was determined
+    if target_dtype is not None and tensor.dtype != target_dtype:
+         tensor = tensor.astype(target_dtype) # Use astype()
+    # Move to the target device
+    if target_device:
+        from ember_ml.backend.numpy.device_ops import to_device
+        tensor = to_device(tensor, target_device)
+
     return tensor
 
-def to_numpy(data: TensorLike) -> Any:
+def to_numpy(data: TensorLike) -> Optional[np.ndarray]:
     """
     Convert a NumPy array to a NumPy array.
     
@@ -154,7 +181,7 @@ def to_numpy(data: TensorLike) -> Any:
         NumPy array
     """
     # For NumPy, this is a no-op since we're already using NumPy arrays
-    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    from ember_ml.backend.numpy.tensor import NumpyTensor
     Tensor = NumpyTensor()
     tensor_data = Tensor.convert_to_tensor(data)
     return tensor_data
@@ -205,9 +232,7 @@ def shape(data: TensorLike) -> Tuple[int, ...]:
     Returns:
         Shape of the array
     """
-    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
-    Tensor = NumpyTensor()
-    return Tensor.convert_to_tensor(data).shape
+    return tuple(_convert_to_tensor(data).shape)
 
 def dtype(data: TensorLike) -> Any:
     """

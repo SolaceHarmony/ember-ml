@@ -3,7 +3,7 @@
 import math
 import mlx.core as mx
 from mlx.core import matmul
-from ember_ml.backend.mlx.linearalg.ops.decomp_ops_hpc import HPC16x8  # Corrected import
+from ember_ml.backend.mlx.linearalg.decomp_ops_hpc import HPC16x8  # Corrected import path
 
 # Helper for double-single precision arithmetic (copied from provided code)
 def _add_double_single(a_high, a_low, b_high, b_low):

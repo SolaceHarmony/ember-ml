@@ -46,32 +46,4 @@ def load(filepath: PathLike, allow_pickle: bool = True) -> Union[TorchArray, Dic
     # Load with map_location='cpu' to ensure compatibility
     return torch.load(filepath, map_location='cpu')
 
-class TorchIOOps:
-    """PyTorch implementation of I/O operations."""
-    
-    def save(self, filepath: PathLike, obj: TensorLike, allow_pickle: bool = True) -> None:
-        """
-        Save a tensor or dictionary of tensors to a file.
-        
-        Args:
-            filepath: Path to save the object to
-            obj: Tensor or dictionary of tensors to save
-            allow_pickle: Whether to allow saving objects that can't be saved directly
-            
-        Returns:
-            None
-        """
-        save(filepath, obj, allow_pickle)
-    
-    def load(self, filepath: PathLike, allow_pickle: bool = True) -> Union[TorchArray, Dict[str, TorchArray]]:
-        """
-        Load a tensor or dictionary of tensors from a file.
-        
-        Args:
-            filepath: Path to load the object from
-            allow_pickle: Whether to allow loading objects that can't be loaded directly
-            
-        Returns:
-            Loaded tensor or dictionary of tensors
-        """
-        return load(filepath, allow_pickle)
+# Removed TorchIOOps class as it's redundant with standalone functions

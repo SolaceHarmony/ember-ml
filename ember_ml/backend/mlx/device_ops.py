@@ -1,236 +1,196 @@
 """
 MLX device operations for ember_ml.
-
-This module provides MLX implementations of device operations.
 """
 
 import mlx.core as mx
-import mlx.core
-from typing import Optional, Dict, Any
+from typing import Any, Optional, List, Dict
+from ember_ml.backend.mlx.types import TensorLike # Use TensorLike from mlx types
 
-# Import from tensor_ops
-from ember_ml.backend.mlx.types import TensorLike
+# Module-level variable for default device consistency
+# It's mainly set via mx.set_default_device, but we can track it
+_default_device = str(mx.default_device().type).lower()
+
+def get_device(tensor: Optional[Any] = None) -> str:
+    """
+    Get the current default device or the device of a given tensor.
+
+    Args:
+        tensor: Optional tensor to get the device from.
+
+    Returns:
+        Device name as a string ('cpu' or 'gpu').
+    """
+    if tensor is not None:
+        # If a tensor is provided, try to get its device
+        if hasattr(tensor, 'device'):
+            # MLX device is a DeviceType object, convert to string
+            return str(tensor.device.type).lower() # e.g., 'cpu', 'gpu'
+
+    # Return the default MLX device type as a string
+    return str(mx.default_device().type).lower()
+
+def set_device(device: Any) -> None:
+    """
+    Set the default device for MLX operations.
+
+    Args:
+        device: Device name as a string ('cpu', 'gpu') or an mx.Device object.
+
+    Raises:
+        ValueError: If the device is not valid for MLX.
+    """
+    global _default_device
+    target_device_obj = None
+    if isinstance(device, mx.Device):
+        target_device_obj = device
+        target_device_str = str(device.type).lower()
+    elif isinstance(device, str):
+        device_str = device.lower()
+        if device_str == 'cpu':
+            target_device_obj = mx.Device(mx.DeviceType.cpu)
+            target_device_str = 'cpu'
+        elif device_str in ['gpu', 'metal']: # Accept 'gpu' or 'metal'
+            target_device_obj = mx.Device(mx.DeviceType.gpu)
+            target_device_str = 'gpu'
+        else:
+            raise ValueError(f"Invalid device string for MLX: {device}. Use 'cpu' or 'gpu'.")
+    else:
+        raise ValueError(f"Invalid device type for MLX: {type(device)}. Use str or mx.Device.")
+
+    # Set the default device for subsequent MLX operations
+    try:
+        mx.set_default_device(target_device_obj)
+        _default_device = target_device_str # Update tracked default
+    except Exception as e:
+        # Catch potential errors if the device isn't available
+        raise ValueError(f"Failed to set MLX default device to {target_device_obj}: {e}")
 
 def to_device(x: TensorLike, device: str) -> mx.array:
     """
-    Move an MLX array to the specified device.
-    
-    Args:
-        x: Input array
-        device: Target device (ignored for MLX backend)
-        
-    Returns:
-        MLX array (unchanged)
-    """
-    from ember_ml.backend.mlx.tensor import MLXTensor
-    Tensor = MLXTensor()
-    return Tensor.convert_to_tensor(x)
+    Move a tensor to the specified device (effectively a no-op for MLX default).
 
-def get_device(x: mx.array) -> str:
-    """
-    Get the device of an MLX array.
-    
     Args:
-        x: Input array
-        
-    Returns:
-        Device of the array (always 'mps' for MLX backend on Apple Silicon)
-    """
-    device = mlx.core.default_device()
-    if device == mx.cpu:
-        return 'cpu'
-    else:
-        return 'gpu'
+        x: Input tensor (MLX array)
+        device: Target device ('cpu' or 'gpu')
 
-def get_available_devices() -> list[str]:
-    """
-    Get a list of available devices.
-    
     Returns:
-        List of available devices (always ['mps'] for MLX backend on Apple Silicon)
-    """
-    return ['mps']  # MLX uses Metal on Apple Silicon
+        The original MLX array (as default device handles placement).
 
-def memory_usage(device: Optional[str] = None) -> Dict[str, int]:
+    Raises:
+        ValueError: If the target device is invalid.
     """
-    Get the memory usage of the specified device.
-    
-    Args:
-        device: Target device (ignored for MLX backend)
-        
+    # Validate the target device string, but MLX handles placement implicitly
+    set_device(device) # This validates and sets the default if possible
+    # Ensure input is converted if needed
+    from ember_ml.backend.mlx.tensor.ops.utility import convert_to_mlx_tensor
+    x_tensor = convert_to_mlx_tensor(x)
+    # In MLX, tensors generally reside on the default device.
+    # Explicit movement isn't the primary mechanism like in PyTorch.
+    # We return the tensor, assuming it's now on the (new) default device.
+    return x_tensor
+
+def get_available_devices() -> List[str]:
+    """
+    Get a list of available devices for MLX.
+
     Returns:
-        Dictionary containing memory usage statistics
+        List containing 'cpu' and potentially 'gpu'.
     """
-    # Use MLX's metal.get_active_memory function to get the active memory usage
+    devices = ['cpu']
+    # MLX doesn't have a direct equivalent to torch.cuda.is_available() easily accessible
+    # We might need a try-except block attempting to set the GPU device
     try:
-        active_memory = mx.metal.get_active_memory()
-        return {
-            'used': active_memory,
-            'total': 0,  # MLX doesn't provide total memory info directly
-            'free': 0    # MLX doesn't provide free memory info directly
-        }
-    except (AttributeError, ImportError):
-        # Fallback if the function is not available
-        return {
-            'used': 0,
-            'total': 0,
-            'free': 0
-        }
+        set_device('gpu') # Try setting to GPU
+        devices.append('gpu')
+        set_device('cpu') # Set back to CPU if GPU was available
+    except ValueError:
+        pass # GPU not available or setting failed
+    return devices
 
-
-def memory_info(device: Optional[str] = None) -> Dict[str, Any]:
+def set_default_device(device: str) -> None:
     """
-    Get memory information for the specified device.
-    
+    Set the default device for MLX operations (calls set_device).
+
     Args:
-        device: Device to get memory information for (default: current device)
-    
-    Returns:
-        Dictionary containing memory information
+        device: Default device ('cpu' or 'gpu').
     """
-    # Use MLX's metal.device_info function to get detailed device information
-    try:
-        device_info = mx.metal.device_info()
-        active_memory = mx.metal.get_active_memory()
-        
-        # Extract relevant information from device_info and ensure it's an integer
-        total_memory = device_info.get('memory_size', 0)
-        if not isinstance(total_memory, int):
-            total_memory = 0
-        # Convert to MLX tensors
-        total_memory_tensor = mx.array(total_memory)
-        active_memory_tensor = mx.array(active_memory)
-        
-        # Calculate available memory using mx functions
-        available_memory_tensor = mx.maximum(mx.array(0), mx.subtract(total_memory_tensor, active_memory_tensor))
-        
-        # Return the tensor directly without conversion
-        available_memory = available_memory_tensor
-        
-        # Calculate percentage safely using mx functions
-        zero = mx.array(0)
-        hundred = mx.array(100)
-        
-        if mx.greater(total_memory_tensor, zero).item():
-            percent = mx.multiply(mx.divide(active_memory_tensor, total_memory_tensor), hundred)
-        else:
-            percent = mx.array(0.0)
-        
-        return {
-            'total': total_memory,
-            'used': active_memory,
-            'available': available_memory,
-            'percent': percent
-        }
-    except (AttributeError, ImportError, ZeroDivisionError, TypeError):
-        # Fallback if the functions are not available
-        return {
-            'total': 0,
-            'available': 0,
-            'used': 0,
-            'percent': 0
-        }
-
+    set_device(device) # Use the main set_device function
 
 def get_default_device() -> str:
     """
     Get the default device for MLX operations.
-    
+
     Returns:
-        Default device
+        Default device ('cpu' or 'gpu').
     """
-    # Convert MLX Device to string
-    device = mx.default_device()
-    device_str = str(device)
-    
-    # Extract just the device type without the "DeviceType." prefix
-    if device_str.startswith("DeviceType."):
-        return device_str.split(".")[-1]
-    return device_str
-
-
-def set_default_device(device: str) -> None:
-    """
-    Set the default device for MLX operations.
-    
-    Args:
-        device: Default device
-    """
-    # MLX expects a Device object, but we'll handle string inputs
-    if device == 'cpu':
-        mx.set_default_device(mx.Device(mx.cpu))
-    elif device == 'mps' or device == 'gpu':
-        # On Apple Silicon, use Metal
-        mx.set_default_device(mx.Device(mx.gpu))
-    else:
-        # Default to CPU for unknown devices
-        mx.set_default_device(mx.Device(mx.cpu))
+    # Return the tracked default or query MLX again
+    # return _default_device
+    return str(mx.default_device().type).lower()
 
 
 def is_available(device: str) -> bool:
     """
-    Check if the specified device is available.
-    
+    Check if the specified device is available for MLX.
+
     Args:
-        device: Device to check
-    
+        device: Device to check ('cpu' or 'gpu').
+
     Returns:
-        True if the device is available, False otherwise
+        True if the device seems available, False otherwise.
     """
-    if device == 'cpu':
+    device_str = str(device).lower()
+    if device_str == 'cpu':
         return True
-    elif device == 'mps' or device == 'gpu':
-        # Check if Metal is available
-        return mx.metal.is_available()
+    elif device_str in ['gpu', 'metal']:
+        # Try setting the device; if it fails, it's not available
+        current_default = get_default_device()
+        try:
+            set_device(device_str)
+            set_device(current_default) # Set back
+            return True
+        except ValueError:
+            return False
     return False
+
+def memory_usage(device: Optional[str] = None) -> Dict[str, int]:
+    """
+    Get memory usage information (limited info available for MLX).
+
+    Args:
+        device: Target device ('cpu' or 'gpu').
+
+    Returns:
+        Dictionary with memory usage (currently returns zeros).
+    """
+    # MLX doesn't provide detailed memory usage APIs like PyTorch CUDA yet
+    if device is not None:
+        set_device(device) # Validate
+    return {'allocated': 0, 'reserved': 0, 'free': 0, 'total': 0} # Placeholder
+
+def memory_info(device: Optional[str] = None) -> Dict[str, int]:
+    """
+    Get memory information (limited info available for MLX).
+
+    Args:
+        device: Target device ('cpu' or 'gpu').
+
+    Returns:
+        Dictionary with memory information (currently returns zeros).
+    """
+    return memory_usage(device) # Same placeholder
 
 
 def synchronize(device: Optional[str] = None) -> None:
     """
-    Synchronize the specified device.
-    
+    Synchronize the specified device (uses mx.eval).
+
     Args:
-        device: Target device (ignored for MLX backend)
+        device: Target device ('cpu' or 'gpu').
     """
-    # MLX handles synchronization automatically
-    pass
+    # MLX uses lazy evaluation. mx.eval() forces computation.
+    # It doesn't target a specific device like torch.cuda.synchronize.
+    if device is not None:
+        set_device(device) # Validate device, though eval isn't device specific
+    mx.eval() # Evaluate all pending computations
 
-
-class MLXDeviceOps:
-    """MLX implementation of device operations."""
-    
-    def to_device(self, x, device):
-        """Move a tensor to the specified device."""
-        return to_device(x, device)
-    
-    def get_device(self, x):
-        """Get the device of a tensor."""
-        return get_device(x)
-    
-    def get_default_device(self):
-        """Get the default device for tensor operations."""
-        return get_default_device()
-    
-    def set_default_device(self, device):
-        """Set the default device for tensor operations."""
-        set_default_device(device)
-    
-    def get_available_devices(self):
-        """Get a list of available devices."""
-        return get_available_devices()
-    
-    def memory_usage(self, device=None):
-        """Get the memory usage of the specified device."""
-        return memory_usage(device)
-    
-    def memory_info(self, device=None):
-        """Get memory information for the specified device."""
-        return memory_info(device)
-    
-    def is_available(self, device_type):
-        """Check if a device type is available."""
-        return is_available(device_type)
-    
-    def synchronize(self, device=None):
-        """Synchronize the specified device."""
-        synchronize(device)
+# Removed the MLXDeviceOps class

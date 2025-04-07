@@ -2,10 +2,10 @@
 
 import numpy as np
 from typing import Any, Optional
-from ember_ml.backend.numpy.tensor.dtype import NumpyDType
+
 from ember_ml.backend.numpy.types import DType, TensorLike
 
-def _validate_dtype(dtype_cls: NumpyDType, dtype: DType) -> Optional[Any]:
+def _validate_dtype(dtype: DType) -> Optional[Any]:
     """
     Validate and convert dtype to NumPy format.
     
@@ -31,7 +31,8 @@ def _validate_dtype(dtype_cls: NumpyDType, dtype: DType) -> Optional[Any]:
             
     # EmberTensor string handling
     if isinstance(dtype, str):
-        return dtype_cls.from_dtype_str(dtype)
+        from ember_ml.backend.numpy.tensor.dtype import NumpyDType # Corrected import path
+        return NumpyDType().from_dtype_str(dtype=dtype)
 
     # If it's already a NumPy dtype, return as is
     if isinstance(dtype, np.dtype) or dtype in [np.float32, np.float64, np.int32, np.int64,
@@ -52,15 +53,13 @@ def cast(tensor: TensorLike, dtype: DType) -> np.ndarray:
     Returns:
         Tensor with new data type
     """
-    # Import NumpyTensor lazily to avoid circular import
-    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
-    tensor_obj = NumpyTensor()
-    
-    # Get the tensor array from the tensor object
-    tensor_array = tensor_obj.convert_to_tensor(tensor)
+    # Import helper locally to avoid potential cycles if this module grows
+    from ember_ml.backend.numpy.tensor.ops.utility import _convert_input
+    # Ensure input is a NumPy array first
+    tensor_array = _convert_input(tensor)
     
     # Validate the dtype
-    numpy_dtype = _validate_dtype(NumpyDType(), dtype)
+    numpy_dtype = _validate_dtype(dtype) # _validate_dtype doesn't need NumpyDType() instance
     
     # If numpy_dtype is None, return the tensor as is
     if numpy_dtype is None:

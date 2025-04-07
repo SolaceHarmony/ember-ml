@@ -85,11 +85,13 @@ class EmberTensor(TensorInterface):
                 processed_dtype = dtype
         
         self._tensor = _convert_to_backend_tensor(data, dtype=processed_dtype)
-        # Use the get_device function from the backend module to get the default device
-        from ember_ml.backend import get_device, get_backend
-        self._device = device if device is not None else get_device()
+        # Use the device_ops to get the default device
+        # Import get_backend_module directly for reliable access during init
+        from ember_ml.backend import get_backend_module, get_backend
+        # Use the backend's get_device directly instead of relying on ops alias timing
+        self._device = device if device is not None else get_backend_module().get_device()
         self._requires_grad = requires_grad
-        self._backend = get_backend()
+        self._backend = get_backend() # get_backend is safe here
         
         # Store the dtype explicitly
         from ember_ml.nn.tensor.common import dtype as get_dtype

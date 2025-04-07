@@ -44,8 +44,12 @@ def transpose(data: TensorLike, axes: Optional[List[int]] = None) -> torch.Tenso
     tensor = tensor_ops.convert_to_tensor(data)
     
     if axes is None:
-        return tensor.t()
-    return tensor.permute(axes)
+        if tensor.dim() <= 2:
+            return tensor.t()
+        else:
+            # Reverse the dimensions for default transpose
+            axes = list(reversed(range(tensor.dim())))
+    return torch.transpose(tensor, *axes)
 
 def concatenate(data: List[TensorLike], axis: int = 0) -> torch.Tensor:
     """

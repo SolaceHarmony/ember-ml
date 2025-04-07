@@ -97,7 +97,16 @@ def _convert_input(x: TensorLike) -> Any:
 
     if is_python_scalar and not is_numpy_scalar:
         try:
-            return mx.array(x)
+            # Import default_float and default_int for type conversion
+            from ember_ml.backend.mlx.types import default_float, default_int
+            
+            # Map Python types to default MLX types
+            if isinstance(x, float):
+                return mx.array(x, dtype=default_float)
+            elif isinstance(x, int):
+                return mx.array(x, dtype=default_int)
+            else:  # bool or other
+                return mx.array(x)
         except Exception as e:
             raise ValueError(f"Cannot convert Python scalar {type(x)} to MLX array: {e}")
     
@@ -118,7 +127,7 @@ def _convert_input(x: TensorLike) -> Any:
 
     # For any other type, reject it with a corrected list of supported types
     raise ValueError(f"Cannot convert {type(x)} to MLX array. Supported types: Python scalars/sequences, NumPy scalars/arrays, MLXTensor, EmberTensor, Parameter.")
-def convert_to_mlx_tensor(data: TensorLike, dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
+def _convert_to_tensor(data: TensorLike, dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
     """
     Convert input to MLX array.
     
@@ -130,17 +139,42 @@ def convert_to_mlx_tensor(data: TensorLike, dtype: Optional[DType] = None, devic
     
     Args:
         data: Input data
-        dtype: Optional data type
+        dtype: Optional data type. If None, defaults to default_float for floating point data
+              and default_int for integer data.
         device: Ignored for MLX backend
         
     Returns:
         MLX array
     """
     tensor = _convert_input(data)
+    
+    # Handle dtype
     if dtype is not None:
+        # User explicitly provided a dtype, use it, less it's float64
+        if dtype == 'float64':
+            # Convert to default_float
+            from ember_ml.backend.mlx.types import default_float
+            tensor = tensor.astype(default_float)
         mlx_dtype = DTypeHandler.validate_dtype(dtype)
         if mlx_dtype is not None:
             tensor = tensor.astype(mlx_dtype)
+    else:
+        # No dtype provided, set default based on data type
+        from ember_ml.backend.mlx.types import default_float, default_int
+        
+        # Check if the tensor has integer or floating-point data
+        current_dtype = tensor.dtype
+        if current_dtype in [mx.int8, mx.int16, mx.int32, mx.int64, mx.uint8, mx.uint16, mx.uint32, mx.uint64]:
+            # Integer data, use default_int
+            tensor = tensor.astype(default_int)
+        elif current_dtype in [mx.float16, mx.float32, mx.bfloat16]:
+            # Floating-point data, use default_float
+            tensor = tensor.astype(default_float)
+        # For other types (bool, etc.), keep as is
+        elif current_dtype == mx.bool_:
+            pass
+        else:
+            raise ValueError(f"Unsupported data type: {current_dtype}")
     
     # Ensure proper dimensionality
     # If data is a scalar but we need a 0-dim tensor, reshape accordingly

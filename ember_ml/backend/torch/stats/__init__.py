@@ -4,17 +4,39 @@ PyTorch statistical operations for ember_ml.
 This module provides PyTorch implementations of statistical operations.
 """
 
-from ember_ml.backend.torch.stats.stats_ops import TorchStatsOps
-from ember_ml.backend.torch.stats.ops import (
-    # Descriptive statistics
+# Removed TorchStatsOps import
+# from ember_ml.backend.torch.stats.stats_ops import TorchStatsOps
+from ember_ml.backend.torch.stats.descriptive import ( # Import from moved file
     median,
     std,
-    percentile
+    percentile,
+    mean,
+    median,
+    std,
+    percentile,
+    var,
+    max,
+    min,
+    sum,
+    cumsum,
+    argmax,
+    sort,
+    argsort,
+    gaussian,
 )
 
 __all__ = [
-    "TorchStatsOps",
+    "mean",
+    "var",
     "median",
     "std",
-    "percentile"
+    "percentile",
+    "max",
+    "min",
+    "sum",
+    "cumsum",
+    "argmax",
+    "sort",
+    "argsort",
+    "gaussian",
 ]

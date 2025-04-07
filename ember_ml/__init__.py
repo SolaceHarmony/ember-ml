@@ -37,26 +37,31 @@ def set_backend(backend_name: Union[str, Literal['numpy', 'torch', 'mlx']]) -> N
         if not name.startswith('_'):
             globals()[name] = getattr(_BACKEND_MODULE, name)
 
-# Import auto_select_backend from the backend module
-from ember_ml.backend import auto_select_backend
+# Import auto_select_backend from the backend module - REMOVED
+# from ember_ml.backend import auto_select_backend
 
-# Set default backend using auto-selection
+# Set default backend - REMOVED auto_select_backend usage
+# User should explicitly call set_backend() initially.
+# Fallback backend setting if none explicitly set:
 try:
-    backend, _ = auto_select_backend()
-    set_backend(backend)
+    set_backend('torch')
 except ImportError:
-    # Fallback to PyTorch if auto-selection fails
+    # Fallback to NumPy if PyTorch is not available
     try:
-        set_backend('torch')
+        set_backend('numpy')
     except ImportError:
-        # Fallback to NumPy if PyTorch is not available
+        # Fallback to MLX if NumPy is not available
         try:
-            set_backend('numpy')
+            set_backend('mlx')
         except ImportError:
-            raise ImportError("No backend is available. Please install PyTorch, MLX, or NumPy.")
+            # If no backend is available, don't raise error here,
+            # let subsequent ops fail naturally if backend is needed.
+            # Consider adding a warning.
+            print("Warning: No default backend (torch, numpy, mlx) found. Imports may fail if backend operations are used without calling set_backend().")
+            pass # Allow import to proceed without a default backend set
 
 # Import submodules
-from ember_ml import benchmarks
+# from ember_ml import benchmarks # Removed - moved out of package
 from ember_ml import data
 from ember_ml import models
 from ember_ml import nn
@@ -72,7 +77,7 @@ __version__ = '0.2.0'
 # List of public objects exported by this module
 __all__ = [
     'set_backend',
-    'auto_select_backend',
+    # 'auto_select_backend', # Removed - moved to ops
     'benchmarks',
     'data',
     'models',

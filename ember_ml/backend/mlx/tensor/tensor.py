@@ -123,7 +123,7 @@ class MLXTensor:
         Returns:
             MLX array
         """
-        from ember_ml.backend.mlx.tensor.ops.utility import convert_to_mlx_tensor as convert_to_tensor_func
+        from ember_ml.backend.mlx.tensor.ops.utility import _convert_to_tensor as convert_to_tensor_func
         return convert_to_tensor_func(data, dtype, device)
 
     def slice(self, data: TensorLike, starts: Sequence[int], sizes: Sequence[int]) -> mx.array:

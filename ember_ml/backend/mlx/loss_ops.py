@@ -1,301 +1,128 @@
-"""
-MLX implementation of loss operations.
+"""MLX backend implementation for loss operations."""
 
-This module provides MLX implementations of loss operations.
-"""
-
+from typing import Any, Optional, Union, Sequence
 import mlx.core as mx
-from typing import Optional, Union, Sequence, cast
+import numpy as np # For epsilon, potentially other constants
 
-from ember_ml.backend.mlx.tensor.tensor import MLXTensor
-from ember_ml.backend.mlx.types import TensorLike, Shape, ShapeLike
-from ember_ml.backend.mlx.tensor.ops.indexing import scatter
+from ember_ml.backend.mlx.types import TensorLike
 
-# Create a tensor instance for tensor operations
-Tensor = MLXTensor()
+# Epsilon for numerical stability
+EPSILON = 1e-7
 
-def mean_squared_error(y_true: TensorLike, y_pred: TensorLike, 
-                        axis: Optional[ShapeLike] = None, 
-                        keepdims: bool = False) -> mx.array:
-    """
-    Compute the mean squared error between y_true and y_pred.
-    
-    Args:
-        y_true: Ground truth values
-        y_pred: Predicted values
-        axis: Axis or axes along which to compute the mean
-        keepdims: Whether to keep the reduced dimensions
-        
-    Returns:
-        Mean squared error
-    """
-    y_true = Tensor.convert_to_tensor(y_true)
-    y_pred = Tensor.convert_to_tensor(y_pred)
-    
-    squared_error = mx.square(mx.subtract(y_true,y_pred))
-    return mx.mean(squared_error, axis=axis, keepdims=keepdims)
-
-def mean_absolute_error(y_true: TensorLike, y_pred: TensorLike, 
-                        axis: Optional[ShapeLike] = None, 
-                        keepdims: bool = False) -> mx.array:
-    """
-    Compute the mean absolute error between y_true and y_pred.
-    
-    Args:
-        y_true: Ground truth values
-        y_pred: Predicted values
-        axis: Axis or axes along which to compute the mean
-        keepdims: Whether to keep the reduced dimensions
-        
-    Returns:
-        Mean absolute error
-    """
-    y_true = Tensor.convert_to_tensor(y_true)
-    y_pred = Tensor.convert_to_tensor(y_pred)
-    
-    absolute_error = mx.abs(y_true - y_pred)
-    return mx.mean(absolute_error, axis=axis, keepdims=keepdims)
-
-def binary_crossentropy(y_true: TensorLike, y_pred: TensorLike, from_logits: bool = False, 
-                        axis: Optional[ShapeLike] = None, 
-                        keepdims: bool = False) -> mx.array:
-    """
-    Compute the binary crossentropy loss between y_true and y_pred.
-    
-    Args:
-        y_true: Ground truth values
-        y_pred: Predicted values
-        from_logits: Whether y_pred is expected to be a logits tensor
-        axis: Axis or axes along which to compute the mean
-        keepdims: Whether to keep the reduced dimensions
-        
-    Returns:
-        Binary crossentropy loss
-    """
-    y_true = Tensor.convert_to_tensor(y_true)
-    y_pred = Tensor.convert_to_tensor(y_pred)
-    
-    if from_logits:
-        # Apply sigmoid to convert logits to probabilities
-        y_pred = mx.sigmoid(y_pred)
-    
-    # Clip to avoid log(0)
-    epsilon = 1e-7
-    y_pred = mx.clip(y_pred, epsilon, 1.0 - epsilon)
-    
-    # Binary crossentropy formula: -y_true * log(y_pred) - (1 - y_true) * log(1 - y_pred)
-    bce = -y_true * mx.log(y_pred) - (1.0 - y_true) * mx.log(1.0 - y_pred)
-    
-    return mx.mean(bce, axis=axis, keepdims=keepdims)
-
-def categorical_crossentropy(y_true: TensorLike, y_pred: TensorLike, from_logits: bool = False, 
-                            axis: Optional[Union[int, Sequence[int]]] = -1, 
-                            keepdims: bool = False) -> mx.array:
-    """
-    Compute the categorical crossentropy loss between y_true and y_pred.
-    
-    Args:
-        y_true: Ground truth values
-        y_pred: Predicted values
-        from_logits: Whether y_pred is expected to be a logits tensor
-        axis: Axis or axes along which to compute the mean
-        keepdims: Whether to keep the reduced dimensions
-        
-    Returns:
-        Categorical crossentropy loss
-    """
-    y_true = Tensor.convert_to_tensor(y_true)
-    y_pred = Tensor.convert_to_tensor(y_pred)
-    
-    if from_logits:
-        # Apply softmax to convert logits to probabilities
-        if axis is not None:
-            axis_val = cast(int, axis)
-            y_pred = mx.softmax(y_pred, axis=axis_val)
-        else:
-            y_pred = mx.softmax(y_pred, axis=-1)
-    
-    # Clip to avoid log(0)
-    epsilon = 1e-7
-    y_pred = mx.clip(y_pred, epsilon, 1.0)
-    
-    # Categorical crossentropy formula: -sum(y_true * log(y_pred))
-    if axis is not None:
-        axis_val = cast(int, axis)
-        cce = -mx.sum(y_true * mx.log(y_pred), axis=axis_val, keepdims=keepdims)
-    else:
-        cce = -mx.sum(y_true * mx.log(y_pred), axis=-1, keepdims=keepdims)
-        
-    return cce
-
-def sparse_categorical_crossentropy(y_true: TensorLike, y_pred: TensorLike, from_logits: bool = False, 
-                                    axis: Optional[Union[int, Sequence[int]]] = -1, 
-                                    keepdims: bool = False) -> mx.array:
-    """
-    Compute the sparse categorical crossentropy loss between y_true and y_pred.
-    
-    Args:
-        y_true: Ground truth values (integer indices)
-        y_pred: Predicted values
-        from_logits: Whether y_pred is expected to be a logits tensor
-        axis: Axis or axes along which to compute the mean
-        keepdims: Whether to keep the reduced dimensions
-        
-    Returns:
-        Sparse categorical crossentropy loss
-    """
-    y_true = Tensor.convert_to_tensor(y_true)
-    y_pred = Tensor.convert_to_tensor(y_pred)
-    
-    # Convert sparse labels to one-hot encoding
-    if len(y_true.shape) == len(y_pred.shape) - 1:
-        num_classes = y_pred.shape[-1] if axis is None else y_pred.shape[cast(int, axis)]
-        
-        # Convert to one-hot encoding
-        y_true_one_hot = mx.zeros_like(y_pred)
-        
-        # Create indices for one-hot encoding
-        if axis is None or axis == -1:
-            # Handle the common case where class dimension is the last dimension
-            indices = []
-            for i in range(len(y_pred.shape) - 1):
-                indices.append(mx.arange(y_pred.shape[i]))
-            indices.append(y_true)
-            
-            # Set the one-hot values
-            # Create empty tensor for output
-            y_true_one_hot = scatter(mx.ones_like(y_true), indices, y_pred.shape[-1], aggr="add", axis=-1)
-        else:
-            # Handle the case where class dimension is not the last dimension
-            axis_val = cast(int, axis)
-            indices = []
-            for i in range(len(y_pred.shape)):
-                if i == axis_val:
-                    indices.append(y_true)
-                else:
-                    indices.append(mx.arange(y_pred.shape[i]))
-            
-            # Set the one-hot values
-            # Create empty tensor for output with the correct shape
-            y_true_one_hot = scatter(mx.ones_like(y_true), indices, y_pred.shape[axis_val], aggr="add", axis=axis_val)
-        
-        # Use categorical crossentropy with one-hot encoded labels
-        return categorical_crossentropy(y_true_one_hot, y_pred, from_logits, axis, keepdims)
-    else:
-        # If y_true is already one-hot encoded, use categorical crossentropy directly
-        return categorical_crossentropy(y_true, y_pred, from_logits, axis, keepdims)
-
-def huber_loss(y_true: TensorLike, y_pred: TensorLike, delta: float = 1.0, 
-                axis: Optional[Union[int, Sequence[int]]] = None, 
-                keepdims: bool = False) -> mx.array:
-    """
-    Compute the Huber loss between y_true and y_pred.
-    
-    The Huber loss is a loss function that is less sensitive to outliers than MSE.
-    It's quadratic for small errors and linear for large errors.
-    
-    Args:
-        y_true: Ground truth values
-        y_pred: Predicted values
-        delta: Threshold at which to change from quadratic to linear
-        axis: Axis or axes along which to compute the mean
-        keepdims: Whether to keep the reduced dimensions
-        
-    Returns:
-        Huber loss
-    """
-    y_true = Tensor.convert_to_tensor(y_true)
-    y_pred = Tensor.convert_to_tensor(y_pred)
-    
-    error = y_true - y_pred
-    abs_error = mx.abs(error)
-    
-    # Quadratic part (for errors <= delta)
-    quadratic = 0.5 * mx.square(error)
-    # Linear part (for errors > delta)
-    linear = delta * (abs_error - 0.5 * delta)
-    
-    # Combine quadratic and linear parts
-    loss = mx.where(abs_error <= delta, quadratic, linear)
-    
+# Helper function (module level)
+def _reduce_loss(loss: mx.array,
+                 axis: Optional[Union[int, Sequence[int]]] = None,
+                 keepdims: bool = False) -> mx.array:
+    """Helper to apply reduction (mean) to loss tensor."""
+    # MLX's mean function handles None axis and keepdims directly
     return mx.mean(loss, axis=axis, keepdims=keepdims)
 
-def log_cosh_loss(y_true: TensorLike, y_pred: TensorLike, 
-                    axis: Optional[ShapeLike] = None, 
-                    keepdims: bool = False) -> mx.array:
-    """
-    Compute the logarithm of the hyperbolic cosine of the prediction error.
-    
-    log(cosh(x)) is approximately equal to (x^2 / 2) for small x and
-    to abs(x) - log(2) for large x. This means that log_cosh works
-    mostly like the mean squared error, but will not be so strongly affected
-    by the occasional wildly incorrect prediction.
-    
-    Args:
-        y_true: Ground truth values
-        y_pred: Predicted values
-        axis: Axis or axes along which to compute the mean
-        keepdims: Whether to keep the reduced dimensions
-        
-    Returns:
-        Log-cosh loss
-    """
-    y_true = Tensor.convert_to_tensor(y_true)
-    y_pred = Tensor.convert_to_tensor(y_pred)
-    
-    error = y_pred - y_true
-    
-    # Compute log(cosh(error))
-    # Use a numerically stable formula to avoid overflow
-    log_cosh = error + mx.log(1 + mx.exp(-2 * error)) - mx.log(mx.array(2.0))
-    
-    return mx.mean(log_cosh, axis=axis, keepdims=keepdims)
-class MLXLossOps:
-    """MLX implementation of loss operations."""
-    def mean_squared_error(self, y_true: TensorLike, y_pred: TensorLike,
-                           axis: Optional[ShapeLike] = None,
-                           keepdims: bool = False) -> mx.array:
-        """Compute the mean squared error between y_true and y_pred."""
-        return mean_squared_error(y_true, y_pred, axis, keepdims)
-    
-    def mean_absolute_error(self, y_true: TensorLike, y_pred: TensorLike,
-                            axis: Optional[ShapeLike] = None,
-                            keepdims: bool = False) -> mx.array:
-        """Compute the mean absolute error between y_true and y_pred."""
-        return mean_absolute_error(y_true, y_pred, axis, keepdims)
-    
-    def binary_crossentropy(self, y_true: TensorLike, y_pred: TensorLike, from_logits: bool = False,
-                            axis: Optional[ShapeLike] = None,
-                            keepdims: bool = False) -> mx.array:
-        """Compute the binary crossentropy loss between y_true and y_pred."""
-        return binary_crossentropy(y_true, y_pred, from_logits, axis, keepdims)
-    
-    def categorical_crossentropy(self, y_true: TensorLike, y_pred: TensorLike, from_logits: bool = False,
-                                axis: Optional[Union[int, Sequence[int]]] = -1,
-                                keepdims: bool = False) -> mx.array:
-        """Compute the categorical crossentropy loss between y_true and y_pred."""
-        return categorical_crossentropy(y_true, y_pred, from_logits, axis, keepdims)    
-    
-    def sparse_categorical_crossentropy(self, y_true: TensorLike, y_pred: TensorLike, from_logits: bool = False,
-                                        axis: Optional[Union[int, Sequence[int]]] = -1,
-                                        keepdims: bool = False) -> mx.array:
-          """Compute the sparse categorical crossentropy loss between y_true and y_pred."""
-          return sparse_categorical_crossentropy(y_true, y_pred, from_logits, axis, keepdims)
-    
-    def huber_loss(self, y_true: TensorLike, y_pred: TensorLike, delta: float = 1.0,
-                     axis: Optional[Union[int, Sequence[int]]] = None,
-                     keepdims: bool = False) -> mx.array:
-          """Compute the Huber loss between y_true and y_pred."""
-          return huber_loss(y_true, y_pred, delta, axis, keepdims)
-    
-    def log_cosh_loss(self, y_true: TensorLike, y_pred: TensorLike,
-                          axis: Optional[ShapeLike] = None,
-                          keepdims: bool = False) -> mx.array:
-             """Compute the logarithm of the hyperbolic cosine of the prediction error."""
-             return log_cosh_loss(y_true, y_pred, axis, keepdims)
-    
- 
-    
-    
+# --- Standalone Loss Functions ---
 
+def mean_squared_error(y_true: TensorLike, y_pred: TensorLike,
+                       axis: Optional[Union[int, Sequence[int]]] = None,
+                       keepdims: bool = False) -> mx.array:
+    """MLX implementation of mean squared error."""
+    from ember_ml.backend.mlx.tensor.ops.utility import convert_to_mlx_tensor # Lazy load functional
+    y_true_arr = convert_to_mlx_tensor(data=y_true)
+    y_pred_arr = convert_to_mlx_tensor(data=y_pred)
+    squared_diff = mx.square(y_pred_arr - y_true_arr)
+    return _reduce_loss(squared_diff, axis=axis, keepdims=keepdims)
+
+def mean_absolute_error(y_true: TensorLike, y_pred: TensorLike,
+                         axis: Optional[Union[int, Sequence[int]]] = None,
+                         keepdims: bool = False) -> mx.array:
+    """MLX implementation of mean absolute error."""
+    from ember_ml.backend.mlx.tensor.ops.utility import convert_to_mlx_tensor # Lazy load functional
+    y_true_arr = convert_to_mlx_tensor(data=y_true)
+    y_pred_arr = convert_to_mlx_tensor(data=y_pred)
+    abs_diff = mx.abs(y_pred_arr - y_true_arr)
+    return _reduce_loss(abs_diff, axis=axis, keepdims=keepdims)
+
+def binary_crossentropy(y_true: TensorLike, y_pred: TensorLike,
+                        from_logits: bool = False,
+                        axis: Optional[Union[int, Sequence[int]]] = None,
+                        keepdims: bool = False) -> mx.array:
+    """MLX implementation of binary crossentropy."""
+    from ember_ml.backend.mlx.tensor.ops.utility import convert_to_mlx_tensor # Lazy load functional
+    y_true_arr = convert_to_mlx_tensor(data=y_true)
+    y_pred_arr = convert_to_mlx_tensor(data=y_pred)
+
+    if from_logits:
+        # Stable implementation: max(logits, 0) - logits * y_true + log(1 + exp(-abs(logits)))
+        max_val = mx.maximum(y_pred_arr, 0)
+        log_exp_term = mx.log(1 + mx.exp(-mx.abs(y_pred_arr)))
+        loss = max_val - y_pred_arr * y_true_arr + log_exp_term
+    else:
+        # Clip predictions for numerical stability
+        y_pred_arr = mx.clip(y_pred_arr, EPSILON, 1.0 - EPSILON)
+        loss = - (y_true_arr * mx.log(y_pred_arr) +
+                  (1.0 - y_true_arr) * mx.log(1.0 - y_pred_arr))
+
+    return _reduce_loss(loss, axis=axis, keepdims=keepdims)
+
+def categorical_crossentropy(y_true: TensorLike, y_pred: TensorLike,
+                             from_logits: bool = False,
+                             axis: Optional[Union[int, Sequence[int]]] = None,
+                             keepdims: bool = False) -> mx.array:
+    """MLX implementation of categorical crossentropy."""
+    from ember_ml.backend.mlx.tensor.ops.utility import convert_to_mlx_tensor # Lazy load functional
+    y_true_arr = convert_to_mlx_tensor(data=y_true)
+    y_pred_arr = convert_to_mlx_tensor(data=y_pred)
+
+    if from_logits:
+        log_probs = mx.log_softmax(y_pred_arr, axis=-1)
+    else:
+        y_pred_arr = mx.clip(y_pred_arr, EPSILON, 1.0 - EPSILON)
+        log_probs = mx.log(y_pred_arr)
+
+    cce = -mx.sum(y_true_arr * log_probs, axis=-1)
+    return _reduce_loss(cce, axis=axis, keepdims=keepdims)
+
+def sparse_categorical_crossentropy(y_true: TensorLike, y_pred: TensorLike,
+                                    from_logits: bool = False,
+                                    axis: Optional[Union[int, Sequence[int]]] = None,
+                                    keepdims: bool = False) -> mx.array:
+    """MLX implementation of sparse categorical crossentropy."""
+    from ember_ml.backend.mlx.tensor.ops.utility import convert_to_mlx_tensor # Lazy load functional
+    y_true_int = convert_to_mlx_tensor(data=y_true).astype(mx.int32)
+    y_pred_logits = convert_to_mlx_tensor(data=y_pred)
+
+    if not from_logits:
+         y_pred_logits = mx.clip(y_pred_logits, EPSILON, 1.0 - EPSILON)
+         y_pred_logits = mx.log(y_pred_logits)
     
+    probs = mx.softmax(y_pred_logits, axis=-1)
+    log_probs = mx.log(probs)
+    y_true_int_expanded = mx.expand_dims(y_true_int, axis=-1)
+    neg_log_likelihood = -mx.take_along_axis(log_probs, y_true_int_expanded, axis=-1)
+    loss = mx.squeeze(neg_log_likelihood, axis=-1)
+
+    return _reduce_loss(loss, axis=axis, keepdims=keepdims)
+
+def huber_loss(y_true: TensorLike, y_pred: TensorLike, delta: float = 1.0,
+               axis: Optional[Union[int, Sequence[int]]] = None,
+               keepdims: bool = False) -> mx.array:
+    """MLX implementation of Huber loss."""
+    from ember_ml.backend.mlx.tensor.ops.utility import convert_to_mlx_tensor # Lazy load functional
+    y_true_arr = convert_to_mlx_tensor(data=y_true)
+    y_pred_arr = convert_to_mlx_tensor(data=y_pred)
+    error = y_pred_arr - y_true_arr
+    abs_error = mx.abs(error)
+    quadratic = mx.minimum(abs_error, delta)
+    linear = abs_error - quadratic
+    loss = 0.5 * mx.square(quadratic) + delta * linear
+    return _reduce_loss(loss, axis=axis, keepdims=keepdims)
+
+def log_cosh_loss(y_true: TensorLike, y_pred: TensorLike,
+                  axis: Optional[Union[int, Sequence[int]]] = None,
+                  keepdims: bool = False) -> mx.array:
+    """MLX implementation of log-cosh loss."""
+    from ember_ml.backend.mlx.tensor.ops.utility import convert_to_mlx_tensor # Lazy load functional
+    y_true_arr = convert_to_mlx_tensor(data=y_true)
+    y_pred_arr = convert_to_mlx_tensor(data=y_pred)
+    error = y_pred_arr - y_true_arr
+    logcosh = mx.logaddexp(error, -error) - mx.log(mx.array(2.0, dtype=error.dtype))
+    return _reduce_loss(logcosh, axis=axis, keepdims=keepdims)
+
+# Removed MLXLossOps class

@@ -14,13 +14,15 @@ from ember_ml.backend.mlx.config import (
 from ember_ml.backend.mlx.tensor import MLXDType, MLXTensor
 
 # Import all ops classes
-from ember_ml.backend.mlx.math_ops import MLXMathOps
-from ember_ml.backend.mlx.comparison_ops import MLXComparisonOps
-from ember_ml.backend.mlx.device_ops import MLXDeviceOps
-from ember_ml.backend.mlx.linearalg import MLXLinearAlgOps
-from ember_ml.backend.mlx.io_ops import MLXIOOps
-from ember_ml.backend.mlx.vector_ops import MLXVectorOps
-from ember_ml.backend.mlx.stats import MLXStatsOps
+# Removed Ops class imports
+# from ember_ml.backend.mlx.math_ops import MLXMathOps
+# from ember_ml.backend.mlx.comparison_ops import MLXComparisonOps
+# from ember_ml.backend.mlx.device_ops import MLXDeviceOps
+# from ember_ml.backend.mlx.linearalg import MLXLinearAlgOps
+# from ember_ml.backend.mlx.io_ops import MLXIOOps
+# from ember_ml.backend.mlx.vector_ops import MLXVectorOps
+# from ember_ml.backend.mlx.stats import MLXStatsOps
+# from ember_ml.backend.mlx.loss_ops import MLXLossOps
 
 # Import specific functions from math_ops
 from ember_ml.backend.mlx.math_ops import (
@@ -48,10 +50,6 @@ from ember_ml.backend.mlx.math_ops import (
     tan,
     sinh,
     cosh,
-    tanh,
-    sigmoid,
-    relu,
-    softmax,
     clip,
     var,
     negative,
@@ -124,6 +122,8 @@ from ember_ml.backend.mlx.vector_ops import (
     irfftn
 )
 
+# Import activation functions (Added)
+from ember_ml.backend.mlx.activations import relu, sigmoid, tanh, softmax, softplus
 # Set power function
 power = pow
 
@@ -133,19 +133,19 @@ __all__ = [
     'DEFAULT_DEVICE',
     'DEFAULT_DTYPE',
 
-    # Ops classes
-    'MLXMathOps',
-    'MLXComparisonOps',
-    'MLXDeviceOps',
-    'MLXLinearAlgOps',
-    'MLXIOOps',
-    'MLXVectorOps',
-    'MLXStatsOps',
-    'MLXStatsOps',
+    # Ops classes removed from export
+    # 'MLXMathOps',
+    # 'MLXComparisonOps',
+    # 'MLXDeviceOps',
+    # 'MLXLinearAlgOps',
+    # 'MLXIOOps',
+    # 'MLXVectorOps',
+    # 'MLXStatsOps',
+    # 'MLXLossOps',
 
-    # Tensor classes
-    'MLXDType',
-    'MLXTensor',
+    # Tensor classes removed from export
+    # 'MLXDType',
+    # 'MLXTensor',
 
     # Math operations
     'add',
@@ -166,6 +166,20 @@ __all__ = [
     'sqrt',
     'square',
     'abs',
+    'sign',
+    'sin',
+    'cos',
+    'tan',
+    'sinh',
+    'cosh',
+    'negative',
+    'clip',
+    'var',
+    'mod',
+    'floor_divide',
+    'sort',
+    'gradient',
+    'cumsum',
 
     # Casting operations
     'cast',
@@ -282,4 +296,7 @@ __all__ = [
     'irfft2',
     'rfftn',
     'irfftn',
+
+    # Activation Ops Functions (added)
+    'relu', 'sigmoid', 'tanh', 'softmax', 'softplus',
 ]

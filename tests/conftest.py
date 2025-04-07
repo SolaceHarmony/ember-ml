@@ -54,33 +54,8 @@ def available_backends():
     return backends
 
 
-# Renamed fixture from any_backend to backend to match test usage
-@pytest.fixture(params=['numpy', 'torch', 'mlx'])
-def backend(request): # Renamed function argument
-    """Parametrize tests with all available backends."""
-    backend_name = request.param
-    
-    # Skip if backend is not available
-    if backend_name == 'torch':
-        try:
-            import torch
-        except ImportError:
-            pytest.skip("PyTorch not available")
-    elif backend_name == 'mlx':
-        try:
-            import mlx.core
-        except ImportError:
-            pytest.skip("MLX not available")
-    
-    # Set backend
-    original_backend = get_backend()
-    set_backend(backend_name)
-    
-    yield backend_name # Yield the backend name string
-    
-    # Restore original backend
-    set_backend(original_backend or 'numpy')  # Default to numpy if None
-
+# Removed the parameterized 'backend' fixture as tests are now separated by directory
+# Individual backend fixtures (numpy_backend, torch_backend, mlx_backend) are kept
 
 @pytest.fixture
 def random_seed():
@@ -126,32 +101,7 @@ def mlx_backend():
         pytest.skip("MLX not available")
 
 
-@pytest.fixture(params=['numpy', 'torch', 'mlx'])
-def any_backend(request):
-    """Parametrize tests with all available backends."""
-    backend_name = request.param
-    
-    # Skip if backend is not available
-    if backend_name == 'torch':
-        try:
-            import torch
-        except ImportError:
-            pytest.skip("PyTorch not available")
-    elif backend_name == 'mlx':
-        try:
-            import mlx.core
-        except ImportError:
-            pytest.skip("MLX not available")
-    
-    # Set backend
-    original_backend = get_backend()
-    set_backend(backend_name)
-    
-    yield backend_name
-    
-    # Restore original backend
-    set_backend(original_backend or 'numpy')  # Default to numpy if None
-
+# Removed the parameterized 'any_backend' fixture as tests are now separated by directory
 
 @pytest.fixture
 def sample_tensor_1d():

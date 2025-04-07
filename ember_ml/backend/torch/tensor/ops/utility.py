@@ -88,7 +88,7 @@ def _convert_input(x: TensorLike, no_scalars = False) -> Any:
     raise ValueError(f"Cannot convert {type(x)} to torch.Tensor. Supported types: Python scalars/sequences, NumPy scalars/arrays, TorchTensor, EmberTensor, Parameter.")
 
 
-def convert_to_torch_tensor(data: Any, dtype: Optional[Any] = None, device: Optional[str] = None) -> torch.Tensor:
+def _convert_to_tensor(data: Any, dtype: Optional[Any] = None, device: Optional[str] = None) -> torch.Tensor: # Renamed
     """
     Convert data to a PyTorch tensor.
 
@@ -103,9 +103,21 @@ def convert_to_torch_tensor(data: Any, dtype: Optional[Any] = None, device: Opti
     # Use the unified _convert_input
     tensor = _convert_input(data)
 
+    # Determine the target device
+    target_device = device
+    if target_device is None:
+        # Use the backend's get_device
+        from ember_ml.backend.torch.device_ops import get_device
+        target_device = get_device()
+
+    # Apply dtype if provided
     if dtype is not None:
         torch_dtype = TorchDType().from_dtype_str(dtype)
-        return tensor.to(torch_dtype)  # Correctly apply dtype
+        tensor = tensor.to(dtype=torch_dtype)
+
+    # Move to the target device
+    if target_device:
+        tensor = tensor.to(device=target_device)
 
     return tensor
 
@@ -131,7 +143,7 @@ def to_numpy(data: TensorLike) -> Optional[np.ndarray]:
         return data.detach().cpu().numpy()
     
     # For non-tensor types, let PyTorch handle the conversion
-    return convert_to_torch_tensor(data).detach().cpu().numpy()
+    return _convert_to_tensor(data).detach().cpu().numpy()
 
 def item(data: TensorLike) -> Union[int, float, bool]:
     """
@@ -144,7 +156,7 @@ def item(data: TensorLike) -> Union[int, float, bool]:
         The scalar value
     """
     # Ensure data is a torch tensor first
-    tensor_torch = convert_to_torch_tensor(data)
+    tensor_torch = _convert_to_tensor(data)
     # Check if the tensor is scalar before calling item()
     if tensor_torch.numel() != 1:
          raise ValueError("item() can only be called on scalar tensors (tensors with one element)")
@@ -163,7 +175,7 @@ def shape(data: TensorLike) -> Shape:
     if isinstance(data, torch.Tensor):
         return tuple(data.shape)
     # Convert to tensor first
-    return tuple(convert_to_torch_tensor(data).shape)
+    return tuple(_convert_to_tensor(data).shape)
 
 def dtype(data: TensorLike) -> Any:
     """
@@ -178,7 +190,7 @@ def dtype(data: TensorLike) -> Any:
     if isinstance(data, torch.Tensor):
         return data.dtype
     # Convert to tensor first
-    return convert_to_torch_tensor(data).dtype
+    return _convert_to_tensor(data).dtype
 
 def copy(data: TensorLike) -> torch.Tensor:
     """
@@ -191,7 +203,7 @@ def copy(data: TensorLike) -> torch.Tensor:
         Copy of the tensor
     """
     if not isinstance(data, torch.Tensor):
-        data = convert_to_torch_tensor(data)
+        data = _convert_to_tensor(data)
     
     return data.clone()
 
@@ -207,7 +219,7 @@ def var(data: TensorLike, axis: Optional[Union[int, List[int]]] = None, keepdims
     Returns:
         Variance of the tensor
     """
-    tensor_torch = convert_to_torch_tensor(data)
+    tensor_torch = _convert_to_tensor(data)
     
     if axis is None:
         return torch.var(tensor_torch, keepdim=keepdims)
@@ -226,7 +238,7 @@ def sort(data: TensorLike, axis: int = -1, descending: bool = False) -> torch.Te
     Returns:
         Sorted tensor
     """
-    tensor_torch = convert_to_torch_tensor(data)
+    tensor_torch = _convert_to_tensor(data)
     
     # PyTorch sort returns a tuple of (values, indices)
     values, _ = torch.sort(tensor_torch, dim=axis, descending=descending)
@@ -245,7 +257,7 @@ def argsort(data: TensorLike, axis: int = -1, descending: bool = False) -> torch
     Returns:
         Indices that would sort the tensor
     """
-    tensor_torch = convert_to_torch_tensor(data)
+    tensor_torch = _convert_to_tensor(data)
     
     # PyTorch sort returns a tuple of (values, indices)
     _, indices = torch.sort(tensor_torch, dim=axis, descending=descending)
@@ -263,6 +275,6 @@ def maximum(data1: TensorLike, data2: TensorLike) -> torch.Tensor:
     Returns:
         Element-wise maximum
     """
-    x_torch = convert_to_torch_tensor(data1)
-    y_torch = convert_to_torch_tensor(data2)
+    x_torch = _convert_to_tensor(data1)
+    y_torch = _convert_to_tensor(data2)
     return torch.maximum(x_torch, y_torch)

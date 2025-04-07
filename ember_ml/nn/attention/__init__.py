@@ -6,12 +6,11 @@ including attention neurons and base neurons.
 """
 
 # Import classes now located within this package
-from .base import BaseAttention, AttentionLayer, MultiHeadAttention, AttentionMask, AttentionScore
-from .causal import CausalAttention, PredictionAttention, AttentionState # CausalAttention moved here
-from .temporal import TemporalAttention, PositionalEncoding
-from .mechanisms import CausalAttention as MechanismCausalAttention # Import mechanism if different
-from .attention import LTCNeuronWithAttention # Keep this if it's still relevant
-# Removed WeightedLTCNeuron and SpecializedNeuron as they were deleted or moved elsewhere
+from ember_ml.nn.attention.base import BaseAttention, AttentionLayer, MultiHeadAttention, AttentionMask, AttentionScore
+from ember_ml.nn.attention.causal import CausalAttention, PredictionAttention, AttentionState # CausalAttention moved here
+from ember_ml.nn.attention.temporal import TemporalAttention, PositionalEncoding
+from ember_ml.nn.attention.mechanisms import CausalAttention as MechanismCausalAttention # Import mechanism if different
+from ember_ml.nn.attention.attention import LTCNeuronWithAttention # Keep this if it's still relevant
 
 __all__ = [
     # Core Attention Classes

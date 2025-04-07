@@ -1,95 +1,74 @@
 """
-Operations module.
+Linear Algebra operations module.
 
-This module provides operations that abstract machine learning library
-scalar operations. Tensor operations ONLY EXIST in ember_ml.nn.tensor and backend.*.tensor.*. The only exception is tensor compatibility with arithmetic.
+This module dynamically aliases functions from the active backend
+(NumPy, PyTorch, MLX) upon import to provide a consistent `ops.linearalg.*` interface.
 """
 
-from typing import Type
-_CURRENT_INSTANCES = {}
+import importlib
+import sys
+import os
+from typing import List, Optional, Callable, Any
 
+# Import backend control functions
+from ember_ml.backend import get_backend, get_backend_module
 
-# Import specific operations from interfaces
-from ember_ml.ops.linearalg.linearalg_ops import *
-
-# Use backend directly
-from ember_ml.backend import get_backend
-def _load_ops_module():
-    """Load the current ops module."""
-    from ember_ml.backend import get_backend_module
-    return get_backend_module()
-
-def _get_ops_instance(ops_class: Type):
-    """Get an instance of the specified ops class."""
-    global _CURRENT_INSTANCES
-    
-    if ops_class not in _CURRENT_INSTANCES:
-        module = _load_ops_module()
-        
-        # Get the backend directly
-        backend = get_backend()
-        
-        # Get the ops class name based on the current implementation
-        if backend == 'numpy':
-            class_name_prefix = 'Numpy'
-        elif backend == 'torch':
-            class_name_prefix = 'Torch'
-        elif backend == 'mlx':
-            class_name_prefix = 'MLX'
-        else:
-            raise ValueError(f"Unknown ops implementation: {backend}")
-        
-        # Get the class name
-  
-        if ops_class == LinearAlgOps:
-            class_name = f"{class_name_prefix}LinearAlgOps"
-        else:
-            raise ValueError(f"Unknown ops class: {ops_class}")
-        
-        # Get the class and create an instance
-        ops_class_impl = getattr(module, class_name)
-        _CURRENT_INSTANCES[ops_class] = ops_class_impl()
-    
-    return _CURRENT_INSTANCES[ops_class]
-
-def linearalg_ops() -> LinearAlgOps:
-    """Get solver operations."""
-    return _get_ops_instance(LinearAlgOps)
-
-
-# Export all functions and classes
-__all__ = [
-    # Classes
-    'LinearAlgOps',
-    
-    # Functions
-    'linearalg_ops',
-    
-    # Linear Algebra operations
-    'solve',
-    'inv',
-    'det',
-    'norm',
-    'qr',
-    'svd',
-    'cholesky',
-    'lstsq',
-    'eig',
-    'eigvals',
-    'diag',
-    'diagonal',
+# Master list of linear algebra functions expected to be aliased
+_LINEARALG_OPS_LIST = [
+    'solve', 'inv', 'svd', 'eig', 'eigvals', 'det', 'norm', 'qr',
+    'cholesky', 'lstsq', 'diag', 'diagonal',
 ]
+def get_linearalg_module():
+    """Imports the activation functions from the active backend module."""
+    # This function is not used in this module but can be used for testing purposes
+    # or to ensure that the backend module is imported correctly.
+    # Reload the backend module to ensure the latest version is use
+    backend_name = get_backend()
+    module_name = get_backend_module().__name__ + '.linearalg'
+    module = importlib.import_module(module_name)
+    return module
 
-# Linear Algebra operations
-solve = lambda *args, **kwargs: linearalg_ops().solve(*args, **kwargs)
-inv = lambda *args, **kwargs: linearalg_ops().inv(*args, **kwargs)
-det = lambda *args, **kwargs: linearalg_ops().det(*args, **kwargs)
-norm = lambda *args, **kwargs: linearalg_ops().norm(*args, **kwargs)
-qr = lambda *args, **kwargs: linearalg_ops().qr(*args, **kwargs)
-svd = lambda *args, **kwargs: linearalg_ops().svd(*args, **kwargs)
-cholesky = lambda *args, **kwargs: linearalg_ops().cholesky(*args, **kwargs)
-lstsq = lambda *args, **kwargs: linearalg_ops().lstsq(*args, **kwargs)
-eig = lambda *args, **kwargs: linearalg_ops().eig(*args, **kwargs)
-eigvals = lambda *args, **kwargs: linearalg_ops().eigvals(*args, **kwargs)
-diag = lambda *args, **kwargs: linearalg_ops().diag(*args, **kwargs)
-diagonal = lambda *args, **kwargs: linearalg_ops().diagonal(*args, **kwargs)
+# Placeholder initialization
+for _op_name in _LINEARALG_OPS_LIST:
+    if _op_name not in globals():
+        globals()[_op_name] = None
+
+# Keep track if aliases have been set for the current backend
+_aliased_backend_linearalg: Optional[str] = None
+
+def _update_linearalg_aliases():
+    """Dynamically updates this module's namespace with backend linearalg functions."""
+    global _aliased_backend_linearalg
+    backend_name = get_backend()
+
+    # Avoid re-aliasing if backend hasn't changed since last update for this module
+    if backend_name == _aliased_backend_linearalg:
+        return
+
+    backend_module = get_linearalg_module()
+    current_module = sys.modules[__name__]
+    missing_ops = []
+
+    for func_name in _LINEARALG_OPS_LIST:
+        try:
+            backend_function = getattr(backend_module, func_name)
+            setattr(current_module, func_name, backend_function)
+            globals()[func_name] = backend_function
+        except AttributeError:
+            setattr(current_module, func_name, None)
+            globals()[func_name] = None
+            missing_ops.append(func_name)
+
+    if missing_ops:
+        # Suppress warning here as ops/__init__ might also warn
+        # print(f"Warning: Backend '{backend_name}' does not implement the following linearalg ops: {', '.join(missing_ops)}")
+        pass
+    _aliased_backend_linearalg = backend_name
+
+# --- Initial alias setup ---
+# Populate aliases when this module is first imported.
+# Relies on the backend having been determined by prior imports.
+_update_linearalg_aliases()
+
+# --- Define __all__ ---
+__all__ = _LINEARALG_OPS_LIST

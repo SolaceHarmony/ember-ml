@@ -10,7 +10,7 @@ from ember_ml.nn.tensor import EmberTensor, zeros, arange, maximum, shape, conca
 from ember_ml.nn.modules import Module
 from ember_ml.nn.container import Dropout, Linear, Sequential
 from ember_ml.nn.modules import Module
-from ember_ml.ops import sigmoid
+from ember_ml.nn.modules.activations import Sigmoid # Import Sigmoid class
 from .base import BaseAttention
 
 class PositionalEncoding(Module):

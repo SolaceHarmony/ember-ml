@@ -10,27 +10,26 @@ __all__ = [
     'DEFAULT_DEVICE',
     'DEFAULT_DTYPE',
     
-    # Ops classes
-    'TorchMathOps',
-    'TorchComparisonOps',
-    'TorchDeviceOps',
-    'TorchIOOps',
-    'TorchLinearAlgOps',
-    'TorchFeatureOps',
-    'TorchVectorOps',
-    'TorchStatsOps',
-    
+    # Ops classes removed from __all__
+    # 'TorchMathOps',
+    # 'TorchComparisonOps',
+    # 'TorchDeviceOps',
+    # 'TorchIOOps',
+    # 'TorchLossOps',
+    # 'TorchLinearAlgOps',
+    # 'TorchFeatureOps',
+    # 'TorchVectorOps',
+    # 'TorchStatsOps',
     # Math operations
     'add', 'subtract', 'multiply', 'divide', 'matmul', 'dot',
     'mean', 'sum', 'max', 'min', 'exp', 'log', 'log10', 'log2',
     'pow', 'sqrt', 'square', 'abs', 'sign', 'sin', 'cos', 'tan',
     'sinh', 'cosh', 'tanh', 'sigmoid', 'relu', 'softmax', 'clip',
-    'var', 'pi', 'power',
+    'var', 'pi', 'power', 'negative', 'mod', 'floor_divide', 'sort', 'gradient', 'cumsum', 'eigh', # Added missing math ops
     
     # Comparison operations
     'equal', 'not_equal', 'less', 'less_equal', 'greater', 'greater_equal',
-    'logical_and', 'logical_or', 'logical_not', 'logical_xor',
-    
+    'logical_and', 'logical_or', 'logical_not', 'logical_xor', 'allclose', 'isclose', 'all', 'where', 'isnan', # Added missing comparison ops
     # Device operations
     'to_device', 'get_device', 'get_available_devices', 'memory_usage',
     'memory_info', 'synchronize', 'set_default_device', 'get_default_device',
@@ -38,30 +37,46 @@ __all__ = [
     
     # Linear Algebra operations
     'solve', 'inv', 'svd', 'eig', 'eigvals', 'det', 'norm', 'qr',
-    'cholesky', 'lstsq', 'diag', 'diagonal',
-    
+    'cholesky', 'lstsq', 'diag', 'diagonal', # Added missing linear algebra ops
     # I/O operations
     'save', 'load',
     
     # Feature operations
-    'pca', 'transform', 'inverse_transform', 'standardize', 'normalize',
-    
+    'pca', 'transform', 'inverse_transform', 'standardize', 'normalize', # Added missing feature ops
     # Vector operations
     'normalize_vector', 'euclidean_distance', 'cosine_similarity',
-    'exponential_decay', 'gaussian', 'compute_energy_stability',
+    'exponential_decay', 'compute_energy_stability', # Removed gaussian from here
     'compute_interference_strength', 'compute_phase_coherence',
     'partial_interference', 'fft', 'ifft', 'fft2', 'ifft2', 'fftn',
-    'ifftn', 'rfft', 'irfft', 'rfft2', 'irfft2', 'rfftn', 'irfftn'
-]
+    'ifftn', 'rfft', 'irfft', 'rfft2', 'irfft2', 'rfftn', 'irfftn', # Removed gaussian
+    # Loss Ops Functions (added)
+    'mean_squared_error', 'mean_absolute_error', 'binary_crossentropy', 'categorical_crossentropy',
+    'sparse_categorical_crossentropy', 'huber_loss', 'log_cosh_loss',
 
-# Import all ops classes
-from ember_ml.backend.torch.math_ops import TorchMathOps
-from ember_ml.backend.torch.comparison_ops import TorchComparisonOps
-from ember_ml.backend.torch.device_ops import TorchDeviceOps
-from ember_ml.backend.torch.io_ops import TorchIOOps
-from ember_ml.backend.torch.linearalg import TorchLinearAlgOps
-from ember_ml.backend.torch.stats import TorchStatsOps
-from ember_ml.backend.torch.vector_ops import TorchVectorOps
+    # Functional Tensor Ops (from tensor.ops - added)
+    'cast', 'zeros', 'ones', 'eye', 'zeros_like', 'ones_like', 'full', 'full_like', 'arange', 'linspace',
+    'reshape', 'transpose', 'concatenate', 'stack', 'split', 'expand_dims', 'squeeze', 'tile', 'pad',
+    'slice_tensor', 'slice_update', 'gather', 'tensor_scatter_nd_update', 'scatter',
+    'convert_to_torch_tensor', 'to_numpy', 'item', 'shape', 'dtype', 'copy', 'argsort', 'maximum',
+    'random_normal', 'random_uniform', 'random_binomial', 'random_gamma', 'random_exponential',
+    'random_poisson', 'random_categorical', 'random_permutation', 'shuffle', 'set_seed', 'get_seed',
+   # Stats Ops Functions (added)
+   'gaussian',
+   # Add other stats ops like median, std, percentile here if needed for aliasing
+   # 'median', 'std', 'percentile',
+
+   # Activation Ops Functions (added)
+   'relu', 'sigmoid', 'tanh', 'softmax', 'softplus',
+]
+# Removed imports of Ops classes as they are no longer used for dispatch
+# from ember_ml.backend.torch.math_ops import TorchMathOps
+# from ember_ml.backend.torch.comparison_ops import TorchComparisonOps
+# from ember_ml.backend.torch.device_ops import TorchDeviceOps
+# from ember_ml.backend.torch.io_ops import TorchIOOps
+# from ember_ml.backend.torch.loss_ops import TorchLossOps
+# from ember_ml.backend.torch.linearalg import TorchLinearAlgOps
+# from ember_ml.backend.torch.stats import TorchStatsOps
+# from ember_ml.backend.torch.vector_ops import TorchVectorOps
 
 
 # Import specific functions from math_ops
@@ -90,13 +105,16 @@ from ember_ml.backend.torch.math_ops import (
     tan,
     sinh,
     cosh,
-    tanh,
-    sigmoid,
-    relu,
-    softmax,
-    clip,
-    var,
-    pi
+   clip,
+   var,
+   pi,
+   negative, # Added import
+   mod,      # Added import
+   floor_divide, # Added import
+   sort,     # Added import
+   gradient, # Added import
+   cumsum,   # Added import
+   eigh      # Added import
 )
 
 # Import specific functions from comparison_ops
@@ -108,9 +126,14 @@ from ember_ml.backend.torch.comparison_ops import (
     greater,
     greater_equal,
     logical_and,
-    logical_or,
-    logical_not,
-    logical_xor
+   logical_or,
+   logical_not,
+   logical_xor,
+   allclose, # Added import
+   isclose,  # Added import
+   all,      # Added import
+   where,    # Added import
+   isnan     # Added import
 )
 
 # Import specific functions from device_ops
@@ -145,7 +168,13 @@ from ember_ml.backend.torch.linearalg import (
 # Import specific functions from io_ops
 from ember_ml.backend.torch.io_ops import (
     save,
-    load
+   load
+)
+
+# Import specific functions from loss_ops (Added)
+from ember_ml.backend.torch.loss_ops import (
+   mean_squared_error, mean_absolute_error, binary_crossentropy, categorical_crossentropy,
+   sparse_categorical_crossentropy, huber_loss, log_cosh_loss
 )
 
 # Import specific functions from feature_ops
@@ -177,9 +206,29 @@ from ember_ml.backend.torch.vector_ops import (
     irfft,
     rfft2,
     irfft2,
-    rfftn,
-    irfftn
+  rfftn,
+  irfftn
+) # End of vector_ops import
+
+# Import specific functions from stats (Corrected path)
+from ember_ml.backend.torch.stats.descriptive import gaussian # Corrected import path after flattening
+# from ember_ml.backend.torch.stats import median, std, percentile # Example if importing from stats/__init__ later
+
+# Import functional tensor ops directly (Added)
+from ember_ml.backend.torch.tensor.ops import (
+   cast, zeros, ones, eye, zeros_like, ones_like, full, full_like, arange, linspace,
+   reshape, transpose, concatenate, stack, split, expand_dims, squeeze, tile, pad,
+   slice_tensor, slice_update, gather, tensor_scatter_nd_update, scatter,
+   to_numpy, item, shape, dtype, copy, var as tensor_var, sort as tensor_sort, argsort, maximum, # aliased var/sort to avoid name clash
+   random_normal, random_uniform, random_binomial, random_gamma, random_exponential,
+   random_poisson, random_categorical, random_permutation, shuffle, set_seed, get_seed
 )
+# Re-alias tensor ops that clash with math ops (if necessary, though adding to __all__ should be sufficient)
+# var = tensor_var # Example if direct aliasing is needed later
+# sort = tensor_sort # Example if direct aliasing is needed later
 
 # Set power function
 power = pow
+
+# Import activation functions (Added)
+from ember_ml.backend.torch.activations.ops import relu, sigmoid, tanh, softmax, softplus

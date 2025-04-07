@@ -5,7 +5,7 @@ This module provides MLX implementations of vector operations.
 """
 
 import mlx.core as mx
-from typing import Optional, Tuple, Sequence, List, Union, Any # Keep Any for now
+from typing import Optional, Tuple, List, Union, Any # Keep Any for now
 from ember_ml.backend.mlx.types import TensorLike, Shape, Axis, default_float # Remove unused default_int
 
 # We avoid creating global instances to prevent circular imports
@@ -710,96 +710,4 @@ def irfftn(input_array: TensorLike, output_shape: Optional[Shape] = None, axes: 
     return mx.fft.irfftn(a_tensor, s=output_shape, axes=axes)
 
 
-class MLXVectorOps: # Class methods updated to match module-level functions
-    """MLX implementation of vector operations."""
-
-    def normalize_vector(self, input_vector: TensorLike) -> mx.array:
-        """Normalize an input vector to unit length (L2 norm)."""
-        return normalize_vector(input_vector)
-
-    def euclidean_distance(self, vector1: TensorLike, vector2: TensorLike) -> mx.array:
-        """Compute the Euclidean (L2) distance between two vectors."""
-        return euclidean_distance(vector1, vector2)
-    
-    def cosine_similarity(self, vector1: TensorLike, vector2: TensorLike) -> mx.array:
-        """Compute the cosine similarity between two vectors."""
-        # Note: The module-level cosine_similarity had 'self' incorrectly, fixed here.
-        return cosine_similarity(vector1, vector2)
-    
-    def exponential_decay(self, initial_value: TensorLike, decay_rate: TensorLike, time_step: Optional[TensorLike] = None) -> mx.array:
-        """Compute exponential decay. Supports uniform or index-based time."""
-        return exponential_decay(initial_value, decay_rate, time_step)
-    
-    
-    def compute_energy_stability(self, input_wave: TensorLike, window_size: int = 100) -> mx.array:
-        """Compute the energy stability of a wave signal."""
-        return compute_energy_stability(input_wave, window_size)
-    
-    def compute_interference_strength(self, input_wave1: TensorLike, input_wave2: TensorLike) -> mx.array:
-        """Compute the interference strength between two wave signals."""
-        return compute_interference_strength(input_wave1, input_wave2)
-    
-    def compute_phase_coherence(self, input_wave1: TensorLike, input_wave2: TensorLike,
-                              freq_range: Optional[Tuple[float, float]] = None) -> mx.array:
-        """Compute the phase coherence between two wave signals."""
-        return compute_phase_coherence(input_wave1, input_wave2, freq_range)
-    
-    def partial_interference(self, input_wave1: TensorLike, input_wave2: TensorLike, window_size: int = 100) -> mx.array:
-        """Compute the partial interference between two wave signals over sliding windows."""
-        return partial_interference(input_wave1, input_wave2, window_size)
-    
-    def fft(self, input_array: TensorLike, output_length: Optional[int] = None, axis: int = -1) -> mx.array:
-        """Compute the one-dimensional discrete Fourier Transform."""
-        return fft(input_array, output_length, axis)
-    
-    def ifft(self, input_array: TensorLike, output_length: Optional[int] = None, axis: int = -1) -> mx.array:
-        """Compute the one-dimensional inverse discrete Fourier Transform."""
-        return ifft(input_array, output_length, axis)
-    
-    def fft2(self, input_array: TensorLike, output_shape: Optional[Shape] = None,
-            axes: Axis = (-2, -1)) -> mx.array:
-        """Compute the two-dimensional discrete Fourier Transform."""
-        return fft2(input_array, output_shape, axes)
-    
-    def ifft2(self, input_array: TensorLike, output_shape: Optional[Shape] = None,
-            axes: Axis = (-2, -1)) -> mx.array:
-        """Compute the two-dimensional inverse discrete Fourier Transform."""
-        return ifft2(input_array, output_shape, axes)
-    
-    def fftn(self, input_array: TensorLike, output_shape: Optional[Shape] = None,
-            axes: Axis = None) -> mx.array:
-        """Compute the N-dimensional discrete Fourier Transform."""
-        return fftn(input_array, output_shape, axes)
-    
-    def ifftn(self, input_array: TensorLike, output_shape: Optional[Shape] = None,
-            axes: Axis = None) -> mx.array:
-        """Compute the N-dimensional inverse discrete Fourier Transform."""
-        return ifftn(input_array, output_shape, axes)
-    
-    def rfft(self, input_array: TensorLike, output_length: Optional[int] = None, axis: int = -1) -> mx.array:
-        """Compute the one-dimensional discrete Fourier Transform for real input."""
-        return rfft(input_array, output_length, axis)
-    
-    def irfft(self, input_array: TensorLike, output_length: Optional[int] = None, axis: int = -1) -> mx.array:
-        """Compute the one-dimensional inverse discrete Fourier Transform for real input."""
-        return irfft(input_array, output_length, axis)
-    
-    def rfft2(self, input_array: TensorLike, output_shape: Optional[Shape] = None,
-            axes: Axis = (-2, -1)) -> mx.array:
-        """Compute the two-dimensional discrete Fourier Transform for real input."""
-        return rfft2(input_array, output_shape, axes)
-    
-    def irfft2(self, input_array: TensorLike, output_shape: Optional[Shape] = None,
-            axes: Axis = (-2, -1)) -> mx.array:
-        """Compute the two-dimensional inverse discrete Fourier Transform for real input."""
-        return irfft2(input_array, output_shape, axes)
-    
-    def rfftn(self, input_array: TensorLike, output_shape: Optional[Shape] = None,
-            axes: Axis = None) -> mx.array:
-        """Compute the N-dimensional discrete Fourier Transform for real input."""
-        return rfftn(input_array, output_shape, axes)
-    
-    def irfftn(self, input_array: TensorLike, output_shape: Optional[Shape] = None,
-            axes: Axis = None) -> mx.array:
-        """Compute the N-dimensional inverse discrete Fourier Transform for real input."""
-        return irfftn(input_array, output_shape, axes)
+# Removed MLXVectorOps class as it's redundant with standalone functions

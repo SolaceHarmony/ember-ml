@@ -10,10 +10,20 @@ import os
 import platform
 from pathlib import Path
 
-# Import tensor classes from all backends
-from ember_ml.backend.torch.tensor import TorchDType, TorchTensor
-from ember_ml.backend.numpy.tensor import NumpyDType, NumpyTensor
-from ember_ml.backend.mlx.tensor import MLXDType, MLXTensor
+# We'll use lazy imports for tensor classes to avoid circular dependencies
+# Initialize variables for lazy loading
+# TorchDType = None # Removed DType lazy load
+# NumpyDType = None # Removed DType lazy load
+# MLXDType = None # Removed DType lazy load
+
+# Removed get_torch_dtype() function
+
+
+# Removed get_numpy_dtype() function
+
+
+# Removed get_mlx_dtype() function
+
 
 # Available backends
 _BACKENDS = {
@@ -29,6 +39,7 @@ EMBER_BACKEND_FILE = EMBER_CONFIG_DIR / 'backend'
 # Current backend
 _CURRENT_BACKEND = None
 _CURRENT_BACKEND_MODULE = None
+# _backend_change_callbacks = [] # Removed Callback registry
 
 def _get_backend_from_file():
     """Get the backend from the .ember/backend file."""
@@ -64,26 +75,31 @@ def get_backend():
     set_backend(backend)
     return _CURRENT_BACKEND
 
+
 def set_backend(backend: str):
     """Set the current backend."""
     global _CURRENT_BACKEND, _CURRENT_BACKEND_MODULE
-    
+
     # Check if the backend is valid
     if backend not in _BACKENDS:
         raise ValueError(f"Invalid backend: {backend}. Available backends: {list(_BACKENDS.keys())}")
-    
-    # Set the current backend
+
+    # Set the current backend only if changed (to avoid redundant reloads/updates)
+    if backend == _CURRENT_BACKEND:
+        return
+
     _CURRENT_BACKEND = backend
-    
+
     # Save the backend to the .ember/backend file
     _save_backend_to_file(backend)
-    
+
     # Also store in environment variable for backward compatibility
     os.environ['EMBER_ML_BACKEND'] = backend
-    
-    # Clear the current backend module
+
+    # Clear the current backend module cache
     _CURRENT_BACKEND_MODULE = None
-    
+
+    # Reload ops module (Restored - was present before callback attempt)
     _reload_ops_module()
 
 def get_backend_module():
@@ -98,16 +114,13 @@ def get_backend_module():
         if backend in _BACKENDS:
             _CURRENT_BACKEND_MODULE = importlib.import_module(_BACKENDS[backend])
             
-            # Add tensor classes to the backend module
+            # Add tensor classes to the backend module using the getter functions
             if backend == 'numpy':
-                setattr(_CURRENT_BACKEND_MODULE, 'DType', NumpyDType)
-                setattr(_CURRENT_BACKEND_MODULE, 'Tensor', NumpyTensor)
+                pass # Placeholder after removing DType attachment
             elif backend == 'torch':
-                setattr(_CURRENT_BACKEND_MODULE, 'DType', TorchDType)
-                setattr(_CURRENT_BACKEND_MODULE, 'Tensor', TorchTensor)
+                pass # Placeholder after removing DType attachment
             elif backend == 'mlx':
-                setattr(_CURRENT_BACKEND_MODULE, 'DType', MLXDType)
-                setattr(_CURRENT_BACKEND_MODULE, 'Tensor', MLXTensor)
+                pass # Placeholder after removing DType attachment
         else:
             raise ValueError(f"Invalid backend: {backend}. Available backends: {list(_BACKENDS.keys())}")
     

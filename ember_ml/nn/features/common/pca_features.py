@@ -8,7 +8,9 @@ making it compatible with all backends (NumPy, PyTorch, MLX).
 from typing import Optional, Dict, Any, Union, Tuple
 from math import log
 
-from ember_ml import ops
+from ember_ml.nn import tensor
+from ember_ml import ops as ops
+from ember_ml.ops import stats
 from ember_ml.nn import tensor
 from ember_ml.ops.linearalg import svd
 def _svd_flip(u, v):
@@ -25,10 +27,11 @@ def _svd_flip(u, v):
         u_adjusted, v_adjusted: Adjusted singular vectors
     """
     # Columns of u, rows of v
-    max_abs_cols = ops.argmax(ops.abs(u), axis=0)
+    max_abs_cols = stats.argmax(ops.abs(u), axis=0) # Use ops.stats.argmax
     signs = ops.sign(tensor.gather(u, max_abs_cols, axis=0))
     u = ops.multiply(u, signs)
-    v = ops.multiply(v, signs[:, ops.newaxis])
+    # Reshape signs to (n_components, 1) for broadcasting with v (n_components, n_features)
+    v = ops.multiply(v, tensor.reshape(signs, (tensor.shape(signs)[0], 1)))
     return u, v
 
 
@@ -112,8 +115,8 @@ def _infer_dimensions(explained_variance, n_samples):
                 [[i]],
                 [ops.multiply(-0.5, ops.multiply(n_samples, ops.stats.sum(ops.log(explained_variance))))]
             )
-    
-    return ops.add(ops.argmax(ll), 1)
+
+    return ops.add(ops.stats.argmax(ll), 1) # Use ops.stats.argmax
 
 
 def _randomized_svd(
@@ -251,7 +254,7 @@ class PCA:
         
         # Center data
         if center:
-            self.mean_ = ops.mean(X_tensor, axis=0)
+            self.mean_ = stats.mean(X_tensor, axis=0) # Use ops.stats.mean
             X_centered = ops.subtract(X_tensor, self.mean_)
         else:
             self.mean_ = tensor.zeros((self.n_features_,))

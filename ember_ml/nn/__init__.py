@@ -35,20 +35,5 @@ from ember_ml.nn.modules.rnn import RNN, LSTM, GRU, RNNCell, LSTMCell, GRUCell, 
 from ember_ml.nn.modules.rnn import CfC, CfCCell, WiredCfCCell, StrideAwareWiredCfCCell, LTC, LTCCell, RNNCell
 
 __all__ = [
-    'Module',
-    'Parameter', 
-    'BaseModule',
-    'Sequential',
-    'NCP',
-    'AutoNCP',
-    # Use new NeuronMap names
-    'NeuronMap',
-    'FullyConnectedMap',
-    'RandomMap',
-    'NCPMap',
-    'TensorInterface',
-    'EmberTensor',
-    'LTCNeuronWithAttention',
-    'DopamineState',
-    'DopamineModulator',
+    # Intentionally empty - classes/functions should be imported from submodules
 ]

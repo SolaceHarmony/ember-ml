@@ -331,74 +331,6 @@ def clip(x: TensorLike,
     return torch.clamp(x_array, min=min_val, max=max_val)
 
 
-def sigmoid(x: TensorLike) -> torch.Tensor:
-    """
-    Compute sigmoid function on all elements.
-    
-    The sigmoid function is defined as:
-    sigmoid(x) = 1 / (1 + exp(-x))
-    
-    It transforms each element of input tensor to a value between 0 and 1.
-    
-    Args:
-        x: Input tensor
-        
-    Returns:
-        Tensor with sigmoid applied to each element
-    """
-    from ember_ml.backend.torch.tensor import TorchTensor
-    x_tensor = TorchTensor().convert_to_tensor(x)
-    x_safe = clip(x_tensor, -88.0, 88.0)  # Prevent overflow
-    return torch.sigmoid(x_safe)
-
-
-def softplus(x: TensorLike) -> torch.Tensor:
-    """
-    Compute the softplus of tensor elements element-wise.
-    
-    The softplus function is defined as log(1 + exp(x)).
-    
-    Args:
-        x: Input tensor
-        
-    Returns:
-        Tensor with softplus applied to each element
-    """
-    from ember_ml.backend.torch.tensor import TorchTensor
-    x_tensor = TorchTensor().convert_to_tensor(x)
-    x_safe = torch.clamp(x_tensor, min=-88.0, max=88.0)  # Prevent overflow
-    return torch.log(torch.add(torch.tensor(1.0), torch.exp(x_safe)))
-
-
-def tanh(x: TensorLike) -> torch.Tensor:
-    """
-    Compute hyperbolic tangent of all elements.
-    
-    Args:
-        x: Input tensor
-        
-    Returns:
-        Element-wise tanh
-    """
-    from ember_ml.backend.torch.tensor import TorchTensor
-    return torch.tanh(TorchTensor().convert_to_tensor(x))
-
-
-def relu(x: TensorLike) -> torch.Tensor:
-    """
-    Apply Rectified Linear Unit function element-wise.
-
-
-        
-    Args:
-        x: Input tensor
-        
-    Returns:
-        Tensor with ReLU applied to each element
-    """
-    from ember_ml.backend.torch.tensor import TorchTensor
-    return torch.relu(TorchTensor().convert_to_tensor(x))
-
 def abs(x: TensorLike) -> torch.Tensor:
     """
     Compute absolute value of tensor elements.
@@ -672,34 +604,7 @@ def max(x: TensorLike, axis: Optional[int] = None, keepdims: bool = False) -> to
         return torch.max(x_tensor)
     return torch.max(x_tensor, dim=axis, keepdim=keepdims).values
 
-def softmax(x: TensorLike, axis: int = -1) -> torch.Tensor:
-    """
-    Compute softmax values for the last dimension of the tensor.
-    
-    softmax(x) = exp(x_i) / sum(exp(x_j))
-    
-    Args:
-        x: Input tensor
-        axis: Dimension along which softmax will be computed (default: -1, the last dimension)
-        
-    Returns:
-        Tensor with softmax applied along the specified dimension
-    """
-    from ember_ml.backend.torch.tensor import TorchTensor
-    x_tensor = TorchTensor().convert_to_tensor(x)
-    
-    # For numerical stability, subtract the maximum value before taking the exponential
-    if x_tensor.dim() > 1:
-        max_vals = torch.max(x_tensor, dim=axis, keepdim=True).values
-        exp_vals = torch.exp(torch.subtract(x_tensor, max_vals))
-        sum_exp = torch.sum(exp_vals, dim=axis, keepdim=True)
-        return torch.div(exp_vals, sum_exp)
-    else:
-        # Handle 1D case
-        max_val = torch.max(x_tensor)
-        exp_vals = torch.exp(torch.subtract(x_tensor, max_val))
-        sum_exp = torch.sum(exp_vals)
-        return torch.div(exp_vals, sum_exp)
+# Removed softmax function definition
 
 
 def sort(x: TensorLike, axis: int = -1) -> torch.Tensor:
@@ -973,49 +878,61 @@ def _calculate_pi_value(precision_digits=15):
     Returns:
         Value of pi with the specified precision
     """
-    # Constants in the Chudnovsky algorithm
+    # Get the default device for the current backend inside the function
+    from ember_ml.backend.torch.device_ops import get_device # Use backend's get_device
+    device = get_device()
+
+    # Constants in the Chudnovsky algorithm (on the correct device)
     from ember_ml.backend.torch.tensor import TorchTensor
     tensor_ops = TorchTensor()
-    C = torch.tensor(640320)
-    C3_OVER_24 = torch.divide(torch.pow(C, 3), torch.tensor(24))
-    DIGITS_PER_TERM = torch.tensor(14.1816474627254776555)  # Approx. digits per iteration
-    
+    C = torch.tensor(640320, device=device)
+    C3_OVER_24 = torch.divide(torch.pow(C, 3), torch.tensor(24, device=device))
+    DIGITS_PER_TERM = torch.tensor(14.1816474627254776555, device=device)  # Approx. digits per iteration
+
     def binary_split(a, b):
         """Recursive binary split for the Chudnovsky algorithm."""
         from ember_ml.backend.torch.tensor import TorchTensor
+        # Ensure tensors created here are on the correct device
         inner_tensor = TorchTensor()
-        a_tensor = inner_tensor.convert_to_tensor(a)
-        b_tensor = inner_tensor.convert_to_tensor(b)
+        a_tensor = inner_tensor.convert_to_tensor(a) # convert_to_tensor handles device
+        b_tensor = inner_tensor.convert_to_tensor(b) # convert_to_tensor handles device
         diff = torch.subtract(b_tensor, a_tensor)
-        
-        if torch.equal(diff, torch.tensor(1)):
+
+        # Ensure comparisons happen on the same device
+        one_tensor = torch.tensor(1, device=device)
+        zero_tensor = torch.tensor(0, device=device)
+        two_tensor = torch.tensor(2, device=device)
+        five_tensor = torch.tensor(5, device=device)
+        six_tensor = torch.tensor(6, device=device)
+        base_term_tensor = torch.tensor(13591409, device=device)
+        multiplier_tensor = torch.tensor(545140134, device=device)
+
+        if torch.equal(diff, one_tensor):
             # Base case
-            if torch.equal(a_tensor, torch.tensor(0)):
-                Pab = torch.tensor(1)
-                Qab = torch.tensor(1)
+            if torch.equal(a_tensor, zero_tensor):
+                Pab = torch.tensor(1, device=device)
+                Qab = torch.tensor(1, device=device)
             else:
-                term1 = torch.subtract(torch.multiply(torch.tensor(6), a_tensor), torch.tensor(5))
-                term2 = torch.subtract(torch.multiply(torch.tensor(2), a_tensor), torch.tensor(1))
-                term3 = torch.subtract(torch.multiply(torch.tensor(6), a_tensor), torch.tensor(1))
+                term1 = torch.subtract(torch.multiply(six_tensor, a_tensor), five_tensor)
+                term2 = torch.subtract(torch.multiply(two_tensor, a_tensor), one_tensor)
+                term3 = torch.subtract(torch.multiply(six_tensor, a_tensor), one_tensor)
                 Pab = torch.multiply(torch.multiply(term1, term2), term3)
-                Qab = torch.multiply(torch.pow(a_tensor, 3), C3_OVER_24)
-            
-            base_term = torch.tensor(13591409)
-            multiplier = torch.tensor(545140134)
-            term = torch.add(base_term, torch.multiply(multiplier, a_tensor))
+                Qab = torch.multiply(torch.pow(a_tensor, 3), C3_OVER_24) # C3_OVER_24 is already on device
+
+            term = torch.add(base_term_tensor, torch.multiply(multiplier_tensor, a_tensor))
             Tab = torch.multiply(Pab, term)
-            
+
             # Check if a is odd using remainder comparison
-            remainder = torch.remainder(a_tensor, torch.tensor(2))
-            is_odd = torch.eq(remainder, torch.tensor(1))
-            
+            remainder = torch.remainder(a_tensor, two_tensor)
+            is_odd = torch.eq(remainder, one_tensor)
+
             # If a is odd, negate Tab
             Tab = torch.where(is_odd, torch.negative(Tab), Tab)
-            
+
             return Pab, Qab, Tab
         
         # Recursive case
-        m = torch.divide(torch.add(a_tensor, b_tensor), torch.tensor(2))
+        m = torch.divide(torch.add(a_tensor, b_tensor), two_tensor) # Use two_tensor
         m = torch.floor(m)  # Ensure m is an integer
         
         Pam, Qam, Tam = binary_split(a, m)
@@ -1031,17 +948,17 @@ def _calculate_pi_value(precision_digits=15):
     
     # Number of terms needed for the desired precision
     precision_tensor = tensor_ops.convert_to_tensor(precision_digits)
-    terms_float = torch.divide(precision_tensor, DIGITS_PER_TERM)
-    terms_float = torch.add(terms_float, torch.tensor(1))
+    terms_float = torch.divide(precision_tensor, DIGITS_PER_TERM) # DIGITS_PER_TERM is already on device
+    terms_float = torch.add(terms_float, torch.tensor(1, device=device)) # Use device
     terms = torch.floor(terms_float)  # Convert to integer
     terms_int = terms.to(torch.int32)  # Convert to int32 using PyTorch's to() method
     
     # Compute the binary split
     P, Q, T = binary_split(0, terms_int)
     
-    # Calculate pi
-    sqrt_10005 = torch.sqrt(torch.tensor(10005))
-    numerator = torch.multiply(Q, torch.tensor(426880))
+    # Calculate pi (ensure constants are on the correct device)
+    sqrt_10005 = torch.sqrt(torch.tensor(10005, device=device))
+    numerator = torch.multiply(Q, torch.tensor(426880, device=device))
     numerator = torch.multiply(numerator, sqrt_10005)
     pi_approx = torch.divide(numerator, T)
     
@@ -1106,199 +1023,4 @@ def binary_split(a: TensorLike, b: TensorLike) -> Tuple[torch.Tensor, torch.Tens
         
         return Pab, Qab
 
-class TorchMathOps:
-    """PyTorch implementation of math operations."""
-    
-    def gather(self, x, indices, axis=0):
-        """Gather slices from tensor according to indices."""
-        return gather(x, indices, axis)
-        
-    def add(self, x, y):
-        """Add two tensors element-wise."""
-        return add(x, y)
-        
-    def subtract(self, x, y):
-        """Subtract two tensors element-wise."""
-        return subtract(x, y)
-        
-    def multiply(self, x, y):
-        """Multiply two tensors element-wise."""
-        return multiply(x, y)
-        
-    def divide(self, x, y):
-        """Divide two tensors element-wise."""
-        return divide(x, y)
-        
-    def dot(self, x, y):
-        """Compute the dot product of two tensors."""
-        return dot(x, y)
-        
-    def matmul(self, x, y):
-        """Compute the matrix product of two tensors."""
-        return matmul(x, y)
-        
-    def mean(self, x, axis=None, keepdims=False):
-        """Compute the mean of a tensor along specified axes."""
-        return mean(x, axis=axis, keepdims=keepdims)
-        
-    def sum(self, x, axis=None, keepdims=False):
-        """Compute the sum of a tensor along specified axes."""
-        # Correct implementation using torch.sum and handling keepdims
-        from ember_ml.backend.torch.tensor import TorchTensor # Import needed here
-        x_tensor = TorchTensor().convert_to_tensor(x)
-        
-        if axis is None:
-            # torch.sum doesn't accept keepdim when axis is None
-            result = torch.sum(x_tensor)
-            if keepdims:
-                # Manually reshape to keep dimensions if keepdims=True
-                target_shape = (1,) * x_tensor.ndim
-                return result.reshape(target_shape)
-            else:
-                return result
-        elif isinstance(axis, tuple):
-            # Handle tuple axis by summing iteratively
-            result = x_tensor
-            for dim in sorted(axis, reverse=True):
-                result = torch.sum(result, dim=dim, keepdim=keepdims)
-            return result
-        else:
-            # Handle single axis
-            return torch.sum(x_tensor, dim=axis, keepdim=keepdims)
-        
-    def var(self, x, axis=None, keepdims=False):
-        """Compute the variance of a tensor along specified axes."""
-        return var(x, axis=axis, keepdims=keepdims)
-        
-    def exp(self, x):
-        """Compute the exponential of a tensor element-wise."""
-        return exp(x)
-        
-    def log(self, x):
-        """Compute the natural logarithm of a tensor element-wise."""
-        return log(x)
-        
-    def pow(self, x, y):
-        """Compute x raised to the power of y element-wise."""
-        return pow(x, y)
-        
-    def sqrt(self, x):
-        """Compute the square root of a tensor element-wise."""
-        return sqrt(x)
-        
-    def clip(self, x, min_val, max_val):
-        """Clip the values of a tensor to a specified range."""
-        return clip(x, min_val, max_val)
-        
-    def sigmoid(self, x):
-        """Compute the sigmoid of a tensor element-wise."""
-        return sigmoid(x)
-        
-    def softplus(self, x):
-        """Compute the softplus of a tensor element-wise."""
-        return softplus(x)
-        
-    def tanh(self, x):
-        """Compute the hyperbolic tangent of a tensor element-wise."""
-        return tanh(x)
-        
-    def relu(self, x):
-        """Compute the rectified linear unit of a tensor element-wise."""
-        return relu(x)
-        
-    def abs(self, x):
-        """Compute the absolute value of a tensor element-wise."""
-        return abs(x)
-        
-    def negative(self, x):
-        """Compute the negative of a tensor element-wise."""
-        return negative(x)
-        
-    def square(self, x):
-        """Compute the square of a tensor element-wise."""
-        return square(x)
-        
-    def min(self, x, axis=None, keepdims=False):
-        """Compute the minimum value of a tensor along specified axes."""
-        return min(x, axis=axis, keepdims=keepdims)
-        
-    def max(self, x, axis=None, keepdims=False):
-        """Compute the maximum value of a tensor along specified axes."""
-        return max(x, axis=axis, keepdims=keepdims)
-        
-    def softmax(self, x, axis=-1):
-        """Compute the softmax of a tensor along a specified axis."""
-        return softmax(x, axis=axis)
-        
-    def sin(self, x):
-        """Compute the sine of a tensor element-wise."""
-        return sin(x)
-        
-    def cos(self, x):
-        """Compute the cosine of a tensor element-wise."""
-        return cos(x)
-        
-    def tan(self, x):
-        """Compute the tangent of a tensor element-wise."""
-        return tan(x)
-        
-    def sinh(self, x):
-        """Compute the hyperbolic sine of a tensor element-wise."""
-        return sinh(x)
-        
-    def cosh(self, x):
-        """Compute the hyperbolic cosine of a tensor element-wise."""
-        return cosh(x)
-        
-    def sign(self, x):
-        """Compute the sign of a tensor element-wise."""
-        return sign(x)
-        
-    def argmax(self, x, axis=None, keepdims=False):
-        """Return the indices of the maximum values along the specified axis."""
-        return argmax(x, axis=axis, keepdims=keepdims)
-        
-    def log10(self, x):
-        """Compute the base-10 logarithm of a tensor element-wise."""
-        return log10(x)
-        
-    def log2(self, x):
-        """Compute the base-2 logarithm of a tensor element-wise."""
-        return log2(x)
-        
-    def mod(self, x, y):
-        """Compute the remainder of division of x by y element-wise."""
-        return mod(x, y)
-        
-    def floor_divide(self, x, y):
-        """Element-wise integer division."""
-        return floor_divide(x, y)
-        
-    def sort(self, x, axis=-1):
-        """Sort an array along a specified axis."""
-        return sort(x, axis=axis)
-        
-    def gradient(self, f, *varargs, axis=None, edge_order=1):
-        """Return the gradient of an N-dimensional array."""
-        if edge_order not in (1, 2):
-            raise ValueError("edge_order must be 1 or 2")
-        return gradient(f, *varargs, axis=axis, edge_order=edge_order)
-        
-    def cumsum(self, x, axis=None):
-        """Compute the cumulative sum of a tensor along a specified axis."""
-        return cumsum(x, axis=axis)
-        
-    def eigh(self, a):
-        """Compute the eigenvalues and eigenvectors of a Hermitian or symmetric matrix."""
-        return eigh(a)
-
-    def binary_split(self, a, b):
-        """Recursive binary split for the Chudnovsky algorithm."""
-        return binary_split(a, b)
-    
-    @property
-    def pi(self):
-        """Return the value of pi."""
-        return torch.tensor([PI_CONSTANT], dtype=torch.float32)
-
-
+# Removed TorchMathOps class as it's redundant with standalone functions

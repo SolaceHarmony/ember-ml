@@ -1,117 +1,35 @@
 """
 Device operations interface.
-
-This module defines the abstract interface for device operations.
 """
 
-from abc import ABC, abstractmethod
-from typing import Any, Optional, List
+import abc
+from typing import Any, Optional
 
-class DeviceOps(ABC):
-    """Abstract interface for device operations."""
-    
-    @abstractmethod
-    def to_device(self, x: Any, device: str) -> Any:
+class DeviceOps(abc.ABC):
+    """Abstract base class for backend-specific device operations."""
+
+    @abc.abstractmethod
+    def get_device(self, tensor: Optional[Any] = None) -> str:
         """
-        Move a tensor to the specified device.
-        
+        Get the current default device or the device of a given tensor.
+
         Args:
-            x: Input tensor
-            device: Target device
-            
+            tensor: Optional tensor to get the device from.
+
         Returns:
-            Tensor on the target device
-        """
-        pass
-    
-    @abstractmethod
-    def get_device(self, x: Any) -> str:
-        """
-        Get the device of a tensor.
-        
-        Args:
-            x: Input tensor
-            
-        Returns:
-            Device of the tensor
-        """
-        pass
-    
-    @abstractmethod
-    def set_default_device(self, device: str) -> None:
-        """
-        Set the default device for tensor operations.
-        
-        Args:
-            device: Default device
-        """
-        pass
-    
-    @abstractmethod
-    def get_default_device(self) -> str:
-        """
-        Get the default device for tensor operations.
-        
-        Returns:
-            Default device
-        """
-        pass
-    
-    @abstractmethod
-    def synchronize(self, device: Optional[str] = None) -> None:
-        """
-        Synchronize the specified device.
-        
-        Args:
-            device: Device to synchronize (default: current device)
-        """
-        pass
-    
-    @abstractmethod
-    def is_available(self, device_type: str) -> bool:
-        """
-        Check if a device type is available.
-        
-        Args:
-            device_type: Device type to check
-            
-        Returns:
-            True if the device type is available, False otherwise
-        """
-        pass
-    
-    @abstractmethod
-    def memory_info(self, device: Optional[str] = None) -> dict:
-        """
-        Get memory information for the specified device.
-        
-        Args:
-            device: Device to get memory information for (default: current device)
-            
-        Returns:
-            Dictionary containing memory information
+            Device name as a string (e.g., 'cpu', 'cuda', 'mps').
         """
         pass
 
-    @abstractmethod
-    def memory_usage(self, device: Optional[str] = None) -> dict:
+    @abc.abstractmethod
+    def set_device(self, device: Any) -> None:
         """
-        Get memory usage statistics for the specified device.
-        
-        Args:
-            device: Device to get memory usage for (default: current device)
-            
-        Returns:
-            Dictionary containing memory usage statistics
-        """
-        pass
+        Set the current default device for the backend.
 
-    @abstractmethod
-    def get_available_devices(self) -> List[str]:
-        """
-        Get list of available devices.
-        
-        Returns:
-            List of available device names
+        Args:
+            device: Device name as a string or a backend-specific device object.
+
+        Raises:
+            ValueError: If the device is not valid for the current backend.
         """
         pass
