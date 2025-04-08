@@ -282,17 +282,21 @@ gru = GRU(
     batch_first=True
 )
 
-# Create an LTC (Liquid Time-Constant) network
+# Create a NeuronMap (e.g., FullyConnectedMap)
+from ember_ml.nn.modules.wiring import FullyConnectedMap
+neuron_map_ltc = FullyConnectedMap(units=20, input_dim=10, output_dim=20)
+# Create an LTC (Liquid Time-Constant) network using the map
 ltc = LTC(
-    input_size=10,
-    hidden_size=20,
+    neuron_map=neuron_map_ltc,
     batch_first=True
 )
 
-# Create a CFC (Closed-form Continuous-time) network
+# Create a CfC Cell first
+from ember_ml.nn.modules.rnn import CfCCell
+cell_cfc = CfCCell(input_size=10, hidden_size=20)
+# Create a CFC (Closed-form Continuous-time) network using the cell
 cfc = CFC(
-    input_size=10,
-    hidden_size=20,
+    cell_or_map=cell_cfc,
     batch_first=True
 )
 
@@ -306,22 +310,24 @@ output = lstm(input_sequence)  # Shape: (32, 10, 20) if return_sequences=True, e
 Ember ML provides Neural Circuit Policy (NCP) implementations:
 
 ```python
-from ember_ml.nn.wirings import AutoNCP
+# Import the appropriate NeuronMap (e.g., NCPMap)
+from ember_ml.nn.modules.wiring import NCPMap
 from ember_ml.nn.modules.ncp import NCP
 
-# Create a wiring configuration
-wiring = AutoNCP(
-    units=64,
-    output_size=4,
-    sparsity_level=0.5
+# Create a neuron map configuration
+neuron_map_ncp = NCPMap(
+    inter_neurons=30, # Example values
+    command_neurons=24,
+    motor_neurons=4,
+    sensory_neurons=10 # Must match input features
 )
 
 # Create an NCP
-model = NCP(wiring=wiring)
+model = NCP(neuron_map=neuron_map_ncp) # Use neuron_map argument
 
 # Forward pass
-input_tensor = EmberTensor.random_normal((32, 10))  # Batch of 32 samples with 10 features
-output = model(input_tensor)  # Shape: (32, 4)
+input_tensor = EmberTensor.random_normal((32, 10)) # Batch of 32 samples, input features determined by build
+output = model(input_tensor)  # Shape: (32, 4) (matches output_size)
 ```
 
 ### Restricted Boltzmann Machines
@@ -374,15 +380,17 @@ class CustomModule(Module):
         self.b2 = EmberTensor.zeros((output_size,))
         
     def forward(self, x):
-        # First layer
-        h = ops.matmul(x, self.W1) + self.b1
-        h = ops.relu(h)
+        # First layer (use ops.add)
+        z1 = ops.matmul(x, self.W1)
+        h = ops.add(z1, self.b1)
+        h_act = ops.relu(h) # Assuming relu is available via ops
+
+        # Second layer (use ops.add)
+        z2 = ops.matmul(h_act, self.W2)
+        y = ops.add(z2, self.b2)
+        y_act = ops.sigmoid(y) # Assuming sigmoid is available via ops
         
-        # Second layer
-        y = ops.matmul(h, self.W2) + self.b2
-        y = ops.sigmoid(y)
-        
-        return y
+        return y_act
 ```
 
 ### Backend-Specific Optimizations
@@ -417,13 +425,13 @@ from ember_ml.nn.tensor import EmberTensor
 a = EmberTensor.random_normal((1000, 1000))
 
 # Use in-place operations where possible
-a += 1  # In-place addition
+a = ops.add(a, 1) # Use ops.add for operations
 
 # Reuse tensors instead of creating new ones
 b = EmberTensor.zeros_like(a)
 for i in range(10):
     # Update b in-place instead of creating a new tensor
-    b += a
+    b = ops.add(b, a) # Use ops.add
 
 # Release tensors when they're no longer needed
 del a
@@ -458,11 +466,11 @@ Currently, these operations need to be performed using the ops module:
 ```python
 from ember_ml import ops
 
-# Arithmetic operations
-c = ops.add(EmberTensor([1, 2]), EmberTensor([2, 3]))  # [3, 5]
-c = ops.subtract(EmberTensor([5, 6]), EmberTensor([2, 3]))  # [3, 3]
-c = ops.multiply(EmberTensor([1, 2]), EmberTensor([2, 3]))  # [2, 6]
-c = ops.divide(EmberTensor([4, 6]), EmberTensor([2, 3]))  # [2, 2]
+# Arithmetic operations (Examples already correctly use ops)
+c = ops.add(EmberTensor([1, 2]), EmberTensor([2, 3]))
+c = ops.subtract(EmberTensor([5, 6]), EmberTensor([2, 3]))
+c = ops.multiply(EmberTensor([1, 2]), EmberTensor([2, 3]))
+c = ops.divide(EmberTensor([4, 6]), EmberTensor([2, 3]))
 ```
 
 ### Static Methods

@@ -71,6 +71,7 @@ class AutoNCP(NCP):
         # Create the wiring
         wiring = NCPMap( # Use renamed NCPMap
             inter_neurons=inter_neurons,
+            command_neurons=command_neurons, # Pass calculated command_neurons
             motor_neurons=output_size,
             sensory_neurons=0,  # No sensory neurons in AutoNCP
             sparsity_level=sparsity_level,

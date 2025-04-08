@@ -26,7 +26,9 @@ cell = RNNCell(input_size=10, hidden_size=20, activation='tanh')
 # Forward pass (single time step)
 x_t = tensor.random_normal((32, 10))  # Batch of 32 with 10 features
 h_prev = tensor.random_normal((32, 20))  # Previous hidden state
-h_next = cell(x_t, h_prev)  # Next hidden state
+# cell returns (output, new_state), where new_state=[h_next]
+output, new_state = cell(x_t, [h_prev])
+h_next = output # Output is the new hidden state
 ```
 
 ### RNN
@@ -42,7 +44,12 @@ rnn_layer = RNN(input_size=10, hidden_size=20, activation='tanh')
 
 # Forward pass (sequence)
 x = tensor.random_normal((32, 5, 10))  # Batch of 32 sequences of length 5 with 10 features each
-y, h = rnn_layer(x)  # y: (32, 5, 20), h: (32, 20)
+# Layer returns outputs by default. Set return_state=True to get final state.
+# y, [h] = rnn_layer(x, return_state=True)
+# If return_sequences=True (default for RNN layer? Check impl): y shape=(32, 5, 20)
+# If return_sequences=False: y shape=(32, 20)
+# Final state h shape=(num_layers*num_directions, 32, 20) -> (1, 32, 20) for default
+y = rnn_layer(x) # Example without state return
 ```
 
 ## LSTM Modules
@@ -62,7 +69,10 @@ cell = LSTMCell(input_size=10, hidden_size=20)
 x_t = tensor.random_normal((32, 10))  # Batch of 32 with 10 features
 h_prev = tensor.random_normal((32, 20))  # Previous hidden state
 c_prev = tensor.random_normal((32, 20))  # Previous cell state
-h_next, c_next = cell(x_t, (h_prev, c_prev))  # Next hidden and cell states
+# cell returns (output, new_state), where new_state=[h_next, c_next]
+output, new_state = cell(x_t, [h_prev, c_prev])
+h_next = output
+c_next = new_state[1]
 ```
 
 ### LSTM
@@ -78,7 +88,13 @@ lstm_layer = LSTM(input_size=10, hidden_size=20)
 
 # Forward pass (sequence)
 x = tensor.random_normal((32, 5, 10))  # Batch of 32 sequences of length 5 with 10 features each
-y, (h, c) = lstm_layer(x)  # y: (32, 5, 20), h: (32, 20), c: (32, 20)
+# Layer returns outputs by default. Set return_state=True to get final state.
+# y, (h, c) = lstm_layer(x, return_state=True)
+# If return_sequences=True (default): y shape=(32, 5, 20)
+# If return_sequences=False: y shape=(32, 20)
+# Final state h shape=(num_layers*num_directions, 32, 20) -> (1, 32, 20) for default
+# Final state c shape=(num_layers*num_directions, 32, 20) -> (1, 32, 20) for default
+y = lstm_layer(x) # Example without state return
 ```
 
 ## GRU Modules
@@ -97,7 +113,9 @@ cell = GRUCell(input_size=10, hidden_size=20)
 # Forward pass (single time step)
 x_t = tensor.random_normal((32, 10))  # Batch of 32 with 10 features
 h_prev = tensor.random_normal((32, 20))  # Previous hidden state
-h_next = cell(x_t, h_prev)  # Next hidden state
+# cell returns (output, new_state), where new_state=[h_next]
+output, new_state = cell(x_t, [h_prev])
+h_next = output
 ```
 
 ### GRU
@@ -113,7 +131,12 @@ gru_layer = GRU(input_size=10, hidden_size=20)
 
 # Forward pass (sequence)
 x = tensor.random_normal((32, 5, 10))  # Batch of 32 sequences of length 5 with 10 features each
-y, h = gru_layer(x)  # y: (32, 5, 20), h: (32, 20)
+# Layer returns outputs by default. Set return_state=True to get final state.
+# y, [h] = gru_layer(x, return_state=True)
+# If return_sequences=True (default): y shape=(32, 5, 20)
+# If return_sequences=False: y shape=(32, 20)
+# Final state h shape=(num_layers*num_directions, 32, 20) -> (1, 32, 20) for default
+y = gru_layer(x) # Example without state return
 ```
 
 ## Closed-form Continuous-time (CfC) Modules
@@ -134,7 +157,10 @@ cell = CfCCell(input_size=10, hidden_size=20)
 # Forward pass (single time step)
 x_t = tensor.random_normal((32, 10))  # Batch of 32 with 10 features
 h_prev = tensor.random_normal((32, 20))  # Previous hidden state
-h_next = cell(x_t, h_prev)  # Next hidden state
+# cell returns (output, new_state), where new_state=[h_next, t_next]
+output, new_state = cell(x_t, [h_prev, tensor.zeros_like(h_prev)]) # Requires initial time state
+h_next = output
+t_next = new_state[1]
 ```
 
 ### CfC
@@ -145,12 +171,18 @@ h_next = cell(x_t, h_prev)  # Next hidden state
 from ember_ml.nn.modules.rnn import CfC
 from ember_ml.nn import tensor
 
-# Create a CfC layer
-cfc_layer = CfC(input_size=10, hidden_size=20)
+# Create a CfC layer by passing a pre-configured cell
+cell = CfCCell(input_size=10, hidden_size=20)
+cfc_layer = CfC(cell_or_map=cell)
 
 # Forward pass (sequence)
 x = tensor.random_normal((32, 5, 10))  # Batch of 32 sequences of length 5 with 10 features each
-y, h = cfc_layer(x)  # y: (32, 5, 20), h: (32, 20)
+# Layer returns outputs by default. Set return_state=True to get final state.
+# y, [h, t] = cfc_layer(x, return_state=True)
+# If return_sequences=False (default): y shape=(32, 20)
+# If return_sequences=True: y shape=(32, 5, 20)
+# Final state h shape=(32, 20), t shape=(32, 20)
+y = cfc_layer(x) # Example without state return
 ```
 
 ### WiredCfCCell
@@ -180,7 +212,10 @@ wired_cfc_cell = WiredCfCCell(
 # Forward pass (single time step)
 x_t = tensor.random_normal((32, 10))  # Batch of 32 with 10 features
 h_prev = tensor.random_normal((32, 20))  # Previous hidden state
-h_next = wired_cfc_cell(x_t, h_prev)  # Next hidden state
+# cell returns (output, new_state), structure depends on specific WiredCfCCell implementation
+# Assuming standard CfC state [h_next, t_next] for this example
+output, new_state = wired_cfc_cell(x_t, [h_prev, tensor.zeros_like(h_prev)])
+h_next = output
 ```
 
 ## Liquid Time-Constant (LTC) Modules
@@ -214,7 +249,9 @@ ltc_cell = LTCCell(
 # Forward pass (single time step)
 x_t = tensor.random_normal((32, 10))  # Batch of 32 with 10 features
 h_prev = tensor.random_normal((32, 20))  # Previous hidden state
-h_next = ltc_cell(x_t, h_prev)  # Next hidden state
+# cell returns (output, new_state), where new_state is h_next for LTC
+output, new_state = ltc_cell(x_t, h_prev)
+h_next = output
 ```
 
 ### LTC
@@ -225,16 +262,21 @@ h_next = ltc_cell(x_t, h_prev)  # Next hidden state
 from ember_ml.nn.modules.rnn import LTC
 from ember_ml.nn import tensor
 
-# Create an LTC layer
-ltc_layer = LTC(
-    input_size=10,
-    hidden_size=20,
-    neuron_map='auto'  # Automatically create a neuron map
-)
+# Create a NeuronMap (e.g., FullyConnectedMap)
+from ember_ml.nn.modules.wiring import FullyConnectedMap
+neuron_map = FullyConnectedMap(units=20, input_dim=10, output_dim=20)
+
+# Create an LTC layer by passing the NeuronMap
+ltc_layer = LTC(neuron_map=neuron_map)
 
 # Forward pass (sequence)
 x = tensor.random_normal((32, 5, 10))  # Batch of 32 sequences of length 5 with 10 features each
-y, h = ltc_layer(x)  # y: (32, 5, 20), h: (32, 20)
+# Layer returns outputs by default. Set return_state=True to get final state.
+# y, h = ltc_layer(x, return_state=True)
+# If return_sequences=True (default): y shape=(32, 5, 20)
+# If return_sequences=False: y shape=(32, 20)
+# Final state h shape=(32, 20)
+y = ltc_layer(x) # Example without state return
 ```
 
 ## Stride-Aware Modules
@@ -257,16 +299,22 @@ Stride-aware modules are specialized for processing temporal data with variable 
 from ember_ml.nn.modules.rnn import StrideAwareCfC
 from ember_ml.nn import tensor
 
-# Create a StrideAwareCfC
+# Create a NeuronMap (assuming FullyConnected for this example)
+# The StrideAwareCfC layer likely expects a NeuronMap or a pre-configured stride-aware cell
+from ember_ml.nn.modules.wiring import FullyConnectedMap
+neuron_map = FullyConnectedMap(units=20, input_dim=10, output_dim=20)
+
+# Create a StrideAwareCfC layer (Verify exact init signature if different)
 stride_cfc = StrideAwareCfC(
-    input_size=10,
-    hidden_size=20,
+    neuron_map_or_cell=neuron_map, # Example assuming it takes a map
     stride_lengths=[1, 2, 4]
 )
 
 # Forward pass
 x = tensor.random_normal((32, 5, 10))  # Batch of 32 sequences of length 5 with 10 features each
-y, h = stride_cfc(x)  # y: (32, 5, 20), h: (32, 20)
+# Layer returns outputs by default. Check implementation for state return details.
+# y, h = stride_cfc(x, return_state=True)
+y = stride_cfc(x)
 ```
 
 ### StrideAwareWiredCfCCell
@@ -297,7 +345,10 @@ stride_wired_cfc_cell = StrideAwareWiredCfCCell(
 # Forward pass (single time step)
 x_t = tensor.random_normal((32, 10))  # Batch of 32 with 10 features
 h_prev = tensor.random_normal((32, 20))  # Previous hidden state
-h_next = stride_wired_cfc_cell(x_t, h_prev)  # Next hidden state
+# cell returns (output, new_state), structure depends on implementation
+# Assuming CfC state [h_next, t_next] for example
+output, new_state = stride_wired_cfc_cell(x_t, [h_prev, tensor.zeros_like(h_prev)])
+h_next = output
 ```
 
 ## Advanced Usage
@@ -311,14 +362,18 @@ from ember_ml.nn.modules.rnn import CfC
 from ember_ml.nn import tensor
 
 # Create a CfC layer
-cfc_layer = CfC(input_size=10, hidden_size=20)
+cell = CfCCell(input_size=10, hidden_size=20)
+cfc_layer = CfC(cell_or_map=cell)
 
 # Create input sequence and time deltas
 x = tensor.random_normal((32, 5, 10))  # Batch of 32 sequences of length 5 with 10 features each
 time_deltas = tensor.random_uniform((32, 5, 1), minval=0.1, maxval=1.0)  # Time deltas between inputs
 
 # Forward pass with time deltas
-y, h = cfc_layer(x, time_deltas=time_deltas)
+# Assuming return_sequences=False, return_state=False by default
+y = cfc_layer(x, time_deltas=time_deltas)
+# Or to get state:
+# y, [h, t] = cfc_layer(x, time_deltas=time_deltas, return_state=True)
 ```
 
 ### Multi-Scale Time Series Processing
@@ -329,12 +384,14 @@ Stride-aware modules can process time series at multiple scales simultaneously:
 from ember_ml.nn.modules.rnn import StrideAwareCfC
 from ember_ml.nn import tensor
 
+# Create a NeuronMap first
+from ember_ml.nn.modules.wiring import FullyConnectedMap
+neuron_map = FullyConnectedMap(units=20, input_dim=10, output_dim=20)
 # Create a StrideAwareCfC with multiple stride lengths
 stride_cfc = StrideAwareCfC(
-    input_size=10,
-    hidden_size=20,
+    neuron_map_or_cell=neuron_map, # Example assuming it takes a map
     stride_lengths=[1, 2, 4, 8],
-    backbone_units=32,
+    backbone_units=32, # Note: Check if backbone args are valid when passing map
     backbone_layers=2
 )
 
@@ -342,7 +399,10 @@ stride_cfc = StrideAwareCfC(
 x = tensor.random_normal((32, 100, 10))  # Batch of 32 sequences of length 100 with 10 features each
 
 # Forward pass
-y, h = stride_cfc(x)
+# Assuming return_sequences=False, return_state=False by default
+y = stride_cfc(x)
+# Or to get state:
+# y, h = stride_cfc(x, return_state=True) # Check state structure
 
 # Each stride processes the sequence at a different time scale:
 # - Stride 1: Processes every time step

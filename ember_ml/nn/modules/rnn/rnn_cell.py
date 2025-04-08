@@ -12,6 +12,7 @@ from ember_ml.nn.initializers import glorot_uniform, orthogonal # Updated initia
 from ember_ml.nn.modules import Parameter # Module removed
 from ember_ml.nn.modules.module_cell import ModuleCell # Import ModuleCell
 from ember_ml.nn import tensor
+from ember_ml.nn.modules.activations import get_activation # Import the helper
 
 class RNNCell(ModuleCell): # Inherit from ModuleCell
     """
@@ -104,15 +105,9 @@ class RNNCell(ModuleCell): # Inherit from ModuleCell
         # Compute new hidden state
         h_new = ops.add(x, h)
         
-        # Apply activation function
-        if self.activation == "tanh":
-            h_new = ops.tanh(h_new)
-        elif self.activation == "relu":
-            h_new = ops.relu(h_new)
-        elif self.activation == "sigmoid":
-            h_new = ops.sigmoid(h_new)
-        else:
-            h_new = getattr(ops, self.activation)(h_new)
+        # Apply activation function dynamically
+        activation_fn = get_activation(self.activation) # Lookup happens here
+        h_new = activation_fn(h_new)
         
         return h_new, [h_new]
     

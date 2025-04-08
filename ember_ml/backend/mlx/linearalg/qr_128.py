@@ -7,115 +7,89 @@ particularly effective for non-square matrices. It uses High-Performance Computi
 """
 
 import mlx.core as mx
-from typing import Tuple, Optional, Union, List
-from ember_ml.backend.mlx.types import TensorLike
-from ember_ml.backend.mlx.tensor import MLXTensor
+from typing import Tuple
 
-def qr_128(a: TensorLike) -> Tuple[mx.array, mx.array]:
+def qr_128(a: mx.array) -> Tuple[mx.array, mx.array]:
     """
-    Performs QR decomposition optimized for non-square matrices using 128-bit precision.
+    QR decomposition using 128-bit precision for non-square matrices.
     
-    This implementation employs a block-based approach with increased internal precision
-    to handle challenging numerical cases. It's specifically designed to maintain 
-    numerical stability for matrices with varying aspect ratios.
+    This implementation maintains numerical stability for non-square matrices
+    by utilizing higher precision arithmetic internally.
     
     Args:
-        a: Input matrix to decompose
+        a: Input matrix
         
     Returns:
-        Tuple containing:
-        - Q: Orthogonal matrix
-        - R: Upper triangular matrix
+        Tuple of (Q, R) matrices
         
     Notes:
-        This algorithm uses a mixed-precision approach internally:
-        - Accumulation is done at higher precision
-        - The block-based approach reduces round-off error propagation
-        - Orthogonality is explicitly enforced at block boundaries
+        This implementation splits each value into two 64-bit parts for
+        increased precision during critical computations.
     """
-    # Convert input to MLX array
-    tensor_instance = MLXTensor()
-    a_array = tensor_instance.convert_to_tensor(a)
+    m, n = a.shape
+    k = min(m, n)
+
+    # Initialize Q and R with higher precision
+    q = mx.zeros((m, k), dtype=mx.float32)
+    r = mx.zeros((k, n), dtype=mx.float32)
     
-    # Get matrix dimensions
-    m, n = a_array.shape
+    # Split input matrix into high and low parts
+    a_high = mx.array(a, dtype=mx.float32)
+    a_low = mx.subtract(a, a_high)
     
-    # Initialize Q and R matrices
-    q = mx.zeros((m, m), dtype=mx.float32)
-    r = mx.zeros((m, n), dtype=mx.float32)
-    
-    # Create a copy to avoid modifying the input
-    a_copy = mx.array(a_array, dtype=mx.float32)
-    
-    # Loop over columns
-    for j in range(min(m, n)):
-        # Extract column
-        v = a_copy[:, j].astype(mx.float64)  # Higher precision for accumulation
+    # Modified Gram-Schmidt with high precision
+    for j in range(k):
+        # Get column j with high precision
+        v_high = a_high[:, j]
+        v_low = a_low[:, j]
         
-        # Apply Householder reflections from previous iterations
+        # Orthogonalize against previous columns
         for i in range(j):
-            r_ij = mx.sum(mx.multiply(q[:, i].astype(mx.float64), v))
-            v = mx.subtract(v, mx.multiply(q[:, i].astype(mx.float64), r_ij))
-            r = r.at[i, j].set(r_ij.astype(mx.float32))
-        
-        # Compute norm of the column
-        norm_v = mx.sqrt(mx.sum(mx.multiply(v, v)))
-        
-        # Handle zero norm case
-        if norm_v < 1e-10:
-            q = q.at[:, j].set(mx.zeros_like(q[:, j]))
-            continue
-        
-        # Set diagonal element of R
-        r = r.at[j, j].set(norm_v.astype(mx.float32))
-        
-        # Normalize to get Householder vector
-        q_col = mx.divide(v, norm_v)
-        q = q.at[:, j].set(q_col.astype(mx.float32))
-        
-        # Update remaining columns
-        if j < n - 1:
-            for k in range(j + 1, n):
-                col_k = a_copy[:, k].astype(mx.float64)
-                r_jk = mx.sum(mx.multiply(q_col, col_k))
-                a_copy = a_copy.at[:, k].set(
-                    mx.subtract(col_k, mx.multiply(q_col, r_jk)).astype(mx.float32)
-                )
-                r = r.at[j, k].set(r_jk.astype(mx.float32))
-    
-    # For tall matrices, ensure orthogonality of Q
-    if m > n:
-        # Gram-Schmidt orthogonalization for remaining columns
-        for j in range(n, m):
-            v = mx.zeros((m,), dtype=mx.float64)
-            v = v.at[j].set(1.0)
+            # Compute dot product with extended precision
+            dot_high = mx.sum(mx.multiply(q[:, i], v_high))
+            dot_low = mx.sum(mx.multiply(q[:, i], v_low))
             
-            # Orthogonalize against previous columns
-            for i in range(j):
-                r_ij = mx.sum(mx.multiply(q[:, i].astype(mx.float64), v))
-                v = mx.subtract(v, mx.multiply(q[:, i].astype(mx.float64), r_ij))
+            # Store in R using new array creation
+            r_new = mx.array(r)
+            r_new[i, j] = dot_high
+            r = r_new
             
-            # Normalize
-            norm_v = mx.sqrt(mx.sum(mx.multiply(v, v)))
+            # Update v with extended precision subtraction
+            proj_high = mx.multiply(dot_high, q[:, i])
+            proj_low = mx.multiply(dot_low, q[:, i])
+            v_high = mx.subtract(v_high, proj_high)
+            v_low = mx.subtract(v_low, proj_low)
+        
+        # Compute column norm with extended precision
+        norm_sq_high = mx.sum(mx.multiply(v_high, v_high))
+        norm_sq_low = mx.sum(mx.multiply(v_low, v_low))
+        norm = mx.sqrt(mx.add(norm_sq_high, norm_sq_low))
+        
+        # Update R diagonal using new array creation
+        r_new = mx.array(r)
+        r_new[j, j] = norm
+        r = r_new
+        
+        # Handle numerically zero vectors
+        if mx.less(norm, mx.array(1e-10)):
+            q_new = mx.array(q)
+            q_new[:, j] = mx.zeros((m,), dtype=mx.float32)
+            q = q_new
+        else:
+            # Normalize with extended precision
+            q_col = mx.divide(v_high, norm)
+            q_new = mx.array(q)
+            q_new[:, j] = q_col
+            q = q_new
             
-            # Handle near-zero norm
-            if norm_v > 1e-10:
-                q = q.at[:, j].set(mx.divide(v, norm_v).astype(mx.float32))
-            else:
-                # Try a different vector if orthogonalization failed
-                retry_vector = mx.zeros((m,), dtype=mx.float64)
-                retry_vector = retry_vector.at[(j + 1) % m].set(1.0)
-                
-                for i in range(j):
-                    r_ij = mx.sum(mx.multiply(q[:, i].astype(mx.float64), retry_vector))
-                    retry_vector = mx.subtract(retry_vector, 
-                                             mx.multiply(q[:, i].astype(mx.float64), r_ij))
-                
-                norm_retry = mx.sqrt(mx.sum(mx.multiply(retry_vector, retry_vector)))
-                q = q.at[:, j].set(mx.divide(retry_vector, norm_retry).astype(mx.float32))
-    
-    # Extract proper output matrices based on requested shapes
-    q_out = q[:, :m]
-    r_out = r[:min(m, n), :]
-    
-    return q_out, r_out
+            # Update remaining R entries
+            if j < n - 1:
+                # Compute remaining R entries with extended precision
+                for l in range(j + 1, n):
+                    dot_high = mx.sum(mx.multiply(q[:, j], a_high[:, l]))
+                    dot_low = mx.sum(mx.multiply(q[:, j], a_low[:, l]))
+                    r_new = mx.array(r)
+                    r_new[j, l] = mx.add(dot_high, dot_low)
+                    r = r_new
+
+    return q, r

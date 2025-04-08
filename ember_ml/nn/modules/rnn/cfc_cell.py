@@ -12,6 +12,7 @@ from ember_ml.nn.initializers import glorot_uniform, orthogonal # Updated initia
 from ember_ml.nn.modules import Module, Parameter
 from ember_ml.nn.modules.module_cell import ModuleCell
 from ember_ml.nn import tensor
+from ember_ml.nn.modules.activations import get_activation # Import the helper
 class CfCCell(ModuleCell):
     """
     Closed-form Continuous-time (CfC) cell.
@@ -78,8 +79,7 @@ class CfCCell(ModuleCell):
         # Initialize weights
         self._initialize_weights()
         
-        # For backward compatibility
-        self.units = self.hidden_size
+        # self.units removed, use self.hidden_size consistently
         
         # Store the actual state size for CfC
         self._cfc_state_size = [self.hidden_size, self.hidden_size]
@@ -92,7 +92,7 @@ class CfCCell(ModuleCell):
     @property
     def output_size(self) -> int:
         """Return the output size."""
-        return self.units
+        return self.hidden_size
     
     def _initialize_weights(self):
         """Initialize the weights for the cell."""
@@ -100,24 +100,24 @@ class CfCCell(ModuleCell):
         self.kernel = Parameter(tensor.zeros((self.input_size, self.hidden_size * 4))) # Use input_size and hidden_size
         
         # Recurrent weights
-        self.recurrent_kernel = Parameter(tensor.zeros((self.units, self.units * 4)))
+        self.recurrent_kernel = Parameter(tensor.zeros((self.hidden_size, self.hidden_size * 4)))
         
         # Bias
         if self.use_bias:
-            self.bias = Parameter(tensor.zeros((self.units * 4,)))
+            self.bias = Parameter(tensor.zeros((self.hidden_size * 4,)))
         
         # Time-scale parameter (learnable)
-        self.time_scale = Parameter(tensor.ones((self.units,)) * self.time_scale_factor)
+        self.time_scale = Parameter(tensor.ones((self.hidden_size,)) * self.time_scale_factor)
         
         # Initialize weights
         if self.kernel_initializer == "glorot_uniform":
             self.kernel.data = glorot_uniform((self.input_size, self.hidden_size * 4)) # Use input_size and hidden_size
         
         if self.recurrent_initializer == "orthogonal":
-            self.recurrent_kernel.data = orthogonal((self.units, self.units * 4))
+            self.recurrent_kernel.data = orthogonal((self.hidden_size, self.hidden_size * 4))
         
         if self.use_bias and self.bias_initializer == "zeros":
-            self.bias.data = tensor.zeros((self.units * 4,))
+            self.bias.data = tensor.zeros((self.hidden_size * 4,))
     
     def forward(self, inputs, state=None, **kwargs):
         """
@@ -137,8 +137,8 @@ class CfCCell(ModuleCell):
         
         # Initialize states if not provided
         if state is None:
-            h_prev = tensor.zeros((tensor.shape(inputs)[0], self.units))
-            t_prev = tensor.zeros((tensor.shape(inputs)[0], self.units))
+            h_prev = tensor.zeros((tensor.shape(inputs)[0], self.hidden_size))
+            t_prev = tensor.zeros((tensor.shape(inputs)[0], self.hidden_size))
         else:
             h_prev, t_prev = state
         
@@ -156,21 +156,14 @@ class CfCCell(ModuleCell):
         z_i, z_f, z_o, z_c = z_chunks
         
         # Apply activations
-        if self.recurrent_activation == "sigmoid":
-            i = ops.sigmoid(z_i)  # Input gate
-            f = ops.sigmoid(z_f)  # Forget gate
-            o = ops.sigmoid(z_o)  # Output gate
-        else:
-            activation_fn = getattr(ops, self.recurrent_activation)
-            i = activation_fn(z_i)
-            f = activation_fn(z_f)
-            o = activation_fn(z_o)
-        
-        if self.activation == "tanh":
-            c = ops.tanh(z_c)     # Cell input
-        else:
-            activation_fn = getattr(ops, self.activation_name)
-            c = activation_fn(z_c)
+        # Apply activations dynamically
+        rec_activation_fn = get_activation(self.recurrent_activation)
+        i = rec_activation_fn(z_i)  # Input gate
+        f = rec_activation_fn(z_f)  # Forget gate
+        o = rec_activation_fn(z_o)  # Output gate
+
+        activation_fn = get_activation(self.activation) # Use self.activation (from ModuleCell)
+        c = activation_fn(z_c)     # Cell input
         
         # Apply time scaling
         # Compute time decay factor
@@ -183,11 +176,8 @@ class CfCCell(ModuleCell):
         decay_term = ops.multiply(decay, h_prev)
         time_term = ops.multiply(ops.subtract(tensor.ones_like(decay), decay), t)
         
-        if self.activation_name == "tanh":
-            h = ops.multiply(o, ops.tanh(ops.add(decay_term, time_term)))
-        else:
-            activation_fn = getattr(ops, self.activation_name)
-            h = ops.multiply(o, activation_fn(ops.add(decay_term, time_term)))
+        # Apply output activation dynamically
+        h = ops.multiply(o, activation_fn(ops.add(decay_term, time_term))) # Use already looked-up activation_fn
         
         return h, [h, t]
     
@@ -201,8 +191,8 @@ class CfCCell(ModuleCell):
         Returns:
             Tuple of (hidden_state, time_state)
         """
-        h = tensor.zeros((batch_size, self.units))
-        t = tensor.zeros((batch_size, self.units))
+        h = tensor.zeros((batch_size, self.hidden_size))
+        t = tensor.zeros((batch_size, self.hidden_size))
         return [h, t]
 
     def get_config(self) -> Dict[str, Any]:

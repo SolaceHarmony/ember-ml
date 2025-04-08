@@ -1,11 +1,11 @@
 """NumPy tensor utility operations."""
 
-from typing import Any, Optional, Sequence, Tuple, Union
+from typing import Any, Optional, Sequence, Tuple, Union, Callable
 
 import numpy as np
 
 from ember_ml.backend.numpy.tensor.dtype import NumpyDType
-from ember_ml.backend.numpy.types import TensorLike, Shape, default_int, default_float
+from ember_ml.backend.numpy.types import TensorLike, default_int, default_float
 
 
 def _convert_input(x: TensorLike, no_scalars = False) -> Any:
@@ -45,36 +45,35 @@ def _convert_input(x: TensorLike, no_scalars = False) -> Any:
     if (hasattr(x, '__class__') and
         hasattr(x.__class__, '__name__') and
         x.__class__.__name__ == 'NumpyTensor'):
-        return x._tensor
+        return x
 
     # Handle EmberTensor objects - return underlying tensor
     if (hasattr(x, '__class__') and
         hasattr(x.__class__, '__name__') and
         x.__class__.__name__ == 'EmberTensor'):
-        if hasattr(x, '_tensor'):
-            return x._tensor
-        else:
-            raise ValueError(f"EmberTensor does not have a '_tensor' attribute: {x}")
+        # Use getattr with a default to avoid attribute errors
+        return getattr(x, '_tensor', x)
 
     # Handle Parameter objects
     # Check by class name to avoid direct import which might cause circular dependencies
     if (hasattr(x, '__class__') and
         hasattr(x.__class__, '__name__') and
         x.__class__.__name__ == 'Parameter'):
+        # Only access data attribute if we're sure it exists
         if hasattr(x, 'data'):
             # Recursively convert the underlying data
-            return _convert_input(x.data)
+            data_attr = getattr(x, 'data')
+            return _convert_input(data_attr)
         else:
             raise ValueError(f"Parameter object does not have a 'data' attribute: {x}")
 
      # Handle NumPy scalar types using hasattr to avoid isinstance
-    if (hasattr(x, 'item') and # Check for item method common to numpy scalars
-        hasattr(x, '__class__') and
+    if (hasattr(x, '__class__') and
         hasattr(x.__class__, '__module__') and
         x.__class__.__module__ == 'numpy'):
         try:
-            # Convert NumPy scalar to its Python equivalent, then to tensor
-            return np.array(x.item())
+            # Convert NumPy scalar directly to a NumPy array without calling item()
+            return np.array(x)
         except Exception as e:
              raise ValueError(f"Cannot convert NumPy scalar {type(x)} to Numpy array: {e}")
 
@@ -234,21 +233,28 @@ def shape(data: TensorLike) -> Tuple[int, ...]:
     """
     return tuple(_convert_to_tensor(data).shape)
 
-def dtype(data: TensorLike) -> Any:
+def dtype(data: TensorLike) -> str: # Return type is now string
     """
-    Get the data type of a tensor.
+    Get the string representation of a tensor's data type.
     
     Args:
         data: Input array
         
     Returns:
-        Data type of the array
+        String representation of the array's data type (e.g., 'float32', 'int64').
     """
     from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    from ember_ml.backend.numpy.tensor.dtype import NumpyDType # For converting native to string
+
     Tensor = NumpyTensor()
-    # Return the dtype property directly to maintain backward compatibility
-    # with code that accesses the property directly
-    return Tensor.convert_to_tensor(data).dtype
+    native_dtype = Tensor.convert_to_tensor(data).dtype
+    
+    # Convert native NumPy dtype to string representation
+    np_dtype_helper = NumpyDType()
+    dtype_str = np_dtype_helper.to_dtype_str(native_dtype)
+    
+    # Ensure we always return a string even if to_dtype_str returns None
+    return dtype_str if dtype_str is not None else str(native_dtype)
 
 def copy(data: TensorLike) -> np.ndarray:
     """
@@ -349,3 +355,77 @@ def maximum(data1: TensorLike, data2: TensorLike) -> np.ndarray:
     data1_array = Tensor.convert_to_tensor(data1)
     data2_array = Tensor.convert_to_tensor(data2)
     return np.maximum(data1_array, data2_array)
+
+
+def _create_new_tensor(creation_func: Callable, dtype: Optional[Any] = None, device: Optional[str] = None, **kwargs) -> np.ndarray:
+    """
+    Internal helper to create a new NumPy tensor, handling dtype resolution and defaults.
+    Accepts function-specific arguments via **kwargs.
+
+    Args:
+        creation_func: The underlying NumPy creation function (e.g., np.zeros, np.eye, np.random.uniform).
+        dtype: Optional desired dtype (EmberDType, string, np.dtype, None).
+        device: Ignored for NumPy.
+        **kwargs: Function-specific arguments (e.g., shape, N, M, start, stop, num, fill_value).
+
+    Returns:
+        A new NumPy ndarray.
+    """
+    dtype_cls = NumpyDType()
+    # Explicitly resolve input dtype to native NumPy type
+    numpy_native_dtype = dtype_cls.from_dtype_str(dtype) if dtype else None
+
+    # Apply default dtype if none provided or resolution failed
+    # Defaulting to float for most creation funcs unless kwargs suggest otherwise
+    # Note: This default might need refinement based on the specific creation_func context
+    if numpy_native_dtype is None:
+         # A simple heuristic: if kwargs suggest an integer operation, default to int, else float.
+         # This isn't perfect. Consider passing expected type context if needed.
+         if any(k in kwargs for k in ['low', 'high', 'minval', 'maxval']) and not any(isinstance(v, float) for v in kwargs.values()):
+              numpy_native_dtype = default_int
+         else:
+              numpy_native_dtype = default_float
+
+
+    # Shape normalization (if 'shape' is present in kwargs)
+    if 'shape' in kwargs:
+        shape_arg = kwargs['shape']
+        if isinstance(shape_arg, int):
+            kwargs['shape'] = (shape_arg,)
+        elif not isinstance(shape_arg, tuple):
+            kwargs['shape'] = tuple(shape_arg)
+
+    # Call the actual NumPy creation function
+    try:
+        # Create the tensor without passing dtype directly to the function
+        # This handles functions like np.random.uniform that don't accept dtype
+        result = creation_func(**kwargs)
+        
+        # Apply dtype separately if needed
+        if numpy_native_dtype is not None and result.dtype != numpy_native_dtype:
+            result = result.astype(numpy_native_dtype)
+            
+        return result
+    except TypeError as e:
+        # Provide more context on failure
+        raise TypeError(
+            f"{creation_func.__name__} failed. "
+            f"Input dtype: {dtype}, Resolved native dtype: {numpy_native_dtype}, "
+            f"Type: {type(numpy_native_dtype)}, Kwargs: {kwargs}. Error: {e}"
+        )
+
+# Expose necessary functions
+__all__ = [
+    "_convert_input",
+    "_convert_to_tensor",
+    "to_numpy",
+    "item",
+    "shape",
+    "dtype",
+    "copy",
+    "var",
+    "sort",
+    "argsort",
+    "maximum",
+    "_create_new_tensor", # Export the new helper
+]

@@ -87,7 +87,7 @@ def eigvals(a: TensorLike) -> np.ndarray:
     # Use NumPy's built-in eigvals function
     return np.linalg.eigvals(a_array)
 
-def qr(a: TensorLike, mode: str = 'reduced') -> Tuple[np.ndarray, np.ndarray]:
+def qr(a: TensorLike, mode: Literal['reduced', 'complete', 'r', 'raw'] = 'reduced') -> Tuple[np.ndarray, np.ndarray]:
     """
     Compute the QR decomposition of a matrix.
     
@@ -105,3 +105,21 @@ def qr(a: TensorLike, mode: str = 'reduced') -> Tuple[np.ndarray, np.ndarray]:
     
     # Use NumPy's built-in qr function
     return np.linalg.qr(a_array, mode=mode)
+
+def eigh(matrix: TensorLike) -> tuple[np.ndarray, np.ndarray]:
+    """Compute eigenvalues and eigenvectors of a Hermitian/symmetric matrix.
+    
+    Args:
+        matrix: Square matrix of shape (..., M, M) that is Hermitian/symmetric
+    
+    Returns:
+        Tuple of:
+            - eigenvalues (..., M) in ascending order
+            - eigenvectors (..., M, M) where v[..., :, i] is eigenvector i
+    """
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor = NumpyTensor()
+    
+    matrix = tensor.convert_to_tensor(matrix)
+    eigenvals, eigenvecs = np.linalg.eigh(matrix)
+    return eigenvals, eigenvecs

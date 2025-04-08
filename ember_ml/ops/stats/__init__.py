@@ -8,8 +8,7 @@ It handles backend switching by updating these aliases.
 
 import importlib
 import sys
-import os
-from typing import List, Optional, Callable, Any
+from typing import Optional
 
 # Import backend control functions
 from ember_ml.backend import (
@@ -61,6 +60,11 @@ def _update_stats_aliases():
         return
 
     backend_module = get_stats_module()
+    # Attempt to force reload the specific backend stats module
+    try:
+        backend_module = importlib.reload(backend_module)
+    except Exception as e:
+        print(f"Warning: Failed to reload backend stats module {getattr(backend_module, '__name__', 'N/A')}: {e}")
     current_module = sys.modules[__name__]
     missing_ops = []
 
@@ -91,4 +95,4 @@ _init_backend_name_stats = get_backend() # Ensure backend is determined
 _update_stats_aliases() # Populate aliases on first import
 
 # --- Define __all__ ---
-__all__ = _STATS_OPS_LIST
+__all__ = _STATS_OPS_LIST # type: ignore

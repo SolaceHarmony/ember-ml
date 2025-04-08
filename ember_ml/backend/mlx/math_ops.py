@@ -193,35 +193,7 @@ def mean(x: TensorLike, axis: Optional[ShapeLike] = None, keepdims: bool = False
     return mx.mean(x_array, axis=axis, keepdims=keepdims)
 
 
-def sum(x: TensorLike, axis: Optional[ShapeLike] = None, keepdims: bool = False) -> mx.array:
-    """
-    Compute the sum of an MLX array along specified axes.
-    
-    Args:
-        x: Input array
-        axis: Axis or axes along which to compute the sum
-        keepdims: Whether to keep the reduced dimensions
-        
-    Returns:
-        Sum of the array
-    """
-    # Create instances for each call to avoid circular imports
-    from ember_ml.backend.mlx.tensor import MLXTensor
-    tensor_ops = MLXTensor()    
-    x_array = tensor_ops.convert_to_tensor(x)
-    
-    if axis is None:
-        return mx.sum(x_array, keepdims=keepdims)
-    if isinstance(axis, (list, tuple)):
-        # MLX doesn't support multiple axes directly, so we need to do it sequentially
-        result = x_array
-        # Sort axes in descending order to avoid dimension shifting
-        for ax in sorted(axis, reverse=True):
-            result = mx.sum(result, axis=ax, keepdims=keepdims)
-        return result
-    else:
-        return mx.sum(x_array, axis=axis, keepdims=keepdims)
-
+# Sum function correctly belongs in stats_ops, removed from here.
 def var(x: TensorLike, axis: Optional[ShapeLike] = None, keepdims: bool = False) -> mx.array:
     """
     Compute the variance of an MLX array along specified axes.
@@ -386,23 +358,7 @@ def sign(x: TensorLike) -> mx.array:
     return mx.where(x_tensor > 0, positive, mx.where(x_tensor < 0, negative, zero))
 
 
-def argmax(x: TensorLike, axis: Optional[int] = None, keepdims: bool = False) -> mx.array:
-    """
-    Return the indices of the maximum values along the specified axis.
-    
-    Args:
-        x: Input array
-        axis: Axis along which to find maximum values. If None, the argmax of
-            the flattened array is returned.
-        keepdims: If True, the reduced axes are kept as dimensions with size one.
-            
-    Returns:
-        Indices of the maximum values along the specified axis.
-    """
-    from ember_ml.backend.mlx.tensor import MLXTensor   
-    x_tensor = MLXTensor().convert_to_tensor(x)
-    return mx.argmax(x_tensor, axis=axis, keepdims=keepdims)
-
+# argmax moved to stats/descriptive.py
 
 def sin(x: TensorLike) -> mx.array:
     """
@@ -613,21 +569,7 @@ def max(x: TensorLike, axis: Optional[ShapeLike] = None, keepdims: bool = False)
 # Removed softmax definition
 
 
-def sort(x: TensorLike, axis: int = -1) -> mx.array:
-    """
-    Sort an MLX array along a specified axis.
-    
-    Args:
-        x: Input array
-        axis: Axis along which to sort
-        
-    Returns:
-        Sorted array
-    """
-    from ember_ml.backend.mlx.tensor import MLXTensor
-    tensor_ops = MLXTensor()
-    x_array = tensor_ops.convert_to_tensor(x)
-    return mx.sort(x_array, axis=axis)
+# sort moved to stats/descriptive.py
 
 
 def gradient(f: TensorLike, 
@@ -801,27 +743,7 @@ def cumsum(x: mx.array, axis: Optional[int] = None) -> mx.array:
     return mx.cumsum(x_array, axis=axis)
 
 
-def eigh(a: mx.array) -> Tuple[mx.array, mx.array]:
-    """
-    Compute the eigenvalues and eigenvectors of a Hermitian or symmetric matrix.
-    
-    Args:
-        a: Input Hermitian or symmetric matrix
-        
-    Returns:
-        Tuple of (eigenvalues, eigenvectors)
-    """
-    from ember_ml.backend.mlx.tensor import MLXTensor
-    tensor_ops = MLXTensor()
-    a_array = tensor_ops.convert_to_tensor(a)
-    
-    # Ensure the input is a 2D matrix
-    if len(a_array.shape) != 2 or a_array.shape[0] != a_array.shape[1]:
-        raise ValueError("Input must be a square matrix.")
-    
-
-    eigenvalues, eigenvectors = mx.linalg.eig(a_array)
-    return eigenvalues, eigenvectors
+# eigh moved to linearalg/decomp_ops.py
 
 # Define the pi constant using Chudnovsky algorithm
 def _calculate_pi_value(precision_digits=15):

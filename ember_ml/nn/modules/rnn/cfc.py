@@ -47,8 +47,8 @@ class CfC(Module):
         """
         super().__init__(**kwargs)
         
-        # Import WiredCfCCell using relative path
-        from .wired_cfc_cell import WiredCfCCell
+        # Import WiredCfCCell
+        from ember_ml.nn.modules.rnn.wired_cfc_cell import WiredCfCCell
         if isinstance(cell_or_map, (CfCCell, WiredCfCCell)):
             self.cell = cell_or_map
         elif isinstance(cell_or_map, NeuronMap): # Check against renamed base class

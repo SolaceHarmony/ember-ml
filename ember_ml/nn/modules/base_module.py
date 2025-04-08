@@ -23,22 +23,53 @@ class Parameter:
     def __init__(self, data, requires_grad=True):
         """
         Initialize a parameter with data.
-        
+
         Args:
             data: Initial data for the parameter
             requires_grad: Whether the parameter requires gradients
         """
-        self.data = tensor.convert_to_tensor(data)
+        from ember_ml.nn import tensor # Use lazy import
+
+        # Convert data to EmberTensor first
+        ember_tensor = tensor.convert_to_tensor(data)
+        
+        # Get the underlying backend tensor (mx.array, torch.Tensor, np.ndarray)
+        # This ensures .data is the native backend tensor, which is what the tests expect
+        self.data = ember_tensor._tensor
+        
+        # Store requires_grad and initialize grad
         self.requires_grad = requires_grad
         self.grad = None
-    
+
     def __repr__(self):
-        shape_val = tensor.shape(self.data)
+        # Use try-except for robustness as self.data might not be initialized
+        # when repr is called (e.g., during debugging or errors in __init__)
+        try:
+            # Attempt to get shape using lazy imported tensor object
+            from ember_ml.nn import tensor
+            shape_val = tensor.shape(self.data)
+        except AttributeError:
+            shape_val = "[AttributeError: data not found]" # Provide informative fallback
+        except Exception as e: # Catch other potential errors during shape access
+            shape_val = f"[Error getting shape: {e}]"
+        try:
+            # Attempt to get dtype using lazy imported tensor object
+            from ember_ml.nn import tensor
+            dtype_val = tensor.dtype(self.data)
+            return f"Parameter(shape={shape_val}, dtype={dtype_val})"
+        except AttributeError:
+             # This might happen if shape failed and shape_val is a string
+             return f"Parameter(shape={shape_val})"
+        except Exception as e: # Catch other potential errors during dtype access
+             return f"Parameter(shape={shape_val}, dtype_error: {e})"
         try:
             dtype_val = tensor.dtype(self.data)
             return f"Parameter(shape={shape_val}, dtype={dtype_val})"
-        except:
-            return f"Parameter(shape={shape_val})"
+        except AttributeError:
+             return f"Parameter(shape={shape_val})" # Fallback if dtype access also fails
+        except Exception as e: # Catch other potential errors during repr
+             return f"Parameter(shape={shape_val}, repr_error: {e})"
+
 
 class BaseModule:
     """
@@ -93,6 +124,9 @@ class BaseModule:
             # Determine input shape from the first argument primarily
             # Assumes the first argument is the main input tensor or a tuple/list of them
             # More complex input structures might need custom handling in __call__ overrides
+            import mlx.core as mx
+            import numpy as np
+            import torch
             if isinstance(args[0], (list, tuple)):
                  # Handle multiple inputs - pass list/tuple of shapes
                  try:
@@ -325,9 +359,14 @@ class BaseModule:
     def __setattr__(self, name, value):
         """Set an attribute on the module."""
         if isinstance(value, Parameter):
+            # Register in parameter dictionary
             self.register_parameter(name, value)
+            # ALSO set the actual attribute for direct access
+            object.__setattr__(self, name, value)
         elif isinstance(value, BaseModule):
             self.add_module(name, value)
+            # Similarly for modules
+            object.__setattr__(self, name, value)
         else:
             object.__setattr__(self, name, value)
     

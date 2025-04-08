@@ -21,8 +21,7 @@ Available Modules:
 
 """
 
-from ember_ml.nn.modules.module import Module, Parameter
-from ember_ml.nn.modules.base_module import BaseModule
+from ember_ml.nn.modules.base_module import BaseModule as Module, BaseModule, Parameter
 from ember_ml.nn.modules.module_cell import ModuleCell
 from ember_ml.nn.modules.module_wired_cell import ModuleWiredCell
 from ember_ml.nn.modules.ncp import NCP
@@ -36,12 +35,13 @@ from ember_ml.nn.modules.rnn import RNN, LSTM, GRU, RNNCell, LSTMCell, GRUCell, 
 from ember_ml.nn.modules.rnn import CfC, CfCCell, WiredCfCCell, StrideAwareWiredCfCCell, LTC, LTCCell
 from ember_ml.nn.modules.rnn.stride_aware_cfc_layer import StrideAwareCfC
 # Import activation modules
-from .activations import ReLU, Tanh, Sigmoid, Softmax, Softplus, LeCunTanh, Dropout
+from ember_ml.nn.modules.activations import ReLU, Tanh, Sigmoid, Softmax, Softplus, LeCunTanh, Dropout
 
 __all__ = [
     # Base
     'Module',
     'Parameter',
+    'Module',
     'BaseModule',
     'ModuleCell',
     'ModuleWiredCell',

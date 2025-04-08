@@ -10,9 +10,9 @@ from ember_ml.nn.tensor import float32, shape, cast, arange, stack, pad, full
 from ember_ml.nn.modules import AutoNCP # Updated import path
 from ember_ml.nn.modules.rnn.stride_aware_cell import StrideAwareCell
 from ember_ml.nn.modules.rnn.rnn import RNN
-from ember_ml.initializers import glorot_uniform
+from ember_ml.nn.initializers import glorot_uniform
 from ember_ml.nn.tensor import EmberTensor
-from ember_ml.features import one_hot, fit_transform, fit, transform, PCA
+from ember_ml.nn.features import one_hot, fit_transform, fit, transform, PCA
 
 # The prepare_bigquery_data_bf function would be imported here in a real implementation
 # from data_utils import prepare_bigquery_data_bf

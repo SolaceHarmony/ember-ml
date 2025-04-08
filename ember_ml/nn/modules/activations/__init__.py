@@ -34,6 +34,7 @@ _ACTIVATION_OPS_LIST = [
     'tanh',
     'softmax',
     'softplus',
+    'lecun_tanh', 
 ]
 
 # Placeholder initialization
@@ -90,6 +91,36 @@ def _update_activation_aliases():
 _update_activation_aliases()
 
 
+def get_activation(name: str) -> Callable:
+    """
+    Retrieves an activation function by name from the currently aliased backend functions.
+
+    Args:
+        name: The string name of the activation function (e.g., 'relu', 'tanh').
+
+    Returns:
+        The corresponding activation function callable.
+
+    Raises:
+        AttributeError: If the activation function name is not found in the
+                       currently aliased functions for the active backend, or if
+                       the retrieved attribute is not callable.
+    """
+    current_module = sys.modules[__name__]
+    try:
+        # Ensure aliases are up-to-date before lookup
+        _update_activation_aliases()
+        func = getattr(current_module, name)
+        if func is None:
+             raise AttributeError(f"Activation function '{name}' is not implemented or aliased by the current backend '{get_backend()}'.")
+        if not callable(func):
+            # This shouldn't happen if aliasing works correctly, but good sanity check
+            raise TypeError(f"Retrieved attribute '{name}' for backend '{get_backend()}' is not callable.")
+        return func
+    except AttributeError:
+        raise AttributeError(f"Activation function '{name}' not found or not aliased in {__name__} for backend '{get_backend()}'.") from None
+
+
 # --- Define __all__ ---
 __all__ = [
     # Module Classes
@@ -106,4 +137,6 @@ __all__ = [
     'tanh',
     'softmax',
     'softplus',
+    'lecun_tanh', # Add to __all__ as well
+    'get_activation',
 ]

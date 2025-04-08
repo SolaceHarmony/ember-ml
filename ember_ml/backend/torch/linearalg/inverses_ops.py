@@ -13,7 +13,7 @@ from ember_ml.backend.torch.types import TensorLike
 dtype_obj = TorchDType()
 
 
-def inv(a: TensorLike) -> torch.Tensor:
+def inv(A: TensorLike) -> torch.Tensor:
     """
     Compute the inverse of a square matrix.
     
@@ -24,7 +24,7 @@ def inv(a: TensorLike) -> torch.Tensor:
         Inverse of the matrix
     """
        # Convert input to Torch array with float32 dtype
-    A = torch.Tensor(A, dtype=torch.float32)
+    A = torch.tensor(A, dtype=torch.float32)
     
     # Get matrix dimensions
     n = A.shape[0]
@@ -32,7 +32,7 @@ def inv(a: TensorLike) -> torch.Tensor:
     
     # Create augmented matrix [A|I]
     I = torch.eye(n, dtype=A.dtype)
-    aug = torch.concatenate([A, I], axis=1)
+    aug = torch.cat([A, I], dim=1)
     
     # Create a copy of the augmented matrix that we can modify
     aug_copy = torch.Tensor(aug)

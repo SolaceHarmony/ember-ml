@@ -139,19 +139,6 @@ class LinearAlgOps(ABC):
         pass
     
     @abstractmethod
-    def eigvals(self, a: Any) -> Any:
-        """
-        Compute the eigenvalues of a square matrix.
-        
-        Args:
-            a: Input square matrix
-            
-        Returns:
-            Eigenvalues of the matrix
-        """
-        pass
-    
-    @abstractmethod
     def diag(self, x: Any, k: int = 0):
         """
         Extract a diagonal or construct a diagonal matrix.

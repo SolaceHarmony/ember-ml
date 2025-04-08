@@ -5,11 +5,12 @@ This module provides the ModuleCell abstract base class, which defines
 the interface for all cell types in ember_ml.
 """
 
-from typing import List, Union, TypeVar, Dict, Any # Add Dict, Any
+from typing import List, Union, TypeVar, Dict, Any, Optional # Add Optional
 
 from ember_ml import ops
 import ember_ml.nn.tensor as tensor
 from ember_ml.nn.modules import Module, Parameter
+from ember_ml.nn.modules.activations import get_activation # Import the new helper
 
 # Type variable for state size
 StateSize = TypeVar('StateSize', int, List[int])
@@ -24,7 +25,7 @@ class ModuleCell(Module):
     
     def __init__(
         self,
-        input_size: int,
+        input_size: Optional[int], # Make optional
         hidden_size: int,
         activation: str = "tanh",
         use_bias: bool = True,
@@ -34,7 +35,7 @@ class ModuleCell(Module):
         Initialize a ModuleCell.
         
         Args:
-            input_size: Size of the input
+            input_size: Size of the input (can be None initially for deferred build)
             hidden_size: Size of the hidden state
             activation: Activation function to use
             use_bias: Whether to use bias
@@ -44,8 +45,8 @@ class ModuleCell(Module):
         
         self.input_size = input_size
         self.hidden_size = hidden_size
-        self.activation_name = activation
-        self.activation = ops.get_activation(activation)
+        self.activation = activation # Store the string name only
+        # self._activation_fn removed
         self.use_bias = use_bias
     
     @property
@@ -94,7 +95,7 @@ class ModuleCell(Module):
         config.update({
             "input_size": self.input_size,
             "hidden_size": self.hidden_size,
-            "activation": self.activation_name, # Save name, not function object
+            "activation": self.activation, # Save the string name
             "use_bias": self.use_bias,
         })
         return config

@@ -12,7 +12,7 @@ from ember_ml.nn.modules.wiring import NeuronMap # Use renamed base class
 from ember_ml.nn.modules.module_wired_cell import ModuleWiredCell # Import base wired cell class
 from ember_ml.nn.modules.rnn.cfc_cell import CfCCell # Import for reference
 from ember_ml.nn.initializers import glorot_uniform, orthogonal
-
+from ember_ml.nn.modules.activations import get_activation # Keep helper import
 class WiredCfCCell(ModuleWiredCell):
     """
     CfC cell with custom wiring.
@@ -69,7 +69,9 @@ class WiredCfCCell(ModuleWiredCell):
         self.recurrent_initializer = recurrent_initializer
         self.bias_initializer = bias_initializer
         self.mixed_memory = mixed_memory
-        
+
+        # Activation functions will be resolved dynamically in forward pass
+
         # Initialize weights
         self._initialize_weights()
 
@@ -155,13 +157,13 @@ class WiredCfCCell(ModuleWiredCell):
         z_chunks = tensor.split(z, 4, axis=-1)
         z_i, z_f, z_o, z_c = z_chunks
 
-        # Apply activations (using parent's activation attributes)
-        rec_activation_fn = ops.get_activation(self.recurrent_activation)
+        # Apply activations (using dynamic lookup)
+        rec_activation_fn = get_activation(self.recurrent_activation)
         i = rec_activation_fn(z_i)  # Input gate
         f = rec_activation_fn(z_f)  # Forget gate
         o = rec_activation_fn(z_o)  # Output gate
 
-        activation_fn = ops.get_activation(self.activation)
+        activation_fn = get_activation(self.activation)
         c = activation_fn(z_c)     # Cell input
 
         # Apply time scaling

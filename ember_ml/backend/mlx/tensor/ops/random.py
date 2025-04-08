@@ -3,11 +3,11 @@
 import mlx.core as mx
 from typing import Union, Optional, Sequence, Any, List, Tuple
 
-from ember_ml.backend.mlx.tensor.dtype import MLXDType
 from ember_ml.backend.mlx.types import Shape, TensorLike, DType
+from ember_ml.backend.mlx.tensor.ops.utility import _create_new_tensor # Import helper
 
 # Create single instances to reuse throughout the module
-DTypeHandler = MLXDType()
+# DTypeHandler instance removed, logic moved to helper/local
 
 def random_normal(shape: Shape, mean: float = 0.0, stddev: float = 1.0,
                  dtype: Optional[DType] = None, device: Optional[str] = None) -> 'mx.array':
@@ -24,15 +24,8 @@ def random_normal(shape: Shape, mean: float = 0.0, stddev: float = 1.0,
     Returns:
         MLX array with random normal values
     """
-    # Convert shape to a sequence if it's an int
-    if isinstance(shape, int):
-        shape = (shape,)
-    
-    # Validate dtype
-    mlx_dtype = DTypeHandler.validate_dtype(dtype)
-    
-    # Use MLX's normal function
-    return mx.random.normal(shape=shape, loc=mean, scale=stddev, dtype=mlx_dtype)
+    # Use the helper function, passing mx.random.normal and its specific args
+    return _create_new_tensor(mx.random.normal, dtype=dtype, device=device, shape=shape, loc=mean, scale=stddev)
 
 def random_uniform(shape: Shape, minval: float = 0.0, maxval: float = 1.0,
                   dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
@@ -49,64 +42,9 @@ def random_uniform(shape: Shape, minval: float = 0.0, maxval: float = 1.0,
     Returns:
         MLX array with random uniform values
     """
-    # Special handling for the common case where the function is called as
-    # random_uniform(min, max) to generate a scalar random value
-    if isinstance(shape, (int, float)) and isinstance(minval, (int, float)):
-        # If shape is 0 or close to 0, and minval is positive, assume this is
-        # actually a call like random_uniform(minval=0, maxval=2*pi)
-        if abs(shape) < 1e-10 and minval > 0:
-            # Generate a single random float between shape (as minval) and minval (as maxval)
-            # Use mx.array explicitly for scalar values to avoid broadcasting issues
-            low = mx.array(shape, dtype=mx.float32)
-            high = mx.array(minval, dtype=mx.float32)
-            result = mx.add(
-                low,
-                mx.multiply(
-                    mx.array(mx.random.uniform(shape=()), dtype=mx.float32),
-                    mx.subtract(high, low)
-                )
-            )
-            
-            # Handle dtype conversion
-            mlx_dtype = DTypeHandler.validate_dtype(dtype)
-            if mlx_dtype is not None:
-                result = result.astype(mlx_dtype)
-            
-            return result
-    
-    # Standard case: shape is actually a shape
-    if isinstance(shape, int):
-        shape = (shape,)
-    
-    # Handle empty shape
-    if shape == () or (isinstance(shape, tuple) and len(shape) == 0):
-        # For scalar output, use (1,) shape and then convert to scalar after
-        shape = (1,)
-    elif isinstance(shape, tuple) and len(shape) == 1 and shape[0] == 0:
-        shape = (1,)
-    
-    # Validate dtype
-    mlx_dtype = DTypeHandler.validate_dtype(dtype)
-    
-    # Create the low and high values as MLX arrays to ensure proper broadcasting
-    low = mx.array(minval)
-    high = mx.array(maxval)
-    
-    # Generate random values using uniform from 0 to 1
-    u = mx.random.uniform(shape=shape)
-    
-    # Scale to the desired range manually to avoid broadcasting issues
-    result = mx.add(low, mx.multiply(u, mx.subtract(high, low)))
-    
-    # Convert to scalar if shape was originally empty
-    if shape == (1,):
-        result = result[0]
-    
-    # Apply dtype conversion if needed
-    if mlx_dtype is not None:
-        result = result.astype(mlx_dtype)
-    
-    return result
+    # Use the helper function, passing mx.random.uniform and its specific args
+    # Note: MLX uniform takes low, high, shape.
+    return _create_new_tensor(mx.random.uniform, dtype=dtype, device=device, shape=shape, low=minval, high=maxval)
 
 def random_binomial(shape: Shape, p: float = 0.5,
                    dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
@@ -122,21 +60,9 @@ def random_binomial(shape: Shape, p: float = 0.5,
     Returns:
         MLX array with random binomial values
     """
-    # Convert shape to a sequence if it's an int
-    if isinstance(shape, int):
-        shape = (shape,)
-    
-    # Validate dtype
-    mlx_dtype = DTypeHandler.validate_dtype(dtype)
-    
-    # Use MLX's bernoulli function
-    result = mx.random.bernoulli(p=p, shape=shape)
-    
-    # Convert to the specified dtype if needed
-    if mlx_dtype is not None:
-        result = result.astype(mlx_dtype)
-    
-    return result
+    # Use the helper function, passing mx.random.bernoulli and its specific args
+    # Pass probability p via kwargs. Helper handles dtype/device.
+    return _create_new_tensor(mx.random.bernoulli, dtype=dtype, device=device, shape=shape, p=p)
 
 def random_exponential(shape: Shape, scale: float = 1.0,
                       dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
@@ -152,25 +78,19 @@ def random_exponential(shape: Shape, scale: float = 1.0,
     Returns:
         MLX array with random values from an exponential distribution
     """
-    # Convert shape to sequence if it's an int
-    if isinstance(shape, int):
-        shape = (shape,)
-    
-    # Generate uniform random values
-    u = mx.random.uniform(shape=shape)
-    
-    # Transform to exponential distribution
-    # Exponential distribution: f(x) = (1/scale) * exp(-x/scale)
-    # Can be sampled by taking -scale * ln(U) where U is uniform(0,1)
-    # Avoid log(0) by using 1-u instead of u
-    scale_tensor = mx.array(scale)
-    result = mx.multiply(mx.negative(scale_tensor), mx.log(mx.subtract(mx.array(1.0), u)))
-    
-    # Validate dtype
-    mlx_dtype = DTypeHandler.validate_dtype(dtype)
-    if mlx_dtype is not None:
-        result = result.astype(mlx_dtype)
-    
+    # MLX doesn't have direct exponential. Sample uniform and transform: -scale * log(1-U)
+    # Use helper for uniform sampling first.
+    u = _create_new_tensor(mx.random.uniform, shape=shape, dtype=dtype, device=device) # Use target dtype for intermediate if specified
+
+    # Perform transformation using mx ops
+    scale_tensor = mx.array(scale) # Scale doesn't need helper conversion
+    # Ensure 1.0 has compatible dtype with u if u's dtype was specified
+    one_tensor = mx.array(1.0, dtype=u.dtype)
+    # Clamp to avoid log(0)
+    log_input = mx.maximum(mx.subtract(one_tensor, u), mx.array(1e-9, dtype=u.dtype))
+    result = mx.multiply(mx.negative(scale_tensor), mx.log(log_input))
+
+    # The result should already have the correct dtype from u or inference
     return result
 
 def random_gamma(shape: Shape, alpha: float = 1.0, beta: float = 1.0,
@@ -188,81 +108,11 @@ def random_gamma(shape: Shape, alpha: float = 1.0, beta: float = 1.0,
     Returns:
         MLX array with random values from a gamma distribution
     """
-    # Convert shape to sequence if it's an int
-    if isinstance(shape, int):
-        shape = (shape,)
-    
     if alpha <= 0:
         raise ValueError("Alpha parameter must be positive")
-    
-    # For alpha = 1, gamma is equivalent to exponential
-    if alpha == 1.0:
-        return random_exponential(shape, scale=beta, dtype=dtype, device=device)
-    
-    # For integer alpha, we can use the sum of exponentials
-    if isinstance(alpha, int) and alpha > 1:
-        result = mx.zeros(shape)
-        for _ in range(alpha):
-            result = mx.add(result, random_exponential(shape, scale=beta, dtype=None, device=device))
-        
-        # Validate dtype
-        mlx_dtype = DTypeHandler.validate_dtype(dtype)
-        if mlx_dtype is not None:
-            result = result.astype(mlx_dtype)
-        
-        return result
-    
-    # For non-integer alpha, we use the Marsaglia and Tsang method
-    # This is a simplified version that works for alpha > 1
-    # For alpha < 1, we would need a more complex algorithm
-    d = mx.subtract(mx.array(alpha), mx.divide(mx.array(1.0), mx.array(3.0)))
-    c = mx.divide(mx.array(1.0), mx.sqrt(mx.multiply(mx.array(9.0), d)))
-    
-    result = mx.zeros(shape)
-    # Use boolean type without the underscore
-    valid_samples = mx.zeros(shape, dtype=bool)
-    
-    # Keep generating until all samples are valid
-    while not mx.all(valid_samples):
-        # Generate standard normal samples
-        z = mx.random.normal(shape=shape)
-        
-        # Calculate v = (1 + c*z)^3
-        v = mx.power(mx.add(mx.array(1.0), mx.multiply(c, z)), mx.array(3.0))
-        
-        # Filter out invalid samples (v <= 0)
-        v_valid = mx.greater(v, mx.array(0.0))
-        
-        # Calculate log acceptance ratio
-        u = mx.random.uniform(shape=shape)
-        log_accept = mx.add(
-            mx.add(
-                mx.multiply(mx.array(0.5), mx.square(z)),
-                d
-            ),
-            mx.subtract(
-                mx.negative(mx.multiply(d, v)),
-                mx.multiply(d, mx.log(v))
-            )
-        )
-        
-        # Accept samples where log(u) < log_accept
-        accept = mx.less(mx.log(u), log_accept)
-        
-        # Update valid samples and result
-        new_valid = mx.logical_and(
-            mx.logical_and(v_valid, accept),
-            mx.logical_not(valid_samples)
-        )
-        result = mx.where(new_valid, mx.multiply(mx.multiply(d, v), beta), result)
-        valid_samples = mx.logical_or(valid_samples, new_valid)
-    
-    # Validate dtype
-    mlx_dtype = DTypeHandler.validate_dtype(dtype)
-    if mlx_dtype is not None:
-        result = result.astype(mlx_dtype)
-    
-    return result
+    # Use the helper function, passing mx.random.gamma and its specific args
+    # Note: mx.random.gamma takes shape_param (alpha) and scale (beta)
+    return _create_new_tensor(mx.random.gamma, dtype=dtype, device=device, shape=shape, shape_param=alpha, scale=beta)
 
 def random_poisson(shape: Shape, lam: float = 1.0,
                   dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
@@ -278,48 +128,8 @@ def random_poisson(shape: Shape, lam: float = 1.0,
     Returns:
         MLX array with random values from a Poisson distribution
     """
-    # Convert shape to sequence if it's an int
-    if isinstance(shape, int):
-        shape = (shape,)
-    
-    # Import here to avoid circular imports
-    from ember_ml.backend.mlx.tensor import MLXTensor
-    
-    # Convert lambda to MLX array if it's a scalar
-    if isinstance(lam, (int, float)):
-        lam_array = mx.full(shape, lam)
-    else:
-        lam_array = MLXTensor().convert_to_tensor(lam)
-    
-    # Initialize counts and time accumulators
-    counts = mx.zeros(shape, dtype=mx.int32)
-    times = mx.zeros(shape)
-    
-    # Generate exponential waiting times until exceeding 1.0
-    # This is based on the fact that Poisson process events have
-    # exponentially distributed inter-arrival times
-    while not mx.all(mx.greater_equal(times, mx.array(1.0))):
-        # Generate exponential random variables with rate lambda
-        exp_samples = mx.divide(
-            mx.negative(mx.log(mx.random.uniform(shape=shape))),
-            lam_array
-        )
-        # Add to accumulated times
-        new_times = mx.add(times, exp_samples)
-        # Increment counts where we haven't exceeded 1.0 yet
-        counts = mx.where(
-            mx.less(new_times, mx.array(1.0)),
-            mx.add(counts, mx.array(1)),
-            counts
-        )
-        times = new_times
-    
-    # Validate dtype
-    mlx_dtype = DTypeHandler.validate_dtype(dtype)
-    if mlx_dtype is not None and mlx_dtype != mx.int32:
-        counts = counts.astype(mlx_dtype)
-    
-    return counts
+    # Use the helper function, passing mx.random.poisson and its specific args
+    return _create_new_tensor(mx.random.poisson, dtype=dtype, device=device, shape=shape, lam=lam)
 
 def random_categorical(logits: TensorLike, num_samples: int,
                       dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
@@ -345,7 +155,8 @@ def random_categorical(logits: TensorLike, num_samples: int,
     result = mx.random.categorical(logits=logits_tensor, num_samples=num_samples)
     
     # Validate dtype
-    mlx_dtype = DTypeHandler.validate_dtype(dtype)
+    from ember_ml.backend.mlx.tensor.ops.utility import _validate_and_get_mlx_dtype
+    mlx_dtype = _validate_and_get_mlx_dtype(dtype)
     if mlx_dtype is not None:
         result = result.astype(mlx_dtype)
     

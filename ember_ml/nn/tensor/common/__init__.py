@@ -65,18 +65,31 @@ gather = lambda *args, **kwargs: _get_backend_tensor_ops_module().gather(*args, 
 scatter = lambda *args, **kwargs: _get_backend_tensor_ops_module().scatter(*args, **kwargs)
 tensor_scatter_nd_update = lambda *args, **kwargs: _get_backend_tensor_ops_module().tensor_scatter_nd_update(*args, **kwargs)
 # Define slice as a function that handles both callable and non-callable backend slices
-def slice(data, starts, sizes):
+def slice(data, starts=None, sizes=None, begin=None, size=None):
     """
     Extract a slice from a tensor.
     
+    This function supports both parameter naming conventions:
+    - starts/sizes (backend native)
+    - begin/size (used in tests)
+    
     Args:
         data: Input tensor
-        starts: Starting indices for each dimension
-        sizes: Size of the slice in each dimension
+        starts: Starting indices for each dimension (backend native)
+        sizes: Size of the slice in each dimension (backend native)
+        begin: Starting indices for each dimension (alternative name used in tests)
+        size: Size of the slice in each dimension (alternative name used in tests)
         
     Returns:
         Sliced tensor
     """
+    # Use the parameters that are provided, with priority to starts/sizes
+    actual_starts = starts if starts is not None else begin
+    actual_sizes = sizes if sizes is not None else size
+    
+    if actual_starts is None or actual_sizes is None:
+        raise ValueError("Either (starts, sizes) or (begin, size) must be provided")
+        
     # Use the slice function directly from the backend ops module
     # Note: NumPy uses 'slice_tensor' in its ops module, others might use 'slice'.
     # We might need a lookup or consistent naming. Assuming 'slice' for now.
@@ -84,7 +97,7 @@ def slice(data, starts, sizes):
     ops_module = _get_backend_tensor_ops_module()
     slice_func = getattr(ops_module, 'slice', getattr(ops_module, 'slice_tensor', None))
     if slice_func:
-        return slice_func(data, starts, sizes)
+        return slice_func(data, actual_starts, actual_sizes)
     else:
         raise AttributeError(f"Backend '{get_backend()}' tensor ops module does not have a 'slice' or 'slice_tensor' function.")
 slice_update = lambda *args, **kwargs: _get_backend_tensor_ops_module().slice_update(*args, **kwargs)
@@ -146,6 +159,7 @@ random_permutation = lambda *args, **kwargs: _get_backend_tensor_ops_module().ra
 shuffle = lambda *args, **kwargs: _get_backend_tensor_ops_module().shuffle(*args, **kwargs)
 set_seed = lambda *args, **kwargs: _get_backend_tensor_ops_module().set_seed(*args, **kwargs)
 get_seed = lambda *args, **kwargs: _get_backend_tensor_ops_module().get_seed(*args, **kwargs)
+meshgrid = lambda *args, **kwargs: _get_backend_tensor_ops_module().meshgrid(*args, **kwargs) # Add meshgrid lambda
 
 # Import EmberTensor class for use in __all__ but don't import it directly
 # This avoids the unused import warning
@@ -201,5 +215,6 @@ __all__ = [
     'shuffle',
     'set_seed',
     'get_seed',
+    'meshgrid', # Add meshgrid export
     # Note: _convert_to_backend_tensor is intentionally not exported
 ]

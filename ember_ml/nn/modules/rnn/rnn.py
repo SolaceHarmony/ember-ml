@@ -226,7 +226,9 @@ class RNN(Module):
             outputs = tensor.squeeze(outputs, batch_dim)
         
         # Prepare final state
-        final_state = tensor.stack(final_h_states)
+        # Return final state as a list containing the stacked tensor(s)
+        # for consistency with other RNN layers' state format
+        final_state = [tensor.stack(final_h_states)]
         
         # Return outputs and states if requested
         if self.return_state:

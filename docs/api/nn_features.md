@@ -1,86 +1,117 @@
-# Feature Extraction Module (nn.features)
+# Feature Extraction Module (`nn.features`)
 
-The `ember_ml.nn.features` module provides a comprehensive set of feature extraction and transformation operations for machine learning tasks. These operations are backend-agnostic and follow a consistent API across different backends.
+The `ember_ml.nn.features` module provides components for feature extraction and transformation. It combines stateful components (classes like `PCA`, `Standardize`, `Normalize`) with stateless, backend-agnostic operations (like `one_hot`).
 
 ## Importing
 
 ```python
 from ember_ml.nn import features
+from ember_ml.nn import tensor # For creating example tensors
 ```
 
-## Core Classes
+## Stateful Feature Components
+
+These components maintain internal state (e.g., fitted PCA components, standardization means/stds) and are typically used in a fit/transform pattern. They are instantiated via factory functions or directly using their class names.
 
 ### PCA
 
-`PCA` performs principal component analysis, a dimensionality reduction technique.
+Performs Principal Component Analysis for dimensionality reduction.
 
+**Instantiation:**
 ```python
+# Using the factory function (recommended)
+pca_instance = features.pca()
+
+# Direct instantiation
 from ember_ml.nn.features import PCA
-from ember_ml.nn import tensor
-
-# Create a PCA instance
-pca = PCA(n_components=2)
-
-# Fit PCA to data
-data = tensor.convert_to_tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-pca.fit(data)
-
-# Transform data
-transformed = pca.transform(data)
-
-# Inverse transform
-reconstructed = pca.inverse_transform(transformed)
+pca_instance = PCA(n_components=2)
 ```
 
-### StandardizeInterface
+**Usage:**
+```python
+# Fit PCA to data
+data = tensor.convert_to_tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+pca_instance.fit(data)
+
+# Transform data
+transformed = pca_instance.transform(data)
+
+# Inverse transform
+reconstructed = pca_instance.inverse_transform(transformed)
+```
+**Key Methods:** `fit`, `transform`, `fit_transform`, `inverse_transform`
+
+### Standardize
 
 Standardizes features by removing the mean and scaling to unit variance.
 
-### NormalizeInterface
-
-Normalizes features using various normalization techniques like L1, L2, or max normalization.
-
-### TensorFeaturesInterface
-
-Provides tensor-specific feature operations like one-hot encoding.
-
-## Common Operations
-
-| Function | Description |
-|----------|-------------|
-| `features.fit(X, **kwargs)` | Fit the PCA model to the data |
-| `features.transform(X, **kwargs)` | Apply dimensionality reduction to X |
-| `features.fit_transform(X, **kwargs)` | Fit the model and apply dimensionality reduction |
-| `features.inverse_transform(X, **kwargs)` | Transform data back to its original space |
-| `features.one_hot(indices, depth, **kwargs)` | Convert indices to one-hot encoding |
-| `features.scatter(indices, updates, shape, **kwargs)` | Scatter updates into a tensor |
-
-## Examples
-
-### Principal Component Analysis
-
+**Instantiation:**
 ```python
-from ember_ml.nn import features, tensor
-import numpy as np
+# Using the factory function (recommended)
+std_scaler = features.standardize()
 
-# Create some data
-data = tensor.convert_to_tensor(np.random.randn(100, 10))
-
-# Fit and transform with PCA
-transformed = features.fit_transform(data, n_components=3)
-print(f"Original shape: {data.shape}")  # (100, 10)
-print(f"Transformed shape: {transformed.shape}")  # (100, 3)
-
-# Reconstruct the data
-reconstructed = features.inverse_transform(transformed)
-print(f"Reconstructed shape: {reconstructed.shape}")  # (100, 10)
+# Direct instantiation
+from ember_ml.nn.features import Standardize
+std_scaler = Standardize(with_mean=True, with_std=True)
 ```
 
-### One-Hot Encoding
-
+**Usage:**
 ```python
-from ember_ml.nn import features, tensor
+# Fit the scaler
+data = tensor.convert_to_tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+std_scaler.fit(data)
 
+# Transform data
+standardized_data = std_scaler.transform(data)
+
+# Inverse transform
+original_data = std_scaler.inverse_transform(standardized_data)
+```
+**Key Methods:** `fit`, `transform`, `fit_transform`, `inverse_transform`
+
+### Normalize
+
+Normalizes features using various normalization techniques (e.g., L1, L2, max).
+
+**Instantiation:**
+```python
+# Using the factory function (recommended)
+normalizer = features.normalize()
+
+# Direct instantiation
+from ember_ml.nn.features import Normalize
+normalizer = Normalize(norm='l2', axis=1) # Example: L2 norm along rows
+```
+
+**Usage:**
+```python
+# Fit the normalizer (often not needed for simple normalization)
+data = tensor.convert_to_tensor([[1, 2, 3], [4, 5, 6]])
+# normalizer.fit(data) # Usually no-op
+
+# Transform data
+normalized_data = normalizer.transform(data)
+```
+**Key Methods:** `fit`, `transform`, `fit_transform`
+
+## Stateless Feature Operations
+
+These are backend-agnostic functions for common feature transformations.
+
+### `features.one_hot(indices, depth, **kwargs)`
+
+Convert integer indices to a one-hot encoded representation.
+
+**Parameters:**
+- `indices`: Tensor containing indices to convert.
+- `depth`: The number of classes (determines the length of the one-hot vector).
+- `**kwargs`: Backend-specific arguments.
+
+**Returns:**
+- One-hot encoded tensor (native backend tensor).
+
+**Example:**
+```python
 # Create indices
 indices = tensor.convert_to_tensor([0, 2, 1, 0])
 
@@ -93,16 +124,16 @@ print(one_hot_encoded)
 #  [1, 0, 0]]
 ```
 
-## Feature Extraction Components
+## Specialized Feature Extractors (Classes)
 
-Ember ML includes several specialized feature extraction components that are available through the nn.features module:
+Ember ML also includes specialized classes for common feature extraction pipelines, typically imported directly.
 
-### TerabyteFeatureExtractor
+### `TerabyteFeatureExtractor`
 
-Designed for extracting features from very large datasets.
+Designed for extracting features from very large datasets, often involving chunking and out-of-core processing.
 
 ```python
-from ember_ml.nn.features import TerabyteFeatureExtractor
+from ember_ml.nn.features.terabyte_feature_extractor import TerabyteFeatureExtractor
 
 extractor = TerabyteFeatureExtractor(
     window_size=100,
@@ -110,32 +141,32 @@ extractor = TerabyteFeatureExtractor(
     feature_functions=['mean', 'std', 'min', 'max']
 )
 
-# Extract features from time series data
-features = extractor.extract(time_series_data)
+# Extract features (example assumes time_series_data is loaded)
+# features = extractor.extract(time_series_data)
 ```
 
-### TemporalStrideProcessor
+### `TemporalStrideProcessor`
 
 Processes temporal data with variable strides, useful for time series analysis.
 
 ```python
-from ember_ml.nn.features import TemporalStrideProcessor
+from ember_ml.nn.features.temporal_stride_processor import TemporalStrideProcessor
 
 processor = TemporalStrideProcessor(
     stride_lengths=[1, 2, 4, 8],
     feature_functions=['mean', 'std', 'skew', 'kurtosis']
 )
 
-# Process temporal data
-features = processor.process(temporal_data)
+# Process temporal data (example assumes temporal_data is loaded)
+# features = processor.process(temporal_data)
 ```
 
-### ColumnFeatureExtractor
+### `ColumnFeatureExtractor`
 
-Extracts features from tabular data on a column-by-column basis.
+Extracts features from tabular data on a column-by-column basis, handling categorical, numerical, and text columns.
 
 ```python
-from ember_ml.nn.features import ColumnFeatureExtractor
+from ember_ml.nn.features.column_feature_extractor import ColumnFeatureExtractor
 
 extractor = ColumnFeatureExtractor(
     categorical_columns=['gender', 'country'],
@@ -143,126 +174,16 @@ extractor = ColumnFeatureExtractor(
     text_columns=['description']
 )
 
-# Extract features from tabular data
-features = extractor.extract(tabular_data)
+# Extract features from tabular data (example assumes tabular_data is loaded)
+# features = extractor.extract(tabular_data)
 ```
 
 ## Backend Support
 
-The feature extraction operations are backend-agnostic and work with any backend (NumPy, PyTorch, MLX) using the backend abstraction layer.
-
-```python
-from ember_ml.nn import features
-from ember_ml.backend import set_backend
-
-# Use NumPy backend
-set_backend('numpy')
-pca_numpy = features.PCA(n_components=2)
-
-# Use PyTorch backend
-set_backend('torch')
-pca_torch = features.PCA(n_components=2)
-
-# Use MLX backend
-set_backend('mlx')
-pca_mlx = features.PCA(n_components=2)
-```
-
-## Implementation Details
-
-The feature extraction module is implemented using a layered architecture:
-
-1. **Interfaces**: Define the API for feature extraction operations
-2. **Common Implementations**: Provide backend-agnostic implementations
-3. **Backend-Specific Implementations**: Optimize for specific backends
-
-This architecture allows Ember ML to provide consistent feature extraction capabilities across different backends while still leveraging the unique capabilities of each backend.
-
-## Feature Engineering Pipeline
-
-Ember ML's feature extraction components can be combined to create powerful feature engineering pipelines:
-
-```python
-from ember_ml.nn.features import ColumnFeatureExtractor, TemporalStrideProcessor, PCA
-
-# Extract features from tabular data
-column_extractor = ColumnFeatureExtractor(
-    categorical_columns=['gender', 'country'],
-    numerical_columns=['age', 'income']
-)
-tabular_features = column_extractor.extract(tabular_data)
-
-# Process temporal columns
-temporal_processor = TemporalStrideProcessor(
-    stride_lengths=[1, 2, 4],
-    feature_functions=['mean', 'std']
-)
-temporal_features = temporal_processor.process(temporal_data)
-
-# Combine features
-combined_features = concatenate([tabular_features, temporal_features], axis=1)
-
-# Apply dimensionality reduction
-pca = PCA(n_components=10)
-final_features = pca.fit_transform(combined_features)
-```
-
-This pipeline extracts features from tabular data, processes temporal data with variable strides, combines the features, and applies dimensionality reduction to create a compact feature representation.
-
-## Advanced Usage
-
-### Custom Feature Functions
-
-You can define custom feature functions for use with the feature extraction components:
-
-```python
-from ember_ml.nn import tensor
-from ember_ml import ops
-from ember_ml.ops import stats
-
-def entropy(x, axis=None):
-    """Compute the entropy of a probability distribution."""
-    x = tensor.convert_to_tensor(x)
-    x = ops.clip(x, 1e-10, 1.0)
-    return -ops.stats.sum(x * ops.log(x), axis=axis)
-
-# Use the custom feature function
-from ember_ml.nn.features import TemporalStrideProcessor
-
-processor = TemporalStrideProcessor(
-    stride_lengths=[1, 2, 4],
-    feature_functions=['mean', 'std', entropy]
-)
-```
-
-### Feature Selection
-
-You can combine feature extraction with feature selection techniques:
-
-```python
-from ember_ml.nn.features import PCA
-from ember_ml import ops
-
-# Extract features
-features = extract_features(data)
-
-# Compute feature importance
-importance = compute_feature_importance(features, labels)
-
-# Select top k features
-k = 10
-top_indices = ops.argsort(importance)[-k:]
-selected_features = features[:, top_indices]
-
-# Apply PCA to the selected features
-pca = PCA(n_components=5)
-final_features = pca.fit_transform(selected_features)
-```
+All feature extraction operations and components are designed to be backend-agnostic, leveraging the `ops` module internally where necessary. Stateful components like `PCA` manage their state independently of the backend, while stateless functions like `one_hot` rely on the dynamically aliased backend implementation.
 
 ## Notes
 
-- All feature extraction operations are backend-agnostic and work with any backend.
-- The operations follow a consistent API across different backends.
-- For tensor creation and manipulation, use the `ember_ml.nn.tensor` module.
-- For mathematical operations, use the `ember_ml.ops` module.
-- For statistical operations, use the `ember_ml.ops.stats` module.
+- For basic tensor creation and manipulation, use the `ember_ml.nn.tensor` module.
+- For mathematical and statistical operations within custom feature functions, use the `ember_ml.ops` and `ember_ml.ops.stats` modules respectively.
+- Refer to specific class documentation for detailed parameters and methods of `PCA`, `Standardize`, `Normalize`, `TerabyteFeatureExtractor`, `TemporalStrideProcessor`, and `ColumnFeatureExtractor`.

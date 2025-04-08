@@ -28,9 +28,9 @@ The tensor architecture consists of three main components:
    - Perform the actual operation using the backend-specific implementation
 
 The data flow is as follows:
-1. User creates an EmberTensor or calls an operation
+1. User creates an EmberTensor, Parameter, or calls an operation with various input types (native tensor, list, scalar, etc.)
 2. EmberTensor delegates to a standalone function
-3. The standalone function calls the appropriate backend implementation
+3. The standalone function calls the appropriate backend implementation, which uses utility functions (like `_convert_input`) to handle different input types, including unwrapping `Parameter` and `EmberTensor` objects to get the native backend tensor.
 4. The backend implementation performs the operation using the backend-specific library
 5. The result is returned to the user
 
@@ -49,7 +49,7 @@ ember_ml/backend/{backend_name}/tensor/
   │   ├── creation.py       # Contains zeros(), ones(), etc.
   │   ├── manipulation.py   # Contains reshape(), transpose(), etc.
   │   ├── indexing.py       # Contains slice(), gather(), etc.
-  │   ├── utility.py        # Contains convert_to_tensor(), to_numpy(), etc.
+  │   ├── utility.py        # Contains helper functions like _convert_input (handles Parameter/EmberTensor unwrapping), to_numpy(), etc.
   │   └── random.py         # Contains random_normal(), random_uniform(), etc.
 ```
 

@@ -78,7 +78,6 @@ __version__ = '0.2.0'
 __all__ = [
     'set_backend',
     # 'auto_select_backend', # Removed - moved to ops
-    'benchmarks',
     'data',
     'models',
     'nn',

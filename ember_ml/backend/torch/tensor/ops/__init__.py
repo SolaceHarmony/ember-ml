@@ -7,7 +7,7 @@ These functions can be called directly or through the TorchTensor class methods.
 # Import functions defined within this directory (ops) using absolute paths
 from ember_ml.backend.torch.tensor.ops.casting import cast
 from ember_ml.backend.torch.tensor.ops.creation import (
-    zeros, ones, eye, zeros_like, ones_like, full, full_like, arange, linspace
+    zeros, ones, eye, zeros_like, ones_like, full, full_like, arange, linspace, meshgrid # Add meshgrid
 )
 from ember_ml.backend.torch.tensor.ops.manipulation import (
     reshape, transpose, concatenate, stack, split, expand_dims, squeeze, tile, pad
@@ -40,6 +40,7 @@ __all__ = [
     'full_like',
     'arange',
     'linspace',
+    'meshgrid', # Add meshgrid
 
     # Manipulation operations
     'reshape',

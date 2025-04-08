@@ -4,7 +4,7 @@ import pandas as pd
 from datetime import datetime
 
 from ember_ml import ops
-from ember_ml.nn.wirings import AutoNCP
+from ember_ml.nn.modules import AutoNCP
 from ember_ml.nn.modules.rnn import CfC
 from ember_ml.nn import Module, Sequential
 from sklearn.preprocessing import StandardScaler
@@ -64,7 +64,7 @@ class LiquidAnomalyDetector:
         
     def _build_model(self, total_neurons, motor_neurons):
         # First layer - fast timescale for immediate anomaly detection
-        wiring_fast = wirings.AutoNCP(
+        wiring_fast = AutoNCP(
             units=total_neurons,
             output_size=motor_neurons,
             sparsity_level=0.5
@@ -76,7 +76,7 @@ class LiquidAnomalyDetector:
         )
 
         # Second layer - medium timescale for pattern recognition
-        wiring_med = wirings.AutoNCP(
+        wiring_med = AutoNCP(
             units=total_neurons // 2,
             output_size=motor_neurons // 2,
             sparsity_level=0.4
@@ -88,7 +88,7 @@ class LiquidAnomalyDetector:
         )
 
         # Third layer - slow timescale for long-term dependencies
-        wiring_slow = wirings.AutoNCP(
+        wiring_slow = AutoNCP(
             units=total_neurons // 4,
             output_size=motor_neurons // 4,
             sparsity_level=0.3

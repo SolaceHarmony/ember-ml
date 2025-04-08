@@ -33,7 +33,7 @@ def solve(a: TensorLike, b: TensorLike) -> np.ndarray:
     # Use NumPy's built-in solve function
     return np.linalg.solve(a_array, b_array)
 
-def lstsq(a: TensorLike, b: TensorLike, rcond: Optional[float] = None) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def lstsq(a: TensorLike, b: TensorLike, rcond: Optional[float] = None) -> tuple[np.ndarray, np.ndarray, np.int32, np.ndarray]:
     """
     Compute the least-squares solution to a linear matrix equation.
     

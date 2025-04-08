@@ -174,16 +174,16 @@ def tile(tensor : TensorLike, reps : ShapeLike) -> mx.array:
     tensor_array = Tensor.convert_to_tensor(tensor)
     return mx.tile(tensor_array, reps)
 
-def pad(tensor : TensorLike, paddings, constant_values=0):
+def pad(tensor: TensorLike, paddings, mode='constant', constant_values=0):
     """
     Pad a tensor with a constant value.
 
     Args:
-        tensor_obj: MLXTensor instance
         tensor: Input tensor
         paddings: Sequence of sequences of integers specifying the padding for each dimension
                 Each inner sequence should contain two integers: [pad_before, pad_after]
-        constant_values: Value to pad with
+        mode: Padding mode. MLX supports 'constant' and 'edge'. Default is 'constant'.
+        constant_values: Value to pad with when mode is 'constant'. Default is 0.
 
     Returns:
         Padded tensor
@@ -197,5 +197,10 @@ def pad(tensor : TensorLike, paddings, constant_values=0):
     # MLX expects a tuple of (pad_before, pad_after) for each dimension
     pad_width = tuple(tuple(p) for p in paddings)
 
-    # Pad the tensor
-    return mx.pad(tensor_array, pad_width, constant_values)
+    # MLX supports 'constant' and 'edge' modes
+    valid_mode = 'constant'
+    if mode in ['constant', 'edge']:
+        valid_mode = mode
+
+    # Pad the tensor using MLX's pad function with the correct argument order
+    return mx.pad(tensor_array, pad_width, valid_mode, constant_values)

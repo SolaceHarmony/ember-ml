@@ -12,6 +12,7 @@ from ember_ml import ops
 from ember_ml.nn.modules import Parameter # Module removed
 from ember_ml.nn.modules.module_cell import ModuleCell # Import ModuleCell
 from ember_ml.nn import initializers # Import initializers module
+from ember_ml.nn.modules import activations # Import activations module
 from ember_ml.nn import tensor
 class GRUCell(ModuleCell): # Inherit from ModuleCell
     """
@@ -99,31 +100,31 @@ class GRUCell(ModuleCell): # Inherit from ModuleCell
             h_prev = states[0]
         
         # Compute input projection
-        x_z = ops.matmul(inputs, self.input_kernel[:, :self.hidden_size])
-        x_r = ops.matmul(inputs, self.input_kernel[:, self.hidden_size:self.hidden_size*2])
-        x_h = ops.matmul(inputs, self.input_kernel[:, self.hidden_size*2:])
+        x_z = ops.matmul(inputs, self.input_kernel.data[:, :self.hidden_size])
+        x_r = ops.matmul(inputs, self.input_kernel.data[:, self.hidden_size:self.hidden_size*2])
+        x_h = ops.matmul(inputs, self.input_kernel.data[:, self.hidden_size*2:])
         
         # Compute recurrent projection
-        h_z = ops.matmul(h_prev, self.recurrent_kernel[:, :self.hidden_size])
-        h_r = ops.matmul(h_prev, self.recurrent_kernel[:, self.hidden_size:self.hidden_size*2])
-        h_h = ops.matmul(h_prev, self.recurrent_kernel[:, self.hidden_size*2:])
+        h_z = ops.matmul(h_prev, self.recurrent_kernel.data[:, :self.hidden_size])
+        h_r = ops.matmul(h_prev, self.recurrent_kernel.data[:, self.hidden_size:self.hidden_size*2])
+        h_h = ops.matmul(h_prev, self.recurrent_kernel.data[:, self.hidden_size*2:])
         
         # Add bias if needed
         if self.use_bias and self.bias is not None and self.recurrent_bias is not None:
-            x_z = ops.add(x_z, self.bias[:self.hidden_size])
-            x_r = ops.add(x_r, self.bias[self.hidden_size:self.hidden_size*2])
-            x_h = ops.add(x_h, self.bias[self.hidden_size*2:])
+            x_z = ops.add(x_z, self.bias.data[:self.hidden_size])
+            x_r = ops.add(x_r, self.bias.data[self.hidden_size:self.hidden_size*2])
+            x_h = ops.add(x_h, self.bias.data[self.hidden_size*2:])
 
-            h_z = ops.add(h_z, self.recurrent_bias[:self.hidden_size])
-            h_r = ops.add(h_r, self.recurrent_bias[self.hidden_size:self.hidden_size*2])
-            h_h = ops.add(h_h, self.recurrent_bias[self.hidden_size*2:])
+            h_z = ops.add(h_z, self.recurrent_bias.data[:self.hidden_size])
+            h_r = ops.add(h_r, self.recurrent_bias.data[self.hidden_size:self.hidden_size*2])
+            h_h = ops.add(h_h, self.recurrent_bias.data[self.hidden_size*2:])
         
         # Compute gates
-        z = ops.sigmoid(ops.add(x_z, h_z))  # Update gate
-        r = ops.sigmoid(ops.add(x_r, h_r))  # Reset gate
+        z = activations.sigmoid(ops.add(x_z, h_z))  # Update gate
+        r = activations.sigmoid(ops.add(x_r, h_r))  # Reset gate
         
         # Compute candidate hidden state
-        h_tilde = ops.tanh(ops.add(x_h, ops.multiply(r, h_h)))
+        h_tilde = activations.tanh(ops.add(x_h, ops.multiply(r, h_h)))
         
         # Compute new hidden state
         h = ops.add(

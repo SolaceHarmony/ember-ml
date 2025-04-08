@@ -64,12 +64,24 @@ class EmberDType:
         return self._name
     
     def __eq__(self, other: Any) -> bool:
-        """Check if two data types are equal."""
+        """Check if this EmberDType is equal to another object."""
         if isinstance(other, EmberDType):
+            # Compare names directly if other is also an EmberDType
             return self._name == other._name
         elif isinstance(other, str):
+            # Compare name if other is a string
             return self._name == other
-        return False
+        else:
+            # Attempt to convert 'other' to its string representation using the backend
+            try:
+                # Get the backend helper's to_dtype_str method
+                to_str_func = _get_backend_dtype().to_dtype_str
+                other_str = to_str_func(other)
+                # Compare names
+                return self._name == other_str
+            except (ValueError, TypeError, AttributeError):
+                # If conversion fails or type is incompatible, they are not equal
+                return False
     
     def __call__(self) -> Any:
         """Return the backend-specific data type."""
@@ -125,6 +137,10 @@ def get_dtype(name):
 # Define a function to convert a dtype to a string
 def to_dtype_str(dtype):
     """Convert a data type to a string."""
+    # Handle EmberDType instances
+    if isinstance(dtype, EmberDType):
+        return dtype.name
+    # Handle string dtypes
     return _get_backend_dtype().to_dtype_str(dtype)
 
 # Define a function to convert a string to a dtype

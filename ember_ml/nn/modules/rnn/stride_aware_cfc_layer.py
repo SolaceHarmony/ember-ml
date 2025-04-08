@@ -11,9 +11,11 @@ from ember_ml.nn import tensor
 from ember_ml.nn.modules import Module
 from ember_ml.nn.modules.wiring import NeuronMap # Use renamed base class
 # Import the cell this layer uses
-from ember_ml.nn.modules.rnn.stride_aware_cfc import StrideAwareWiredCfCCell, lecun_tanh
+from ember_ml.nn.modules.rnn.stride_aware_cfc import StrideAwareWiredCfCCell # Remove lecun_tanh import
 # Import specific wirings needed for default behavior
 from ember_ml.nn.modules.wiring import FullyConnectedMap # Use renamed map class
+from ember_ml.nn.modules import activations # Import activations module
+from ember_ml.nn.modules.activations import get_activation # Import the new helper
 
 class StrideAwareCfC(Module):
     """
@@ -45,7 +47,7 @@ class StrideAwareCfC(Module):
         time_scale_factor: float = 1.0,
         mixed_memory: bool = False,
         mode: str = "default",
-        activation = lecun_tanh,
+        activation = "lecun_tanh", # Use string name as default
         backbone_units: Optional[int] = None,
         backbone_layers: Optional[int] = None,
         backbone_dropout: Optional[float] = None,
@@ -63,7 +65,7 @@ class StrideAwareCfC(Module):
             time_scale_factor: Factor to scale the time constant
             mixed_memory: Whether to use mixed memory
             mode: Mode of operation ("default", "pure", or "no_gate")
-            activation: Activation function for the output
+            activation: Activation function name string for the output (e.g., "lecun_tanh")
             backbone_units: Number of units in the backbone
             backbone_layers: Number of layers in the backbone
             backbone_dropout: Dropout rate for the backbone
@@ -312,16 +314,19 @@ class StrideAwareCfC(Module):
         layer_config = config # Start with remaining config
         layer_config['neuron_map_or_cell'] = cell # Pass the reconstructed cell
 
-        # Handle activation reconstruction (similar to StrideAwareWiredCfCCell.from_config)
-        activation_config = layer_config.get('activation')
-        if activation_config == 'lecun_tanh':
-             from .stride_aware_cfc import lecun_tanh
-             layer_config['activation'] = lecun_tanh
-        elif isinstance(activation_config, str):
-             try:
-                 layer_config['activation'] = ops.get_activation(activation_config)
-             except ValueError:
-                 pass # Keep string if not found in ops
+        # Handle activation reconstruction if name was serialized
+        activation_config_val = layer_config.get('activation')
+        # Remove special case for 'lecun_tanh', rely on get_activation
+        if isinstance(activation_config_val, str):
+            try:
+                # Use new helper to reconstruct from name
+                layer_config['activation'] = get_activation(activation_config_val)
+            except (AttributeError, TypeError):
+                # If reconstruction fails, remove it so __init__ uses default
+                layer_config.pop('activation', None)
+        elif activation_config_val is not None and not callable(activation_config_val):
+            # If it's somehow serialized but not a string or callable, remove it
+            layer_config.pop('activation', None)
 
         # Call the base from_config which calls cls(**layer_config)
         return super(StrideAwareCfC, cls).from_config(layer_config)

@@ -36,6 +36,7 @@ default_int = torch.int32
 default_float = torch.float32
 default_bool = torch.bool if hasattr(torch, 'bool') else Any
 type TensorLike = Any
+type ScalarLike = Any
 
 # Default type for dtype
 type DType = Any

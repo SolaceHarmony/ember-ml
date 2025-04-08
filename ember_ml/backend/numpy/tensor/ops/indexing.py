@@ -132,6 +132,12 @@ def slice_update(tensor: TensorLike, slices: TensorLike, updates: Optional[Tenso
     elif isinstance(slices, np.ndarray) and slices.dtype == bool:
         # Handle boolean mask directly
         indices_tuple = slices # NumPy supports boolean array indexing
+    elif isinstance(slices, tuple):
+        # Handle tuples directly - convert elements to integers
+        try:
+            indices_tuple = tuple(int(i) for i in slices)
+        except (ValueError, TypeError):
+            raise TypeError(f"Tuple indices must contain values convertible to integers, got {slices}")
     else:
         # Attempt conversion for list/array-like integer indices
         try:
@@ -200,7 +206,7 @@ def scatter_nd(self: np.ndarray, dim: int, index: np.ndarray, src: Union[np.ndar
 
     # Helper function to create slices
     def make_slice(arr, dim, i):
-        slc = [slice(None)] * arr.ndim
+        slc = [py_slice(None)] * arr.ndim
         slc[dim] = i
         return tuple(slc)
 
@@ -269,15 +275,25 @@ def scatter(data: TensorLike, indices: TensorLike, dim_size: Optional[Union[int,
     # Ensure indices are integers
     indices_int = indices_array.astype(np.int32)
     
-    # Handle dim_size
+    # Handle dim_size to determine output shape
     if dim_size is None:
-        computed_dim_size = int(np.max(indices_int) + 1)
+        # If dim_size is not provided, infer it from the max index
+        computed_dim_size_for_axis = int(np.max(indices_int) + 1)
+        output_shape = list(data_array.shape)
+        output_shape[axis] = computed_dim_size_for_axis
+    elif isinstance(dim_size, int):
+        # If dim_size is an integer, use it for the specified axis
+        output_shape = list(data_array.shape)
+        output_shape[axis] = dim_size
+    elif isinstance(dim_size, (list, tuple, np.ndarray)):
+        # If dim_size is a sequence (like a shape tuple), use it directly as the output shape
+        # This handles the case where the test provides the full output shape
+        output_shape = tuple(dim_size)
+        # Basic validation
+        if len(output_shape) != data_array.ndim:
+             raise ValueError(f"Provided shape dim_size {output_shape} has different rank ({len(output_shape)}) than data ({data_array.ndim})")
     else:
-        computed_dim_size = int(dim_size)
-    
-    # Create output shape
-    output_shape = list(data_array.shape)
-    output_shape[axis] = computed_dim_size
+        raise TypeError(f"Unsupported type for dim_size: {type(dim_size)}")
     
     # Initialize output tensor based on operation
     if aggr == "add" or aggr == "mean" or aggr == "softmax":

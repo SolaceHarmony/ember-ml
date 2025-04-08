@@ -13,16 +13,6 @@ from ember_ml.backend.mlx.config import (
 # Import tensor classes
 from ember_ml.backend.mlx.tensor import MLXDType, MLXTensor
 
-# Import all ops classes
-# Removed Ops class imports
-# from ember_ml.backend.mlx.math_ops import MLXMathOps
-# from ember_ml.backend.mlx.comparison_ops import MLXComparisonOps
-# from ember_ml.backend.mlx.device_ops import MLXDeviceOps
-# from ember_ml.backend.mlx.linearalg import MLXLinearAlgOps
-# from ember_ml.backend.mlx.io_ops import MLXIOOps
-# from ember_ml.backend.mlx.vector_ops import MLXVectorOps
-# from ember_ml.backend.mlx.stats import MLXStatsOps
-# from ember_ml.backend.mlx.loss_ops import MLXLossOps
 
 # Import specific functions from math_ops
 from ember_ml.backend.mlx.math_ops import (
@@ -32,10 +22,6 @@ from ember_ml.backend.mlx.math_ops import (
     divide,
     matmul,
     dot,
-    mean,
-    sum,
-    max,
-    min,
     exp,
     log,
     log10,
@@ -51,14 +37,10 @@ from ember_ml.backend.mlx.math_ops import (
     sinh,
     cosh,
     clip,
-    var,
     negative,
     mod,
     floor_divide,
-    sort,
-    gradient,
-    cumsum,
-    eigh
+    gradient
 )
 
 
@@ -77,7 +59,8 @@ from ember_ml.backend.mlx.comparison_ops import (
     allclose,
     isclose,
     all,
-    where
+    where,
+    isnan
 )
 
 # Import specific functions from device_ops
@@ -122,8 +105,17 @@ from ember_ml.backend.mlx.vector_ops import (
     irfftn
 )
 
-# Import activation functions (Added)
-from ember_ml.backend.mlx.activations import relu, sigmoid, tanh, softmax, softplus
+# Import specific functions from loss_ops
+from ember_ml.backend.mlx.loss_ops import (
+    mean_squared_error,
+    mean_absolute_error,
+    binary_crossentropy,
+    categorical_crossentropy,
+    sparse_categorical_crossentropy,
+    huber_loss,
+    log_cosh_loss
+)
+
 # Set power function
 power = pow
 
@@ -154,10 +146,7 @@ __all__ = [
     'divide',
     'matmul',
     'dot',
-    'mean',
-    'sum',
-    'max',
-    'min',
+
     'exp',
     'log',
     'log10',
@@ -174,12 +163,9 @@ __all__ = [
     'cosh',
     'negative',
     'clip',
-    'var',
     'mod',
     'floor_divide',
-    'sort',
     'gradient',
-    'cumsum',
 
     # Casting operations
     'cast',
@@ -238,9 +224,6 @@ __all__ = [
     'shape',
     'dtype',
     'copy',
-    'var',
-    'sort',
-    'argsort',
     'maximum',
     
     # Comparison operations
@@ -258,6 +241,7 @@ __all__ = [
     'isclose',
     'all',
     'where',
+    'isnan',
     
     # Device operations
     'to_device',
@@ -283,7 +267,7 @@ __all__ = [
     'euclidean_distance',
     'cosine_similarity',
     'exponential_decay',
-    'gaussian',
+    # 'gaussian', # Handled by ops.stats
     'fft',
     'ifft',
     'fft2',
@@ -296,7 +280,14 @@ __all__ = [
     'irfft2',
     'rfftn',
     'irfftn',
+    # Loss Ops Functions (added)
+    'mean_squared_error',
+    'mean_absolute_error',
+    'binary_crossentropy',
+    'categorical_crossentropy',
+    'sparse_categorical_crossentropy',
+    'huber_loss',
+    'log_cosh_loss',
 
-    # Activation Ops Functions (added)
-    'relu', 'sigmoid', 'tanh', 'softmax', 'softplus',
+
 ]

@@ -8,11 +8,11 @@ This version only tests MLX to avoid backend switching issues.
 
 import time
 import platform
-from typing import List, Optional, Dict
+from typing import List
 
 from ember_ml import ops
 from ember_ml.ops import set_backend
-from ember_ml.nn import Module, Sequential, tensor
+from ember_ml.nn import tensor
 set_backend('mlx')
 
 def benchmark_matrix_multiply(

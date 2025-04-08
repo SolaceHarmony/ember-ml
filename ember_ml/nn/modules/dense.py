@@ -9,6 +9,7 @@ from typing import Optional, Any, Dict # Removed Union, Tuple, Callable
 
 from ember_ml import ops
 from ember_ml.nn.modules import Module, Parameter
+from ember_ml.nn.modules.activations import get_activation
 from ember_ml.nn import tensor
 class Dense(Module):
     # Explicitly type hint attributes for clarity and type checking
@@ -100,19 +101,17 @@ class Dense(Module):
         
         # Apply activation if specified
         if self.activation is not None:
-            if self.activation == "tanh":
-                output = ops.tanh(output)
-            elif self.activation == "sigmoid":
-                output = ops.sigmoid(output)
-            elif self.activation == "relu":
-                output = ops.relu(output)
-            else:
-                # Try to get the activation function from ops
+            try:
+                # Use the get_activation helper to retrieve the activation function
+                activation_fn = get_activation(self.activation)
+                output = activation_fn(output)
+            except (AttributeError, ValueError) as e:
+                # Fallback to ops module for backward compatibility
                 activation_fn = getattr(ops, self.activation, None)
                 if activation_fn is not None:
                     output = activation_fn(output)
                 else:
-                    raise ValueError(f"Unknown activation function: {self.activation}")
+                    raise ValueError(f"Unknown activation function: {self.activation}") from e
         
         # Reshape output if needed
         if len(original_shape) > 2:

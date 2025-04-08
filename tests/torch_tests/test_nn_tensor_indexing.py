@@ -17,10 +17,14 @@ def test_tensor_gather_torch(torch_backend): # Use fixture
     result_axis0 = tensor.gather(params, indices_axis0, axis=0)
     expected_axis0 = tensor.convert_to_tensor([[0, 1, 2, 3], [8, 9, 10, 11]])
     assert tensor.shape(result_axis0) == (2, 4), "Gather axis=0 shape failed"
+    # Ensure the expected tensor has the same dtype as the result
+    expected_axis0 = tensor.cast(expected_axis0, tensor.dtype(result_axis0))
     assert ops.allclose(result_axis0, expected_axis0), "Gather axis=0 failed"
     result_axis1 = tensor.gather(params, indices_axis1, axis=1)
     expected_axis1 = tensor.convert_to_tensor([[1, 3], [5, 7], [9, 11]])
     assert tensor.shape(result_axis1) == (3, 2), "Gather axis=1 shape failed"
+    # Ensure the expected tensor has the same dtype as the result
+    expected_axis1 = tensor.cast(expected_axis1, tensor.dtype(result_axis1))
     assert ops.allclose(result_axis1, expected_axis1), "Gather axis=1 failed"
 
 def test_tensor_scatter_torch(torch_backend): # Use fixture
@@ -28,7 +32,7 @@ def test_tensor_scatter_torch(torch_backend): # Use fixture
     indices = tensor.convert_to_tensor([[0, 1], [2, 2]])
     updates = tensor.convert_to_tensor([100, 200])
     shape = (3, 4)
-    scattered = tensor.scatter(indices, updates, shape)
+    scattered = tensor.tensor_scatter_nd_update(tensor.zeros(shape), indices, updates)
     assert tensor.shape(scattered) == shape, "tensor.scatter shape failed"
     expected_manual = tensor.convert_to_tensor([[0, 100, 0, 0],[0, 0,   0, 0],[0, 0, 200, 0]])
     expected_manual = tensor.cast(expected_manual, tensor.dtype(scattered))

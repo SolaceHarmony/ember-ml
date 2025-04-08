@@ -132,3 +132,22 @@ def qr(a: TensorLike, mode: Literal['reduced', 'complete', 'r', 'raw'] = 'reduce
         return R
     else:
         raise ValueError(f"Invalid mode: {mode}. Expected one of ['reduced', 'complete', 'r', 'raw']")
+
+
+def eigh(matrix: TensorLike) -> tuple[torch.Tensor, torch.Tensor]:
+    """Compute eigenvalues and eigenvectors of a Hermitian/symmetric matrix.
+    
+    Args:
+        matrix: Square matrix of shape (..., M, M) that is Hermitian/symmetric
+    
+    Returns:
+        Tuple of:
+            - eigenvalues (..., M) in ascending order
+            - eigenvectors (..., M, M) where v[..., :, i] is eigenvector i
+    """
+    from ember_ml.backend.torch.tensor.tensor import TorchTensor
+    tensor = TorchTensor()
+    
+    matrix = tensor.convert_to_tensor(matrix)
+    eigenvals, eigenvecs = torch.linalg.eigh(matrix)
+    return eigenvals, eigenvecs

@@ -12,7 +12,7 @@ from ember_ml.nn import tensor
 from ember_ml import ops as ops
 from ember_ml.ops import stats
 from ember_ml.nn import tensor
-from ember_ml.ops.linearalg import svd
+# Defer svd import to method call to respect dynamic backend
 def _svd_flip(u, v):
     """Sign correction for SVD to ensure deterministic output.
     
@@ -27,11 +27,46 @@ def _svd_flip(u, v):
         u_adjusted, v_adjusted: Adjusted singular vectors
     """
     # Columns of u, rows of v
-    max_abs_cols = stats.argmax(ops.abs(u), axis=0) # Use ops.stats.argmax
-    signs = ops.sign(tensor.gather(u, max_abs_cols, axis=0))
+    # u has shape (n_samples, n_components)
+    # v has shape (n_components, n_features)
+    n_samples, n_components = tensor.shape(u)
+
+    # Find the row index of the maximum absolute value in each column of u
+    max_abs_row_indices = stats.argmax(ops.abs(u), axis=0) # Shape: (n_components,)
+
+    # Gather the actual elements with the largest absolute value in each column
+    # We need elements u[max_abs_row_indices[i], i] for each column i.
+    # Using a loop for clarity as vectorized element gathering via ops might be complex/unreliable.
+    gathered_elements = []
+    for i in range(n_components):
+        # Extract scalar index for the row
+        row_idx_tensor = max_abs_row_indices[i]
+        # Ensure row_idx_tensor is scalar before calling item() if needed
+        # Assuming item() works on 0-d tensors resulting from indexing
+        try:
+             row_idx = tensor.item(row_idx_tensor)
+        except: # Broad except, consider refining based on potential errors
+             # If item() fails maybe it's already a scalar or needs different handling
+             row_idx = int(row_idx_tensor) # Fallback attempt
+
+        col_idx = i
+        # Index the specific element u[row_idx, col_idx]
+        # Direct indexing might depend on backend tensor type returned by ops
+        element = u[row_idx, col_idx]
+        gathered_elements.append(element)
+
+    # Compute signs of the gathered elements
+    signs = ops.sign(tensor.stack(gathered_elements)) # Shape: (n_components,)
+
+
+    # Apply signs to columns of u
+    # Broadcasting 'signs' (n_components,) across rows of u (n_samples, n_components)
     u = ops.multiply(u, signs)
+
+    # Apply signs to rows of v
     # Reshape signs to (n_components, 1) for broadcasting with v (n_components, n_features)
-    v = ops.multiply(v, tensor.reshape(signs, (tensor.shape(signs)[0], 1)))
+    signs_reshaped = tensor.reshape(signs, (n_components, 1))
+    v = ops.multiply(v, signs_reshaped)
     return u, v
 
 
@@ -189,8 +224,16 @@ def _randomized_svd(
     
     # Step 6: Compute SVD of the small matrix B
     Uhat, S, V = ops.svd(B)
-    U = ops.matmul(Q, Uhat)
-    
+    # --- Truncate Uhat, S, V before calculating final U ---
+    Uhat = Uhat[:, :n_components] # Shape (num_features, n_components) e.g. (5, 3)
+    S = S[:n_components]         # Shape (n_components,) e.g. (3,)
+    V = V[:n_components, :]      # Shape (n_components, n_features) e.g. (3, 5) assuming V is Vh
+
+    # Now calculate final U using truncated Uhat
+    U = ops.matmul(Q, Uhat)      # Shape (n_samples, n_features) @ (n_features, n_components) = (n_samples, n_components) e.g. (100, 5) @ (5, 3) = (100, 3)
+
+    V = V[:n_components, :] # Assuming V is Vh (transposed right singular vectors)
+
     return U, S, V
 
 
@@ -254,7 +297,7 @@ class PCA:
         
         # Center data
         if center:
-            self.mean_ = stats.mean(X_tensor, axis=0) # Use ops.stats.mean
+            self.mean_ = stats.mean(X_tensor, axis=0) # Corrected: Use stats.mean
             X_centered = ops.subtract(X_tensor, self.mean_)
         else:
             self.mean_ = tensor.zeros((self.n_features_,))
@@ -262,10 +305,27 @@ class PCA:
         
         # Perform SVD
         if svd_solver == "full":
-            U, S, V = svd(X_centered)
+            # Import svd dynamically inside the method
+            from ember_ml.ops.linearalg import svd
+            U, S, V = svd(X_centered) # Full SVD
+
+            # --- Truncate results from full SVD ---
+            if n_components is not None:
+                 # Ensure n_components is calculated if it was 'mle' or float
+                 _n_components_int = _find_ncomponents(n_components, self.n_samples_, self.n_features_, S) # Need S for MLE
+
+                 U = U[:, :_n_components_int]
+                 S = S[:_n_components_int]
+                 V = V[:_n_components_int, :] # Assuming V is Vh
+            # --- End Truncation ---
             # Explained variance
-            explained_variance = ops.divide(ops.square(S), ops.subtract(self.n_samples_, 1))
+            denominator = ops.subtract(self.n_samples_, 1)
+            # Use a_min and a_max for ops.clip, using float('inf') for upper bound
+            denominator = ops.clip(denominator, 1e-8, float('inf'))  # Avoid division by zero
+            explained_variance = ops.divide(ops.square(S), denominator)
             total_var = ops.stats.sum(explained_variance)
+            # Use a_min and a_max for ops.clip, using float('inf') for upper bound
+            total_var = ops.clip(total_var, 1e-8, float('inf'))  # Avoid division by zero
             explained_variance_ratio = ops.divide(explained_variance, total_var)
         elif svd_solver == "randomized":
             if n_components is None:
@@ -282,14 +342,24 @@ class PCA:
                 random_state=None,
             )
             # Explained variance
-            explained_variance = ops.divide(ops.square(S), ops.subtract(self.n_samples_, 1))
-            total_var = ops.divide(ops.stats.sum(ops.square(X_centered)), ops.subtract(self.n_samples_, 1))
+            denominator = ops.subtract(self.n_samples_, 1)
+            denominator = ops.clip(denominator, 1e-8, float('inf'))  # Avoid division by zero
+            explained_variance = ops.divide(ops.square(S), denominator)
+            
+            # Calculate total variance with safeguards
+            squared_sum = ops.stats.sum(ops.square(X_centered))
+            total_var = ops.divide(squared_sum, denominator)
+            
+            # Ensure non-zero denominator for ratio calculation
+            total_var = ops.clip(total_var, 1e-8, float('inf'))  # Avoid division by zero
             explained_variance_ratio = ops.divide(explained_variance, total_var)
         elif svd_solver == "covariance_eigh":
-            # Compute covariance matrix
+            # Compute covariance matrix with safeguards
+            denominator = ops.subtract(self.n_samples_, 1)
+            denominator = ops.clip(denominator, 1e-8, float('inf'))  # Avoid division by zero
             cov = ops.divide(
                 ops.matmul(tensor.transpose(X_centered), X_centered),
-                ops.subtract(self.n_samples_, 1)
+                denominator
             )
             # Eigendecomposition
             eigenvals, eigenvecs = ops.eigh(cov)
@@ -298,10 +368,12 @@ class PCA:
             eigenvals = eigenvals[idx]
             eigenvecs = eigenvecs[:, idx]
             # Fix numerical errors
-            eigenvals = ops.clip(eigenvals, min_value=0.0)
+            eigenvals = ops.clip(eigenvals, 0.0, float('inf'))
             # Compute equivalent variables to full SVD output
             explained_variance = eigenvals
             total_var = ops.stats.sum(explained_variance)
+            # Ensure non-zero denominator for ratio calculation
+            total_var = ops.clip(total_var, 1e-8, float('inf'))  # Avoid division by zero
             explained_variance_ratio = ops.divide(explained_variance, total_var)
             S = ops.sqrt(ops.multiply(eigenvals, ops.subtract(self.n_samples_, 1)))
             V = tensor.transpose(eigenvecs)
@@ -330,9 +402,14 @@ class PCA:
         
         # Compute noise variance
         if ops.less(self.n_components_, min(self.n_samples_, self.n_features_)):
-            self.noise_variance_ = ops.mean(explained_variance[self.n_components_:])
+            # Check if slice is empty before computing mean to avoid warning
+            remaining_variance = explained_variance[self.n_components_:]
+            if tensor.shape(remaining_variance)[0] > 0:
+                self.noise_variance_ = stats.mean(remaining_variance)
+            else:
+                self.noise_variance_ = tensor.convert_to_tensor(0.0)
         else:
-            self.noise_variance_ = 0.0
+            self.noise_variance_ = tensor.convert_to_tensor(0.0)
         
         return self
     
@@ -356,7 +433,7 @@ class PCA:
         if self.whiten_:
             # Avoid division by zero
             eps = 1e-8  # Small constant to avoid division by zero
-            scale = ops.sqrt(ops.clip(self.explained_variance_, min_value=eps))
+            scale = ops.sqrt(ops.clip(self.explained_variance_, eps, float('inf')))
             X_transformed = ops.divide(X_transformed, scale)
         
         return X_transformed
@@ -410,12 +487,14 @@ class PCA:
         if self.whiten_:
             # Avoid division by zero
             eps = 1e-8  # Small constant to avoid division by zero
-            scale = ops.sqrt(ops.clip(self.explained_variance_, min_value=eps))
+            scale = ops.sqrt(ops.clip(self.explained_variance_, eps, float('inf')))
             X_unwhitened = ops.multiply(X_tensor, scale)
         else:
             X_unwhitened = X_tensor
         
+        # Apply matrix multiplication using ops.matmul
         X_original = ops.matmul(X_unwhitened, self.components_)
+        # Add the mean back using ops.add
         X_original = ops.add(X_original, self.mean_)
         
         return X_original

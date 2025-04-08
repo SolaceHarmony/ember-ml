@@ -70,9 +70,9 @@ def random_seed():
 def numpy_backend():
     """Set NumPy backend for tests."""
     original_backend = get_backend()
-    set_backend('numpy')
+    ops.set_backend('numpy') # Use ops.set_backend to trigger alias updates
     yield
-    set_backend(original_backend or 'numpy')  # Default to numpy if None
+    ops.set_backend(original_backend or 'numpy')  # Use ops.set_backend
 
 
 @pytest.fixture
@@ -81,9 +81,9 @@ def torch_backend():
     try:
         import torch
         original_backend = get_backend()
-        set_backend('torch')
+        ops.set_backend('torch') # Use ops.set_backend
         yield
-        set_backend(original_backend or 'numpy')  # Default to numpy if None
+        ops.set_backend(original_backend or 'numpy')  # Use ops.set_backend
     except ImportError:
         pytest.skip("PyTorch not available")
 
@@ -94,9 +94,9 @@ def mlx_backend():
     try:
         import mlx.core
         original_backend = get_backend()
-        set_backend('mlx')
+        ops.set_backend('mlx') # Use ops.set_backend
         yield
-        set_backend(original_backend or 'numpy')  # Default to numpy if None
+        ops.set_backend(original_backend or 'numpy')  # Use ops.set_backend
     except ImportError:
         pytest.skip("MLX not available")
 

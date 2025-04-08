@@ -38,11 +38,11 @@ default_bool = np.bool_ if hasattr(np, 'bool_') else Any
 
 
 # Runtime definitions (simplified)
-type TensorTypes = Any
-type ArrayLike = Any
-type TensorLike = Any
-type ScalarLike = Any
-type DTypes = Any
+type TensorTypes = Any # type: ignore
+type ArrayLike = Any # type: ignore
+type TensorLike = Any # type: ignore
+type ScalarLike = Any # type: ignore
+type DTypes = Any # type: ignore
 type DType = Any
 
 # Conditional type definitions

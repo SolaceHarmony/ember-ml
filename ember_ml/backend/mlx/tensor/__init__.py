@@ -65,7 +65,6 @@ __all__ = [
     'tensor_scatter_nd_update',
     
     # Utility operations
-    'convert_to_mlx_tensor',
     'to_numpy',
     'item',
     'shape',

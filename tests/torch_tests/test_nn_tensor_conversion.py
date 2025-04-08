@@ -95,7 +95,7 @@ def test_tensor_item_torch(torch_backend): # Use fixture
 
     t_bool = tensor.convert_to_tensor(True)
     item_bool = tensor.item(t_bool)
-    assert isinstance(item_bool, (bool, np.bool_)), "Bool type failed"
+    # Directly assert the value is True, remove isinstance check
     assert item_bool is True, "Bool value failed"
 
     t_non_scalar = tensor.convert_to_tensor([1, 2])

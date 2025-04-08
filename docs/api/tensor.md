@@ -191,7 +191,9 @@ set_backend('mlx')
 
 ## Backend Purity
 
-The tensor module maintains backend purity by ensuring that all tensor operations go through the backend abstraction layer. This means that you can use the same code with different backends without having to change your code.
+The tensor module maintains backend purity by ensuring that all tensor operations go through the backend abstraction layer via the `ops` module. This means that you can use the same code with different backends without having to change your code.
+
+**Important Note on Return Types:** Functions within the `ops` module (e.g., `ops.add`, `ops.matmul`) operate on and return **native backend tensors** (like `mlx.core.array`, `torch.Tensor`, or `numpy.ndarray`), not `EmberTensor` instances. The `EmberTensor` class serves as a wrapper primarily for user interaction and parameter management. When combining results from `ops` functions with `EmberTensor` or `Parameter` objects, ensure all inputs to subsequent `ops` calls are handled correctly by the backend's conversion utilities (which typically accept native tensors, `EmberTensor`, and `Parameter` objects). Avoid mixing types with direct Python operators (`+`, `*`).
 
 For example, the following code will work with any backend:
 

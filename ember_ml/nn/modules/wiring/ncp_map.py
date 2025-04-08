@@ -27,11 +27,12 @@ class NCPMap(NeuronMap): # Name is already correct
     """
     
     def __init__(
-        self, 
+        self,
         inter_neurons: int,
+        command_neurons: int, # Add command_neurons
         motor_neurons: int,
         sensory_neurons: int = 0,
-        sparsity_level: float = 0.5, 
+        sparsity_level: float = 0.5,
         seed: Optional[int] = None,
         sensory_to_inter_sparsity: Optional[float] = None,
         sensory_to_motor_sparsity: Optional[float] = None,
@@ -48,6 +49,7 @@ class NCPMap(NeuronMap): # Name is already correct
         
         Args:
             inter_neurons: Number of inter neurons
+            command_neurons: Number of command neurons
             motor_neurons: Number of motor neurons
             sensory_neurons: Number of sensory neurons (default: 0)
             sparsity_level: Default sparsity level for all connections (default: 0.5)
@@ -64,7 +66,7 @@ class NCPMap(NeuronMap): # Name is already correct
         """
         # If units is provided, use it, otherwise calculate it
         if units is None:
-            units = inter_neurons + motor_neurons + sensory_neurons
+            units = inter_neurons + command_neurons + motor_neurons + sensory_neurons # Update units calculation
         
         # If output_dim is provided, use it, otherwise use motor_neurons
         if output_dim is None:
@@ -77,6 +79,7 @@ class NCPMap(NeuronMap): # Name is already correct
         super().__init__(units, output_dim, input_dim, sparsity_level, seed)
         
         self.inter_neurons = inter_neurons
+        self.command_neurons = command_neurons # Store command_neurons
         self.motor_neurons = motor_neurons
         self.sensory_neurons = sensory_neurons
         
@@ -110,13 +113,15 @@ class NCPMap(NeuronMap): # Name is already correct
         input_mask = ones((self.input_dim,), dtype=int32)
         output_mask = zeros((self.units,), dtype=int32)
         
-        # Define neuron group indices
+        # Define neuron group indices based on diagram and original source structure
         sensory_start = 0
         sensory_end = self.sensory_neurons
         inter_start = sensory_end
         inter_end = sensory_end + self.inter_neurons
-        motor_start = inter_end
-        motor_end = inter_end + self.motor_neurons
+        command_start = inter_end # Add command indices
+        command_end = inter_end + self.command_neurons
+        motor_start = command_end # Adjust motor indices
+        motor_end = command_end + self.motor_neurons
         
         # Create output mask (only motor neurons contribute to output)
         output_mask = zeros((self.units,), dtype=int32)
@@ -142,12 +147,20 @@ class NCPMap(NeuronMap): # Name is already correct
                     if random_uniform(()) >= self.sensory_to_inter_sparsity:
                         recurrent_mask_list[i][j] = 1
         
-        # Sensory to motor connections
-        if self.sensory_neurons > 0 and self.motor_neurons > 0:
-            for i in range(sensory_start, sensory_end):
-                for j in range(motor_start, motor_end):
-                    if random_uniform(()) >= self.sensory_to_motor_sparsity:
-                        recurrent_mask_list[i][j] = 1
+        # Sensory to command connections (NEW - Matches diagram & original source logic)
+        if self.sensory_neurons > 0 and self.command_neurons > 0:
+             for i in range(sensory_start, sensory_end):
+                 for j in range(command_start, command_end):
+                     # Using sensory_to_inter_sparsity for now, could add specific arg later
+                     if random_uniform(()) >= self.sensory_to_inter_sparsity:
+                         recurrent_mask_list[i][j] = 1
+
+        # Sensory to motor connections -> REMOVE (Not in diagram or original source build logic)
+        # if self.sensory_neurons > 0 and self.motor_neurons > 0:
+        #     for i in range(sensory_start, sensory_end):
+        #         for j in range(motor_start, motor_end):
+        #             if random_uniform(()) >= self.sensory_to_motor_sparsity:
+        #                 recurrent_mask_list[i][j] = 1
         
         # Inter to inter connections
         if self.inter_neurons > 0:
@@ -155,6 +168,14 @@ class NCPMap(NeuronMap): # Name is already correct
                 for j in range(inter_start, inter_end):
                     if random_uniform(()) >= self.inter_to_inter_sparsity:
                         recurrent_mask_list[i][j] = 1
+
+        # Inter to command connections (NEW - Matches diagram & original source logic)
+        if self.inter_neurons > 0 and self.command_neurons > 0:
+            for i in range(inter_start, inter_end):
+                for j in range(command_start, command_end):
+                    # Using inter_to_inter_sparsity for now, could add specific arg later
+                    if random_uniform(()) >= self.inter_to_inter_sparsity:
+                         recurrent_mask_list[i][j] = 1
         
         # Inter to motor connections
         if self.inter_neurons > 0 and self.motor_neurons > 0:
@@ -163,19 +184,27 @@ class NCPMap(NeuronMap): # Name is already correct
                     if random_uniform(()) >= self.inter_to_motor_sparsity:
                         recurrent_mask_list[i][j] = 1
         
-        # Motor to motor connections
-        if self.motor_neurons > 0:
-            for i in range(motor_start, motor_end):
+        # Command to motor connections (NEW - Matches diagram & original source logic)
+        if self.command_neurons > 0 and self.motor_neurons > 0:
+            for i in range(command_start, command_end):
                 for j in range(motor_start, motor_end):
-                    if random_uniform(()) >= self.motor_to_motor_sparsity:
-                        recurrent_mask_list[i][j] = 1
-        
-        # Motor to inter connections
-        if self.motor_neurons > 0 and self.inter_neurons > 0:
-            for i in range(motor_start, motor_end):
-                for j in range(inter_start, inter_end):
-                    if random_uniform(()) >= self.motor_to_inter_sparsity:
-                        recurrent_mask_list[i][j] = 1
+                     # Using inter_to_motor_sparsity for now, could add specific arg later
+                     if random_uniform(()) >= self.inter_to_motor_sparsity:
+                         recurrent_mask_list[i][j] = 1
+
+        # Motor to motor connections -> REMOVE (Not in diagram or original source build logic)
+        # if self.motor_neurons > 0:
+        #     for i in range(motor_start, motor_end):
+        #         for j in range(motor_start, motor_end):
+        #             if random_uniform(()) >= self.motor_to_motor_sparsity:
+        #                 recurrent_mask_list[i][j] = 1
+
+        # Motor to inter connections -> REMOVE (Not in diagram or original source build logic)
+        # if self.motor_neurons > 0 and self.inter_neurons > 0:
+        #     for i in range(motor_start, motor_end):
+        #         for j in range(inter_start, inter_end):
+        #             if random_uniform(()) >= self.motor_to_inter_sparsity:
+        #                 recurrent_mask_list[i][j] = 1
         
         # Convert the list to a tensor
         recurrent_mask = EmberTensor(recurrent_mask_list, dtype=int32)
@@ -193,6 +222,7 @@ class NCPMap(NeuronMap): # Name is already correct
         config = super().get_config()
         config.update({
             "inter_neurons": self.inter_neurons,
+            "command_neurons": self.command_neurons, # Add command_neurons
             "motor_neurons": self.motor_neurons,
             "sensory_neurons": self.sensory_neurons,
             "sensory_to_inter_sparsity": self.sensory_to_inter_sparsity,
@@ -226,12 +256,25 @@ class NCPMap(NeuronMap): # Name is already correct
         Returns:
             Dictionary mapping group names to lists of neuron indices
         """
-        sensory_idx = [i for i in range(self.sensory_neurons)]
-        inter_idx = [i for i in range(self.sensory_neurons, self.sensory_neurons + self.inter_neurons)]
-        motor_idx = [i for i in range(self.sensory_neurons + self.inter_neurons, self.units)]
-        
+        # Define start/end indices consistent with build method
+        sensory_start = 0
+        sensory_end = self.sensory_neurons
+        inter_start = sensory_end
+        inter_end = inter_start + self.inter_neurons
+        command_start = inter_end
+        command_end = command_start + self.command_neurons
+        motor_start = command_end
+        motor_end = self.units # self.units now includes command_neurons
+
+        # Generate index lists
+        sensory_idx = list(range(sensory_start, sensory_end))
+        inter_idx = list(range(inter_start, inter_end))
+        command_idx = list(range(command_start, command_end)) # Add command indices
+        motor_idx = list(range(motor_start, motor_end)) # Adjust motor indices
+
         return {
             "sensory": sensory_idx,
             "inter": inter_idx,
+            "command": command_idx, # Add command group
             "motor": motor_idx
         }

@@ -13,21 +13,10 @@ from ember_ml.nn.modules import Parameter # Module removed, inheriting from Modu
 from ember_ml.nn.modules.wiring import NeuronMap # Use renamed base class
 from ember_ml.nn.modules.module_wired_cell import ModuleWiredCell # Import parent class
 from ember_ml.nn.initializers import glorot_uniform, orthogonal, BinomialInitializer
+from ember_ml.nn.modules import activations # Import activations module
+from ember_ml.nn.modules.activations import get_activation # Import the new helper
 
-# LeCun improved tanh activation
-def lecun_tanh(x):
-    """
-    LeCun improved tanh activation function.
-    
-    Args:
-        x: Input tensor
-        
-    Returns:
-        Activated tensor
-    """
-    scale_factor = tensor.convert_to_tensor(0.66666667)  # More precise 2/3
-    amplitude = tensor.convert_to_tensor(1.7159)
-    return ops.multiply(amplitude, ops.tanh(ops.multiply(scale_factor, x)))
+# Local lecun_tanh function removed, use activations.lecun_tanh instead
 
 
 class StrideAwareWiredCfCCell(ModuleWiredCell): # Inherit from ModuleWiredCell
@@ -56,7 +45,7 @@ class StrideAwareWiredCfCCell(ModuleWiredCell): # Inherit from ModuleWiredCell
             time_scale_factor: float = 1.0,
             fully_recurrent: bool = True,
             mode: str = "default",
-            activation = lecun_tanh,
+            activation = "lecun_tanh", # Use string name as default
             backbone_units: int = 128,
             backbone_layers: int = 1,
             **kwargs
@@ -70,7 +59,7 @@ class StrideAwareWiredCfCCell(ModuleWiredCell): # Inherit from ModuleWiredCell
             time_scale_factor: Factor to scale the time constant
             fully_recurrent: Whether to use full recurrent connections
             mode: Mode of operation ("default", "pure", or "no_gate")
-            activation: Activation function for the output
+            activation: Activation function name string for the output (e.g., "lecun_tanh")
             backbone_units: Number of units in the backbone
             backbone_layers: Number of layers in the backbone
             **kwargs: Additional keyword arguments
@@ -315,9 +304,7 @@ class StrideAwareWiredCfCCell(ModuleWiredCell): # Inherit from ModuleWiredCell
             "stride_length": self.stride_length,
             "time_scale_factor": self.time_scale_factor,
             "fully_recurrent": self.fully_recurrent,
-            # Save activation name/identifier
-            # Check if self._activation holds the object or name
-            "activation": self._activation if isinstance(self._activation, str) else getattr(self._activation, '__name__', str(self._activation)),
+            # "activation": ..., # Removing activation serialization for now
             "backbone_units": self.backbone_units,
             "backbone_layers": self.backbone_layers,
         })
@@ -331,16 +318,19 @@ class StrideAwareWiredCfCCell(ModuleWiredCell): # Inherit from ModuleWiredCell
     @classmethod
     def from_config(cls, config: Dict[str, Any]) -> 'StrideAwareWiredCfCCell':
         """Creates a StrideAwareWiredCfC cell from its configuration."""
-        # Handle activation reconstruction: config has name/repr, __init__ needs function
-        activation_config = config.get('activation')
-        if activation_config == 'lecun_tanh': # Simple check for this specific case
-             from .stride_aware_cfc import lecun_tanh # Import locally
-             config['activation'] = lecun_tanh
-        elif isinstance(activation_config, str):
+        # Handle activation reconstruction if name was serialized
+        activation_config_val = config.get('activation')
+        # Remove special case for 'lecun_tanh', rely on get_activation
+        if isinstance(activation_config_val, str):
              try:
-                 config['activation'] = ops.get_activation(activation_config)
-             except ValueError:
-                 pass # Keep string, assume __init__ handles it or adjust later
+                 # Use new helper to reconstruct from name
+                 config['activation'] = get_activation(activation_config_val)
+             except (AttributeError, TypeError):
+                 # If reconstruction fails, remove it so __init__ uses default
+                 config.pop('activation', None)
+        elif activation_config_val is not None and not callable(activation_config_val):
+             # If it's somehow serialized but not a string or callable, remove it
+             config.pop('activation', None)
 
         # Clean up the config for proper reconstruction
         # Remove input_size from config to avoid duplicate parameter error

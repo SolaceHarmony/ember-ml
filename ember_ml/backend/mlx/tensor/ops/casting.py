@@ -2,7 +2,8 @@
 
 import mlx.core # Restore necessary import for type hint
 # from typing import Optional # Removed unused Optional
-from ember_ml.backend.mlx.tensor.dtype import MLXDType
+# Removed top-level import of _validate_and_get_mlx_dtype
+# from ember_ml.backend.mlx.tensor.dtype import MLXDType # Restore this import if needed, but likely not used now
 from ember_ml.backend.mlx.types import DType, TensorLike
 
 # _validate_dtype helper function removed. Logic should exist in MLXDType.validate_dtype
@@ -23,11 +24,12 @@ def cast(tensor: TensorLike, dtype: DType) -> mlx.core.array: # Use direct type 
     """
     # Import MLX specifics lazily
     from ember_ml.backend.mlx.tensor.tensor import MLXTensor
-    from ember_ml.backend.mlx.tensor.tensor import MLXTensor # Moved import here
-    from ember_ml.backend.mlx.tensor.dtype import MLXDType
+    # MLXDType import removed
 
     # 1. Validate the target dtype using the class method
-    mlx_dtype = MLXDType().validate_dtype(dtype)
+    # 1. Validate the target dtype using the utility function (lazy import)
+    from ember_ml.backend.mlx.tensor.ops.utility import _validate_and_get_mlx_dtype
+    mlx_dtype = _validate_and_get_mlx_dtype(dtype)
 
     # 2. Convert the input tensor to a base MLX array (without casting yet)
     # Ensure convert_to_tensor doesn't apply the final dtype cast itself

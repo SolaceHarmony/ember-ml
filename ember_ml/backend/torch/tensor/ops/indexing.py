@@ -102,7 +102,36 @@ def gather(tensor: TensorLike, indices: TensorLike, axis: int = 0) -> torch.Tens
     # Convert indices to long
     indices_array = indices_array.long()
     
-    return torch.gather(tensor_array, axis, indices_array)
+    # For 1D indices with multi-dimensional tensor, we need to handle it specially
+    if len(indices_array.shape) == 1 and len(tensor_array.shape) > 1:
+        # Create a list to store the gathered slices
+        slices = []
+        
+        # Iterate through the indices and gather each slice
+        for idx in indices_array:
+            # Create slice objects for the specific index along the axis
+            # Use Python's built-in slice, not our slice_tensor function
+            slice_indices = [py_slice(None)] * len(tensor_array.shape)
+            slice_indices[axis] = idx.item()
+            
+            # Gather the slice
+            slices.append(tensor_array[tuple(slice_indices)])
+        
+        # For axis=0, stack the slices along dim=0
+        # For axis=1, we need to stack differently to maintain expected shape
+        if axis == 0:
+            return torch.stack(slices, dim=0)
+        elif axis == 1:
+            # For axis=1, transpose the result to match expected shape
+            result = torch.stack(slices, dim=1)
+            # No need to transpose for axis=1, the shape is already correct
+            return result
+        else:
+            # For other axes, stack along the same axis
+            return torch.stack(slices, dim=axis)
+    else:
+        # For indices with same dimensions as tensor, use torch.gather directly
+        return torch.gather(tensor_array, axis, indices_array)
     
 
 def tensor_scatter_nd_update(data: TensorLike, indices: TensorLike, updates: TensorLike) -> torch.Tensor:
@@ -170,8 +199,8 @@ def scatter(data: TensorLike, indices: TensorLike, dim_size: Optional[int] = Non
     # Create output shape
     output_shape = list(tensor_torch.shape)
     output_shape[axis] = dim_size
-    
     # Initialize output tensor with zeros
+    output = torch.zeros(tuple(output_shape), dtype=tensor_torch.dtype, device=tensor_torch.device)
     output = torch.zeros(output_shape, dtype=tensor_torch.dtype, device=tensor_torch.device)
     
     # Apply the appropriate scatter operation based on aggr

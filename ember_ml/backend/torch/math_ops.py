@@ -132,17 +132,28 @@ def dot(x: TensorLike, y: TensorLike) -> torch.Tensor:
 def matmul(x: TensorLike, y: TensorLike) -> torch.Tensor:
     """
     Multiply two tensors as matrices.
-    
+
     Args:
         x: First array
         y: Second array
-        
+
     Returns:
         Matrix product
     """
     from ember_ml.backend.torch.tensor import TorchTensor
     tensor = TorchTensor()
-    return torch.matmul(tensor.convert_to_tensor(x), tensor.convert_to_tensor(y))
+    
+    # Convert inputs to tensors
+    x_tensor = tensor.convert_to_tensor(x)
+    y_tensor = tensor.convert_to_tensor(y)
+    
+    # Check if we're on MPS device and convert non-float inputs to float32
+    if str(x_tensor.device).startswith('mps') and not torch.is_floating_point(x_tensor):
+        x_tensor = x_tensor.to(dtype=torch.float32)
+    if str(y_tensor.device).startswith('mps') and not torch.is_floating_point(y_tensor):
+        y_tensor = y_tensor.to(dtype=torch.float32)
+    
+    return torch.matmul(x_tensor, y_tensor)
 
 
 def mean(x: TensorLike, axis: Optional[ShapeLike] = None, keepdims: bool = False) -> torch.Tensor:

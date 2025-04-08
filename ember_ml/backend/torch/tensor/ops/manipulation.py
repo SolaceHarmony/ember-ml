@@ -208,7 +208,7 @@ def tile(data: TensorLike, reps: List[int]) -> torch.Tensor:
     tensor = tensor_ops.convert_to_tensor(data)
     return tensor.repeat(tuple(reps))
 
-def pad(data: TensorLike, paddings: List[List[int]], constant_values: int = 0) -> torch.Tensor:
+def pad(data: TensorLike, paddings: List[List[int]], mode: str = 'constant', constant_values: int = 0) -> torch.Tensor:
     """
     Pad a tensor with a constant value.
     
@@ -216,7 +216,9 @@ def pad(data: TensorLike, paddings: List[List[int]], constant_values: int = 0) -
         data: Input tensor
         paddings: List of lists of integers specifying the padding for each dimension
                 Each inner list should contain two integers: [pad_before, pad_after]
-        constant_values: Value to pad with
+        mode: Padding mode. PyTorch supports 'constant', 'reflect', 'replicate', and 'circular'.
+              Default is 'constant'.
+        constant_values: Value to pad with when mode is 'constant'
         
     Returns:
         Padded tensor
@@ -234,4 +236,4 @@ def pad(data: TensorLike, paddings: List[List[int]], constant_values: int = 0) -
         pad_list.extend(pad_pair)
     
     # Pad the tensor
-    return F.pad(tensor, pad_list, mode='constant', value=constant_values)
+    return F.pad(tensor, pad_list, mode=mode, value=constant_values)

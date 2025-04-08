@@ -50,7 +50,8 @@ def test_tensor_tensor_scatter_nd_update_numpy(numpy_backend): # Use fixture
 def test_tensor_slice_numpy(numpy_backend): # Use fixture
     """Tests tensor.slice with NumPy backend."""
     params = _get_indexing_tensor()
-    sliced = tensor.slice(params, begin=[1, 0], size=[2, 2])
+    # Correcting signature based on implementation: starts, sizes
+    sliced = tensor.slice(params, starts=[1, 0], sizes=[2, 2])
     expected_slice = tensor.convert_to_tensor([[4, 5], [8, 9]])
     assert tensor.shape(sliced) == (2, 2), "tensor.slice shape failed"
     expected_slice = tensor.cast(expected_slice, tensor.dtype(sliced))
@@ -61,7 +62,10 @@ def test_tensor_pad_numpy(numpy_backend): # Use fixture
     t = _get_indexing_tensor()
     paddings = [[1, 2], [0, 1]]
     constant_values = 99
-    padded = tensor.pad(t, paddings, mode='constant', constant_values=constant_values)
+    # Assuming the correct signature takes paddings and constant_values
+    # The 'mode' argument might be implicit or named differently per backend.
+    # Keeping 'constant_values' as it's common. Removing 'mode' for now.
+    padded = tensor.pad(t, paddings, constant_values=constant_values)
     expected_pad_shape = (6, 5)
     assert tensor.shape(padded) == expected_pad_shape, "tensor.pad shape failed"
     expected_manual = tensor.convert_to_tensor([

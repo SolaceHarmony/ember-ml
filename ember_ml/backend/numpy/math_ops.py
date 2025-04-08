@@ -482,9 +482,6 @@ def gradient(f: TensorLike, *varargs, axis: Optional[ShapeLike] = None,
     tensor_ops = NumpyTensor()
     return np.gradient(tensor_ops.convert_to_tensor(f), *varargs, axis=axis, edge_order=edge_order)
 
-# Removed softmax definition
-    return np.divide(exp_x, np.sum(exp_x, axis=axis, keepdims=True))
-
 
 def clip(x: TensorLike, min_val: Union[float, TensorLike], max_val: Union[float, TensorLike]) -> np.ndarray:
     """
@@ -684,8 +681,58 @@ def _calculate_pi_value(precision_digits=15):
 # Ensure it's a scalar with shape (1,) as per NumPy conventions
 PI_CONSTANT = _calculate_pi_value(15)  # Increased precision to match reference value
 
+pi : np.ndarray = np.array([PI_CONSTANT], dtype=np.float32)
+
+def binary_split(a: TensorLike, b: TensorLike) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Recursive binary split for the Chudnovsky algorithm.
+
+    This is used in the implementation of PI calculation.
+
+    Args:
+        a: Start value
+        b: End value
+
+    Returns:
+        Tuple of intermediate values for PI calculation
+    """
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    a_tensor = tensor_ops.convert_to_tensor(a)
+    b_tensor = tensor_ops.convert_to_tensor(b)
+
+    # Use numpy operations
+    diff = np.subtract(b_tensor, a_tensor)
+
+    if np.equal(diff, np.array(1)):
+        # Base case
+        if np.equal(a_tensor, np.array(0)):
+            Pab = np.array(1)
+            Qab = np.array(1)
+        else:
+            # Calculate terms using numpy operations
+            term1 = np.subtract(np.multiply(np.array(6), a_tensor), np.array(5))
+            term2 = np.subtract(np.multiply(np.array(2), a_tensor), np.array(1))
+            term3 = np.subtract(np.multiply(np.array(6), a_tensor), np.array(1))
+            Pab = np.multiply(np.multiply(term1, term2), term3)
+
+            # Define C3_OVER_24
+            C = np.array(640320.0)
+            C3_OVER_24 = np.divide(np.power(C, np.array(3.0)), np.array(24.0))
+
+            Qab = np.multiply(np.power(a_tensor, np.array(3.0)), C3_OVER_24)
+
+        return Pab, Qab
+    else:
+        # Recursive case
+        m = np.divide(np.add(a_tensor, b_tensor), np.array(2.0))
+        Pam, Qam = binary_split(a_tensor, m)
+        Pmb, Qmb = binary_split(m, b_tensor)
+
+        Pab = np.multiply(Pam, Pmb)
+        Qab = np.add(np.multiply(Qam, Pmb), np.multiply(Pam, Qmb))
+
+        return Pab, Qab
 
 # Alias for pow
 power = pow
-
-# Removed NumpyMathOps class as it's redundant with standalone functions

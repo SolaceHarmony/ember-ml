@@ -1,133 +1,157 @@
 """
-Features module.
+Features module providing stateful components and dynamic stateless operations.
 
-This module provides feature extraction and transformation operations that abstract
-machine learning library implementations.
+Stateful components (PCA, Standardize, Normalize) are accessed via factory
+functions defined here. Stateless operations (one_hot) are dynamically aliased
+from the active backend or common implementations.
 """
 
 import importlib
-from typing import Dict, Any, Type
+import sys
+import os
+from typing import List, Optional, Callable, Any
 
-# Import interfaces
-from ember_ml.nn.features.interfaces import PCAInterface, StandardizeInterface, NormalizeInterface
-from ember_ml.nn.features.interfaces.tensor_features import TensorFeaturesInterface
-from .common.pca_features import PCA # Import the common PCA implementation
+# Import backend control functions
+from ember_ml.backend import get_backend, get_backend_module
 
-# Import implementations
+# --- Stateful Components ---
 
-# Use backend directly
-from ember_ml.backend import get_backend, set_backend, get_backend_module
+# Import the stateful classes directly from their implementation files
+from ember_ml.nn.features.pca_features import PCA
+from ember_ml.nn.features.standardize_features import Standardize
+from ember_ml.nn.features.normalize_features import Normalize
+# The one_hot implementation lives in tensor_features.py
 
-_CURRENT_INSTANCES: Dict[Type, Any] = {}
+# Define Factory Functions locally
+def pca():
+    """Factory function to create a PCA instance."""
+    return PCA()
 
-def get_features():
-    """Get the current features implementation name."""
-    return get_backend()
-
-def set_features(features_name: str):
-    """Set the current features implementation."""
-    global _CURRENT_INSTANCES
-    
-    # Set the backend
-    set_backend(features_name)
-    
-    # Clear instances
-    _CURRENT_INSTANCES = {}
-
-def _load_features_module():
-    """Load the current features module."""
+def standardize():
+    """Factory function to create a Standardize instance."""
     try:
-        return get_backend_module()
-    except (ImportError, ModuleNotFoundError):
-        # If backend-specific implementation not found, use common implementation
-        return importlib.import_module('ember_ml.features.common')
+        # Instantiation might fail if class definition has issues
+        return Standardize()
+    except NameError:
+        print("Warning: Standardize class not found.")
+        return None
+    except Exception as e:
+        print(f"Error instantiating Standardize: {e}")
+        return None
 
-def _get_features_instance(features_class: Type):
-    """Get an instance of the specified features class."""
-    global _CURRENT_INSTANCES
-    
-    if features_class not in _CURRENT_INSTANCES:
-        try:
-            module = _load_features_module()
-            
-            # Get the backend directly
-            backend = get_backend()
-            
-            # Get the class name prefix based on the current implementation
-            if backend == 'numpy':
-                class_name_prefix = 'Numpy'
-            elif backend == 'torch':
-                class_name_prefix = 'Torch'
-            elif backend == 'mlx':
-                class_name_prefix = 'MLX'
-            else:
-                raise ValueError(f"Unknown features implementation: {backend}")
-            
-            # Get the class name
-            class_name = f"{class_name_prefix}{features_class.__name__[:-9]}"  # Remove 'Interface' suffix
-            
-            # Get the class and create an instance
-            features_class_impl = getattr(module, class_name)
-            _CURRENT_INSTANCES[features_class] = features_class_impl()
-        except (ImportError, AttributeError):
-            # If backend-specific implementation not found, use common implementation
-            common_module = importlib.import_module('ember_ml.nn.features.common')
-            class_name = features_class.__name__[:-9]  # Remove 'Interface' suffix
-            features_class_impl = getattr(common_module, class_name)
-            _CURRENT_INSTANCES[features_class] = features_class_impl()
-    
-    return _CURRENT_INSTANCES[features_class]
 
-# Convenience functions
-def pca_features() -> PCAInterface:
-    """Get PCA features."""
-    return _get_features_instance(PCAInterface)
+def normalize():
+    """Factory function to create a Normalize instance."""
+    try:
+        # Instantiation might fail if class definition has issues
+        return Normalize()
+    except NameError:
+        print("Warning: Normalize class not found.")
+        return None
+    except Exception as e:
+        print(f"Error instantiating Normalize: {e}")
+        return None
 
-def standardize_features() -> StandardizeInterface:
-    """Get standardize features."""
-    return _get_features_instance(StandardizeInterface)
+# --- Dynamic Aliasing for Stateless Operations ---
 
-def normalize_features() -> NormalizeInterface:
-    """Get normalize features."""
-    return _get_features_instance(NormalizeInterface)
-
-def tensor_features() -> TensorFeaturesInterface:
-    """Get tensor features."""
-    return _get_features_instance(TensorFeaturesInterface)
-
-# Direct access to operations
-# PCA operations
-fit = lambda *args, **kwargs: pca_features().fit(*args, **kwargs)
-transform = lambda *args, **kwargs: pca_features().transform(*args, **kwargs)
-fit_transform = lambda *args, **kwargs: pca_features().fit_transform(*args, **kwargs)
-inverse_transform = lambda *args, **kwargs: pca_features().inverse_transform(*args, **kwargs)
-
-# Tensor features operations
-one_hot = lambda *args, **kwargs: tensor_features().one_hot(*args, **kwargs)
-scatter = lambda *args, **kwargs: tensor_features().scatter(*args, **kwargs)
-
-# Export all functions and classes
-__all__ = [
-    # Classes
-    'PCAInterface',
-    'StandardizeInterface',
-    'NormalizeInterface',
-    'TensorFeaturesInterface',
-    'PCA',
-    
-    # Functions
-    'get_features',
-    'set_features',
-    'pca_features',
-    'standardize_features',
-    'normalize_features',
-    'tensor_features',
-    
-    # Operations
-    'fit',
-    'transform',
-    'fit_transform',
-    'inverse_transform',
+# List of stateless feature operations to alias
+_FEATURES_STATELESS_OPS_LIST = [
     'one_hot',
-    'scatter',
+]
+
+# Placeholder initialization
+for _op_name in _FEATURES_STATELESS_OPS_LIST:
+    if _op_name not in globals():
+        globals()[_op_name] = None
+
+# Keep track if aliases have been set for the current backend
+_aliased_backend_features: Optional[str] = None
+
+def get_features_ops_module():
+    """Loads the module containing feature operations."""
+    backend_name = get_backend()
+    try:
+        # Try loading backend-specific first
+        # Assume backend feature ops live directly under backend module now
+        module_name = f"ember_ml.backend.{backend_name}.features"
+        module = importlib.import_module(module_name)
+        # print(f"DEBUG: Loaded backend features op module: {module_name}")
+        return module
+    except (ImportError, ModuleNotFoundError):
+        # Fallback to common implementation file
+        try:
+            # Common implementation is now directly in nn/features
+            module_name = "ember_ml.nn.features.tensor_features"
+            module = importlib.import_module(module_name)
+            # print(f"DEBUG: Loaded common features op module: {module_name}")
+            return module
+        except (ImportError, ModuleNotFoundError):
+            print(f"Error: Could not load feature ops from backend '{backend_name}' or common 'tensor_features'.")
+            return None
+
+def _update_features_aliases():
+    """Dynamically updates this module's namespace with backend/common feature ops."""
+    global _aliased_backend_features
+    backend_name = get_backend()
+
+    if backend_name == _aliased_backend_features:
+        return
+
+    features_ops_module = get_features_ops_module()
+    if features_ops_module is None:
+        print("Warning: Features ops module could not be loaded. Aliases not updated.")
+        # Clear potentially stale aliases
+        current_module = sys.modules[__name__]
+        for op_name in _FEATURES_STATELESS_OPS_LIST:
+             setattr(current_module, op_name, None)
+             globals()[op_name] = None
+        return
+
+    current_module = sys.modules[__name__]
+    missing_ops = []
+
+    for op_name in _FEATURES_STATELESS_OPS_LIST:
+        try:
+            # Try getting from the primary (backend or fallback) module first
+            op_function = getattr(features_ops_module, op_name)
+            setattr(current_module, op_name, op_function)
+            globals()[op_name] = op_function
+        except AttributeError:
+            # If not found in the primary module, try the common module explicitly
+            # This handles cases where a backend module exists but lacks the function
+            try:
+                common_module_name = "ember_ml.nn.features.tensor_features"
+                common_features_ops_module = importlib.import_module(common_module_name)
+                op_function = getattr(common_features_ops_module, op_name)
+                setattr(current_module, op_name, op_function)
+                globals()[op_name] = op_function
+                # print(f"DEBUG: Aliased '{op_name}' from common module.") # Optional debug
+            except (ImportError, ModuleNotFoundError, AttributeError):
+                # If not found in common module either, set to None
+                setattr(current_module, op_name, None)
+                globals()[op_name] = None
+                missing_ops.append(op_name)
+
+    if missing_ops:
+        # print(f"Warning: Features module '{features_ops_module.__name__}' does not provide: {', '.join(missing_ops)}")
+        pass # Suppress for now
+    _aliased_backend_features = backend_name
+
+# --- Initial alias setup ---
+_update_features_aliases()
+
+
+# --- Define __all__ ---
+# Export factory functions, aliased stateless functions, and stateful classes
+__all__ = [
+    # Factory Functions
+    'pca',
+    'standardize',
+    'normalize',
+    # Aliased Stateless Functions
+    'one_hot',
+    # Stateful Classes (for type hinting/direct use)
+    'PCA',
+    'Standardize',
+    'Normalize',
 ]

@@ -13,6 +13,7 @@ from ember_ml import ops
 from ember_ml.nn import tensor
 from ember_ml.nn.modules import Module, Parameter
 from ember_ml.nn.initializers import glorot_uniform # Corrected import path
+from ember_ml.nn.modules.activations import get_activation # Import the helper
 
 class StrideAwareCell(Module):
     """
@@ -126,15 +127,9 @@ class StrideAwareCell(Module):
         if self.use_bias:
             output = ops.add(output, self.output_bias.data)
         
-        # Apply activation function
-        if self.activation == "tanh":
-            output = ops.tanh(output)
-        elif self.activation == "relu":
-            output = ops.relu(output)
-        elif self.activation == "sigmoid":
-            output = ops.sigmoid(output)
-        else:
-            output = getattr(ops, self.activation)(output)
+        # Apply activation function dynamically
+        activation_fn = get_activation(self.activation) # Lookup happens here
+        output = activation_fn(output)
         
         return output, new_state
     

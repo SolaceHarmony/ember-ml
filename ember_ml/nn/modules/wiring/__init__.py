@@ -3,11 +3,10 @@
 NeuronMap implementations defining neural connectivity structures.
 """
 
-from .neuron_map import NeuronMap
-from .fully_connected_map import FullyConnectedMap
-from .ncp_map import NCPMap
-from .random_map import RandomMap
-# Note: AutoNCPMap is not here, it's a layer convenience class in modules/auto_ncp.py
+from ember_ml.nn.modules.wiring.neuron_map import NeuronMap
+from ember_ml.nn.modules.wiring.fully_connected_map import FullyConnectedMap
+from ember_ml.nn.modules.wiring.ncp_map import NCPMap
+from ember_ml.nn.modules.wiring.random_map import RandomMap
 
 __all__ = [
     "NeuronMap",

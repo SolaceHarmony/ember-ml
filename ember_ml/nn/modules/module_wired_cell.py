@@ -66,7 +66,10 @@ class ModuleWiredCell(ModuleCell): # Inherit from ModuleCell
         # Pass other relevant parameters if ModuleCell expects them (like activation, use_bias - let's assume defaults or add if needed)
         # Pass only hidden_size derived from map and kwargs to ModuleCell init
         # input_size will be set during build
+        # Get input_dim from map if it's already built, otherwise None
+        input_dim = getattr(neuron_map, 'input_dim', None)
         super().__init__(
+            input_size=input_dim, # Pass map's input_dim or None
             hidden_size=neuron_map.units,
             **kwargs
         )

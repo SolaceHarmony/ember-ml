@@ -13,7 +13,7 @@ import time
 from datetime import datetime
 
 # Import our modules from ember_ml
-from ember_ml import (
+from ember_ml.nn.features import (
     GenericCSVLoader,
     GenericTypeDetector,
     GenericFeatureEngineer,

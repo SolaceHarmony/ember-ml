@@ -12,6 +12,7 @@ from ember_ml.nn.modules import Parameter # Module removed
 from ember_ml.nn.modules.module_cell import ModuleCell
 from ember_ml.nn import initializers # Import initializers
 from ember_ml.nn import tensor
+from ember_ml.nn.modules import activations # Import activations module
 class LSTMCell(ModuleCell): # Inherit from ModuleCell
     """
     Long Short-Term Memory (LSTM) cell.
@@ -114,16 +115,16 @@ class LSTMCell(ModuleCell): # Inherit from ModuleCell
         z_i, z_f, z_o, z_c = z_chunks
         
         # Apply activations
-        i = ops.sigmoid(z_i)  # Input gate
-        f = ops.sigmoid(z_f)  # Forget gate
-        o = ops.sigmoid(z_o)  # Output gate
-        c = ops.tanh(z_c)     # Cell input
+        i = activations.sigmoid(z_i)  # Input gate
+        f = activations.sigmoid(z_f)  # Forget gate
+        o = activations.sigmoid(z_o)  # Output gate
+        c = activations.tanh(z_c)     # Cell input
         
         # Update cell state
         new_c = ops.add(ops.multiply(f, c_prev), ops.multiply(i, c))
         
         # Update hidden state
-        new_h = ops.multiply(o, ops.tanh(new_c))
+        new_h = ops.multiply(o, activations.tanh(new_c))
         
         return new_h, [new_h, new_c]
     

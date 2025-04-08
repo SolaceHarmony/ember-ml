@@ -12,6 +12,7 @@ from ember_ml.nn.modules import Parameter # Module removed, inheriting from Modu
 from ember_ml.nn.modules.module_wired_cell import ModuleWiredCell # Import parent class
 from ember_ml.nn import tensor
 from ember_ml.nn.modules.wiring import NeuronMap # Import the renamed base class
+from ember_ml.nn.modules import activations # Import activations module
 class LTCCell(ModuleWiredCell): # Inherit from ModuleWiredCell
     """
     Liquid Time-Constant (LTC) cell.
@@ -54,7 +55,7 @@ class LTCCell(ModuleWiredCell): # Inherit from ModuleWiredCell
         # self.input_size, self.hidden_size (units) are set by parent init
 
         # Store LTC specific parameters
-        self.make_positive_fn = ops.softplus if implicit_param_constraints else lambda x: x
+        self.make_positive_fn = activations.softplus if implicit_param_constraints else lambda x: x
         self._implicit_param_constraints = implicit_param_constraints
         self._init_ranges = {
             "gleak": (0.001, 1.0),
@@ -72,7 +73,7 @@ class LTCCell(ModuleWiredCell): # Inherit from ModuleWiredCell
         self._output_mapping = output_mapping
         self._ode_unfolds = ode_unfolds
         self._epsilon = epsilon
-        self._clip = ops.relu # Define clipping function here
+        self._clip = activations.relu # Define clipping function here
 
         # Initialize LTC specific parameters
         # Parameter allocation moved to build method
@@ -160,56 +161,74 @@ class LTCCell(ModuleWiredCell): # Inherit from ModuleWiredCell
     def _sigmoid(self, v_pre, mu, sigma):
         """Compute sigmoid activation for synapses."""
         v_pre = tensor.expand_dims(v_pre, -1)  # For broadcasting
-        mues = v_pre - mu
-        x = sigma * mues
-        return ops.sigmoid(x)
+        # Pass Parameter objects directly to ops functions
+        mues = ops.subtract(v_pre, mu)
+        x = ops.multiply(sigma, mues)
+        return activations.sigmoid(x)
     
     def _ode_solver(self, inputs, state, elapsed_time):
         """Solve the ODE for the LTC dynamics."""
         v_pre = state
         
         # Pre-compute the effects of the sensory neurons
-        sensory_w_activation = self.make_positive_fn(self.sensory_w) * self._sigmoid(
-            inputs, self.sensory_mu, self.sensory_sigma
-        )
-        sensory_w_activation = sensory_w_activation * self.sensory_sparsity_mask
-        
-        sensory_rev_activation = sensory_w_activation * self.sensory_erev
+        # Apply make_positive_fn to Parameter, then use ops.multiply
+        sensory_w_positive = self.make_positive_fn(self.sensory_w)
+        sensory_sigmoid_out = self._sigmoid(inputs, self.sensory_mu, self.sensory_sigma)
+        sensory_w_activation = ops.multiply(sensory_w_positive, sensory_sigmoid_out)
+        sensory_w_activation = ops.multiply(sensory_w_activation, self.sensory_sparsity_mask) # Pass Parameter
+    
+        sensory_rev_activation = ops.multiply(sensory_w_activation, self.sensory_erev) # Pass Parameter
         
         # Reduce over dimension 1 (=source sensory neurons)
         w_numerator_sensory = ops.stats.sum(sensory_rev_activation, axis=1)
         w_denominator_sensory = ops.stats.sum(sensory_w_activation, axis=1)
         
         # cm/t is loop invariant
-        cm_t = self.make_positive_fn(self.cm) / (elapsed_time / self._ode_unfolds)
+        # Apply make_positive_fn to Parameter, use ops.divide
+        cm_positive = self.make_positive_fn(self.cm)
+        time_term = ops.divide(elapsed_time, self._ode_unfolds)
+        cm_t = ops.divide(cm_positive, time_term)
         
         # Unfold the ODE multiple times into one RNN step
+        # Apply make_positive_fn to Parameter
         w_param = self.make_positive_fn(self.w)
         for t in range(self._ode_unfolds):
-            w_activation = w_param * self._sigmoid(v_pre, self.mu, self.sigma)
-            w_activation = w_activation * self.sparsity_mask
+            # Use ops.multiply
+            sigmoid_out = self._sigmoid(v_pre, self.mu, self.sigma) # _sigmoid takes Parameters
+            w_activation = ops.multiply(w_param, sigmoid_out)
+            w_activation = ops.multiply(w_activation, self.sparsity_mask) # Pass Parameter
             
-            rev_activation = w_activation * self.erev
+            rev_activation = ops.multiply(w_activation, self.erev) # Pass Parameter
             
             # Reduce over dimension 1 (=source neurons)
-            w_numerator = ops.stats.sum(rev_activation, axis=1) + w_numerator_sensory
-            w_denominator = ops.stats.sum(w_activation, axis=1) + w_denominator_sensory
-            
+            w_numerator = ops.add(ops.stats.sum(rev_activation, axis=1), w_numerator_sensory) # Use ops.add
+            # Use ops.add for consistency, although '+' might work between native tensors
+            w_denominator = ops.add(ops.stats.sum(w_activation, axis=1), w_denominator_sensory)
+
+            # Apply make_positive_fn to Parameter
             gleak = self.make_positive_fn(self.gleak)
-            numerator = cm_t * v_pre + gleak * self.vleak + w_numerator
-            denominator = cm_t + gleak + w_denominator
+            # Use ops functions for numerator calculation
+            term1 = ops.multiply(cm_t, v_pre)
+            term2 = ops.multiply(gleak, self.vleak) # Pass Parameter
+            numerator = ops.add(ops.add(term1, term2), w_numerator)
+            # Use ops.add for denominator calculation
+            denominator = ops.add(ops.add(cm_t, gleak), w_denominator)
             
             # Avoid dividing by 0
-            v_pre = numerator / (denominator + self._epsilon)
+            # Use ops functions for denominator and division
+            # Use ops.add for denominator calculation
+            # Ensure ops.add is used for denominator calculation
+            denominator = ops.add(ops.add(cm_t, gleak), w_denominator)
+            v_pre = ops.divide(numerator, ops.add(denominator, self._epsilon))
         
         return v_pre
     
     def _map_inputs(self, inputs):
         """Apply input mapping to the inputs."""
         if self._input_mapping in ["affine", "linear"]:
-            inputs = inputs * self.input_w
+            inputs = ops.multiply(inputs, self.input_w) # Pass Parameter
         if self._input_mapping == "affine":
-            inputs = inputs + self.input_b
+            inputs = ops.add(inputs, self.input_b) # Pass Parameter
         return inputs
     
     def _map_outputs(self, state):
@@ -219,9 +238,9 @@ class LTCCell(ModuleWiredCell): # Inherit from ModuleWiredCell
             output = output[:, 0:self.output_size]  # slice
         
         if self._output_mapping in ["affine", "linear"]:
-            output = output * self.output_w
+            output = ops.multiply(output, self.output_w) # Pass Parameter
         if self._output_mapping == "affine":
-            output = output + self.output_b
+            output = ops.add(output, self.output_b) # Pass Parameter
         return output
     
     def apply_weight_constraints(self):

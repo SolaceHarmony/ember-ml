@@ -15,7 +15,7 @@ from ember_ml.backend import get_backend, get_backend_module
 
 # Master list of linear algebra functions expected to be aliased
 _LINEARALG_OPS_LIST = [
-    'solve', 'inv', 'svd', 'eig', 'eigvals', 'det', 'norm', 'qr',
+    'solve', 'inv', 'svd', 'eig', 'eigh', 'eigvals', 'det', 'norm', 'qr',
     'cholesky', 'lstsq', 'diag', 'diagonal',
 ]
 def get_linearalg_module():
@@ -71,4 +71,4 @@ def _update_linearalg_aliases():
 _update_linearalg_aliases()
 
 # --- Define __all__ ---
-__all__ = _LINEARALG_OPS_LIST
+__all__ = _LINEARALG_OPS_LIST # type: ignore

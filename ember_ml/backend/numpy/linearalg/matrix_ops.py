@@ -14,9 +14,9 @@ from ember_ml.backend.numpy.tensor import NumpyDType
 dtype_obj = NumpyDType()
 
 def norm(x: TensorLike,
-         ord: Optional[Union[int, str]] = None,
+         ord: Optional[Union[float, Literal["fro", "nuc"]]] = None,
          axis: Optional[Union[int, Tuple[int, ...]]] = None,
-         keepdims: bool = False) -> np.ndarray:
+         keepdims: bool = False) -> TensorLike:
     """
     Compute the matrix or vector norm.
     

@@ -20,11 +20,10 @@ class MLXDType:
         """Get the float32 data type."""
         return mx.float32
     
-    # float64 property removed as MLX does not support it.
-    # @property
-    # def float64(self):
-    #     """Get the float64 data type."""
-    #     return mx.float64
+    @property
+    def float64(self):
+         """Get the float64 data type."""
+         return mx.float32
     
     @property
     def int8(self):
@@ -96,7 +95,6 @@ class MLXDType:
         dtype_map = {
             mx.float16: 'float16',
             mx.float32: 'float32',
-            # mx.float64: 'float64', # Removed float64
             mx.int8: 'int8',
             mx.int16: 'int16',
             mx.int32: 'int32',
@@ -116,33 +114,7 @@ class MLXDType:
             return dtype_map[dtype]
         else:
             raise ValueError(f"Cannot convert {dtype} to EmberDType")
-    def validate_dtype(self, dtype: Optional[Any]) -> Optional[Any]:
-        """
-        Validate and convert dtype to MLX format.
-        
-        Args:
-            dtype_cls: MLXDType instance for conversions
-            dtype: Input dtype to validate
-            
-        Returns:
-            Validated MLX dtype or None
-        """
-        if dtype is None:
-            return None
-        
-        # Handle string dtypes
-        if isinstance(dtype, str):
-            return self.from_dtype_str(dtype)
-            
-        # Handle EmberDType objects
-        if hasattr(dtype, 'name'):
-            return self.from_dtype_str(str(dtype.name))
-            
-        # If it's already an MLX dtype, return as is
-        if isinstance(dtype, type(mx.float32)):
-            return dtype
-            
-        raise ValueError(f"Invalid dtype: {dtype}")
+    # Removed validate_dtype method, logic moved to utility.py
     def from_dtype_str(self, dtype: Union[Any, str, None]) -> Optional[Any]:
         """
         Convert a dtype string to an MLX data type.
@@ -172,8 +144,8 @@ class MLXDType:
         # Map dtype names to MLX dtypes
         if dtype_name == 'float32':
             return mx.float32
-        # elif dtype_name == 'float64': # Removed float64
-        #     return mx.float64
+        elif dtype_name == 'float64': # Removed float64
+             return mx.float32
         elif dtype_name == 'int32':
             return mx.int32
         elif dtype_name == 'int64':

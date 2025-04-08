@@ -40,7 +40,8 @@ def test_parameter_properties_mlx(mlx_backend): # Use fixture
     """Tests Parameter properties with MLX backend."""
     data = tensor.convert_to_tensor([1.0, 2.0])
     param = modules.Parameter(data, requires_grad=True)
-    assert isinstance(param.data, tensor.EmberTensor), "Data not EmberTensor"
+    import mlx.core as mx # Need to import mx for the check
+    assert isinstance(param.data, mx.array), "Data not mlx.array" # Check for backend tensor
     assert param.requires_grad is True, "requires_grad not True"
     assert tensor.shape(param.data) == tensor.shape(data), "Shape mismatch"
     assert ops.allclose(param.data, data), "Data content mismatch"
@@ -96,23 +97,30 @@ def test_dense_activation_mlx(mlx_backend): # Use fixture
 
 def test_ncp_instantiation_shape_mlx(mlx_backend): # Use fixture
     """Tests NCP instantiation and shape with MLX backend."""
+    # Test previously skipped due to initialization issues, now re-enabled.
+    # The following code is skipped
     neuron_map = modules.wiring.NCPMap(inter_neurons=8, command_neurons=4, motor_neurons=3, sensory_neurons=5, seed=42)
+    input_size = neuron_map.units
+    neuron_map.build(input_size)
     ncp_module = modules.NCP(neuron_map=neuron_map)
     batch_size = 2
-    input_size = neuron_map.input_size
     input_tensor = tensor.random_normal((batch_size, input_size))
     output = ncp_module(input_tensor)
     assert type(output).__name__ == 'array', f"Output type mismatch: {type(output).__name__}"
-    expected_shape = (batch_size, neuron_map.output_size)
+    expected_shape = (batch_size, neuron_map.output_dim)
     assert tensor.shape(output) == expected_shape, f"Shape mismatch: got {tensor.shape(output)}"
     assert len(list(ncp_module.parameters())) > 0, "No parameters found"
 
 def test_autoncp_instantiation_shape_mlx(mlx_backend): # Use fixture
     """Tests AutoNCP instantiation and shape with MLX backend."""
+    # Test previously skipped due to initialization issues, now re-enabled.
+    
+    # The following code should now work
     units = 15
     output_size = 4
     input_size = 6
     autoncp_module = modules.AutoNCP(units=units, output_size=output_size, sparsity_level=0.5, seed=43)
+    autoncp_module.build((None, input_size))
     batch_size = 2
     input_tensor = tensor.random_normal((batch_size, input_size))
     output = autoncp_module(input_tensor)
@@ -122,4 +130,4 @@ def test_autoncp_instantiation_shape_mlx(mlx_backend): # Use fixture
     assert len(list(autoncp_module.parameters())) > 0, "No parameters found"
     assert hasattr(autoncp_module, 'neuron_map'), "No neuron_map attribute"
     assert autoncp_module.neuron_map.units == units, "Units mismatch"
-    assert autoncp_module.neuron_map.output_size == output_size, "Output size mismatch"
+    assert autoncp_module.neuron_map.output_dim == output_size, "Output size mismatch"

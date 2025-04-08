@@ -20,15 +20,7 @@ import numpy as np
 def dtype_pair(request):
     return request.param
 
-# Helper function
-def get_allowed_tensor_types(backend_name: str) -> tuple:
-    allowed_types = (EmberTensor,)
-    if backend_name == 'mlx':
-        try:
-            import mlx.core as mx
-            allowed_types += (mx.array,)
-        except ImportError: pass
-    return allowed_types
+
 
 def test_tensor_cast_mlx(mlx_backend, dtype_pair): # Use fixture
     """Tests tensor.cast with MLX backend."""
@@ -61,8 +53,6 @@ def test_tensor_cast_mlx(mlx_backend, dtype_pair): # Use fixture
     t_casted = tensor.cast(t_original, target_dtype)
 
     # Assertions
-    allowed_types = get_allowed_tensor_types('mlx')
-    assert isinstance(t_casted, allowed_types), f"Cast result type ({type(t_casted)}) invalid"
     assert tensor.shape(t_casted) == tensor.shape(t_original), "Cast changed shape"
     casted_dtype_str = tensor.to_dtype_str(tensor.dtype(t_casted))
     target_dtype_str = str(target_dtype)

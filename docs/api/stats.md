@@ -1,11 +1,17 @@
-# Statistical Operations API
+# Statistical Operations (`ops.stats`)
 
 The `ops.stats` module provides a comprehensive set of statistical operations for tensor analysis. These operations are backend-agnostic and follow a consistent API, making it easy to work with tensors regardless of the underlying backend.
+
+**Important Note on Input/Output Types:** Functions within the `ops.stats` module accept a variety of tensor-like inputs, including native backend tensors (e.g., `mlx.core.array`), `EmberTensor` objects, `Parameter` objects, NumPy arrays, and Python lists/tuples/scalars. The backend implementation automatically handles converting these inputs and unwrapping objects like `Parameter` and `EmberTensor` to access the underlying native tensor data needed for computation. These functions return results as **native backend tensors**, not `EmberTensor` instances.
 
 ## Importing
 
 ```python
 from ember_ml import ops
+from ember_ml.nn import tensor # For creating example tensors
+
+# Access stats functions via ops.stats
+# e.g., ops.stats.mean(...)
 ```
 
 ## Available Functions
@@ -254,12 +260,26 @@ argsort_rows = ops.stats.argsort(x, axis=1)  # Indices to sort each row
 argsort_desc = ops.stats.argsort(x, descending=True)  # Indices for descending sort
 ```
 
+### Other
+
+#### `ops.stats.gaussian(x, mean=0.0, std=1.0)`
+
+Apply Gaussian function element-wise to a tensor. Note: This is often categorized under vector operations but is aliased here.
+
+**Parameters:**
+- `x`: Input tensor
+- `mean`: Mean of the Gaussian distribution
+- `std`: Standard deviation of the Gaussian distribution
+
+**Returns:**
+- Tensor with Gaussian function applied.
+
 ## Notes on Tensor Operations vs. Statistical Operations
 
 In Ember ML, there is a distinction between tensor operations and statistical operations:
 
-- **Tensor Operations** (in `tensor` module): These are operations that manipulate tensor structure, such as reshape, transpose, concatenate, etc.
+- **Tensor Operations** (in `ember_ml.nn.tensor` module): These are operations that manipulate tensor structure, such as reshape, transpose, concatenate, etc., and typically return `EmberTensor` objects.
 
-- **Statistical Operations** (in `ops.stats` module): These are operations that compute statistical properties of tensors, such as mean, variance, percentiles, etc.
+- **Statistical Operations** (in `ember_ml.ops.stats` module): These are operations that compute statistical properties of tensors, such as mean, variance, percentiles, etc., and return native backend tensors.
 
-Sort and argsort are available in both modules, as they can be considered both tensor manipulation operations and statistical operations depending on the context.
+Sort and argsort are available in both modules, as they can be considered both tensor manipulation operations and statistical operations depending on the context. Check the specific module documentation for return type details if needed.

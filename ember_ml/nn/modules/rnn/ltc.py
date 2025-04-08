@@ -16,6 +16,7 @@ from ember_ml.nn.modules import Module
 from ember_ml.nn.modules.wiring import NeuronMap # Use renamed base class
 from ember_ml.nn.modules.rnn.ltc_cell import LTCCell
 from ember_ml.nn import tensor
+from ember_ml.nn.modules.activations import tanh
 
 class LTC(Module):
     """
@@ -28,14 +29,15 @@ class LTC(Module):
         self,
         neuron_map: NeuronMap,
         return_sequences: bool = True,
+        return_state: bool = False, # Add return_state parameter
         batch_first: bool = True,
         mixed_memory: bool = False,
         input_mapping="affine",
         output_mapping="affine",
         ode_unfolds=6,
         epsilon=1e-8,
-        implicit_param_constraints=True,
-        **kwargs
+        implicit_param_constraints=True
+        # **kwargs removed
     ):
         """
         Initialize the LTC layer.
@@ -51,14 +53,15 @@ class LTC(Module):
             ode_unfolds: Number of ODE solver unfoldings
             epsilon: Small constant to avoid division by zero
             implicit_param_constraints: Whether to use implicit parameter constraints
-            **kwargs: Additional keyword arguments
+            # **kwargs removed from docstring
         """
-        super().__init__(**kwargs)
+        super().__init__() # Call base init without args
         
         # Store the map for reference/config
         self.neuron_map = neuron_map
         self.batch_first = batch_first
         self.return_sequences = return_sequences
+        self.return_state = return_state  # Store return_state as an instance attribute
         self.mixed_memory = mixed_memory
         
         # Validate that neuron_map is actually a NeuronMap instance
@@ -121,8 +124,8 @@ class LTC(Module):
                 h_prev, c_prev = states
                 
                 # Input gate
-                i = ops.sigmoid(
-                    ops.matmul(inputs, self.input_kernel) +
+                i = ops.sigmoid( # type: ignore
+                    ops.matmul(inputs, self.input_kernel) + # type: ignore
                     ops.matmul(h_prev, self.input_recurrent_kernel) +
                     self.input_bias
                 )
@@ -196,12 +199,12 @@ class LTC(Module):
         
         Args:
             inputs: Input tensor of shape (batch_size, seq_length, features) if batch_first=True,
-                   or (seq_length, batch_size, features) if batch_first=False
+                    or (seq_length, batch_size, features) if batch_first=False
             initial_state: Initial state of the RNN
             timespans: Time spans for continuous-time dynamics (default: 1.0)
             
         Returns:
-            Layer output and final state
+            Layer output and final state if return_state is True, otherwise just the layer output
         """
         # Get device and batch information
         is_batched = len(tensor.shape(inputs)) == 3
@@ -294,7 +297,10 @@ class LTC(Module):
             else:
                 final_state = tensor.squeeze(h_state, 0)
         
-        return outputs, final_state
+        if self.return_state:
+            return outputs, final_state
+        else:
+            return outputs
     
     def reset_state(self, batch_size=1):
         """
@@ -319,6 +325,11 @@ class LTC(Module):
         
         # Save the cell's config
         cell_config = self.rnn_cell.get_config()
+        
+        # Add return_state to the config
+        config.update({
+            "return_state": self.return_state,
+        })
         
         # Save layer's direct __init__ args
         config.update({
@@ -352,6 +363,9 @@ class LTC(Module):
         # Handle backward compatibility with old configs that used input_size or neuron_map_or_units
         # This ensures older models can still be loaded
         from ember_ml.nn.modules.wiring import FullyConnectedMap
+        
+        # Handle return_state parameter
+        return_state = config.pop("return_state", False)
         
         # Handle old input_size parameter (needed for backward compatibility)
         old_input_size = config.pop("input_size", None)

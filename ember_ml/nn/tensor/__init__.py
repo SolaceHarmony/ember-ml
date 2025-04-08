@@ -33,7 +33,8 @@ from ember_ml.nn.tensor.common import (  # noqa
     to_numpy, item, shape,
     random_uniform, random_normal, maximum,
     random_bernoulli, random_gamma, random_exponential, random_poisson,
-    random_categorical, random_permutation, shuffle, set_seed, get_seed
+    random_categorical, random_permutation, shuffle, set_seed, get_seed,
+    meshgrid # Add meshgrid here
 )
 
 # Define array function as an alias for EmberTensor constructor
@@ -53,7 +54,7 @@ def array(data, dtype=None, device=None, requires_grad=False):
     return EmberTensor(data, dtype=dtype, device=device, requires_grad=requires_grad)
 
 from typing import Any
-
+ 
 def convert_to_tensor(data: Any, dtype=None, device=None, requires_grad=False):
     """
     Create a tensor from data.
@@ -65,18 +66,19 @@ def convert_to_tensor(data: Any, dtype=None, device=None, requires_grad=False):
         requires_grad: Whether the tensor requires gradients
         
     Returns:
-        EmberTensor
+        Backend tensor (e.g., mx.array, torch.Tensor, np.ndarray)
     """
-    # If already an EmberTensor, return it directly (reference passing)
-    if type(EmberTensor) == type(data):
+    # If already an EmberTensor, check if dtype/device/requires_grad match
+    if isinstance(data, EmberTensor):
+        # TODO: Add logic here to potentially re-wrap or cast if dtype/device/requires_grad differ?
+        # For now, return as is, assuming the caller handles potential mismatches if needed.
+        # A more robust implementation might create a new EmberTensor if properties differ significantly.
         return data
-    
-    # Convert to backend tensor first using the internal function
-    from ember_ml.nn.tensor.common import _convert_to_backend_tensor
-    backend_tensor = _convert_to_backend_tensor(data, dtype=dtype)
-    
-    # Wrap in EmberTensor
-    return EmberTensor(backend_tensor, dtype=dtype, device=device, requires_grad=requires_grad)
+
+    # Create and return an EmberTensor instance.
+    # The EmberTensor.__init__ method is responsible for handling the backend conversion,
+    # dtype setting, device placement, and storing the backend tensor and EmberDType.
+    return EmberTensor(data, dtype=dtype, device=device, requires_grad=requires_grad)
 
 # Export all classes and functions
 __all__ = [
@@ -104,7 +106,7 @@ __all__ = [
     'to_numpy', 'item', 'shape', 'dtype',
     'random_uniform', 'random_normal', 'maximum',
     'random_bernoulli', 'random_gamma', 'random_exponential', 'random_poisson',
-    'random_categorical', 'random_permutation', 'shuffle', 'set_seed', 'get_seed',
+    'random_categorical', 'random_permutation', 'shuffle', 'set_seed', 'get_seed', 'meshgrid', # Add meshgrid here
     
     # Data types
     'float32', 'float64', 'int32', 'int64', 'bool_',

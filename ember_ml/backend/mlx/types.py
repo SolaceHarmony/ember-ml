@@ -26,7 +26,7 @@ type DimSize = Union[int, 'mx.array']
 type Axis = Optional[Union[int, Sequence[int]]]
 type IndexType = Union[int, Sequence[int], 'mx.array'] 
 type Indices = Union[Sequence[int], 'mx.array']
-type TensorLike = Optional[Union[
+type TensorLike = Optional[Union[ # type: ignore
     Numeric,
     bool,
     List[Any],
@@ -34,7 +34,7 @@ type TensorLike = Optional[Union[
     'MLXArray',
     'numpy.ndarray',
 ]]
-type ScalarLike = Optional[Union[
+type ScalarLike = Optional[Union[ # type: ignore
     Numeric,
     bool,
     'MLXArray',
@@ -48,7 +48,7 @@ type DTypeClass = mx.Dtype
 # Precision related
 default_int = mx.int32
 default_float = mx.float32
-default_bool = mx.bool_ if hasattr(mx, 'bool_') else Any
+default_bool = mx.bool_ if hasattr(mx, 'bool_') else Any # type: ignore
 
 
 # Default type for dtype
@@ -59,16 +59,17 @@ if TYPE_CHECKING == True:
     # These imports are for type checking only
     # Must be done inside TYPE_CHECKING block to avoid circular imports
     from typing import TypeVar
-    from ember_ml.nn.modules.base_module import Parameter # Import Parameter here
+    # Import Parameter from its correct location
+    from ember_ml.nn.modules import Parameter
     T = TypeVar('T')  # Used for generic type definitions
     
     # Define types that reference external modules
     type TensorTypes = Union[
         MLXArray,
-        Any,  # MLXTensor
-        Any,  # EmberTensor
+        Any,  # MLXTensor placeholder if exists
+        Any,  # EmberTensor placeholder if exists
         Any,  # numpy.ndarray
-        Parameter # Add Parameter here
+        Parameter # Added Parameter
     ]
     
     type ArrayLike = Union[
@@ -84,6 +85,7 @@ if TYPE_CHECKING == True:
         Any,  # numpy.dtype
     ]
     
+    # Ensure TensorLike correctly uses the updated TensorTypes
     type TensorLike = Optional[Union[
         Numeric,
         bool,

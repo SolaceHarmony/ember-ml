@@ -165,7 +165,10 @@ class LSTM(Module):
                     current_input = layer_outputs[t]
                 
                 # Apply forward cell
-                forward_h, (forward_h, forward_c) = forward_cell(current_input, [forward_h, forward_c])
+                # forward_cell returns (output, new_state=[h_next, c_next])
+                output, new_state = forward_cell(current_input, [forward_h, forward_c])
+                forward_h = output # Output is the new hidden state for this step
+                forward_c = new_state[1] # Update cell state from list
                 forward_outputs.append(forward_h)
             
             # Backward direction (if bidirectional)
@@ -178,7 +181,10 @@ class LSTM(Module):
                         current_input = layer_outputs[t]
                     
                     # Apply backward cell
-                    backward_h, (backward_h, backward_c) = backward_cell(current_input, [backward_h, backward_c])
+                    # backward_cell returns (output, new_state=[h_next, c_next])
+                    output, new_state = backward_cell(current_input, [backward_h, backward_c])
+                    backward_h = output # Output is the new hidden state for this step
+                    backward_c = new_state[1] # Update cell state from list
                     backward_outputs.insert(0, backward_h)
             
             # Combine outputs

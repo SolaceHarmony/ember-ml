@@ -480,3 +480,157 @@ def gaussian(input_value: TensorLike, mu: TensorLike = 0.0, sigma: TensorLike = 
         mx.multiply(mx.sqrt(two), mx.sqrt(pi_tensor))
     )
     return mx.divide(mx.exp(exponent), denominator)
+
+
+
+def mean(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
+        keepdims: bool = False) -> mx.array:
+    """
+    Compute the mean along the specified axis.
+    
+    Args:
+        x: Input tensor
+        axis: Axis or axes along which to compute the mean
+        keepdims: Whether to keep the reduced dimensions
+        
+    Returns:
+        Mean of the tensor
+    """
+    # Convert input to MLX array
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    x_array = MLXTensor().convert_to_tensor(x)
+    
+
+
+def var(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
+       keepdims: bool = False, ddof: int = 0) -> mx.array:
+    """
+    Compute the variance along the specified axis.
+    
+    Args:
+        x: Input tensor
+        axis: Axis or axes along which to compute the variance
+        keepdims: Whether to keep the reduced dimensions
+        ddof: Delta degrees of freedom
+        
+    Returns:
+        Variance of the tensor
+    """
+    # Convert input to MLX array
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    x_array = MLXTensor().convert_to_tensor(x)
+    
+    # Compute mean
+    mean = mx.mean(x_array, axis=axis, keepdims=True)
+    
+    # Compute squared deviations
+    squared_diff = mx.square(x_array - mean)
+    
+    # Compute variance
+    if axis is None:
+        # Flatten and compute
+        shape = x_array.shape
+        size = 1
+        for dim in shape:
+             size *= dim # Calculate product using Python
+        n = size - ddof
+        variance = mx.sum(squared_diff) / n
+        if keepdims:
+            return mx.expand_dims(variance)
+        return variance
+    else:
+        # Compute along the specified axis
+        n = x_array.shape[axis] - ddof
+        return mx.sum(squared_diff, axis=axis, keepdims=keepdims) / n
+
+    # Compute mean
+    return mx.mean(x_array, axis=axis, keepdims=keepdims)
+
+
+def argmax(x: TensorLike, axis: Optional[int] = None,
+          keepdims: bool = False) -> mx.array:
+    """
+    Returns the indices of the maximum values along an axis.
+    
+    Args:
+        x: Input tensor
+        axis: Axis along which to compute the argmax
+        keepdims: Whether to keep the reduced dimensions
+        
+    Returns:
+        Indices of the maximum values
+    """
+    # Convert input to MLX array
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    x_array = MLXTensor().convert_to_tensor(x)
+    
+    # If axis is None, flatten the array first
+    if axis is None:
+        flat_x = mx.reshape(x_array, (-1,))
+        result = mx.argmax(flat_x)
+        if keepdims:
+            return mx.expand_dims(result)
+        return result
+    
+    # Compute argmax along the specified axis
+    result = mx.argmax(x_array, axis=axis)
+    
+    # Handle keepdims
+    if keepdims:
+        return mx.expand_dims(result, axis=axis)
+    return result
+
+
+
+def sort(x: TensorLike, axis: int = -1, descending: bool = False) -> mx.array:
+    """
+    Sort a tensor along the specified axis.
+    
+    Args:
+        x: Input tensor
+        axis: Axis along which to sort
+        descending: Whether to sort in descending order
+        
+    Returns:
+        Sorted tensor
+    """
+    # Convert input to MLX array
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    x_array = MLXTensor().convert_to_tensor(x)
+    
+    # Sort the array
+    sorted_x = mx.sort(x_array, axis=axis)
+    
+    # Reverse if descending
+    if descending:
+        # Create slice objects for indexing
+        indices = [slice(None)] * len(x_array.shape)
+        indices[axis] = slice(None, None, -1)
+        return sorted_x[tuple(indices)]
+    
+    return sorted_x
+
+
+
+def cumsum(x: TensorLike, axis: Optional[int] = None) -> mx.array:
+    """
+    Compute the cumulative sum along the specified axis.
+    
+    Args:
+        x: Input tensor
+        axis: Axis along which to compute the cumulative sum
+        
+    Returns:
+        Cumulative sum of the tensor
+    """
+    # Convert input to MLX array
+    from ember_ml.backend.mlx.tensor import Tensor # Use MLXTensor? Check import
+    x_array = Tensor().convert_to_tensor(x)
+    
+    # Default axis is 0 if None is provided
+    if axis is None:
+        axis = 0
+    
+    # Compute cumsum
+    return mx.cumsum(x_array, axis=axis)
+

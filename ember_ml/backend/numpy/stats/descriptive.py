@@ -45,8 +45,8 @@ def std(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
         Standard deviation of the tensor
     """
     # Convert input to NumPy array
-    from ember_ml.backend.numpy.tensor import Tensor
-    x_array = Tensor().convert_to_tensor(x)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    x_array = NumpyTensor().convert_to_tensor(x)
     
     # Compute standard deviation
     return np.std(x_array, axis=axis, keepdims=keepdims, ddof=ddof)
@@ -67,8 +67,8 @@ def percentile(x: TensorLike, q: Union[float, np.ndarray],
         q-th percentile of the tensor
     """
     # Convert input to NumPy array
-    from ember_ml.backend.numpy.tensor import Tensor
-    x_array = Tensor().convert_to_tensor(x)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    x_array = NumpyTensor().convert_to_tensor(x)
     
     # Compute percentile
     return np.percentile(x_array, q, axis=axis, keepdims=keepdims)
@@ -87,8 +87,8 @@ def mean(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
         Mean of the tensor
     """
     # Convert input to NumPy array
-    from ember_ml.backend.numpy.tensor import Tensor
-    x_array = Tensor().convert_to_tensor(x)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    x_array = NumpyTensor().convert_to_tensor(x)
     
     # Compute mean
     return np.mean(x_array, axis=axis, keepdims=keepdims)
@@ -108,8 +108,8 @@ def var(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
         Variance of the tensor
     """
     # Convert input to NumPy array
-    from ember_ml.backend.numpy.tensor import Tensor
-    x_array = Tensor().convert_to_tensor(x)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    x_array = NumpyTensor().convert_to_tensor(x)
     
     # Compute variance
     return np.var(x_array, axis=axis, keepdims=keepdims, ddof=ddof)
@@ -128,8 +128,8 @@ def max(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
         Maximum value of the tensor
     """
     # Convert input to NumPy array
-    from ember_ml.backend.numpy.tensor import Tensor
-    x_array = Tensor().convert_to_tensor(x)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    x_array = NumpyTensor().convert_to_tensor(x)
     
     # Compute maximum
     return np.max(x_array, axis=axis, keepdims=keepdims)
@@ -148,8 +148,8 @@ def min(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
         Minimum value of the tensor
     """
     # Convert input to NumPy array
-    from ember_ml.backend.numpy.tensor import Tensor
-    x_array = Tensor().convert_to_tensor(x)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    x_array = NumpyTensor().convert_to_tensor(x)
     
     # Compute minimum
     return np.min(x_array, axis=axis, keepdims=keepdims)
@@ -168,8 +168,8 @@ def sum(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
         Sum of the tensor
     """
     # Convert input to NumPy array
-    from ember_ml.backend.numpy.tensor import Tensor
-    x_array = Tensor().convert_to_tensor(x)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    x_array = NumpyTensor().convert_to_tensor(x)
     
     # Compute sum
     return np.sum(x_array, axis=axis, keepdims=keepdims)
@@ -186,8 +186,8 @@ def cumsum(x: TensorLike, axis: Optional[int] = None) -> np.ndarray:
         Cumulative sum of the tensor
     """
     # Convert input to NumPy array
-    from ember_ml.backend.numpy.tensor import Tensor
-    x_array = Tensor().convert_to_tensor(x)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    x_array = NumpyTensor().convert_to_tensor(x)
     
     # Compute cumulative sum
     return np.cumsum(x_array, axis=axis)
@@ -206,8 +206,8 @@ def argmax(x: TensorLike, axis: Optional[int] = None,
         Indices of the maximum values
     """
     # Convert input to NumPy array
-    from ember_ml.backend.numpy.tensor import Tensor
-    x_array = Tensor().convert_to_tensor(x)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    x_array = NumpyTensor().convert_to_tensor(x)
     
     # Compute argmax
     result = np.argmax(x_array, axis=axis)
@@ -231,8 +231,8 @@ def sort(x: TensorLike, axis: int = -1, descending: bool = False) -> np.ndarray:
         Sorted tensor
     """
     # Convert input to NumPy array
-    from ember_ml.backend.numpy.tensor import Tensor
-    x_array = Tensor().convert_to_tensor(x)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    x_array = NumpyTensor().convert_to_tensor(x)
     
     # Sort based on direction
     if descending:
@@ -253,8 +253,8 @@ def argsort(x: TensorLike, axis: int = -1, descending: bool = False) -> np.ndarr
         Indices that would sort the tensor
     """
     # Convert input to NumPy array
-    from ember_ml.backend.numpy.tensor import Tensor
-    x_array = Tensor().convert_to_tensor(x)
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    x_array = NumpyTensor().convert_to_tensor(x)
     
     # Get argsort based on direction
     if descending:
@@ -278,11 +278,11 @@ def gaussian(input_value: TensorLike, mu: TensorLike = 0.0, sigma: TensorLike = 
         The Gaussian function evaluated at the input value(s).
     """
     # Convert inputs to NumPy arrays
-    from ember_ml.backend.numpy.tensor import Tensor
+    from ember_ml.backend.numpy.tensor import NumpyTensor
     # Ensure all inputs are tensors
-    x_tensor = Tensor().convert_to_tensor(input_value)
-    mu_tensor = Tensor().convert_to_tensor(mu)
-    sigma_tensor = Tensor().convert_to_tensor(sigma)
+    x_tensor = NumpyTensor().convert_to_tensor(input_value)
+    mu_tensor = NumpyTensor().convert_to_tensor(mu)
+    sigma_tensor = NumpyTensor().convert_to_tensor(sigma)
     # Use np functions for arithmetic
     half = np.array(0.5, dtype=x_tensor.dtype) # Match dtype
     two = np.array(2.0, dtype=x_tensor.dtype)

@@ -29,7 +29,7 @@ class MyModule(Module):
 
 ### Parameter
 
-`Parameter` represents a trainable parameter in a neural network module.
+`Parameter` represents a trainable parameter in a neural network module. It wraps a tensor and indicates that it should be included when collecting trainable variables. When using a `Parameter` in calculations, pass it directly to `ops` module functions (e.g., `ops.add`, `ops.matmul`); the backend abstraction layer will handle accessing the underlying tensor data. Avoid accessing the `.data` attribute directly unless necessary for specific low-level operations.
 
 ```python
 from ember_ml.nn.modules import Module, Parameter
@@ -42,7 +42,9 @@ class Linear(Module):
         self.bias = Parameter(tensor.zeros((out_features,)))
         
     def forward(self, x):
-        return tensor.matmul(x, self.weight) + self.bias
+        # Use ops functions for all operations involving Parameters
+        y = ops.matmul(x, self.weight)
+        return ops.add(y, self.bias)
 ```
 
 ### BaseModule
@@ -56,6 +58,20 @@ class Linear(Module):
 ### ModuleWiredCell
 
 `ModuleWiredCell` extends `ModuleCell` with neuron map capabilities, allowing for custom connectivity patterns between neurons.
+
+### Deferred Initialization (Build Pattern)
+
+Many Ember ML modules, particularly those whose internal structure depends on the shape of the input data (like layers using `NeuronMap` where `input_dim` might not be known at initialization), follow a deferred initialization pattern.
+
+- **Initialization (`__init__`)**: Only parameters independent of the input shape are defined. Parameters like weights or biases that depend on the input dimension are typically set to `None`. The `input_size` attribute might also be initialized to `None`.
+- **Build (`build(input_shape)`)**: This method is automatically called by the base `Module` class during the *first* forward pass (`__call__`). It receives the shape of the first input tensor. Inside `build`, the module finalizes its initialization:
+    - It determines the input dimension from `input_shape`.
+    - If using a `NeuronMap`, it calls the map's `build(input_dim)` method (which should set the map's `input_dim`).
+    - It sets the module's `input_size` attribute.
+    - It initializes all remaining parameters (weights, biases) whose shapes depend on the now-known input dimension.
+- **`self.built` Flag**: A `built` flag (managed by the base class) tracks whether the `build` method has been executed, preventing re-initialization.
+
+This pattern allows for flexible module creation where input dimensions don't need to be specified upfront. Modules like `NCP`, `LTC`, and those inheriting from `ModuleWiredCell` utilize this pattern. Standard layers like `Dense` or basic RNN cells (`RNNCell`, `LSTMCell`, `GRUCell`, `CfCCell`) that require `input_size` during `__init__` typically initialize all parameters immediately and do not rely on deferred building (their `build` method might be empty or only call `super().build`).
 
 ## Core Modules
 
@@ -93,11 +109,60 @@ wiring = NCPMap(
 )
 
 # Create an NCP
-ncp = NCP(wiring=wiring, activation='tanh')
+# Note: NCP internally uses ops functions with Parameters
+ncp = NCP(neuron_map=wiring, activation='tanh') # Use neuron_map argument
 
 # Forward pass
 x = tensor.random_normal((32, 8))  # Batch of 32 samples with 8 features each
 y = ncp(x)  # Shape: (32, 3)
+```
+
+### Sequential
+
+`Sequential` is a container module that chains multiple modules together, applying them sequentially to the input.
+
+```python
+from ember_ml.nn.modules import Sequential, Dense, ReLU, Dropout
+from ember_ml.nn import tensor
+
+# Create a sequential model
+model = Sequential([
+    Dense(in_features=10, out_features=64),
+    ReLU(),
+    Dropout(rate=0.5),
+    Dense(in_features=64, out_features=1)
+])
+
+# Forward pass
+# Note: The 'training' argument is automatically passed down to modules
+# like Dropout within the Sequential container.
+x = tensor.random_normal((32, 10))
+output = model(x, training=True) # Shape: (32, 1)
+```
+
+### BatchNormalization
+
+`BatchNormalization` applies Batch Normalization, a technique to stabilize and accelerate training by normalizing the activations of the previous layer. It maintains running estimates of the mean and variance of activations during training, which are then used for normalization during inference.
+
+```python
+from ember_ml.nn.modules import BatchNormalization, Dense, Sequential
+from ember_ml.nn import tensor
+
+# Example usage within a Sequential model
+model = Sequential([
+    Dense(in_features=10, out_features=64),
+    BatchNormalization(), # Automatically infers feature dimension
+    ReLU(),
+    Dense(in_features=64, out_features=1)
+])
+
+# Forward pass (Batch Normalization uses batch stats during training)
+x = tensor.random_normal((32, 10))
+output = model(x, training=True) # Training=True is important for BN
+
+# During inference (model.eval() mode typically), Batch Normalization
+# would use its moving averages for mean and variance.
+# output_eval = model(x, training=False)
 ```
 
 ### AutoNCP
@@ -279,10 +344,10 @@ from ember_ml.nn.modules.wiring import NCPMap
 from ember_ml.nn import tensor
 
 # Create a CfC
-cfc = CfC(
-    input_size=10,
-    hidden_size=20
-)
+# Create a cell first for the standard CfC layer
+from ember_ml.nn.modules.rnn import CfCCell
+cell = CfCCell(input_size=10, hidden_size=20)
+cfc = CfC(cell_or_map=cell)
 
 # Forward pass
 x = tensor.random_normal((32, 5, 10))  # Batch of 32 sequences of length 5 with 10 features each
@@ -319,10 +384,10 @@ from ember_ml.nn.modules.wiring import NCPMap
 from ember_ml.nn import tensor
 
 # Create an LTC
-ltc = LTC(
-    input_size=10,
-    hidden_size=20
-)
+# Create a NeuronMap first for the LTC layer
+from ember_ml.nn.modules.wiring import FullyConnectedMap
+neuron_map = FullyConnectedMap(units=20, input_dim=10, output_dim=20)
+ltc = LTC(neuron_map=neuron_map)
 
 # Forward pass
 x = tensor.random_normal((32, 5, 10))  # Batch of 32 sequences of length 5 with 10 features each
@@ -370,9 +435,11 @@ from ember_ml.nn.modules import StrideAwareCfC
 from ember_ml.nn import tensor
 
 # Create a StrideAwareCfC
+# Create a NeuronMap first for the StrideAwareCfC layer
+from ember_ml.nn.modules.wiring import FullyConnectedMap
+neuron_map = FullyConnectedMap(units=20, input_dim=10, output_dim=20)
 stride_cfc = StrideAwareCfC(
-    input_size=10,
-    hidden_size=20,
+    neuron_map_or_cell=neuron_map, # Example assuming it takes a map
     stride_lengths=[1, 2, 4]
 )
 
@@ -431,9 +498,13 @@ class SequenceClassifier(Module):
         # x shape: (batch_size, sequence_length, input_size)
         y, (h, _) = self.lstm(x)
         # Use the last hidden state
-        h = self.dropout(h, training=training)
+        # Assume h is the last hidden state tensor (or stacked states)
+        # If h is stacked (num_layers*dirs, batch, hidden), take the last layer's state
+        # Example: h_last = h[-1] if h.ndim == 3 else h
+        h_last = h[-1] if tensor.ndim(h) == 3 else h # Get last layer state if stacked
+        h_dropout = self.dropout(h_last, training=training)
         # Pass through the dense layer
-        output = self.dense(h)
+        output = self.dense(h_dropout)
         return output
 
 # Create a sequence classifier

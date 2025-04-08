@@ -91,30 +91,40 @@ class NumpyDType:
         if isinstance(dtype, str):
             return dtype
             
-        # Map NumPy dtypes to EmberDType names
-        dtype_map = {
-            np.float16: 'float16',
-            np.float32: 'float32',
-            np.float64: 'float64',
-            np.int8: 'int8',
-            np.int16: 'int16',
-            np.int32: 'int32',
-            np.int64: 'int64',
-            np.uint8: 'uint8',
-            np.uint16: 'uint16',
-            np.uint32: 'uint32',
-            np.uint64: 'uint64',
-            np.bool_: 'bool_' # Standardize to bool_ to match EmberDType/Torch
+        # Map standard NumPy dtype names (strings) to EmberDType names (strings)
+        # This avoids issues with comparing type objects directly.
+        dtype_name_map = {
+            'float16': 'float16',
+            'float32': 'float32',
+            'float64': 'float64',
+            'int8': 'int8',
+            'int16': 'int16',
+            'int32': 'int32',
+            'int64': 'int64',
+            'uint8': 'uint8',
+            'uint16': 'uint16',
+            'uint32': 'uint32',
+            'uint64': 'uint64',
+            'bool': 'bool_', # Map numpy 'bool' to standard 'bool_'
+            'bool_': 'bool_' # Handle np.bool_ type as well
+            # Add complex types if needed
+            # 'complex64': 'complex64',
+            # 'complex128': 'complex128',
         }
 
-        # Check using the underlying type (e.g., np.float32) from the dtype object
-        if hasattr(dtype, 'type') and dtype.type in dtype_map:
-            return dtype_map[dtype.type]
-        elif dtype in dtype_map: # Fallback for direct type objects if passed
-             return dtype_map[dtype]
+        # Canonicalize the input dtype and get its standard NumPy name
+        try:
+            input_dtype_obj = np.dtype(dtype)
+            input_dtype_name = input_dtype_obj.name
+        except TypeError:
+             raise ValueError(f"Input '{dtype}' cannot be interpreted as a NumPy dtype.")
+
+        # Perform lookup using the canonical name string
+        if input_dtype_name in dtype_name_map:
+            return dtype_name_map[input_dtype_name]
         else:
             # Add more detail to the error message
-            raise ValueError(f"Cannot convert NumPy dtype '{dtype}' (type: {type(dtype)}, underlying type: {getattr(dtype, 'type', 'N/A')}) to EmberDType string representation.")
+            raise ValueError(f"Cannot convert NumPy dtype '{input_dtype_obj}' (name: {input_dtype_name}) to standardized string representation.")
     
     def validate_dtype(self, dtype: Optional[Any]) -> Optional[Any]:
         """
@@ -145,60 +155,70 @@ class NumpyDType:
             
         raise ValueError(f"Invalid dtype: {dtype}")
     
-    def from_dtype_str(self, dtype: Union[Any, str, None]) -> Optional[Any]:
+    def from_dtype_str(self, dtype: Union[Any, str, None]) -> Optional[np.dtype]: # Ensure return type is native NumPy dtype object
         """
-        Convert a dtype string to a NumPy data type.
-        
+        Convert a dtype string or EmberDType object to a native NumPy data type object.
+
         Args:
-            dtype: The dtype string to convert
-            
+            dtype: The dtype string or EmberDType object to convert
+
         Returns:
-            The corresponding NumPy data type
+            The corresponding native NumPy data type object (e.g., np.float32, np.int64)
         """
         if dtype is None:
             return None
-            
-        # If it's already a NumPy dtype, return it
-        if isinstance(dtype, np.dtype) or dtype in [np.float32, np.float64, np.int32, np.int64,
-                                                  np.bool_, np.int8, np.int16, np.uint8,
-                                                  np.uint16, np.uint32, np.uint64, np.float16]:
-            return dtype
-            
+
+        # If it's already a NumPy dtype object or type, return it
+        if isinstance(dtype, np.dtype):
+             # Already a dtype object, return as is
+             return dtype
+        if isinstance(dtype, type) and issubclass(dtype, np.generic):
+             # It's a type like np.float32, convert to dtype object
+             return np.dtype(dtype)
+
+        dtype_name_str = None
         # If it's a string, use it directly
         if isinstance(dtype, str):
-            dtype_name = dtype
-        # If it has a name attribute, use that
-        elif hasattr(dtype, 'name'):
-            dtype_name = dtype.name
+            dtype_name_str = dtype
+        # If it's an EmberDType instance, get its name attribute
+        elif hasattr(dtype, '__class__') and dtype.__class__.__name__ == 'EmberDType' and hasattr(dtype, 'name'):
+             dtype_name_str = dtype.name
         else:
-            raise ValueError(f"Cannot convert {dtype} to NumPy data type")
-            
-        # Map dtype names to NumPy dtypes
-        if dtype_name == 'float32':
-            return np.float32
-        elif dtype_name == 'float64':
-            return np.float64
-        elif dtype_name == 'int32':
-            return np.int32
-        elif dtype_name == 'int64':
-            return np.int64
-        elif dtype_name == 'bool' or dtype_name == 'bool_':
-            return np.bool_
-        elif dtype_name == 'int8':
-            return np.int8
-        elif dtype_name == 'int16':
-            return np.int16
-        elif dtype_name == 'uint8':
-            return np.uint8
-        elif dtype_name == 'uint16':
-            return np.uint16
-        elif dtype_name == 'uint32':
-            return np.uint32
-        elif dtype_name == 'uint64':
-            return np.uint64
-        elif dtype_name == 'float16':
-            return np.float16
-        elif dtype_name == 'complex64':
-            return np.complex64
+            # If it's some other object that might represent a dtype (like directly passing np.float32 class)
+            # try getting its name, otherwise raise error
+            try:
+                 # Attempt to get a standard name if possible (e.g., from np.float32.__name__)
+                 if hasattr(dtype, '__name__'):
+                      dtype_name_str = dtype.__name__
+                 else: # Last resort, convert to string and hope it matches
+                      dtype_name_str = str(dtype)
+            except Exception:
+                 raise ValueError(f"Cannot convert input '{dtype}' (type: {type(dtype)}) to a NumPy data type name.")
+
+        # Map standard string names to NumPy native type objects
+        dtype_map = {
+            'float16': np.float16,
+            'float32': np.float32,
+            'float64': np.float64,
+            'int8': np.int8,
+            'int16': np.int16,
+            'int32': np.int32,
+            'int64': np.int64,
+            'uint8': np.uint8,
+            'uint16': np.uint16,
+            'uint32': np.uint32,
+            'uint64': np.uint64,
+            'bool_': np.bool_,
+            'bool': np.bool_, # Allow 'bool' as well
+            'complex64': np.complex64,
+            'complex128': np.complex128,
+        }
+
+        if dtype_name_str in dtype_map:
+            return dtype_map[dtype_name_str]
         else:
-            raise ValueError(f"Unknown data type: {dtype_name}")
+            # Maybe it's a direct numpy name like 'i4', try np.dtype()
+            try:
+                 return np.dtype(dtype_name_str) # Return the dtype object (not the type)
+            except TypeError:
+                 raise ValueError(f"Unknown or uninterpretable data type string: '{dtype_name_str}'")

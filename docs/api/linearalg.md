@@ -2,6 +2,8 @@
 
 The `ember_ml.ops.linearalg` module provides a comprehensive set of backend-agnostic linear algebra operations. These operations are essential for performing advanced mathematical computations on tensors.
 
+**Important Note on Input/Output Types:** Functions within the `ops.linearalg` module accept a variety of tensor-like inputs, including native backend tensors (e.g., `mlx.core.array`), `EmberTensor` objects, `Parameter` objects, NumPy arrays, and Python lists/tuples/scalars. The backend implementation automatically handles converting these inputs and unwrapping objects like `Parameter` and `EmberTensor` to access the underlying native tensor data needed for computation. These functions return results as **native backend tensors**, not `EmberTensor` instances.
+
 ## Importing
 
 ```python
