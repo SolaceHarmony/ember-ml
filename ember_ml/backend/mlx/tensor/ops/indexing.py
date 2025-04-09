@@ -3,10 +3,10 @@
 import mlx.core as mx
 
 from typing import Union, Optional, Literal, Any, List, Tuple, Sequence
-from builtins import slice as py_slice
 from ember_ml.backend.mlx.types import (
     TensorLike, Shape, ShapeLike
 )
+from ember_ml.backend.mlx.tensor.ops.utility import to_numpy
 
 def slice_tensor(tensor: TensorLike, starts: Shape, sizes: Shape) -> mx.array:
     """
@@ -24,6 +24,12 @@ def slice_tensor(tensor: TensorLike, starts: Shape, sizes: Shape) -> mx.array:
     from ember_ml.backend.mlx.tensor.tensor import MLXTensor
     Tensor = MLXTensor()
     tensor_array = Tensor.convert_to_tensor(tensor)
+    
+    # Handle scalar starts/sizes by converting to lists
+    if isinstance(starts, (int, float)):
+        starts = [starts]
+    if isinstance(sizes, (int, float)):
+        sizes = [sizes]
     
     # Convert starts to MLX array for consistent operations
     starts_array = mx.array(starts, dtype=mx.int32)
@@ -250,17 +256,17 @@ def scatter(indices: TensorLike, updates: TensorLike, shape: Union[ShapeLike, in
                 current = result[tuple(current_indices)]
                 update_indices = mx.array(current_indices)
                 result = mx.slice_update(result, mx.add(current, updates_array[i]),
-                                      update_indices, list(range(len(current_indices))))
+                    update_indices, list(range(len(current_indices))))
             elif aggr == "max":
                 current = result[tuple(current_indices)]
                 update_indices = mx.array(current_indices)
                 result = mx.slice_update(result, mx.maximum(current, updates_array[i]),
-                                      update_indices, list(range(len(current_indices))))
+                    update_indices, list(range(len(current_indices))))
             elif aggr == "min":
                 current = result[tuple(current_indices)]
                 update_indices = mx.array(current_indices)
                 result = mx.slice_update(result, mx.minimum(current, updates_array[i]),
-                                      update_indices, list(range(len(current_indices))))
+                    update_indices, list(range(len(current_indices))))
     else:
         # Handle 1D indices
         for i in range(len(updates_array)):
@@ -510,6 +516,48 @@ def slice(tensor: TensorLike, starts=None, sizes=None, begin=None, size=None) ->
     
     # Call the backend's slice_tensor function
     return slice_tensor(tensor, actual_starts, actual_sizes)
+
+def nonzero(tensor: TensorLike) -> mx.array:
+    """
+    Returns the indices of the elements that are non-zero.
+    
+    Args:
+        tensor: Input tensor
+        
+    Returns:
+        Tensor containing the indices of the non-zero elements
+    """
+    # Convert input to MLX array
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+    Tensor = MLXTensor()
+    tensor_array = Tensor.convert_to_tensor(tensor)
+    
+    # Create a boolean mask for non-zero elements
+    mask = mx.not_equal(tensor_array, mx.array(0))
+    
+    # MLX doesn't support boolean indexing directly, so we'll use NumPy as a fallback
+    # Convert to NumPy, use np.nonzero, then convert back to MLX
+    
+    # Convert to NumPy array
+    import numpy as np
+    np_array = to_numpy(tensor_array)
+    
+    # Use NumPy's nonzero function
+    np_indices = np.nonzero(np_array)
+    
+    # Stack the indices to get the expected format
+    if len(np_indices) == 1:
+        # For 1D tensors, reshape to Nx1
+        result_np = np.reshape(np_indices[0], (-1, 1))
+    else:
+        # For multi-dimensional tensors, stack the indices
+        result_np = np.stack(np_indices, axis=1)
+    
+    # Convert back to MLX array
+    if result_np.size == 0:
+        # Handle empty case
+        return mx.zeros((0, len(tensor_array.shape)), dtype=mx.int32)
+    return mx.array(result_np, dtype=mx.int32)
 
 def meshgrid(*arrays: TensorLike, indexing: Literal['xy', 'ij'] = 'xy') -> List[mx.array]:
     """

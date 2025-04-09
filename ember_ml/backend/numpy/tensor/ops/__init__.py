@@ -8,7 +8,7 @@ from ember_ml.backend.numpy.tensor.ops.manipulation import (
     reshape, transpose, concatenate, stack, split, expand_dims, squeeze, tile, pad
 )
 from ember_ml.backend.numpy.tensor.ops.indexing import (
-    slice_tensor as slice, slice_update, gather, tensor_scatter_nd_update, scatter
+    slice_tensor as slice, slice_update, gather, tensor_scatter_nd_update, scatter, nonzero
 )
 from ember_ml.backend.numpy.tensor.ops.utility import (
     to_numpy, item, shape, dtype, copy, var, sort, argsort, maximum
@@ -51,6 +51,7 @@ __all__ = [
     'gather',
     'tensor_scatter_nd_update',
     'scatter',
+    'nonzero',
     
     # Utility operations
     'to_numpy',

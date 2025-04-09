@@ -1,6 +1,5 @@
 # tests/numpy_tests/test_nn_tensor_conversion.py
 import pytest
-import typing
 from ember_ml import ops
 from ember_ml.nn import tensor
 from ember_ml.nn.tensor.common.ember_tensor import EmberTensor
@@ -22,11 +21,11 @@ def dtype_pair(request):
 
 # Helper function (can remain or be moved to a common conftest)
 def get_allowed_tensor_types(backend_name: str) -> tuple:
-    allowed_types = (EmberTensor,)
+    allowed_types = [EmberTensor]
     if backend_name == 'numpy':
-        allowed_types += (np.ndarray,)
+        allowed_types.append(np.ndarray)  # type: ignore
     # Removed torch/mlx checks as they are not relevant here
-    return allowed_types
+    return tuple(allowed_types)
 
 def test_tensor_cast_numpy(numpy_backend, dtype_pair): # Use fixture
     """Tests tensor.cast with NumPy backend."""
@@ -85,12 +84,12 @@ def test_tensor_item_numpy(numpy_backend): # Use fixture
     t_float = tensor.convert_to_tensor(3.14)
     item_float = tensor.item(t_float)
     assert isinstance(item_float, (float, np.floating)), "Float type failed"
-    assert abs(item_float - 3.14) < 1e-6, "Float value failed"
+    assert ops.less(ops.abs(ops.subtract(item_float, 3.14)), 1e-6), "Float value failed"
 
     t_bool = tensor.convert_to_tensor(True)
     item_bool = tensor.item(t_bool)
     assert isinstance(item_bool, (bool, np.bool_)), "Bool type failed"
-    assert item_bool is True, "Bool value failed"
+    assert bool(item_bool) is True, "Bool value failed"
 
     t_non_scalar = tensor.convert_to_tensor([1, 2])
     with pytest.raises(Exception):

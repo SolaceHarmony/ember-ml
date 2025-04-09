@@ -38,7 +38,8 @@ type ScalarLike = Optional[Union[ # type: ignore
     Numeric,
     bool,
     'MLXArray',
-    'TensorLike'
+    'mx.array',
+    'numpy.ndarray',
 ]]
 
 # MLX specific

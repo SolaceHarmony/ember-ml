@@ -16,7 +16,9 @@ from ember_ml.backend import get_backend, get_backend_module
 # Master list of linear algebra functions expected to be aliased
 _LINEARALG_OPS_LIST = [
     'solve', 'inv', 'svd', 'eig', 'eigh', 'eigvals', 'det', 'norm', 'qr',
-    'cholesky', 'lstsq', 'diag', 'diagonal',
+    'cholesky', 'lstsq', 'diag', 'diagonal', 'orthogonal',
+    # High-Precision Computing (HPC) operations
+    'qr_128', 'orthogonalize_nonsquare', '_add_limb_precision', 'HPC16x8'
 ]
 def get_linearalg_module():
     """Imports the activation functions from the active backend module."""

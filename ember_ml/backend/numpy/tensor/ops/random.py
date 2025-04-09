@@ -25,7 +25,8 @@ def random_normal(shape: Shape, mean: float = 0.0, stddev: float = 1.0,
         NumPy array with random normal values
     """
     # Use the helper function, passing np.random.normal and its specific args
-    return _create_new_tensor(np.random.normal, dtype=dtype, device=device, shape=shape, loc=mean, scale=stddev)
+    # Note: np.random.normal expects 'size' instead of 'shape'
+    return _create_new_tensor(np.random.normal, dtype=dtype, device=device, size=shape, loc=mean, scale=stddev)
 
 
 def random_uniform(shape: Shape, minval: float = 0.0, maxval: float = 1.0,
@@ -55,6 +56,7 @@ def random_uniform(shape: Shape, minval: float = 0.0, maxval: float = 1.0,
         shape = (1,)
     
     # Use the helper function, passing np.random.uniform and its specific args
+    # Note: np.random.uniform expects 'size' instead of 'shape'
     return _create_new_tensor(np.random.uniform, dtype=dtype, device=device,
                              size=shape, low=minval_tensor, high=maxval_tensor)
 
@@ -83,7 +85,8 @@ def random_binomial(shape: Shape, p: float = 0.5,
 
     # Use the helper, passing np.random.binomial and its specific args
     # Let helper handle dtype resolution (defaults likely to int)
-    return _create_new_tensor(np.random.binomial, dtype=dtype, device=device, shape=shape, n=1, p=p_native)
+    # Note: np.random.binomial expects 'size' instead of 'shape'
+    return _create_new_tensor(np.random.binomial, dtype=dtype, device=device, size=shape, n=1, p=p_native)
 
 def random_exponential(shape: Shape, scale: float = 1.0,
                       dtype: Optional[DType] = None, device: Optional[str] = None) -> np.ndarray:
@@ -101,7 +104,8 @@ def random_exponential(shape: Shape, scale: float = 1.0,
     """
     # Use the helper function, passing np.random.exponential and its specific args
     # Let helper handle dtype resolution (defaults likely to float)
-    return _create_new_tensor(np.random.exponential, dtype=dtype, device=device, shape=shape, scale=scale)
+    # Note: np.random.exponential expects 'size' instead of 'shape'
+    return _create_new_tensor(np.random.exponential, dtype=dtype, device=device, size=shape, scale=scale)
 
 def random_gamma(shape: Shape, alpha: float = 1.0, beta: float = 1.0,
                 dtype: Optional[DType] = None, device: Optional[str] = None) -> np.ndarray:
@@ -124,7 +128,7 @@ def random_gamma(shape: Shape, alpha: float = 1.0, beta: float = 1.0,
     # Let helper handle dtype resolution (defaults likely to float)
     # Note: np.random.gamma uses 'shape' for the alpha parameter, and 'size' for the output shape.
     # We need to map our 'shape' argument to numpy's 'size' argument.
-    return _create_new_tensor(np.random.gamma, dtype=dtype, device=device, shape=alpha, scale=beta, size=shape)
+    return _create_new_tensor(np.random.gamma, dtype=dtype, device=device, shape_param=alpha, scale=beta, size=shape)
 
 def random_poisson(shape: Shape, lam: float = 1.0,
                   dtype: Optional[DType] = None, device: Optional[str] = None) -> np.ndarray:
@@ -142,7 +146,8 @@ def random_poisson(shape: Shape, lam: float = 1.0,
     """
     # Use the helper function, passing np.random.poisson and its specific args
     # Let helper handle dtype resolution (defaults likely to int)
-    return _create_new_tensor(np.random.poisson, dtype=dtype, device=device, shape=shape, lam=lam)
+    # Note: np.random.poisson expects 'size' instead of 'shape'
+    return _create_new_tensor(np.random.poisson, dtype=dtype, device=device, size=shape, lam=lam)
 
 def random_categorical(data: TensorLike, num_samples: int,
                       dtype: Optional[DType] = None, device: Optional[str] = None) -> np.ndarray:

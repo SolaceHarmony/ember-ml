@@ -59,7 +59,13 @@ def orthogonal(shape: Tuple[int, ...], gain: float = 1.0, dtype: Optional[Any] =
     """
     Orthogonal initializer.
     
-    It generates a random orthogonal matrix using a simplified approach.
+    It generates a random orthogonal matrix using QR decomposition.
+    
+    This function uses the backend-specific implementation from ops.linearalg.orthogonal,
+    which provides optimized implementations for different backends:
+    - MLX: Uses HPC implementation with double-single precision for numerical stability
+    - PyTorch: Uses native torch.linalg.qr
+    - NumPy: Uses native numpy.linalg.qr
     
     Args:
         shape: Shape of the tensor to initialize
@@ -70,45 +76,7 @@ def orthogonal(shape: Tuple[int, ...], gain: float = 1.0, dtype: Optional[Any] =
     Returns:
         Initialized tensor
     """
-    if len(shape) < 2:
-        raise ValueError("Orthogonal initialization requires at least 2 dimensions")
+    from ember_ml.ops import linearalg
     
-    # Extract dimensions
-    rows, cols = shape[0], shape[1]
-    
-    # Generate a random matrix
-    a = tensor.random_normal((rows, cols), 0.0, 1.0, dtype=dtype, device=device)
-    
-    # Use a simplified approach for orthogonalization
-    # This is not a true orthogonal matrix, but it's a reasonable approximation
-    # for initialization purposes
-    
-    # Normalize each column to unit length
-    for i in range(cols):
-        # Get the i-th column
-        col = a[:, i:i+1]
-        
-        # Compute the norm
-        # Import the stats module for the sum operation
-        from ember_ml.ops import stats
-        norm = ops.sqrt(stats.sum(ops.square(col)))
-        
-        # Add a small epsilon to avoid division by zero
-        norm = ops.add(norm, 1e-8)
-        
-        # Normalize the column
-        a[:, i:i+1] = ops.divide(col, norm)
-    
-    # Apply gain
-    a = ops.multiply(a, gain)
-    
-    # If shape has more than 2 dimensions, reshape accordingly
-    if len(shape) > 2:
-        extra_dims = shape[2:]
-        flat_dim = cols
-        for dim in extra_dims:
-            flat_dim *= dim
-        a = tensor.reshape(a, (rows, flat_dim))
-        a = tensor.reshape(a, shape)
-    
-    return a
+    # Use the backend-specific implementation from ops.linearalg
+    return linearalg.orthogonal(shape, gain, dtype, device)

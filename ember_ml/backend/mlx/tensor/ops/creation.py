@@ -88,9 +88,20 @@ def eye(n: int, m: Optional[int] = None, dtype: 'Optional[DType]' = None, device
     # Create identity matrix
     return mx.eye(n, m, dtype=mlx_dtype)
 
-def arange(start: Union[int, float], stop: Optional[Union[int, float]] = None, step: int = 1,
+def arange(start: ScalarLike, stop: ScalarLike = None, step: int = 1,
           dtype: 'Optional[DType]' = None, device: Optional[str] = None) -> 'mx.array':
-    """Create a sequence of numbers."""
+    """Create a sequence of numbers.
+    
+    Args:
+        start: Starting value (inclusive)
+        stop: Ending value (exclusive)
+        step: Step size
+        dtype: Data type of the output
+        device: Device to place the output on
+        
+    Returns:
+        A tensor with values from start to stop with step size
+    """
     # Validate dtype
     dtype_cls = MLXDType()
     mlx_dtype = dtype_cls.from_dtype_str(dtype) if dtype else None
@@ -99,6 +110,12 @@ def arange(start: Union[int, float], stop: Optional[Union[int, float]] = None, s
     if stop is None:
         stop = start
         start = 0
+    
+    # Convert tensor inputs to Python scalars if needed
+    if hasattr(start, 'item'):
+        start = float(start.item())
+    if hasattr(stop, 'item'):
+        stop = float(stop.item())
     
     # Create sequence
     return mx.arange(start, stop, step, dtype=mlx_dtype)

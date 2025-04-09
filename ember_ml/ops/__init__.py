@@ -27,10 +27,6 @@ from ember_ml.backend import (
     get_backend_module,
     auto_select_backend
 )
-# Import constants directly
-from ember_ml.backend.mlx.math_ops import pi as _mlx_pi # Use backend-specific pi if needed, or define a generic one
-
-pi = _mlx_pi # Expose it directly in ops namespace
 
 
 # Master list of all functions expected to be aliased by ember_ml.ops
@@ -38,7 +34,7 @@ _MASTER_OPS_LIST = [
     # Math (Core arithmetic, trig, exponential, etc.)
     'add', 'subtract', 'multiply', 'divide', 'matmul', 'dot',
     'exp', 'log', 'log10', 'log2', 'pow', 'sqrt', 'square', 'abs', 'sign', 'sin', 'cos', 'tan',
-    'sinh', 'cosh', 'clip', 'negative', 'mod', 'floor_divide', 'gradient',
+    'sinh', 'cosh', 'clip', 'negative', 'mod', 'floor_divide', 'gradient', 
     # 'pi', # Removed, handled by direct import above
     'power', # Note: 'power' is alias for 'pow'
     # Comparison
@@ -101,7 +97,11 @@ def _update_ops_aliases():
             setattr(current_ops_module, func_name, None) # Set alias to None
             globals()[func_name] = None
             missing_ops.append(func_name)
-
+    
+    # Import pi directly from math to avoid backend issues
+    
+    setattr(current_ops_module, 'pi', backend_module.math_ops.pi)
+    globals()['pi'] = backend_module.math_ops.pi
     if missing_ops:
         print(f"Warning: Backend '{backend_name}' does not implement the following ops: {', '.join(missing_ops)}")
     _aliased_backend = backend_name # Mark this backend as aliased

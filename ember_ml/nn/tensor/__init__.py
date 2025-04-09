@@ -34,7 +34,7 @@ from ember_ml.nn.tensor.common import (  # noqa
     random_uniform, random_normal, maximum,
     random_bernoulli, random_gamma, random_exponential, random_poisson,
     random_categorical, random_permutation, shuffle, set_seed, get_seed,
-    meshgrid # Add meshgrid here
+    meshgrid, nonzero # Add nonzero here
 )
 
 # Define array function as an alias for EmberTensor constructor
@@ -106,7 +106,7 @@ __all__ = [
     'to_numpy', 'item', 'shape', 'dtype',
     'random_uniform', 'random_normal', 'maximum',
     'random_bernoulli', 'random_gamma', 'random_exponential', 'random_poisson',
-    'random_categorical', 'random_permutation', 'shuffle', 'set_seed', 'get_seed', 'meshgrid', # Add meshgrid here
+    'random_categorical', 'random_permutation', 'shuffle', 'set_seed', 'get_seed', 'meshgrid', 'nonzero', # Add nonzero here
     
     # Data types
     'float32', 'float64', 'int32', 'int64', 'bool_',

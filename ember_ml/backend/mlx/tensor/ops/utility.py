@@ -192,6 +192,7 @@ def _convert_input(x: TensorLike) -> Any:
 
             # Map Python types to default MLX types
             if isinstance(x, float):
+                # Convert to MLX float32
                 return mx.array(x, dtype=default_float)
             elif isinstance(x, int):
                 return mx.array(x, dtype=default_int)
@@ -208,13 +209,17 @@ def _convert_input(x: TensorLike) -> Any:
             # Let MLX determine the best dtype from the converted items
             return mx.array(converted_items)
        except Exception as e:
-            # Add more context to the error message
-            item_types = [type(item) for item in x]
-            raise ValueError(f"Cannot convert sequence {type(x)} with item types {item_types} to MLX array: {e}")
+            # Safely get item types, handling potential errors
+            try:
+                item_types = [type(item).__name__ for item in x[:10]]  # Limit to first 10 items for safety
+                if len(x) > 10:
+                    item_types.append("...")
+            except Exception:
+                item_types = ["<unknown>"]
+            raise ValueError(f"Cannot convert sequence {type(x)} with item types {item_types} to MLX array: {str(e)}")
 
 
     # For any other type, reject it with a corrected list of supported types
-    raise ValueError(f"Cannot convert {type(x)} to MLX array. Supported types: Python scalars/sequences, NumPy scalars/arrays, MLXTensor, EmberTensor, Parameter.")
     raise ValueError(f"Cannot convert {type(x)} to MLX array. Supported types: Python scalars/sequences, NumPy scalars/arrays, MLXTensor, EmberTensor, Parameter.")
 
 def _convert_to_tensor(data: TensorLike, dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:

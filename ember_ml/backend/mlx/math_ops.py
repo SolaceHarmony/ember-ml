@@ -5,6 +5,7 @@ This module provides MLX implementations of math operations.
 """
 
 import mlx.core as mx
+import numpy as np
 from typing import Union, Optional, List, Tuple, Literal
 from ember_ml.backend.mlx.tensor.ops import cast
 from ember_ml.backend.mlx.tensor import MLXDType
@@ -726,25 +727,6 @@ def gradient(f: TensorLike,
     else:
         return grad
 
-def cumsum(x: mx.array, axis: Optional[int] = None) -> mx.array:
-    """
-    Compute the cumulative sum of an MLX array along a specified axis.
-    
-    Args:
-        x: Input array
-        axis: Axis along which to compute the cumulative sum
-        
-    Returns:
-        Array with cumulative sums
-    """
-    from ember_ml.backend.mlx.tensor import MLXTensor
-    tensor_ops = MLXTensor()
-    x_array = tensor_ops.convert_to_tensor(x)
-    return mx.cumsum(x_array, axis=axis)
-
-
-# eigh moved to linearalg/decomp_ops.py
-
 # Define the pi constant using Chudnovsky algorithm
 def _calculate_pi_value(precision_digits=15):
     """
@@ -833,7 +815,7 @@ def _calculate_pi_value(precision_digits=15):
     numerator = mx.multiply(Q, mx.array(426880))
     numerator = mx.multiply(numerator, sqrt_10005)
     pi_approx = mx.divide(numerator, T)
-    
+    eval_pi = np.ndarray(pi_approx.astype(pi_approx.dtype).shape, dtype=np.float32)
     # Return as MLX array with shape (1,)
     return mx.reshape(pi_approx, (1,))
 
@@ -841,7 +823,7 @@ def _calculate_pi_value(precision_digits=15):
 # Ensure it's a scalar with shape (1,) as per MLX conventions
 PI_CONSTANT = _calculate_pi_value(15)  # Increased precision to match reference value
 
-pi : mx.array = mx.array([PI_CONSTANT], dtype=mx.float32)
+pi : mx.array = mx.array(PI_CONSTANT, dtype=mx.float32)
 
 
 
@@ -895,5 +877,3 @@ def binary_split(a: TensorLike, b: TensorLike) -> Tuple[mx.array, mx.array]:
         Qab = mx.add(mx.multiply(Qam, Pmb), mx.multiply(Pam, Qmb))
         
         return Pab, Qab
-
-# Removed MLXMathOps class as it's redundant with standalone functions

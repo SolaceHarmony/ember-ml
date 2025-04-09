@@ -980,7 +980,7 @@ def _calculate_pi_value(precision_digits=15):
 # Ensure it's a scalar with shape (1,) as per PyTorch conventions
 PI_CONSTANT = _calculate_pi_value(15)  # Increased precision to match reference value
 
-pi : torch.tensor = torch.tensor([PI_CONSTANT], dtype=torch.float32)
+pi : torch.tensor = PI_CONSTANT.to(torch.float32)  # Ensure pi is float32
 
 
 def binary_split(a: TensorLike, b: TensorLike) -> Tuple[torch.Tensor, torch.Tensor]:

@@ -1,95 +1,146 @@
 """
-Liquid Time-Constant (LTC) Layer
+Liquid Time-Constant (LTC) Layer - Pure Wired Implementation
 
-This module provides an implementation of the LTC layer,
-which wraps an LTCCell to create a recurrent layer.
+This module provides an implementation of the LTC layer that directly uses
+NeuronMap for both structure and dynamics, without relying on separate cell objects.
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, Optional, List, Tuple, Union
 
-import numpy as np
 from ember_ml import ops
-# Updated initializer import path
 from ember_ml.nn.initializers import glorot_uniform, orthogonal
-from ember_ml.nn.modules import Module
-# Updated wiring import paths
-from ember_ml.nn.modules.wiring import NeuronMap # Use renamed base class
-from ember_ml.nn.modules.rnn.ltc_cell import LTCCell
+from ember_ml.nn.modules import Module, Parameter
+from ember_ml.nn.modules.wiring import NeuronMap, NCPMap
 from ember_ml.nn import tensor
-from ember_ml.nn.modules.activations import tanh
+from ember_ml.nn.modules.activations import get_activation
 
 class LTC(Module):
     """
-    Liquid Time-Constant (LTC) RNN layer.
+    Liquid Time-Constant (LTC) RNN layer - Pure Wired Implementation.
     
-    This layer wraps an LTCCell to create a recurrent layer.
+    This layer directly uses NeuronMap for both structure and dynamics,
+    without relying on separate cell objects.
     """
     
     def __init__(
         self,
-        neuron_map: NeuronMap,
+        neuron_map: NCPMap,
         return_sequences: bool = True,
-        return_state: bool = False, # Add return_state parameter
+        return_state: bool = False,
         batch_first: bool = True,
         mixed_memory: bool = False,
-        input_mapping="affine",
-        output_mapping="affine",
-        ode_unfolds=6,
-        epsilon=1e-8,
-        implicit_param_constraints=True
-        # **kwargs removed
+        **kwargs
     ):
         """
         Initialize the LTC layer.
         
         Args:
-            neuron_map: NeuronMap instance defining the connectivity structure
-                        (input dimensions will be derived from the first input tensor)
+            neuron_map: NCPMap instance defining both structure and dynamics
             return_sequences: Whether to return the full sequence or just the last output
+            return_state: Whether to return the final state
             batch_first: Whether the batch or time dimension is the first (0-th) dimension
             mixed_memory: Whether to augment the RNN by a memory-cell to help learn long-term dependencies
-            input_mapping: Type of input mapping ('affine', 'linear', or None)
-            output_mapping: Type of output mapping ('affine', 'linear', or None)
-            ode_unfolds: Number of ODE solver unfoldings
-            epsilon: Small constant to avoid division by zero
-            implicit_param_constraints: Whether to use implicit parameter constraints
-            # **kwargs removed from docstring
+            **kwargs: Additional keyword arguments
         """
-        super().__init__() # Call base init without args
+        super().__init__(**kwargs)
         
-        # Store the map for reference/config
-        self.neuron_map = neuron_map
-        self.batch_first = batch_first
-        self.return_sequences = return_sequences
-        self.return_state = return_state  # Store return_state as an instance attribute
-        self.mixed_memory = mixed_memory
-        
-        # Validate that neuron_map is actually a NeuronMap instance
+        # Validate neuron_map type
         if not isinstance(neuron_map, NeuronMap):
             raise TypeError("neuron_map must be a NeuronMap instance")
-            
+        
+        # Store the neuron map and layer parameters
+        self.neuron_map = neuron_map
+        self.return_sequences = return_sequences
+        self.return_state = return_state
+        self.batch_first = batch_first
+        self.mixed_memory = mixed_memory
+        
         # Set input_size from neuron_map.input_dim if the map is already built
         # Otherwise, it will be set during the first forward pass
         self.input_size = getattr(neuron_map, 'input_dim', None)
         
-        # Create LTC cell
-        self.rnn_cell = LTCCell(
-            neuron_map=neuron_map,
-            input_mapping=input_mapping,
-            output_mapping=output_mapping,
-            ode_unfolds=ode_unfolds,
-            epsilon=epsilon,
-            implicit_param_constraints=implicit_param_constraints
-        )
-        
-        # Store the map internally for property access
-        self._neuron_map = neuron_map
+        # Initialize parameters
+        self.gleak = None
+        self.vleak = None
+        self.cm = None
+        self.sigma = None
+        self.mu = None
+        self.w = None
+        self.erev = None
+        self.sensory_sigma = None
+        self.sensory_mu = None
+        self.sensory_w = None
+        self.sensory_erev = None
+        self.input_kernel = None
+        self.input_bias = None
+        self.output_kernel = None
+        self.output_bias = None
+        self.built = False
         
         # Create memory cell if using mixed memory
         # If input_size is not available yet, memory cell creation will be deferred
         self.memory_cell = None
         if self.mixed_memory and self.input_size is not None:
             self.memory_cell = self._create_memory_cell(self.input_size, self.state_size)
+    
+    def build(self, input_shape):
+        """Build the LTC layer."""
+        # Get input dimension
+        if len(input_shape) == 3:  # (batch, time, features) or (time, batch, features)
+            feature_dim = 2
+            input_dim = input_shape[feature_dim]
+        else:
+            input_dim = input_shape[-1]
+        
+        # Build the neuron map if not already built
+        if not self.neuron_map.is_built():
+            self.neuron_map.build(input_dim)
+        
+        # Set input_size
+        self.input_size = self.neuron_map.input_dim
+        
+        # Get dimensions from neuron map
+        units = self.neuron_map.units
+        
+        # Initialize parameters
+        self.gleak = Parameter(tensor.ones((units,)))
+        self.vleak = Parameter(tensor.zeros((units,)))
+        self.cm = Parameter(tensor.ones((units,)))
+        
+        # Get recurrent mask from neuron map
+        recurrent_mask = self.neuron_map.get_recurrent_mask()
+        
+        # Initialize weights for recurrent connections
+        self.sigma = Parameter(tensor.ones((units,)))
+        self.mu = Parameter(tensor.zeros((units,)))
+        self.w = Parameter(glorot_uniform((units, units)))
+        self.erev = Parameter(tensor.zeros((units, units)))
+        
+        # Initialize weights for input connections
+        if self.neuron_map.input_mapping in ["affine", "linear"]:
+            self.sensory_sigma = Parameter(tensor.ones((self.input_size,)))
+            self.sensory_mu = Parameter(tensor.zeros((self.input_size,)))
+            self.sensory_w = Parameter(glorot_uniform((self.input_size, units)))
+            self.sensory_erev = Parameter(tensor.zeros((self.input_size, units)))
+            
+            # Initialize input projection
+            self.input_kernel = Parameter(glorot_uniform((self.input_size, units)))
+            if self.neuron_map.input_mapping == "affine":
+                self.input_bias = Parameter(tensor.zeros((units,)))
+        
+        # Initialize output projection
+        if self.neuron_map.output_mapping in ["affine", "linear"]:
+            output_dim = self.neuron_map.output_dim
+            self.output_kernel = Parameter(glorot_uniform((units, output_dim)))
+            if self.neuron_map.output_mapping == "affine":
+                self.output_bias = Parameter(tensor.zeros((output_dim,)))
+        
+        # Create memory cell if using mixed memory and it wasn't created during init
+        if self.mixed_memory and self.memory_cell is None:
+            self.memory_cell = self._create_memory_cell(self.input_size, self.state_size)
+        
+        # Mark as built
+        self.built = True
     
     def _create_memory_cell(self, input_size, state_size):
         """Create a memory cell for mixed memory mode."""
@@ -124,8 +175,8 @@ class LTC(Module):
                 h_prev, c_prev = states
                 
                 # Input gate
-                i = ops.sigmoid( # type: ignore
-                    ops.matmul(inputs, self.input_kernel) + # type: ignore
+                i = ops.sigmoid(
+                    ops.matmul(inputs, self.input_kernel) +
                     ops.matmul(h_prev, self.input_recurrent_kernel) +
                     self.input_bias
                 )
@@ -161,17 +212,136 @@ class LTC(Module):
         
         return MemoryCell(input_size, state_size)
     
+    def _ode_solver(self, inputs, state, elapsed_time):
+        """Solve the ODE for the LTC dynamics."""
+        # Get parameters from neuron_map
+        ode_unfolds = self.neuron_map.ode_unfolds
+        epsilon = self.neuron_map.epsilon
+        implicit_param_constraints = self.neuron_map.implicit_param_constraints
+        
+        # Apply constraints to parameters if needed
+        if implicit_param_constraints:
+            gleak = ops.abs(self.gleak) + epsilon
+            cm = ops.abs(self.cm) + epsilon
+        else:
+            gleak = self.gleak
+            cm = self.cm
+        
+        # Get recurrent mask from neuron map
+        recurrent_mask = self.neuron_map.get_recurrent_mask()
+        
+        # Apply mask to weights
+        masked_w = ops.multiply(self.w, recurrent_mask)
+        
+        # Initialize state for ODE solver
+        v_pre = state
+        
+        # Get batch size and units
+        batch_size = tensor.shape(v_pre)[0]
+        units = tensor.shape(v_pre)[1]
+        
+        # Solve ODE using multiple unfoldings
+        for i in range(ode_unfolds):
+            # Calculate activation
+            activation = get_activation(self.neuron_map.activation)(v_pre)
+            
+            # Calculate synaptic current
+            syn_current = ops.matmul(activation, masked_w)
+            
+            # Reshape erev for broadcasting with v_pre
+            # erev shape: (units, units), v_pre shape: (batch_size, units)
+            # We need to reshape erev to (1, units, units) for proper broadcasting
+            erev_expanded = tensor.reshape(self.erev, (1, units, units))
+            v_pre_expanded = tensor.reshape(v_pre, (batch_size, units, 1))
+            
+            # Calculate (erev - v_pre) with proper broadcasting
+            # This will result in a tensor of shape (batch_size, units, units)
+            erev_minus_v = ops.subtract(erev_expanded, v_pre_expanded)
+            
+            # Reshape syn_current for element-wise multiplication
+            syn_current = tensor.reshape(syn_current, (batch_size, 1, units))
+            
+            # Perform element-wise multiplication and sum along the last dimension
+            # This will result in a tensor of shape (batch_size, units)
+            syn_current = ops.stats.sum(ops.multiply(syn_current, erev_minus_v), axis=2)
+            
+            # Calculate sensory current
+            sensory_current = 0
+            if self.neuron_map.input_mapping in ["affine", "linear"]:
+                # Apply activation to inputs
+                sensory_activation = get_activation(self.neuron_map.activation)(inputs)
+                
+                # Ensure inputs and weights have compatible shapes for matrix multiplication
+                # inputs shape: (batch_size, input_size)
+                # self.sensory_w shape: (input_size, units)
+                # We need to transpose self.sensory_w to make the dimensions compatible
+                sensory_w_transposed = tensor.transpose(self.sensory_w)
+                sensory_current = ops.matmul(sensory_activation, sensory_w_transposed)
+                
+                # Reshape sensory_erev for broadcasting with v_pre
+                # sensory_erev shape: (input_size, units), v_pre shape: (batch_size, units)
+                # We need to reshape to (1, input_size, units) for broadcasting with v_pre_expanded
+                sensory_erev_expanded = tensor.reshape(self.sensory_erev, (1, self.input_size, self.neuron_map.units))
+                
+                # Reshape v_pre for broadcasting with sensory_erev
+                # v_pre shape: (batch_size, units)
+                # We need to reshape to (batch_size, 1, units) for broadcasting with sensory_erev_expanded
+                v_pre_expanded = tensor.reshape(v_pre, (batch_size, 1, self.neuron_map.units))
+                
+                # Calculate (sensory_erev - v_pre) with proper broadcasting
+                # Result shape: (batch_size, input_size, units)
+                sensory_erev_minus_v = ops.subtract(sensory_erev_expanded, v_pre_expanded)
+                
+                # Reshape sensory_current for element-wise multiplication
+                # sensory_current shape: (batch_size, units)
+                # We need to reshape to (batch_size, input_size, 1) for broadcasting
+                sensory_current = tensor.reshape(sensory_current, (batch_size, self.input_size, 1))
+                
+                # Perform element-wise multiplication and sum along the input_size dimension
+                # Result shape: (batch_size, units)
+                sensory_current = ops.stats.sum(ops.multiply(sensory_current, sensory_erev_minus_v), axis=1)
+            
+            # Calculate leak current
+            leak_current = ops.multiply(gleak, ops.subtract(self.vleak, v_pre))
+            
+            # Calculate total current
+            total_current = ops.add(leak_current, ops.add(syn_current, sensory_current))
+            
+            # Update state
+            delta_v = ops.divide(ops.multiply(elapsed_time, total_current), cm)
+            v_pre = ops.add(v_pre, delta_v)
+        
+        return v_pre
+    
+    def _map_inputs(self, inputs):
+        """Map inputs using the specified input mapping."""
+        if self.neuron_map.input_mapping == "affine":
+            return ops.add(ops.matmul(inputs, self.input_kernel), self.input_bias)
+        elif self.neuron_map.input_mapping == "linear":
+            return ops.matmul(inputs, self.input_kernel)
+        else:
+            return inputs
+    
+    def _map_outputs(self, state):
+        """Map outputs using the specified output mapping."""
+        if self.neuron_map.output_mapping == "affine":
+            return ops.add(ops.matmul(state, self.output_kernel), self.output_bias)
+        elif self.neuron_map.output_mapping == "linear":
+            return ops.matmul(state, self.output_kernel)
+        else:
+            return state
+    
     @property
     def state_size(self):
-        return self._neuron_map.units
+        return self.neuron_map.units
     
     @property
     def sensory_size(self):
-        return self._neuron_map.input_dim
+        return self.neuron_map.input_dim
     
     @property
     def motor_size(self):
-        return self._neuron_map.output_dim
+        return self.neuron_map.output_dim
     
     @property
     def output_size(self):
@@ -181,15 +351,15 @@ class LTC(Module):
     def synapse_count(self):
         # Use ops/tensor for calculations, avoid numpy
         # Ensure adjacency_matrix is a tensor first
-        adj_matrix_tensor = tensor.convert_to_tensor(self._neuron_map.adjacency_matrix)
-        return tensor.sum(tensor.abs(adj_matrix_tensor))
+        adj_matrix_tensor = tensor.convert_to_tensor(self.neuron_map.adjacency_matrix)
+        return ops.stats.sum(tensor.abs(adj_matrix_tensor))
     
     @property
     def sensory_synapse_count(self):
         # Use ops/tensor for calculations, avoid numpy
-        sensory_matrix_tensor = tensor.convert_to_tensor(self._neuron_map.sensory_adjacency_matrix)
+        sensory_matrix_tensor = tensor.convert_to_tensor(self.neuron_map.sensory_adjacency_matrix)
         # sum result might be a 0-dim tensor, convert to float if necessary
-        sum_val = tensor.sum(tensor.abs(sensory_matrix_tensor))
+        sum_val = ops.stats.sum(tensor.abs(sensory_matrix_tensor))
         # Use item() to get Python scalar
         return float(tensor.item(sum_val))
     
@@ -206,23 +376,14 @@ class LTC(Module):
         Returns:
             Layer output and final state if return_state is True, otherwise just the layer output
         """
+        # Build if not already built
+        if not self.built:
+            self.build(tensor.shape(inputs))
+        
         # Get device and batch information
         is_batched = len(tensor.shape(inputs)) == 3
         batch_dim = 0 if self.batch_first else 1
         seq_dim = 1 if self.batch_first else 0
-        
-        # Build or update neuron_map if needed based on input dimensions
-        feature_dim = 2  # Assuming (batch, seq, features) or (seq, batch, features)
-        input_features = tensor.shape(inputs)[feature_dim]
-        
-        # If input_size is not set or the map isn't built, build it now
-        if self.input_size is None or not self.neuron_map.is_built():
-            self.neuron_map.build(input_features)
-            self.input_size = self.neuron_map.input_dim
-            
-            # Create memory cell now if using mixed memory and it wasn't created during init
-            if self.mixed_memory and self.memory_cell is None:
-                self.memory_cell = self._create_memory_cell(self.input_size, self.state_size)
         
         # Handle non-batched inputs
         if not is_batched:
@@ -271,12 +432,21 @@ class LTC(Module):
             if self.mixed_memory:
                 h_state, (h_state, c_state) = self.memory_cell(current_input, (h_state, c_state))
             
-            # Apply LTC cell
-            output, h_state = self.rnn_cell(current_input, h_state, ts)
+            # Map inputs
+            mapped_input = self._map_inputs(current_input)
+            
+            # Apply LTC dynamics
+            h_state = self._ode_solver(mapped_input, h_state, ts)
+            
+            # Map outputs
+            output = self._map_outputs(h_state)
             
             # Store output if returning sequences
             if self.return_sequences:
                 output_sequence.append(output)
+            else:
+                # Only store the last output
+                output_sequence = [output]
         
         # Prepare output
         if self.return_sequences:
@@ -322,91 +492,24 @@ class LTC(Module):
     def get_config(self) -> Dict[str, Any]:
         """Returns the configuration of the LTC layer."""
         config = super().get_config()
-        
-        # Save the cell's config
-        cell_config = self.rnn_cell.get_config()
-        
-        # Add return_state to the config
         config.update({
-            "return_state": self.return_state,
-        })
-        
-        # Save layer's direct __init__ args
-        config.update({
-            # Don't save input_size as it's derived from the neuron_map
-            # Save the neuron_map config
             "neuron_map": self.neuron_map.get_config(),
-            "neuron_map_class": self.neuron_map.__class__.__name__,
-            # Save other layer args
             "return_sequences": self.return_sequences,
+            "return_state": self.return_state,
             "batch_first": self.batch_first,
-            "mixed_memory": self.mixed_memory,
-            # Save cell args directly in the layer config
-            "input_mapping": self.rnn_cell._input_mapping,
-            "output_mapping": self.rnn_cell._output_mapping,
-            "ode_unfolds": self.rnn_cell._ode_unfolds,
-            "epsilon": self.rnn_cell._epsilon,
-            "implicit_param_constraints": self.rnn_cell._implicit_param_constraints,
-            # Also save cell config and class name
-            "cell_config": cell_config,
-            "cell_class_name": self.rnn_cell.__class__.__name__
+            "mixed_memory": self.mixed_memory
         })
         return config
     
     @classmethod
     def from_config(cls, config: Dict[str, Any]) -> 'LTC':
         """Creates an LTC layer from its configuration."""
-        # First handle the cell config
-        cell_config = config.pop("cell_config", None)
-        cell_class_name = config.pop("cell_class_name", "LTCCell")
+        # Extract neuron_map config
+        neuron_map_config = config.pop("neuron_map", {})
         
-        # Handle backward compatibility with old configs that used input_size or neuron_map_or_units
-        # This ensures older models can still be loaded
-        from ember_ml.nn.modules.wiring import FullyConnectedMap
+        # Create neuron_map
+        from ember_ml.nn.modules.wiring import NCPMap
+        neuron_map = NCPMap.from_config(neuron_map_config)
         
-        # Handle return_state parameter
-        return_state = config.pop("return_state", False)
-        
-        # Handle old input_size parameter (needed for backward compatibility)
-        old_input_size = config.pop("input_size", None)
-        
-        # Handle old neuron_map_or_units parameter
-        if "neuron_map_or_units" in config and "neuron_map" not in config:
-            map_or_units = config.pop("neuron_map_or_units")
-            if isinstance(map_or_units, dict):
-                # It was a map config
-                config["neuron_map"] = map_or_units
-                if "class_name" not in config["neuron_map"]:
-                    config["neuron_map_class"] = "FullyConnectedMap"
-            elif isinstance(map_or_units, int):
-                # It was an integer (units)
-                # Create a FullyConnectedMap config
-                config["neuron_map"] = {"units": map_or_units}
-                config["neuron_map_class"] = "FullyConnectedMap"
-                
-        # If we have old_input_size, make sure it's included in the map config
-        # This ensures the map will be built correctly
-        if old_input_size is not None and "neuron_map" in config and isinstance(config["neuron_map"], dict):
-            config["neuron_map"]["input_dim"] = old_input_size
-        
-        # Reconstruct the NeuronMap
-        if "neuron_map" in config and isinstance(config["neuron_map"], dict):
-            map_config = config.pop("neuron_map")
-            map_class_name = config.pop("neuron_map_class", "NeuronMap")
-            
-            from ember_ml.nn.modules.wiring import NeuronMap, NCPMap, FullyConnectedMap, RandomMap
-            neuron_map_class_map = {
-                "NeuronMap": NeuronMap,
-                "NCPMap": NCPMap,
-                "FullyConnectedMap": FullyConnectedMap,
-                "RandomMap": RandomMap,
-            }
-            map_class_obj = neuron_map_class_map.get(map_class_name)
-            if map_class_obj is None:
-                raise ImportError(f"Unknown NeuronMap class '{map_class_name}' specified in config.")
-            
-            # Reconstruct map and put object back into config
-            config['neuron_map'] = map_class_obj.from_config(map_config)
-        
-        # Let the BaseModule.from_config handle calling cls(**config)
-        return super(LTC, cls).from_config(config)
+        # Create layer
+        return cls(neuron_map=neuron_map, **config)

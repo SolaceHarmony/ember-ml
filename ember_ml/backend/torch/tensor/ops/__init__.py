@@ -13,7 +13,7 @@ from ember_ml.backend.torch.tensor.ops.manipulation import (
     reshape, transpose, concatenate, stack, split, expand_dims, squeeze, tile, pad
 )
 from ember_ml.backend.torch.tensor.ops.indexing import (
-    slice_tensor, slice_update, gather, tensor_scatter_nd_update, scatter
+    slice_tensor, slice_update, gather, tensor_scatter_nd_update, scatter, nonzero
     # Note: scatter_* helpers might be internal to indexing.py
 )
 from ember_ml.backend.torch.tensor.ops.utility import (
@@ -59,6 +59,7 @@ __all__ = [
     'gather',
     'tensor_scatter_nd_update',
     'scatter',
+    'nonzero',
 
     # Utility operations
     'convert_to_torch_tensor',

@@ -10,7 +10,6 @@ from typing import List, Optional, Any, Union, Tuple, Dict, Set, TypeVar, overlo
 from ember_ml.nn.tensor.types import TensorLike
 type Tensor = Any
 # Constants
-pi: Any
 
 # Backend control
 def set_backend(backend: str) -> None: ...

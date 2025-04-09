@@ -388,23 +388,45 @@ def _create_new_tensor(creation_func: Callable, dtype: Optional[Any] = None, dev
 
 
     # Shape normalization (if 'shape' is present in kwargs)
+    shape_arg = None
     if 'shape' in kwargs:
-        shape_arg = kwargs['shape']
+        shape_arg = kwargs.pop('shape')  # Remove 'shape' from kwargs
         if isinstance(shape_arg, int):
-            kwargs['shape'] = (shape_arg,)
+            shape_arg = (shape_arg,)
         elif not isinstance(shape_arg, tuple):
-            kwargs['shape'] = tuple(shape_arg)
+            shape_arg = tuple(shape_arg)
 
     # Call the actual NumPy creation function
     try:
-        # Create the tensor without passing dtype directly to the function
-        # This handles functions like np.random.uniform that don't accept dtype
-        result = creation_func(**kwargs)
-        
+        # Handle different NumPy functions based on their expected arguments
+        if creation_func in [np.zeros, np.ones, np.empty, np.full]:
+            # These functions expect shape as a positional argument
+            if shape_arg is not None:
+                result = creation_func(shape_arg, **kwargs)
+            else:
+                raise ValueError(f"{creation_func.__name__} requires a shape parameter")
+        elif creation_func in [np.random.normal, np.random.uniform, np.random.binomial,
+                              np.random.exponential, np.random.poisson]:
+            # These functions expect 'size' as a keyword argument
+            if shape_arg is not None:
+                kwargs['size'] = shape_arg
+            result = creation_func(**kwargs)
+        elif creation_func == np.random.gamma:
+            # np.random.gamma uses 'shape' for the alpha parameter and 'size' for the output shape
+            if 'shape_param' in kwargs:
+                # Rename 'shape_param' to 'shape' for np.random.gamma
+                kwargs['shape'] = kwargs.pop('shape_param')
+            if shape_arg is not None:
+                kwargs['size'] = shape_arg
+            result = creation_func(**kwargs)
+        else:
+            # For other functions, just pass all kwargs
+            result = creation_func(**kwargs)
+
         # Apply dtype separately if needed
         if numpy_native_dtype is not None and result.dtype != numpy_native_dtype:
             result = result.astype(numpy_native_dtype)
-            
+
         return result
     except TypeError as e:
         # Provide more context on failure

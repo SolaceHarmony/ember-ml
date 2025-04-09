@@ -3,7 +3,8 @@ Recurrent Neural Network (RNN) module.
 
 This module provides implementations of various RNN layers,
 including LSTM, GRU, RNN, CfC (Closed-form Continuous-time), LTC (Liquid Time-Constant),
-and StrideAware cells for multi-timescale processing.
+ELTC (Enhanced Liquid Time-Constant), CTGRU (Continuous-Time GRU), CTRNN (Continuous-Time RNN),
+GUCE (Grand Unified Cognitive Equation), and StrideAware cells for multi-timescale processing.
 """
 
 from ember_ml.nn.modules.rnn.cfc_cell import CfCCell
@@ -11,6 +12,10 @@ from ember_ml.nn.modules.rnn.wired_cfc_cell import WiredCfCCell
 from ember_ml.nn.modules.rnn.cfc import CfC
 from ember_ml.nn.modules.rnn.ltc_cell import LTCCell
 from ember_ml.nn.modules.rnn.ltc import LTC
+from ember_ml.nn.modules.rnn.eltc import ELTC, ODESolver
+from ember_ml.nn.modules.rnn.ctgru import CTGRU
+from ember_ml.nn.modules.rnn.ctrnn import CTRNN
+from ember_ml.nn.modules.rnn.guce import GUCE, HolographicCorrector, OscillatoryGating
 from ember_ml.nn.modules.rnn.lstm_cell import LSTMCell
 from ember_ml.nn.modules.rnn.lstm import LSTM
 from ember_ml.nn.modules.rnn.gru_cell import GRUCell
@@ -28,6 +33,13 @@ __all__ = [
     'CfC',
     'LTCCell',
     'LTC',
+    'ELTC',
+    'ODESolver',
+    'CTGRU',
+    'CTRNN',
+    'GUCE',
+    'HolographicCorrector',
+    'OscillatoryGating',
     'LSTMCell',
     'LSTM',
     'GRUCell',

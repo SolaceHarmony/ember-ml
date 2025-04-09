@@ -520,5 +520,23 @@ def scatter_softmax(values: TensorLike, index: TensorLike, dim_size: Optional[in
     # Compute softmax
     return np.divide(exp_vals, gathered_sum)
 
+def nonzero(tensor: TensorLike) -> np.ndarray:
+    """
+    Returns the indices of the elements that are non-zero.
+    
+    Args:
+        tensor: Input tensor
+        
+    Returns:
+        Tensor containing the indices of the non-zero elements
+    """
+    # Convert input to NumPy array
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    tensor_array = Tensor.convert_to_tensor(tensor)
+    
+    # Get indices of non-zero elements
+    return np.array(np.nonzero(tensor_array)).T
+
 # Alias for backward compatibility
 slice = slice_tensor

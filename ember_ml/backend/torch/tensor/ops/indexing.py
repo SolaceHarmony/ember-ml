@@ -8,6 +8,23 @@ from ember_ml.backend.torch.types import (
     TensorLike, Shape
 )
 
+def nonzero(tensor: TensorLike) -> torch.Tensor:
+    """
+    Returns the indices of the elements that are non-zero.
+    
+    Args:
+        tensor: Input tensor
+        
+    Returns:
+        Tensor containing the indices of the non-zero elements
+    """
+    # Convert input to PyTorch tensor
+    from ember_ml.backend.torch.tensor.tensor import TorchTensor
+    tensor_array = TorchTensor().convert_to_tensor(tensor)
+    
+    # Get indices of non-zero elements
+    return torch.nonzero(tensor_array)
+
 def slice_tensor(tensor: TensorLike, starts: Shape, sizes: Shape) -> torch.Tensor:
     """
     Extract a slice from a tensor.
@@ -22,9 +39,8 @@ def slice_tensor(tensor: TensorLike, starts: Shape, sizes: Shape) -> torch.Tenso
     """
     
     # Convert input to Torch array
-    from ember_ml.backend.torch.tensor import TorchTensor
-    Tensor = TorchTensor()
-    tensor_array = Tensor.convert_to_tensor(tensor)
+    from ember_ml.backend.torch.tensor.tensor import TorchTensor
+    tensor_array = TorchTensor().convert_to_tensor(tensor)
     
     # Create a list of slice objects for each dimension
     slice_objects = []
@@ -64,15 +80,13 @@ def slice_update(data: TensorLike, slices: TensorLike, updates: Optional[TensorL
     """
     # Convert inputs to Torch arrays
     from ember_ml.backend.torch.tensor import TorchTensor
-    tensor_ops = TorchTensor()
-    tensor = tensor_ops.convert_to_tensor(data)
-    
+    tensor = TorchTensor().convert_to_tensor(data)
     # If updates is None, return a slice of the tensor
     if updates is None:
         return tensor[slices].clone()
     
     # Convert updates to tensor
-    updates_tensor = tensor_ops.convert_to_tensor(updates)
+    updates_tensor = TorchTensor().convert_to_tensor(updates)
     
     # Create a copy of the input tensor
     result = tensor.clone()
@@ -96,10 +110,9 @@ def gather(tensor: TensorLike, indices: TensorLike, axis: int = 0) -> torch.Tens
     """
     from ember_ml.backend.torch.tensor import TorchTensor
     Tensor = TorchTensor()
-    tensor_array = Tensor.convert_to_tensor(tensor)
-    indices_array = Tensor.convert_to_tensor(indices)
-    
-    # Convert indices to long
+    from ember_ml.backend.torch.tensor.tensor import convert_to_tensor
+    tensor_array = convert_to_tensor(tensor)
+    indices_array = convert_to_tensor(indices)
     indices_array = indices_array.long()
     
     # For 1D indices with multi-dimensional tensor, we need to handle it specially
@@ -439,7 +452,21 @@ def scatter_softmax(data: TensorLike, indices: TensorLike, dim_size: Optional[in
     
     # First, compute the max for numerical stability
     max_output = torch.full(output_shape, float('-inf'), dtype=tensor_torch.dtype, device=tensor_torch.device)
-    max_output, _ = max_output.scatter_(axis, indices_torch, tensor_torch, reduce='amax')
+    
+    # Manually implement max scatter since reduce='amax' might not be available in all PyTorch versions
+    for i in range(tensor_torch.shape[0]):
+        idx = indices_torch[i].item()
+        value = tensor_torch[i]
+        
+        # Create slice for the specific index using Python's built-in slice
+        slice_indices = [py_slice(None)] * len(output_shape)
+        slice_indices[axis] = idx
+        
+        # Get current value
+        current = max_output[tuple(slice_indices)]
+        
+        # Update with max
+        max_output[tuple(slice_indices)] = torch.maximum(current, value)
     
     # Subtract max for numerical stability
     shifted_data = tensor_torch - max_output.gather(axis, indices_torch)

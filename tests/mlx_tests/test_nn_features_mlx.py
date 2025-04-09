@@ -27,7 +27,6 @@ def test_features_pca_fit_transform_mlx(mlx_backend: None): # Use fixture
     # Use the factory function from features module
     pca_instance = features.pca()
     transformed = pca_instance.fit_transform(data, n_components=n_components)
-    # assert isinstance(transformed, tensor.EmberTensor), "PCA transform did not return EmberTensor" # Check removed
     assert tensor.shape(transformed) == (100, n_components), "PCA transformed shape is incorrect"
     variances = stats.var(transformed, axis=0) # type: ignore
     if tensor.shape(variances)[0] > 1:

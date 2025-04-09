@@ -51,6 +51,7 @@ ones_like = lambda *args, **kwargs: _get_backend_tensor_ops_module().ones_like(*
 eye = lambda *args, **kwargs: _get_backend_tensor_ops_module().eye(*args, **kwargs)
 arange = lambda *args, **kwargs: _get_backend_tensor_ops_module().arange(*args, **kwargs)
 linspace = lambda *args, **kwargs: _get_backend_tensor_ops_module().linspace(*args, **kwargs)
+nonzero = lambda *args, **kwargs: _get_backend_tensor_ops_module().nonzero(*args, **kwargs)
 full = lambda *args, **kwargs: _get_backend_tensor_ops_module().full(*args, **kwargs)
 full_like = lambda *args, **kwargs: _get_backend_tensor_ops_module().full_like(*args, **kwargs)
 reshape = lambda *args, **kwargs: _get_backend_tensor_ops_module().reshape(*args, **kwargs)
@@ -215,6 +216,7 @@ __all__ = [
     'shuffle',
     'set_seed',
     'get_seed',
-    'meshgrid', # Add meshgrid export
+    'meshgrid',
+    'nonzero', # Add nonzero export
     # Note: _convert_to_backend_tensor is intentionally not exported
 ]

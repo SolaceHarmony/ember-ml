@@ -7,6 +7,7 @@ which divides neurons into sensory, inter, and motor neurons.
 
 from typing import Optional, Tuple, List, Dict, Any
 
+from ember_ml import ops
 from ember_ml.nn import tensor
 
 # Already imports NeuronMap correctly
@@ -20,20 +21,41 @@ class NCPMap(NeuronMap): # Name is already correct
     In an NCP wiring, neurons are divided into three groups:
     - Sensory neurons: Receive input from the environment
     - Inter neurons: Process information internally
+    - Command neurons: Coordinate motor responses
     - Motor neurons: Produce output to the environment
     
     The connectivity pattern between these groups is defined by the
     sparsity level and can be customized.
+    
+    This class also includes cell-specific parameters that define the dynamics
+    of the neural network, making it a complete blueprint for both structure
+    and behavior.
     """
     
     def __init__(
         self,
         inter_neurons: int,
-        command_neurons: int, # Add command_neurons
+        command_neurons: int,
         motor_neurons: int,
         sensory_neurons: int = 0,
         sparsity_level: float = 0.5,
         seed: Optional[int] = None,
+        # Add cell-specific parameters
+        time_scale_factor: float = 1.0,
+        activation: str = "tanh",
+        recurrent_activation: str = "sigmoid",
+        mode: str = "default",
+        use_bias: bool = True,
+        kernel_initializer: str = "glorot_uniform",
+        recurrent_initializer: str = "orthogonal",
+        bias_initializer: str = "zeros",
+        mixed_memory: bool = False,
+        ode_unfolds: int = 6,
+        epsilon: float = 1e-8,
+        implicit_param_constraints: bool = False,
+        input_mapping: str = "affine",
+        output_mapping: str = "affine",
+        # Keep existing sparsity parameters
         sensory_to_inter_sparsity: Optional[float] = None,
         sensory_to_motor_sparsity: Optional[float] = None,
         inter_to_inter_sparsity: Optional[float] = None,
@@ -54,34 +76,71 @@ class NCPMap(NeuronMap): # Name is already correct
             sensory_neurons: Number of sensory neurons (default: 0)
             sparsity_level: Default sparsity level for all connections (default: 0.5)
             seed: Random seed for reproducibility
+            
+            # Cell-specific parameters
+            time_scale_factor: Factor to scale the time constant (default: 1.0)
+            activation: Activation function for the output (default: "tanh")
+            recurrent_activation: Activation function for the recurrent step (default: "sigmoid")
+            mode: Mode of operation (default: "default")
+            use_bias: Whether to use bias (default: True)
+            kernel_initializer: Initializer for the kernel weights (default: "glorot_uniform")
+            recurrent_initializer: Initializer for the recurrent weights (default: "orthogonal")
+            bias_initializer: Initializer for the bias (default: "zeros")
+            mixed_memory: Whether to use mixed memory (default: False)
+            ode_unfolds: Number of ODE solver unfoldings (default: 6)
+            epsilon: Small constant to avoid division by zero (default: 1e-8)
+            implicit_param_constraints: Whether to use implicit parameter constraints (default: False)
+            input_mapping: Type of input mapping ('affine', 'linear', or None) (default: "affine")
+            output_mapping: Type of output mapping ('affine', 'linear', or None) (default: "affine")
+            
+            # Sparsity parameters
             sensory_to_inter_sparsity: Sparsity level for sensory to inter connections
             sensory_to_motor_sparsity: Sparsity level for sensory to motor connections
             inter_to_inter_sparsity: Sparsity level for inter to inter connections
             inter_to_motor_sparsity: Sparsity level for inter to motor connections
             motor_to_motor_sparsity: Sparsity level for motor to motor connections
             motor_to_inter_sparsity: Sparsity level for motor to inter connections
+            
+            # Compatibility parameters
             units: Total number of units (optional, for compatibility)
             output_dim: Output dimension (optional, for compatibility)
             input_dim: Input dimension (optional, for compatibility)
         """
         # If units is provided, use it, otherwise calculate it
         if units is None:
-            units = inter_neurons + command_neurons + motor_neurons + sensory_neurons # Update units calculation
+            units = inter_neurons + command_neurons + motor_neurons + sensory_neurons
         
         # If output_dim is provided, use it, otherwise use motor_neurons
         if output_dim is None:
             output_dim = motor_neurons
         
-        # If input_dim is provided, use it, otherwise use units
+        # If input_dim is provided, use it, otherwise use sensory_neurons if > 0
         if input_dim is None:
-            input_dim = units
+            input_dim = sensory_neurons if sensory_neurons > 0 else None
         
         super().__init__(units, output_dim, input_dim, sparsity_level, seed)
         
+        # Store NCP-specific structural parameters
         self.inter_neurons = inter_neurons
-        self.command_neurons = command_neurons # Store command_neurons
+        self.command_neurons = command_neurons
         self.motor_neurons = motor_neurons
         self.sensory_neurons = sensory_neurons
+        
+        # Store cell-specific parameters
+        self.time_scale_factor = time_scale_factor
+        self.activation = activation
+        self.recurrent_activation = recurrent_activation
+        self.mode = mode
+        self.use_bias = use_bias
+        self.kernel_initializer = kernel_initializer
+        self.recurrent_initializer = recurrent_initializer
+        self.bias_initializer = bias_initializer
+        self.mixed_memory = mixed_memory
+        self.ode_unfolds = ode_unfolds
+        self.epsilon = epsilon
+        self.implicit_param_constraints = implicit_param_constraints
+        self.input_mapping = input_mapping
+        self.output_mapping = output_mapping
         
         # Custom sparsity levels
         self.sensory_to_inter_sparsity = sensory_to_inter_sparsity or sparsity_level
@@ -109,9 +168,7 @@ class NCPMap(NeuronMap): # Name is already correct
             tensor.set_seed(self.seed)
         
         # Create masks
-        recurrent_mask = zeros((self.units, self.units), dtype=int32)
         input_mask = ones((self.input_dim,), dtype=int32)
-        output_mask = zeros((self.units,), dtype=int32)
         
         # Define neuron group indices based on diagram and original source structure
         sensory_start = 0
@@ -124,90 +181,109 @@ class NCPMap(NeuronMap): # Name is already correct
         motor_end = command_end + self.motor_neurons
         
         # Create output mask (only motor neurons contribute to output)
+        # Initialize with zeros
         output_mask = zeros((self.units,), dtype=int32)
         
         # Set motor neurons to 1
-        output_mask_list = [0] * self.units
-        for i in range(motor_start, motor_end):
-            output_mask_list[i] = 1
+        # Create a range of indices for motor neurons
+        motor_indices = tensor.arange(motor_start, motor_end)
         
-        # Create a new tensor with the updated values
-        output_mask = EmberTensor(output_mask_list, dtype=int32)
+        # Create a tensor of ones with the same shape as motor_indices
+        motor_values = ones((motor_end - motor_start,), dtype=int32)
         
-        # Create connections using ops functions
-        # We'll use a functional approach with lists and convert to tensors
+        # Use scatter update to set motor neurons to 1
+        output_mask = tensor.tensor_scatter_nd_update(
+            output_mask,
+            tensor.reshape(motor_indices, (-1, 1)),
+            motor_values
+        )
         
-        # Initialize a 2D list for the recurrent mask
-        recurrent_mask_list = [[0 for _ in range(self.units)] for _ in range(self.units)]
+        # Initialize recurrent mask with zeros
+        recurrent_mask = zeros((self.units, self.units), dtype=int32)
         
+        # Helper function to create random connections between neuron groups
+        def create_random_connections(from_start, from_end, to_start, to_end, sparsity):
+            if from_end <= from_start or to_end <= to_start:
+                return  # Skip if either group is empty
+            
+            # Create indices for the from and to neurons
+            from_size = from_end - from_start
+            to_size = to_end - to_start
+            
+            # Create a random mask for connections
+            random_mask = random_uniform((from_size, to_size))
+            connection_mask = ops.greater_equal(random_mask, sparsity)
+            
+            # Create indices for the connections
+            from_indices = tensor.reshape(tensor.arange(from_start, from_end), (-1, 1, 1))
+            to_indices = tensor.reshape(tensor.arange(to_start, to_end), (1, -1, 1))
+            
+            # Combine indices where connection_mask is True
+            mask_indices = tensor.nonzero(connection_mask)
+            if tensor.shape(mask_indices)[0] > 0:
+                from_idx = from_indices[mask_indices[:, 0], 0, 0] 
+                to_idx = to_indices[0, mask_indices[:, 1], 0]
+                
+                # Create update indices and values
+                update_indices = tensor.stack([from_idx, to_idx], axis=1)
+                update_values = ones((tensor.shape(update_indices)[0],), dtype=int32)
+                
+                # Update the recurrent mask
+                nonlocal recurrent_mask
+                recurrent_mask = tensor.tensor_scatter_nd_update(
+                    recurrent_mask, 
+                    update_indices, 
+                    update_values
+                )
+        
+        # Create connections between neuron groups
         # Sensory to inter connections
         if self.sensory_neurons > 0 and self.inter_neurons > 0:
-            for i in range(sensory_start, sensory_end):
-                for j in range(inter_start, inter_end):
-                    if random_uniform(()) >= self.sensory_to_inter_sparsity:
-                        recurrent_mask_list[i][j] = 1
+            create_random_connections(
+                sensory_start, sensory_end, 
+                inter_start, inter_end, 
+                self.sensory_to_inter_sparsity
+            )
         
-        # Sensory to command connections (NEW - Matches diagram & original source logic)
+        # Sensory to command connections
         if self.sensory_neurons > 0 and self.command_neurons > 0:
-             for i in range(sensory_start, sensory_end):
-                 for j in range(command_start, command_end):
-                     # Using sensory_to_inter_sparsity for now, could add specific arg later
-                     if random_uniform(()) >= self.sensory_to_inter_sparsity:
-                         recurrent_mask_list[i][j] = 1
-
-        # Sensory to motor connections -> REMOVE (Not in diagram or original source build logic)
-        # if self.sensory_neurons > 0 and self.motor_neurons > 0:
-        #     for i in range(sensory_start, sensory_end):
-        #         for j in range(motor_start, motor_end):
-        #             if random_uniform(()) >= self.sensory_to_motor_sparsity:
-        #                 recurrent_mask_list[i][j] = 1
+            create_random_connections(
+                sensory_start, sensory_end, 
+                command_start, command_end, 
+                self.sensory_to_inter_sparsity
+            )
         
         # Inter to inter connections
         if self.inter_neurons > 0:
-            for i in range(inter_start, inter_end):
-                for j in range(inter_start, inter_end):
-                    if random_uniform(()) >= self.inter_to_inter_sparsity:
-                        recurrent_mask_list[i][j] = 1
-
-        # Inter to command connections (NEW - Matches diagram & original source logic)
+            create_random_connections(
+                inter_start, inter_end, 
+                inter_start, inter_end, 
+                self.inter_to_inter_sparsity
+            )
+        
+        # Inter to command connections
         if self.inter_neurons > 0 and self.command_neurons > 0:
-            for i in range(inter_start, inter_end):
-                for j in range(command_start, command_end):
-                    # Using inter_to_inter_sparsity for now, could add specific arg later
-                    if random_uniform(()) >= self.inter_to_inter_sparsity:
-                         recurrent_mask_list[i][j] = 1
+            create_random_connections(
+                inter_start, inter_end, 
+                command_start, command_end, 
+                self.inter_to_inter_sparsity
+            )
         
         # Inter to motor connections
         if self.inter_neurons > 0 and self.motor_neurons > 0:
-            for i in range(inter_start, inter_end):
-                for j in range(motor_start, motor_end):
-                    if random_uniform(()) >= self.inter_to_motor_sparsity:
-                        recurrent_mask_list[i][j] = 1
+            create_random_connections(
+                inter_start, inter_end, 
+                motor_start, motor_end, 
+                self.inter_to_motor_sparsity
+            )
         
-        # Command to motor connections (NEW - Matches diagram & original source logic)
+        # Command to motor connections
         if self.command_neurons > 0 and self.motor_neurons > 0:
-            for i in range(command_start, command_end):
-                for j in range(motor_start, motor_end):
-                     # Using inter_to_motor_sparsity for now, could add specific arg later
-                     if random_uniform(()) >= self.inter_to_motor_sparsity:
-                         recurrent_mask_list[i][j] = 1
-
-        # Motor to motor connections -> REMOVE (Not in diagram or original source build logic)
-        # if self.motor_neurons > 0:
-        #     for i in range(motor_start, motor_end):
-        #         for j in range(motor_start, motor_end):
-        #             if random_uniform(()) >= self.motor_to_motor_sparsity:
-        #                 recurrent_mask_list[i][j] = 1
-
-        # Motor to inter connections -> REMOVE (Not in diagram or original source build logic)
-        # if self.motor_neurons > 0 and self.inter_neurons > 0:
-        #     for i in range(motor_start, motor_end):
-        #         for j in range(inter_start, inter_end):
-        #             if random_uniform(()) >= self.motor_to_inter_sparsity:
-        #                 recurrent_mask_list[i][j] = 1
-        
-        # Convert the list to a tensor
-        recurrent_mask = EmberTensor(recurrent_mask_list, dtype=int32)
+            create_random_connections(
+                command_start, command_end, 
+                motor_start, motor_end, 
+                self.inter_to_motor_sparsity
+            )
         
         self._built = True # Mark map as built
         return input_mask, recurrent_mask, output_mask
@@ -221,10 +297,29 @@ class NCPMap(NeuronMap): # Name is already correct
         """
         config = super().get_config()
         config.update({
+            # Structural parameters
             "inter_neurons": self.inter_neurons,
-            "command_neurons": self.command_neurons, # Add command_neurons
+            "command_neurons": self.command_neurons,
             "motor_neurons": self.motor_neurons,
             "sensory_neurons": self.sensory_neurons,
+            
+            # Cell-specific parameters
+            "time_scale_factor": self.time_scale_factor,
+            "activation": self.activation,
+            "recurrent_activation": self.recurrent_activation,
+            "mode": self.mode,
+            "use_bias": self.use_bias,
+            "kernel_initializer": self.kernel_initializer,
+            "recurrent_initializer": self.recurrent_initializer,
+            "bias_initializer": self.bias_initializer,
+            "mixed_memory": self.mixed_memory,
+            "ode_unfolds": self.ode_unfolds,
+            "epsilon": self.epsilon,
+            "implicit_param_constraints": self.implicit_param_constraints,
+            "input_mapping": self.input_mapping,
+            "output_mapping": self.output_mapping,
+            
+            # Sparsity parameters
             "sensory_to_inter_sparsity": self.sensory_to_inter_sparsity,
             "sensory_to_motor_sparsity": self.sensory_to_motor_sparsity,
             "inter_to_inter_sparsity": self.inter_to_inter_sparsity,
@@ -235,7 +330,7 @@ class NCPMap(NeuronMap): # Name is already correct
         return config
     
     @classmethod
-    def from_config(cls, config: Dict[str, Any]) -> 'NCPMap': # Update return type hint
+    def from_config(cls, config: Dict[str, Any]) -> 'NCPMap':
         """
         Create an NCP wiring configuration from a configuration dictionary.
         
