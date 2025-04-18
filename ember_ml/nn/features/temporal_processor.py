@@ -7,7 +7,7 @@ This module provides a class for processing data into multi-stride temporal repr
 from typing import Dict, List, Optional, Any
 from ember_ml import ops
 from ember_ml.nn.tensor import EmberTensor
-from ember_ml.nn.features import fit, transform
+from ember_ml.nn.features.pca_features import PCA
 from ember_ml.nn import tensor
 class TemporalStrideProcessor:
     """
@@ -176,22 +176,18 @@ class TemporalStrideProcessor:
                 
             print(f"Fitting PCA for stride {stride} with {n_components} components")
             # Use our backend-agnostic PCA implementation
-            self.pca_models[stride] = {}
-            pca_result = fit(
+            pca = PCA()
+            pca.fit(
                 flat_windows_np,
                 n_components=n_components,
                 whiten=False,
                 center=True,
                 svd_solver="auto"
             )
-            self.pca_models[stride] = pca_result
+            self.pca_models[stride] = pca
             
         # Transform the data
-        transformed = transform(
-            flat_windows_np,
-            self.pca_models[stride]["components"],
-            self.pca_models[stride]["mean"]
-        )
+        transformed = self.pca_models[stride].transform(flat_windows_np)
         transformed_np = transformed.numpy() if hasattr(transformed, 'numpy') else transformed
         
         # Convert back to EmberTensor
@@ -208,8 +204,7 @@ class TemporalStrideProcessor:
             Sum of explained variance ratios or None if PCA not fit
         """
         if stride in self.pca_models:
-            variance_ratio = self.pca_models[stride]["explained_variance_ratio"]
-            return EmberTensor(ops.stats.sum(tensor.convert_to_tensor(variance_ratio)))
+            return EmberTensor(ops.stats.sum(self.pca_models[stride].explained_variance_ratio_))
         return None
     
     def get_feature_importance(self, stride: int) -> Optional[EmberTensor]:
@@ -224,8 +219,7 @@ class TemporalStrideProcessor:
         """
         if stride in self.pca_models:
             # Calculate feature importance as the sum of absolute component weights
-            components = tensor.convert_to_tensor(self.pca_models[stride]["components"])
-            abs_components = ops.abs(components)
+            abs_components = ops.abs(self.pca_models[stride].components_)
             importance = ops.stats.sum(abs_components, axis=0)
             return EmberTensor(importance)
         return None

@@ -49,7 +49,7 @@ __all__ = [
     'cosine_similarity', 'exponential_decay', # Removed gaussian
 
     # Loss Ops Functions (added)
-    'mean_squared_error', 'mean_absolute_error', 'binary_crossentropy', 'categorical_crossentropy',
+    'mse', 'mean_absolute_error', 'binary_crossentropy', 'categorical_crossentropy',
     'sparse_categorical_crossentropy', 'huber_loss', 'log_cosh_loss',
 
     # Feature Ops Functions (added)
@@ -168,7 +168,7 @@ from ember_ml.backend.numpy.io_ops import (
 
 # Import specific functions from loss_ops (Added)
 from ember_ml.backend.numpy.loss_ops import (
-   mean_squared_error, mean_absolute_error, binary_crossentropy, categorical_crossentropy,
+   mse, mean_absolute_error, binary_crossentropy, categorical_crossentropy,
    sparse_categorical_crossentropy, huber_loss, log_cosh_loss
 )
 

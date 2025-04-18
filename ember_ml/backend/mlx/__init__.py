@@ -107,7 +107,7 @@ from ember_ml.backend.mlx.vector_ops import (
 
 # Import specific functions from loss_ops
 from ember_ml.backend.mlx.loss_ops import (
-    mean_squared_error,
+    mse,
     mean_absolute_error,
     binary_crossentropy,
     categorical_crossentropy,
@@ -281,7 +281,7 @@ __all__ = [
     'rfftn',
     'irfftn',
     # Loss Ops Functions (added)
-    'mean_squared_error',
+    'mse',
     'mean_absolute_error',
     'binary_crossentropy',
     'categorical_crossentropy',

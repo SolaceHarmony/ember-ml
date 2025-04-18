@@ -51,13 +51,6 @@ class Linear(Module):
 
 `BaseModule` extends `Module` with additional functionality for building more complex neural network modules.
 
-### ModuleCell
-
-`ModuleCell` is the base class for recurrent neural network cells.
-
-### ModuleWiredCell
-
-`ModuleWiredCell` extends `ModuleCell` with neuron map capabilities, allowing for custom connectivity patterns between neurons.
 
 ### Deferred Initialization (Build Pattern)
 
@@ -71,7 +64,7 @@ Many Ember ML modules, particularly those whose internal structure depends on th
     - It initializes all remaining parameters (weights, biases) whose shapes depend on the now-known input dimension.
 - **`self.built` Flag**: A `built` flag (managed by the base class) tracks whether the `build` method has been executed, preventing re-initialization.
 
-This pattern allows for flexible module creation where input dimensions don't need to be specified upfront. Modules like `NCP`, `LTC`, and those inheriting from `ModuleWiredCell` utilize this pattern. Standard layers like `Dense` or basic RNN cells (`RNNCell`, `LSTMCell`, `GRUCell`, `CfCCell`) that require `input_size` during `__init__` typically initialize all parameters immediately and do not rely on deferred building (their `build` method might be empty or only call `super().build`).
+This pattern allows for flexible module creation where input dimensions don't need to be specified upfront. Modules like `NCP`, `LTC`, and those using neuron maps utilize this pattern. Standard layers like `Dense` that require `input_size` during `__init__` typically initialize all parameters immediately and do not rely on deferred building (their `build` method might be empty or only call `super().build`).
 
 ## Core Modules
 
@@ -334,24 +327,14 @@ x = tensor.random_normal((32, 5, 10))  # Batch of 32 sequences of length 5 with 
 y, h = gru(x)  # y: (32, 5, 20), h: (32, 20)
 ```
 
-### CfC and WiredCfCCell
+### CfC
 
-`CfC` implements a Closed-form Continuous-time network, and `WiredCfCCell` adds neuron map capabilities.
+`CfC` implements a Closed-form Continuous-time network.
 
 ```python
-from ember_ml.nn.modules import CfC, WiredCfCCell
+from ember_ml.nn.modules import CfC
 from ember_ml.nn.modules.wiring import NCPMap
 from ember_ml.nn import tensor
-
-# Create a CfC
-# Create a cell first for the standard CfC layer
-from ember_ml.nn.modules.rnn import CfCCell
-cell = CfCCell(input_size=10, hidden_size=20)
-cfc = CfC(cell_or_map=cell)
-
-# Forward pass
-x = tensor.random_normal((32, 5, 10))  # Batch of 32 sequences of length 5 with 10 features each
-y, h = cfc(x)  # y: (32, 5, 20), h: (32, 20)
 
 # Create a NeuronMap
 neuron_map = NCPMap(
@@ -362,56 +345,38 @@ neuron_map = NCPMap(
     seed=42
 )
 
-# Create a WiredCfCCell
-wired_cfc_cell = WiredCfCCell(
-    neuron_map=neuron_map,
-    mixed_memory=True
-)
+# Create a CfC layer with the neuron map
+cfc = CfC(neuron_map=neuron_map)
 
-# Forward pass (cell level)
-x_t = tensor.random_normal((32, 10))  # Single time step
-h_prev = tensor.random_normal((32, 20))
-h_next = wired_cfc_cell(x_t, h_prev)
+# Forward pass
+x = tensor.random_normal((32, 5, 10))  # Batch of 32 sequences of length 5 with 10 features each
+y, h = cfc(x)  # y: (32, 5, 5), h: (32, 20)
 ```
 
-### LTC and LTCCell
+### LTC
 
-`LTC` implements a Liquid Time-Constant network, and `LTCCell` is the cell implementation.
+`LTC` implements a Liquid Time-Constant network.
 
 ```python
-from ember_ml.nn.modules import LTC, LTCCell
+from ember_ml.nn.modules import LTC
 from ember_ml.nn.modules.wiring import NCPMap
 from ember_ml.nn import tensor
 
-# Create an LTC
-# Create a NeuronMap first for the LTC layer
-from ember_ml.nn.modules.wiring import FullyConnectedMap
-neuron_map = FullyConnectedMap(units=20, input_dim=10, output_dim=20)
+# Create a NeuronMap
+neuron_map = NCPMap(
+    inter_neurons=10,
+    command_neurons=5,
+    motor_neurons=5,
+    sensory_neurons=10,
+    seed=42
+)
+
+# Create an LTC layer with the neuron map
 ltc = LTC(neuron_map=neuron_map)
 
 # Forward pass
 x = tensor.random_normal((32, 5, 10))  # Batch of 32 sequences of length 5 with 10 features each
-y, h = ltc(x)  # y: (32, 5, 20), h: (32, 20)
-
-# Create a NeuronMap
-neuron_map = NCPMap(
-    inter_neurons=10,
-    command_neurons=5,
-    motor_neurons=5,
-    sensory_neurons=10,
-    seed=42
-)
-
-# Create an LTCCell
-ltc_cell = LTCCell(
-    neuron_map=neuron_map,
-    input_mapping='affine'
-)
-
-# Forward pass (cell level)
-x_t = tensor.random_normal((32, 10))  # Single time step
-h_prev = tensor.random_normal((32, 20))
-h_next = ltc_cell(x_t, h_prev)
+y, h = ltc(x)  # y: (32, 5, 5), h: (32, 20)
 ```
 
 ## Stride-Aware Modules
@@ -422,9 +387,6 @@ Stride-aware modules are specialized for processing temporal data with variable 
 
 `StrideAware` is the base class for stride-aware modules.
 
-### StrideAwareCell
-
-`StrideAwareCell` is the base class for stride-aware cells.
 
 ### StrideAwareCfC
 
@@ -448,36 +410,6 @@ x = tensor.random_normal((32, 5, 10))  # Batch of 32 sequences of length 5 with 
 y, h = stride_cfc(x)  # y: (32, 5, 20), h: (32, 20)
 ```
 
-### StrideAwareWiredCfCCell
-
-`StrideAwareWiredCfCCell` implements a stride-aware Closed-form Continuous-time cell with neuron map capabilities.
-
-```python
-from ember_ml.nn.modules import StrideAwareWiredCfCCell
-from ember_ml.nn.modules.wiring import NCPMap
-from ember_ml.nn import tensor
-
-# Create a NeuronMap
-neuron_map = NCPMap(
-    inter_neurons=10,
-    command_neurons=5,
-    motor_neurons=5,
-    sensory_neurons=10,
-    seed=42
-)
-
-# Create a StrideAwareWiredCfCCell
-stride_wired_cfc_cell = StrideAwareWiredCfCCell(
-    neuron_map=neuron_map,
-    stride_length=4,
-    backbone_layers=2
-)
-
-# Forward pass (cell level)
-x_t = tensor.random_normal((32, 10))  # Single time step
-h_prev = tensor.random_normal((32, 20))
-h_next = stride_wired_cfc_cell(x_t, h_prev)
-```
 
 ## Building Complex Models
 

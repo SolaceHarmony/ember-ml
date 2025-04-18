@@ -11,7 +11,7 @@ class LossOps(ABC):
     """Abstract interface for loss operations."""
     
     @abstractmethod
-    def mean_squared_error(self, y_true: Any, y_pred: Any, axis: Optional[Union[int, Sequence[int]]] = None, 
+    def mse(self, y_true: Any, y_pred: Any, axis: Optional[Union[int, Sequence[int]]] = None,
                           keepdims: bool = False) -> Any:
         """
         Compute the mean squared error between y_true and y_pred.

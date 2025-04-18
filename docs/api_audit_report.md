@@ -650,7 +650,7 @@ This module provides a dynamic interface for mathematical operations that are ba
 - `save`, `load`
 
 **Loss Functions**:
-- `mean_squared_error`, `mean_absolute_error`
+- `mse`, `mean_absolute_error`
 - `binary_crossentropy`, `categorical_crossentropy`
 - `sparse_categorical_crossentropy`
 - `huber_loss`, `log_cosh_loss`

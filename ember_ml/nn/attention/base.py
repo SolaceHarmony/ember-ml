@@ -10,7 +10,7 @@ from ember_ml.nn.tensor import EmberTensor
 from ember_ml.nn.tensor import float32, shape, full_like, expand_dims, arange, transpose, full_like
 from ember_ml.nn.tensor import concatenate, cast, tile, reshape
 from ember_ml.nn.modules import Module
-from ember_ml.nn.linear import Linear
+from ember_ml.nn.container import Linear
 from ember_ml.nn.container import Dropout
 from ember_ml.nn import tensor
 # Removed problematic global assignment

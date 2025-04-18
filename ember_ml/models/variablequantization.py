@@ -19,7 +19,7 @@ class BlockResult:
     hash_info: BlockHash
     processing_time_ms: float
     compression_ratio: float
-    mean_squared_error: float
+    mse: float
 
 class HashVerifier:
     def __init__(self, verification_precision: int = 10):
@@ -84,7 +84,7 @@ class VerifiedQuantizer:
             hash_info=hash_info,
             processing_time_ms=(time.time() - start_time) * 1000,
             compression_ratio=compression_ratio,
-            mean_squared_error=mse
+            mse=mse
         )
     
     def quantize_all_blocks(self, data: np.ndarray) -> List[BlockResult]:
@@ -130,7 +130,7 @@ def test_quantization():
         print(f"\nBlock {block.block_id}:")
         print(f"Processing Time: {block.processing_time_ms:.2f}ms")
         print(f"Compression Ratio: {block.compression_ratio:.2f}x")
-        print(f"Mean Squared Error: {block.mean_squared_error:.6f}")
+        print(f"Mean Squared Error: {block.mse:.6f}")
         print(f"Original Hash: {block.hash_info.original_hash}")
         print(f"Quantized Hash: {block.hash_info.quantized_hash}")
         print(f"First 5 quantized values: {block.quantized_data[:5]}")

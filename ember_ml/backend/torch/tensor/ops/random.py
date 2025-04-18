@@ -21,21 +21,21 @@ def random_normal(shape: Shape, mean: float = 0.0, stddev: float = 1.0,
 def random_uniform(shape: Shape, minval: float = 0.0, maxval: float = 1.0,
                    dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
     """
-    Create a tensor with random values from a uniform distribution using the helper.
+    Create a tensor with random values from a uniform distribution.
+    
+    Args:
+        shape: Shape of the tensor
+        minval: Minimum value
+        maxval: Maximum value
+        dtype: Optional data type
+        device: Optional device to place the tensor on
+        
+    Returns:
+        PyTorch tensor with random uniform values
     """
-    # torch.rand generates [0, 1). Scale and shift using minval/maxval.
-    # Use helper for base creation, then apply scaling.
-    # Helper handles dtype and device.
-    rand_0_1 = _create_new_tensor(torch.rand, dtype=dtype, device=device, shape=shape)
-
-    # Convert minval/maxval to tensors (on correct device/dtype implicitly by helper via creation)
-    min_tensor = _create_new_tensor(torch.full, dtype=dtype, device=device, shape=(), fill_value=minval)
-    max_tensor = _create_new_tensor(torch.full, dtype=dtype, device=device, shape=(), fill_value=maxval)
-
-    # Scale and shift
-    range_diff = torch.sub(max_tensor, min_tensor)
-    result = torch.add(torch.mul(rand_0_1, range_diff), min_tensor)
-    return result
+    # Use the helper function directly, passing torch.rand and scaling parameters
+    # This is simpler and more consistent with the MLX implementation
+    return _create_new_tensor(torch.rand, dtype=dtype, device=device, shape=shape) * (maxval - minval) + minval
 
 def random_binomial(shape: Shape, p: float = 0.5,
                     dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:

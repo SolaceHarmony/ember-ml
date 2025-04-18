@@ -15,7 +15,7 @@ from ember_ml.nn.tensor.interfaces import TensorInterface
 from ember_ml.nn.tensor.common import (
     _convert_to_backend_tensor, to_numpy, item, shape, dtype, zeros, ones, zeros_like, ones_like,
     eye, arange, linspace, full, full_like, reshape, transpose, concatenate, stack, split,
-    expand_dims, squeeze, tile, gather, scatter, tensor_scatter_nd_update, slice, slice_update,
+    expand_dims, squeeze, tile, gather, scatter, tensor_scatter_nd_update, slice_tensor, slice_update,
     cast, copy, pad, maximum, random_normal, random_uniform,
     random_bernoulli, random_gamma, random_exponential, random_poisson,
     random_categorical, random_permutation, shuffle, set_seed, get_seed, tolist

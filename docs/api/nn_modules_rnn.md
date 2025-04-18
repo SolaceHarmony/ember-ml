@@ -1,39 +1,20 @@
 # Recurrent Neural Network Modules (nn.modules.rnn)
 
-The `ember_ml.nn.modules.rnn` package provides a comprehensive set of recurrent neural network (RNN) modules for sequential data processing. These modules are backend-agnostic and follow a consistent API across different backends.
+The `ember_ml.nn.modules.rnn` package provides a comprehensive set of recurrent neural network (RNN) modules for sequential data processing. These modules are backend-agnostic and follow a consistent API across different backends. The implementation has been simplified by removing cell-based architecture and integrating all functionality directly into layer classes.
 
 ## Importing
 
 ```python
 from ember_ml.nn.modules import rnn
 # or import specific modules
-from ember_ml.nn.modules.rnn import LSTM, GRU, CfC
+from ember_ml.nn.modules.rnn import LSTM, GRU, CfC, LQNet, CTRQNet
 ```
 
 ## Basic RNN Modules
 
-### RNNCell
-
-`RNNCell` is the base class for all recurrent cells. It implements a basic recurrent neural network cell.
-
-```python
-from ember_ml.nn.modules.rnn import RNNCell
-from ember_ml.nn import tensor
-
-# Create an RNN cell
-cell = RNNCell(input_size=10, hidden_size=20, activation='tanh')
-
-# Forward pass (single time step)
-x_t = tensor.random_normal((32, 10))  # Batch of 32 with 10 features
-h_prev = tensor.random_normal((32, 20))  # Previous hidden state
-# cell returns (output, new_state), where new_state=[h_next]
-output, new_state = cell(x_t, [h_prev])
-h_next = output # Output is the new hidden state
-```
-
 ### RNN
 
-`RNN` is a layer that applies an RNN cell to a sequence of inputs.
+`RNN` implements a basic recurrent neural network layer.
 
 ```python
 from ember_ml.nn.modules.rnn import RNN
@@ -54,30 +35,9 @@ y = rnn_layer(x) # Example without state return
 
 ## LSTM Modules
 
-### LSTMCell
-
-`LSTMCell` implements a Long Short-Term Memory cell.
-
-```python
-from ember_ml.nn.modules.rnn import LSTMCell
-from ember_ml.nn import tensor
-
-# Create an LSTM cell
-cell = LSTMCell(input_size=10, hidden_size=20)
-
-# Forward pass (single time step)
-x_t = tensor.random_normal((32, 10))  # Batch of 32 with 10 features
-h_prev = tensor.random_normal((32, 20))  # Previous hidden state
-c_prev = tensor.random_normal((32, 20))  # Previous cell state
-# cell returns (output, new_state), where new_state=[h_next, c_next]
-output, new_state = cell(x_t, [h_prev, c_prev])
-h_next = output
-c_next = new_state[1]
-```
-
 ### LSTM
 
-`LSTM` is a layer that applies an LSTM cell to a sequence of inputs.
+`LSTM` implements a Long Short-Term Memory layer.
 
 ```python
 from ember_ml.nn.modules.rnn import LSTM
@@ -99,28 +59,9 @@ y = lstm_layer(x) # Example without state return
 
 ## GRU Modules
 
-### GRUCell
-
-`GRUCell` implements a Gated Recurrent Unit cell.
-
-```python
-from ember_ml.nn.modules.rnn import GRUCell
-from ember_ml.nn import tensor
-
-# Create a GRU cell
-cell = GRUCell(input_size=10, hidden_size=20)
-
-# Forward pass (single time step)
-x_t = tensor.random_normal((32, 10))  # Batch of 32 with 10 features
-h_prev = tensor.random_normal((32, 20))  # Previous hidden state
-# cell returns (output, new_state), where new_state=[h_next]
-output, new_state = cell(x_t, [h_prev])
-h_next = output
-```
-
 ### GRU
 
-`GRU` is a layer that applies a GRU cell to a sequence of inputs.
+`GRU` implements a Gated Recurrent Unit layer.
 
 ```python
 from ember_ml.nn.modules.rnn import GRU
@@ -143,37 +84,26 @@ y = gru_layer(x) # Example without state return
 
 CfC modules implement closed-form continuous-time recurrent neural networks, which are particularly effective for modeling irregular time series.
 
-### CfCCell
-
-`CfCCell` implements a basic Closed-form Continuous-time cell.
-
-```python
-from ember_ml.nn.modules.rnn import CfCCell
-from ember_ml.nn import tensor
-
-# Create a CfC cell
-cell = CfCCell(input_size=10, hidden_size=20)
-
-# Forward pass (single time step)
-x_t = tensor.random_normal((32, 10))  # Batch of 32 with 10 features
-h_prev = tensor.random_normal((32, 20))  # Previous hidden state
-# cell returns (output, new_state), where new_state=[h_next, t_next]
-output, new_state = cell(x_t, [h_prev, tensor.zeros_like(h_prev)]) # Requires initial time state
-h_next = output
-t_next = new_state[1]
-```
-
 ### CfC
 
-`CfC` is a layer that applies a CfC cell to a sequence of inputs.
+`CfC` implements a Closed-form Continuous-time layer.
 
 ```python
 from ember_ml.nn.modules.rnn import CfC
+from ember_ml.nn.modules.wiring import NCPMap
 from ember_ml.nn import tensor
 
-# Create a CfC layer by passing a pre-configured cell
-cell = CfCCell(input_size=10, hidden_size=20)
-cfc_layer = CfC(cell_or_map=cell)
+# Create a NeuronMap
+neuron_map = NCPMap(
+    inter_neurons=10,
+    command_neurons=5,
+    motor_neurons=5,
+    sensory_neurons=10,
+    seed=42
+)
+
+# Create a CfC layer
+cfc_layer = CfC(neuron_map=neuron_map)
 
 # Forward pass (sequence)
 x = tensor.random_normal((32, 5, 10))  # Batch of 32 sequences of length 5 with 10 features each
@@ -185,74 +115,10 @@ x = tensor.random_normal((32, 5, 10))  # Batch of 32 sequences of length 5 with 
 y = cfc_layer(x) # Example without state return
 ```
 
-### WiredCfCCell
-
-`WiredCfCCell` extends `CfCCell` with neuron map capabilities, allowing for custom connectivity patterns between neurons.
-
-```python
-from ember_ml.nn.modules.rnn import WiredCfCCell
-from ember_ml.nn.modules.wiring import NCPMap
-from ember_ml.nn import tensor
-
-# Create a NeuronMap
-neuron_map = NCPMap(
-    inter_neurons=10,
-    command_neurons=5,
-    motor_neurons=5,
-    sensory_neurons=10,
-    seed=42
-)
-
-# Create a WiredCfCCell
-wired_cfc_cell = WiredCfCCell(
-    neuron_map=neuron_map,
-    mixed_memory=True
-)
-
-# Forward pass (single time step)
-x_t = tensor.random_normal((32, 10))  # Batch of 32 with 10 features
-h_prev = tensor.random_normal((32, 20))  # Previous hidden state
-# cell returns (output, new_state), structure depends on specific WiredCfCCell implementation
-# Assuming standard CfC state [h_next, t_next] for this example
-output, new_state = wired_cfc_cell(x_t, [h_prev, tensor.zeros_like(h_prev)])
-h_next = output
-```
 
 ## Liquid Time-Constant (LTC) Modules
 
 LTC modules implement liquid time-constant recurrent neural networks, which model continuous-time neuronal dynamics.
-
-### LTCCell
-
-`LTCCell` implements a Liquid Time-Constant cell.
-
-```python
-from ember_ml.nn.modules.rnn import LTCCell
-from ember_ml.nn.modules.wiring import NCPMap
-from ember_ml.nn import tensor
-
-# Create a NeuronMap
-neuron_map = NCPMap(
-    inter_neurons=10,
-    command_neurons=5,
-    motor_neurons=5,
-    sensory_neurons=10,
-    seed=42
-)
-
-# Create an LTCCell
-ltc_cell = LTCCell(
-    neuron_map=neuron_map,
-    input_mapping='affine'
-)
-
-# Forward pass (single time step)
-x_t = tensor.random_normal((32, 10))  # Batch of 32 with 10 features
-h_prev = tensor.random_normal((32, 20))  # Previous hidden state
-# cell returns (output, new_state), where new_state is h_next for LTC
-output, new_state = ltc_cell(x_t, h_prev)
-h_next = output
-```
 
 ### LTC
 
@@ -287,10 +153,6 @@ Stride-aware modules are specialized for processing temporal data with variable 
 
 `StrideAware` is the base class for stride-aware modules.
 
-### StrideAwareCell
-
-`StrideAwareCell` is the base class for stride-aware cells.
-
 ### StrideAwareCfC
 
 `StrideAwareCfC` implements a stride-aware Closed-form Continuous-time network.
@@ -306,7 +168,7 @@ neuron_map = FullyConnectedMap(units=20, input_dim=10, output_dim=20)
 
 # Create a StrideAwareCfC layer (Verify exact init signature if different)
 stride_cfc = StrideAwareCfC(
-    neuron_map_or_cell=neuron_map, # Example assuming it takes a map
+    neuron_map=neuron_map,
     stride_lengths=[1, 2, 4]
 )
 
@@ -317,12 +179,15 @@ x = tensor.random_normal((32, 5, 10))  # Batch of 32 sequences of length 5 with 
 y = stride_cfc(x)
 ```
 
-### StrideAwareWiredCfCCell
 
-`StrideAwareWiredCfCCell` implements a stride-aware Closed-form Continuous-time cell with neuron map capabilities.
+## Advanced Usage
+
+### Working with Time Deltas
+
+CfC and LTC modules support time deltas between inputs, which is useful for irregular time series:
 
 ```python
-from ember_ml.nn.modules.rnn import StrideAwareWiredCfCCell
+from ember_ml.nn.modules.rnn import CfC
 from ember_ml.nn.modules.wiring import NCPMap
 from ember_ml.nn import tensor
 
@@ -335,35 +200,8 @@ neuron_map = NCPMap(
     seed=42
 )
 
-# Create a StrideAwareWiredCfCCell
-stride_wired_cfc_cell = StrideAwareWiredCfCCell(
-    neuron_map=neuron_map,
-    stride_length=4,
-    backbone_layers=2
-)
-
-# Forward pass (single time step)
-x_t = tensor.random_normal((32, 10))  # Batch of 32 with 10 features
-h_prev = tensor.random_normal((32, 20))  # Previous hidden state
-# cell returns (output, new_state), structure depends on implementation
-# Assuming CfC state [h_next, t_next] for example
-output, new_state = stride_wired_cfc_cell(x_t, [h_prev, tensor.zeros_like(h_prev)])
-h_next = output
-```
-
-## Advanced Usage
-
-### Working with Time Deltas
-
-CfC and LTC modules support time deltas between inputs, which is useful for irregular time series:
-
-```python
-from ember_ml.nn.modules.rnn import CfC
-from ember_ml.nn import tensor
-
 # Create a CfC layer
-cell = CfCCell(input_size=10, hidden_size=20)
-cfc_layer = CfC(cell_or_map=cell)
+cfc_layer = CfC(neuron_map=neuron_map)
 
 # Create input sequence and time deltas
 x = tensor.random_normal((32, 5, 10))  # Batch of 32 sequences of length 5 with 10 features each
@@ -389,9 +227,9 @@ from ember_ml.nn.modules.wiring import FullyConnectedMap
 neuron_map = FullyConnectedMap(units=20, input_dim=10, output_dim=20)
 # Create a StrideAwareCfC with multiple stride lengths
 stride_cfc = StrideAwareCfC(
-    neuron_map_or_cell=neuron_map, # Example assuming it takes a map
+    neuron_map=neuron_map,
     stride_lengths=[1, 2, 4, 8],
-    backbone_units=32, # Note: Check if backbone args are valid when passing map
+    backbone_units=32,
     backbone_layers=2
 )
 
@@ -453,13 +291,12 @@ y, states = deep_lstm(x)
 
 ## Implementation Details
 
-The RNN modules are implemented using a layered architecture:
+The RNN modules are implemented using a simplified architecture:
 
-1. **Cell Classes**: Implement the basic recurrent cell logic
-2. **Layer Classes**: Apply the cells to sequences of inputs
-3. **Advanced Modules**: Implement specialized recurrent architectures
+1. **Layer Classes**: Implement the recurrent neural network logic directly
+2. **Advanced Modules**: Implement specialized recurrent architectures
 
-This architecture allows Ember ML to provide a consistent API across different backends while still leveraging the unique capabilities of each backend.
+This architecture allows Ember ML to provide a consistent API across different backends while still leveraging the unique capabilities of each backend. The cell-based architecture has been removed to simplify the codebase and improve maintainability.
 
 ## Performance Considerations
 
@@ -480,6 +317,82 @@ CfC modules are based on the paper "Closed-form Continuous-time Neural Networks"
 
 LTC modules are based on the paper "Liquid Time-Constant Networks" by Hasani et al. They model continuous-time neuronal dynamics using a liquid time-constant, which allows for adaptive time scales and improved modeling of irregular time series.
 
+### Quantum-Inspired Modules
+
+Quantum-inspired modules combine principles from quantum computing with classical neural networks to enhance temporal processing capabilities.
+
+#### LQNet (Liquid Quantum Neural Network)
+
+`LQNet` implements a quantum-inspired recurrent neural network that combines liquid neural networks with quantum computing concepts using classical hardware.
+
+```python
+from ember_ml.nn.modules.rnn import LQNet
+from ember_ml.nn.modules.wiring import NCPMap
+from ember_ml.nn import tensor
+
+# Create a neuron map for connectivity
+neuron_map = NCPMap(
+    inter_neurons=32,
+    command_neurons=16,
+    motor_neurons=8,
+    sensory_neurons=10,
+    seed=42
+)
+
+# Create LQNet model
+lqnet = LQNet(
+    neuron_map=neuron_map,
+    nu_0=1.0,
+    beta=0.1,
+    noise_scale=0.05,
+    return_sequences=True,
+    return_state=False,
+    batch_first=True
+)
+
+# Forward pass
+inputs = tensor.random_normal((32, 100, 10))  # (batch_size, seq_length, input_dim)
+outputs = lqnet(inputs)
+```
+
+#### CTRQNet (Continuous-Time Recurrent Quantum Neural Network)
+
+`CTRQNet` extends LQNet with continuous-time dynamics and enhanced quantum-inspired features.
+
+```python
+from ember_ml.nn.modules.rnn import CTRQNet
+from ember_ml.nn.modules.wiring import NCPMap
+from ember_ml.nn import tensor
+
+# Create a neuron map for connectivity
+neuron_map = NCPMap(
+    inter_neurons=32,
+    command_neurons=16,
+    motor_neurons=8,
+    sensory_neurons=10,
+    seed=42
+)
+
+# Create CTRQNet model
+ctrqnet = CTRQNet(
+    neuron_map=neuron_map,
+    nu_0=1.0,
+    beta=0.1,
+    noise_scale=0.05,
+    time_scale_factor=1.0,
+    use_harmonic_embedding=True,
+    return_sequences=True,
+    return_state=False,
+    batch_first=True
+)
+
+# Forward pass
+inputs = tensor.random_normal((32, 100, 10))  # (batch_size, seq_length, input_dim)
+outputs = ctrqnet(inputs)
+```
+
+For more details on quantum-inspired modules, see [Quantum-Inspired Neural Networks](nn_modules_rnn_quantum.md).
+
 ### Stride-Aware Modules
 
 Stride-aware modules extend the CfC and LTC architectures with multi-scale processing capabilities, which allow for efficient modeling of time series at multiple time scales simultaneously.
@@ -490,9 +403,12 @@ Stride-aware modules extend the CfC and LTC architectures with multi-scale proce
 2. Hasani, R., Lechner, M., Amini, A., Rus, D., & Grosu, R. (2020). Liquid Time-Constant Networks. [arXiv:2006.04439](https://arxiv.org/abs/2006.04439)
 3. Hochreiter, S., & Schmidhuber, J. (1997). Long Short-Term Memory. Neural Computation, 9(8), 1735-1780.
 4. Cho, K., van Merrienboer, B., Gulcehre, C., Bahdanau, D., Bougares, F., Schwenk, H., & Bengio, Y. (2014). Learning Phrase Representations using RNN Encoder-Decoder for Statistical Machine Translation. [arXiv:1406.1078](https://arxiv.org/abs/1406.1078)
+5. Barandes, J. A., & Kagan, D. (2020). Measurement and Quantum Dynamics in the Minimal Modal Interpretation of Quantum Theory. Foundations of Physics, 50(10), 1189-1218.
+6. Markidis, S. (2021). The Old and the New: Can Quantum Computing Become a Reality? ACM Computing Surveys, 54(8), 1-36.
 
 ## See Also
 
 - [Neural Network Modules](nn_modules.md): Documentation on base neural network modules
-- [Neuron Maps Documentation](nn_modules_wiring.md): Documentation on neuron maps used by wired RNN cells
+- [Neuron Maps Documentation](nn_modules_wiring.md): Documentation on neuron maps used by RNN modules
 - [Tensor Module Documentation](nn_tensor.md): Documentation on tensor operations used by the RNN modules
+- [Quantum-Inspired Neural Networks](nn_modules_rnn_quantum.md): Documentation on quantum-inspired neural network modules

@@ -25,10 +25,10 @@ def generate_sine_wave_data(num_samples=1000, seq_length=100, num_features=1):
     
     for i in range(num_samples):
         # Random phase shift
-        phase_shift = tensor.random_uniform(0, 2 * ops.pi)
+        phase_shift = tensor.random_uniform(0, ops.multiply(2, ops.pi))
         
         # Generate sine wave with phase shift
-        signal = ops.sin(t + phase_shift)
+        signal = ops.sin(ops.add(t, phase_shift))
         
         # Add some noise
         noise = tensor.random_normal(0, 0.1, seq_length)
@@ -38,7 +38,7 @@ def generate_sine_wave_data(num_samples=1000, seq_length=100, num_features=1):
         X = tensor.tensor_scatter_nd_update(
             X,
             tensor.stack([
-                tensor.ones((seq_length,), dtype=tensor.int32) * i,
+                ops.multiply(tensor.ones((seq_length,), dtype=tensor.int32), i),
                 tensor.arange(seq_length),
                 tensor.zeros((seq_length,), dtype=tensor.int32)
             ], axis=1),
@@ -48,7 +48,7 @@ def generate_sine_wave_data(num_samples=1000, seq_length=100, num_features=1):
         y = tensor.tensor_scatter_nd_update(
             y,
             tensor.stack([
-                tensor.ones((seq_length,), dtype=tensor.int32) * i,
+                ops.multiply(tensor.ones((seq_length,), dtype=tensor.int32), i),
                 tensor.arange(seq_length),
                 tensor.zeros((seq_length,), dtype=tensor.int32)
             ], axis=1),
@@ -79,8 +79,10 @@ def train_cfc_model(model, X_train, y_train, epochs=50, batch_size=32, learning_
         
         # Train in batches
         for i in range(0, tensor.shape(X_train)[0], batch_size):
-            batch_X = shuffled_X[i:i+batch_size]
-            batch_y = shuffled_y[i:i+batch_size]
+            end_idx = ops.minimum(i + batch_size, tensor.shape(X_train)[0])
+            batch_size_actual = end_idx - i
+            batch_X = tensor.slice_tensor(shuffled_X, [i, 0, 0], [batch_size_actual, -1, -1])
+            batch_y = tensor.slice_tensor(shuffled_y, [i, 0, 0], [batch_size_actual, -1, -1])
             
             # Zero gradients
             optimizer.zero_grad()
@@ -98,7 +100,8 @@ def train_cfc_model(model, X_train, y_train, epochs=50, batch_size=32, learning_
             epoch_loss += tensor.to_numpy(loss)
         
         # Print progress
-        avg_loss = epoch_loss / (tensor.shape(X_train)[0] // batch_size)
+        batches_per_epoch = ops.floor_divide(tensor.shape(X_train)[0], batch_size)
+        avg_loss = ops.divide(epoch_loss, batches_per_epoch)
         losses.append(avg_loss)
         print(f"Epoch {epoch+1}/{epochs}, Loss: {avg_loss:.6f}")
     
@@ -132,9 +135,11 @@ def main():
     X, y = generate_sine_wave_data(num_samples=1000, seq_length=100, num_features=1)
     
     # Split data into train and test sets
-    train_size = int(0.8 * tensor.shape(X)[0])
-    X_train, X_test = X[:train_size], X[train_size:]
-    y_train, y_test = y[:train_size], y[train_size:]
+    train_size = tensor.cast(ops.multiply(0.8, tensor.shape(X)[0]), tensor.int32)
+    X_train = tensor.slice_tensor(X, [0, 0, 0], [train_size, -1, -1])
+    X_test = tensor.slice_tensor(X, [train_size, 0, 0], [-1, -1, -1])
+    y_train = tensor.slice_tensor(y, [0, 0, 0], [train_size, -1, -1])
+    y_test = tensor.slice_tensor(y, [train_size, 0, 0], [-1, -1, -1])
     
     print(f"Train data shape: {tensor.shape(X_train)}")
     print(f"Test data shape: {tensor.shape(X_test)}")

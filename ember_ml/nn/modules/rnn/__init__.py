@@ -7,31 +7,35 @@ ELTC (Enhanced Liquid Time-Constant), CTGRU (Continuous-Time GRU), CTRNN (Contin
 GUCE (Grand Unified Cognitive Equation), and StrideAware cells for multi-timescale processing.
 """
 
-from ember_ml.nn.modules.rnn.cfc_cell import CfCCell
-from ember_ml.nn.modules.rnn.wired_cfc_cell import WiredCfCCell
+# Removed cfc_cell, ltc_cell, and wired_cfc_cell imports
 from ember_ml.nn.modules.rnn.cfc import CfC
-from ember_ml.nn.modules.rnn.ltc_cell import LTCCell
 from ember_ml.nn.modules.rnn.ltc import LTC
 from ember_ml.nn.modules.rnn.eltc import ELTC, ODESolver
 from ember_ml.nn.modules.rnn.ctgru import CTGRU
 from ember_ml.nn.modules.rnn.ctrnn import CTRNN
 from ember_ml.nn.modules.rnn.guce import GUCE, HolographicCorrector, OscillatoryGating
-from ember_ml.nn.modules.rnn.lstm_cell import LSTMCell
+# Removed lstm_cell import
 from ember_ml.nn.modules.rnn.lstm import LSTM
-from ember_ml.nn.modules.rnn.gru_cell import GRUCell
+# Removed gru_cell import
 from ember_ml.nn.modules.rnn.gru import GRU
-from ember_ml.nn.modules.rnn.rnn_cell import RNNCell
+# Removed rnn_cell import
 from ember_ml.nn.modules.rnn.rnn import RNN
-from ember_ml.nn.modules.rnn.stride_aware_cell import StrideAwareCell
+# Removed stride_aware_cell import
 from ember_ml.nn.modules.rnn.stride_aware import StrideAware
-from ember_ml.nn.modules.rnn.stride_aware_cfc import StrideAwareWiredCfCCell # Keep cell import
-from ember_ml.nn.modules.rnn.stride_aware_cfc_layer import StrideAwareCfC # Import layer from new file
+# Temporarily comment out to avoid circular imports
+# from ember_ml.nn.modules.rnn.stride_aware_cfc import StrideAwareWiredCfCCell
+# from ember_ml.nn.modules.rnn.stride_aware_cfc_layer import StrideAwareCfC
+# Temporarily comment out imports that might cause circular dependencies
+# from ember_ml.nn.modules.rnn.blocky import BlockyRoadNeuron, BlockyRoadChain
+# from ember_ml.nn.modules.rnn.ctrqnet import CTRQNet
+# from ember_ml.nn.modules.rnn.geometric import GeometricNeuron
+# from ember_ml.nn.modules.rnn.hybrid import HybridNeuron, HybridLNNModel
+# from ember_ml.nn.modules.rnn.lqnet import LQNet
+# from ember_ml.nn.modules.rnn.se_cfc import seCfC
+# from ember_ml.nn.modules.rnn.spherical_ltc import SphericalLTCConfig, SphericalLTCNeuron, SphericalLTCChain
 
 __all__ = [
-    'CfCCell',
-    'WiredCfCCell',
     'CfC',
-    'LTCCell',
     'LTC',
     'ELTC',
     'ODESolver',
@@ -40,14 +44,22 @@ __all__ = [
     'GUCE',
     'HolographicCorrector',
     'OscillatoryGating',
-    'LSTMCell',
     'LSTM',
-    'GRUCell',
     'GRU',
-    'RNNCell',
     'RNN',
-    'StrideAwareCell',
     'StrideAware',
-    'StrideAwareWiredCfCCell',
-    'StrideAwareCfC',
+    # 'StrideAwareWiredCfCCell',  # Temporarily commented out
+    # 'StrideAwareCfC',  # Temporarily commented out
+    # Temporarily commented out classes
+    # 'BlockyRoadNeuron',
+    # 'BlockyRoadChain',
+    # 'CTRQNet',
+    # 'GeometricNeuron',
+    # 'HybridNeuron',
+    # 'HybridLNNModel',
+    # 'LQNet',
+    # 'seCfC',
+    # 'SphericalLTCConfig',
+    # 'SphericalLTCNeuron',
+    # 'SphericalLTCChain',
 ]

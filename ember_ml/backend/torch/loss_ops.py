@@ -15,35 +15,78 @@ EPSILON = 1e-7
 # Helper function (moved to module level)
 def _reduce_loss(loss: torch.Tensor,
                  axis: Optional[Union[int, Sequence[int]]] = None,
-                 keepdims: bool = False) -> torch.Tensor:
-    """Helper to apply reduction (mean) to loss tensor."""
+                 keepdims: bool = False,
+                 reduction: str = 'mean') -> torch.Tensor:
+    """
+    Helper to apply reduction to loss tensor.
+    
+    Args:
+        loss: Loss tensor
+        axis: Axis or axes along which to reduce
+        keepdims: Whether to keep the reduced dimensions
+        reduction: Type of reduction ('mean', 'sum', or 'none')
+        
+    Returns:
+        Reduced loss tensor
+    """
+    if reduction == 'none':
+        return loss
+        
     if axis is None:
-        # Mean over all elements
-        return torch.mean(loss) # keepdims doesn't apply here
+        # Reduce over all elements
+        if reduction == 'mean':
+            return torch.mean(loss)  # keepdims doesn't apply here
+        elif reduction == 'sum':
+            return torch.sum(loss)  # keepdims doesn't apply here
     else:
-        # Mean over specified axes
+        # Reduce over specified axes
         if isinstance(axis, int):
             dim = axis
         elif isinstance(axis, Sequence):
             dim = tuple(axis)
         else:
-             raise ValueError(f"Unsupported axis type for PyTorch mean: {type(axis)}")
-        return torch.mean(loss, dim=dim, keepdim=keepdims)
+            raise ValueError(f"Unsupported axis type for PyTorch reduction: {type(axis)}")
+            
+        if reduction == 'mean':
+            return torch.mean(loss, dim=dim, keepdim=keepdims)
+        elif reduction == 'sum':
+            return torch.sum(loss, dim=dim, keepdim=keepdims)
+    
+    raise ValueError(f"Invalid reduction: {reduction}")
 
 # --- Standalone Loss Functions ---
 
-def mean_squared_error(y_true: TensorLike, y_pred: TensorLike,
+def mse(y_true: TensorLike, y_pred: TensorLike,
                        axis: Optional[Union[int, Sequence[int]]] = None,
-                       keepdims: bool = False) -> torch.Tensor:
-    """PyTorch implementation of mean squared error."""
+                       keepdims: bool = False,
+                       reduction: str = 'mean') -> torch.Tensor:
+    """
+    Compute the mean squared error between predictions and targets.
+    
+    Args:
+        y_true: Target values
+        y_pred: Predicted values
+        axis: Axis or axes along which to compute the MSE
+        keepdims: Whether to keep the reduced dimensions
+        reduction: Type of reduction to apply ('mean', 'sum', or 'none')
+        
+    Returns:
+        Mean squared error
+    """
     from ember_ml.backend.torch.tensor.ops.utility import convert_to_torch_tensor # Use functional import
     y_true_t = convert_to_torch_tensor(data=y_true)
     y_pred_t = convert_to_torch_tensor(data=y_pred)
+    
+    # Calculate squared difference
     squared_diff = torch.square(y_pred_t - y_true_t)
-    if axis is None and not keepdims:
-         return F.mse_loss(y_pred_t, y_true_t, reduction='mean')
+    
+    # Use PyTorch's built-in MSE loss for the common case
+    if axis is None and not keepdims and reduction == 'mean':
+        return F.mse_loss(y_pred_t, y_true_t, reduction='mean')
+    elif axis is None and not keepdims and reduction == 'sum':
+        return F.mse_loss(y_pred_t, y_true_t, reduction='sum')
     else:
-         return _reduce_loss(squared_diff, axis=axis, keepdims=keepdims)
+        return _reduce_loss(squared_diff, axis=axis, keepdims=keepdims, reduction=reduction)
 
 def mean_absolute_error(y_true: TensorLike, y_pred: TensorLike,
                          axis: Optional[Union[int, Sequence[int]]] = None,
@@ -131,4 +174,4 @@ def log_cosh_loss(y_true: TensorLike, y_pred: TensorLike,
     return _reduce_loss(logcosh, axis=axis, keepdims=keepdims)
 
 # (Optional) Define __all__ if needed for this module directly
-# __all__ = [ 'mean_squared_error', 'mean_absolute_error', ... ]
+# __all__ = [ 'mse', 'mean_absolute_error', ... ]

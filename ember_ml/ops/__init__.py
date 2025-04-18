@@ -46,7 +46,7 @@ _MASTER_OPS_LIST = [
     # IO
     'save', 'load',
     # Loss
-    'mean_squared_error', 'mean_absolute_error', 'binary_crossentropy', 'categorical_crossentropy',
+    'mse', 'mean_absolute_error', 'binary_crossentropy', 'categorical_crossentropy',
     'sparse_categorical_crossentropy', 'huber_loss', 'log_cosh_loss',
     # Vector (Includes FFT and distance/similarity metrics)
     'normalize_vector', 'compute_energy_stability', 'compute_interference_strength', 'compute_phase_coherence',

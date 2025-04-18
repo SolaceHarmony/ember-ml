@@ -11,20 +11,19 @@ from ember_ml.backend.mlx.types import DType, TensorLike, Shape, ShapeLike, Scal
 def zeros(shape: 'Shape', dtype: 'Optional[DType]' = None, device: Optional[str] = None) -> 'mx.array':
     """Create an MLX array of zeros."""
     # Validate dtype
-    dtype_cls = MLXDType()
-    mlx_dtype = dtype_cls.from_dtype_str(dtype) if dtype else None
-    
+    from ember_ml.backend.mlx.tensor.ops.utility import _create_new_tensor
+    x = _create_new_tensor(mx.zeros, dtype, device,shape=shape)
     # Create zeros array with the specified shape and dtype
-    return mx.zeros(shape, dtype=mlx_dtype)
+    return x
 
 def ones(shape: 'Shape', dtype: 'Optional[DType]' = None, device: Optional[str] = None) -> 'mx.array':
     """Create an MLX array of ones."""
     # Validate dtype
-    dtype_cls = MLXDType()
-    mlx_dtype = dtype_cls.from_dtype_str(dtype) if dtype else None
+    from ember_ml.backend.mlx.tensor.ops.utility import _create_new_tensor
+    x = _create_new_tensor(mx.ones, dtype, device,shape=shape)
     
     # Create ones array with the specified shape and dtype
-    return mx.ones(shape, dtype=mlx_dtype)
+    return x
 
 def zeros_like(tensor: 'TensorLike', dtype: 'Optional[DType]' = None, device: Optional[str] = None) -> 'mx.array':
     """Create an MLX array of zeros with the same shape as the input."""
@@ -56,12 +55,11 @@ def full(shape: 'ShapeLike', fill_value: 'ScalarLike', dtype: 'Optional[DType]' 
     if isinstance(shape, (int, np.integer)):
         shape = (shape,)
         
-    # Validate dtype
-    dtype_cls = MLXDType()
-    mlx_dtype = dtype_cls.from_dtype_str(dtype) if dtype else None
+    from ember_ml.backend.mlx.tensor.ops.utility import _create_new_tensor
+    x = _create_new_tensor(mx.full, dtype, device,shape=shape)
     
     # Create array of the specified shape filled with fill_value
-    return mx.full(shape, fill_value, dtype=mlx_dtype)
+    return x
 
 def full_like(tensor: 'TensorLike', fill_value: 'ScalarLike', dtype: 'Optional[DType]' = None, device: Optional[str] = None) -> 'mx.array':
     """Create a tensor filled with fill_value with the same shape as input."""
@@ -81,12 +79,11 @@ def eye(n: int, m: Optional[int] = None, dtype: 'Optional[DType]' = None, device
     if m is None:
         m = n
     
-    # Validate dtype
-    dtype_cls = MLXDType()
-    mlx_dtype = dtype_cls.from_dtype_str(dtype) if dtype else None
+    from ember_ml.backend.mlx.tensor.ops.utility import _create_new_tensor
+    x = _create_new_tensor(mx.ones, dtype, device,n=n, m=m)
     
     # Create identity matrix
-    return mx.eye(n, m, dtype=mlx_dtype)
+    return x
 
 def arange(start: ScalarLike, stop: ScalarLike = None, step: int = 1,
           dtype: 'Optional[DType]' = None, device: Optional[str] = None) -> 'mx.array':
@@ -102,9 +99,7 @@ def arange(start: ScalarLike, stop: ScalarLike = None, step: int = 1,
     Returns:
         A tensor with values from start to stop with step size
     """
-    # Validate dtype
-    dtype_cls = MLXDType()
-    mlx_dtype = dtype_cls.from_dtype_str(dtype) if dtype else None
+
     
     # Handle single argument case
     if stop is None:
@@ -116,16 +111,18 @@ def arange(start: ScalarLike, stop: ScalarLike = None, step: int = 1,
         start = float(start.item())
     if hasattr(stop, 'item'):
         stop = float(stop.item())
-    
+
+    from ember_ml.backend.mlx.tensor.ops.utility import _create_new_tensor
+    x = _create_new_tensor(mx.arange, dtype=dtype,start=start, stop=stop, step=step)
     # Create sequence
-    return mx.arange(start, stop, step, dtype=mlx_dtype)
+    return x
 
 def linspace(start: Union[int, float], stop: Union[int, float], num: int,
             dtype: 'Optional[DType]' = None, device: Optional[str] = None) -> 'mx.array':
     """Create evenly spaced numbers over a specified interval."""
     # Validate dtype
-    dtype_cls = MLXDType()
-    mlx_dtype = dtype_cls.from_dtype_str(dtype) if dtype else None
+    from ember_ml.backend.mlx.tensor.ops.utility import _create_new_tensor
+    x = _create_new_tensor(mx.linspace, dtype=dtype,start=start, stop=stop, num=num)
     
     # Create evenly spaced sequence
-    return mx.linspace(start, stop, num, dtype=mlx_dtype)
+    return x

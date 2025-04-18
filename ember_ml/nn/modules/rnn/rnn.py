@@ -8,9 +8,11 @@ which wraps an RNNCell to create a recurrent layer.
 from typing import Optional, List, Dict, Any, Union, Tuple
 
 from ember_ml import ops
-from ember_ml.nn.modules import Module
-from ember_ml.nn.modules.rnn.rnn_cell import RNNCell
+from ember_ml import ops
+from ember_ml.nn.modules import Module, Parameter
 from ember_ml.nn import tensor
+from ember_ml.nn.initializers import glorot_uniform, orthogonal
+from ember_ml.nn.modules.activations import get_activation
 # Import Dropout module from its new location
 from ember_ml.nn.modules.activations import Dropout
 class RNN(Module):
@@ -32,6 +34,10 @@ class RNN(Module):
         bidirectional: bool = False,
         return_sequences: bool = True,
         return_state: bool = False,
+        use_bias: bool = True,
+        kernel_initializer: str = "glorot_uniform",
+        recurrent_initializer: str = "orthogonal",
+        bias_initializer: str = "zeros",
         **kwargs
     ):
         """
@@ -63,6 +69,12 @@ class RNN(Module):
         self.return_sequences = return_sequences
         self.return_state = return_state
         
+        # RNNCell parameters
+        self.use_bias = use_bias
+        self.kernel_initializer = kernel_initializer
+        self.recurrent_initializer = recurrent_initializer
+        self.bias_initializer = bias_initializer
+        
         # Create RNN cells for each layer and direction
         self.forward_cells = []
         self.backward_cells = []
@@ -72,29 +84,46 @@ class RNN(Module):
         layer_input_size = input_size
         
         for layer in range(num_layers):
-            # Forward direction cell
-            self.forward_cells.append(
-                RNNCell(
-                    input_size=layer_input_size,
-                    hidden_size=hidden_size,
-                    activation=activation,
-                    bias=bias
-                )
-            )
-            
-            # Backward direction cell (if bidirectional)
-            if bidirectional:
-                self.backward_cells.append(
-                    RNNCell(
-                        input_size=layer_input_size,
-                        hidden_size=hidden_size,
-                        activation=activation,
-                        bias=bias
-                    )
-                )
+            # Initialize parameters for this layer
+            self._initialize_layer_parameters(layer, layer_input_size)
             
             # Update input size for the next layer
-            layer_input_size = hidden_size * (2 if bidirectional else 1)
+            if self.bidirectional:
+                layer_input_size = ops.multiply(hidden_size, 2)
+            else:
+                layer_input_size = hidden_size
+                
+    def _initialize_layer_parameters(self, layer, input_size):
+        """Initialize parameters for a specific layer."""
+        # Input weights
+        self.input_kernels = getattr(self, 'input_kernels', [])
+        self.recurrent_kernels = getattr(self, 'recurrent_kernels', [])
+        self.biases = getattr(self, 'biases', [])
+        
+        # Backward direction weights
+        self.backward_input_kernels = getattr(self, 'backward_input_kernels', [])
+        self.backward_recurrent_kernels = getattr(self, 'backward_recurrent_kernels', [])
+        self.backward_biases = getattr(self, 'backward_biases', [])
+        
+        # Forward direction weights
+        kernel_shape = (input_size, self.hidden_size)
+        recurrent_shape = (self.hidden_size, self.hidden_size)
+        
+        # Initialize forward weights
+        self.input_kernels.append(Parameter(glorot_uniform(kernel_shape)))
+        self.recurrent_kernels.append(Parameter(orthogonal(recurrent_shape)))
+        
+        if self.use_bias:
+            bias_shape = (self.hidden_size,)
+            self.biases.append(Parameter(tensor.zeros(bias_shape)))
+        
+        # Initialize backward weights if bidirectional
+        if self.bidirectional:
+            self.backward_input_kernels.append(Parameter(glorot_uniform(kernel_shape)))
+            self.backward_recurrent_kernels.append(Parameter(orthogonal(recurrent_shape)))
+            
+            if self.use_bias:
+                self.backward_biases.append(Parameter(tensor.zeros(bias_shape)))
     
     def forward(self, inputs, initial_state=None):
         """
@@ -141,9 +170,15 @@ class RNN(Module):
         final_h_states = []
         
         for layer in range(self.num_layers):
-            # Get cells for this layer
-            forward_cell = self.forward_cells[layer]
-            backward_cell = self.backward_cells[layer] if self.bidirectional else None
+            # Get parameters for this layer
+            input_kernel = self.input_kernels[layer]
+            recurrent_kernel = self.recurrent_kernels[layer]
+            bias = self.biases[layer] if self.use_bias else None
+            
+            if self.bidirectional:
+                backward_input_kernel = self.backward_input_kernels[layer]
+                backward_recurrent_kernel = self.backward_recurrent_kernels[layer]
+                backward_bias = self.backward_biases[layer] if self.use_bias else None
             
             # Get initial states for this layer
             layer_idx = layer * (2 if self.bidirectional else 1)
@@ -164,8 +199,17 @@ class RNN(Module):
                 else:
                     current_input = layer_outputs[t]
                 
-                # Apply forward cell
-                forward_h, [forward_h] = forward_cell(current_input, [forward_h])
+                # RNN forward pass implementation
+                activation_fn = get_activation(self.activation)
+                
+                # Project input
+                z = ops.matmul(current_input, input_kernel)
+                z = ops.add(z, ops.matmul(forward_h, recurrent_kernel))
+                if self.use_bias:
+                    z = ops.add(z, bias)
+                
+                # Apply activation
+                forward_h = activation_fn(z)
                 forward_outputs.append(forward_h)
             
             # Backward direction (if bidirectional)
@@ -177,8 +221,17 @@ class RNN(Module):
                     else:
                         current_input = layer_outputs[t]
                     
-                    # Apply backward cell
-                    backward_h, [backward_h] = backward_cell(current_input, [backward_h])
+                    # RNN backward pass implementation
+                    activation_fn = get_activation(self.activation)
+                    
+                    # Project input
+                    z = ops.matmul(current_input, backward_input_kernel)
+                    z = ops.add(z, ops.matmul(backward_h, backward_recurrent_kernel))
+                    if self.use_bias:
+                        z = ops.add(z, backward_bias)
+                    
+                    # Apply activation
+                    backward_h = activation_fn(z)
                     backward_outputs.insert(0, backward_h)
             
             # Combine outputs
@@ -270,6 +323,10 @@ class RNN(Module):
             "bidirectional": self.bidirectional,
             "return_sequences": self.return_sequences,
             "return_state": self.return_state,
+            "use_bias": self.use_bias,
+            "kernel_initializer": self.kernel_initializer,
+            "recurrent_initializer": self.recurrent_initializer,
+            "bias_initializer": self.bias_initializer
         })
         # Cell is reconstructed in __init__ based on these args
         return config

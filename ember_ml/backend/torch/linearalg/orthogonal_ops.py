@@ -144,7 +144,7 @@ def orthogonal(shape: Union[Tuple[int, ...], TensorLike], gain: float = 1.0, dty
     if len(shape_tuple) < 2:
         raise ValueError("Shape must have at least 2 dimensions")
 
-    rows, cols = shape_tuple[0], math.prod(shape_tuple[1:])
+    rows, cols = shape_tuple[0], torch.prod(torch.tensor(shape_tuple[1:]))
     size = max(rows, cols)  # Create a square matrix for QR
 
     # Handle dtype and device

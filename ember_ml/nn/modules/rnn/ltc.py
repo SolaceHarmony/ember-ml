@@ -5,7 +5,7 @@ This module provides an implementation of the LTC layer that directly uses
 NeuronMap for both structure and dynamics, without relying on separate cell objects.
 """
 
-from typing import Dict, Any, Optional, List, Tuple, Union
+from typing import Dict, Any
 
 from ember_ml import ops
 from ember_ml.nn.initializers import glorot_uniform, orthogonal
@@ -29,6 +29,11 @@ class LTC(Module):
         return_state: bool = False,
         batch_first: bool = True,
         mixed_memory: bool = False,
+        input_mapping: str = "affine",
+        output_mapping: str = "affine",
+        ode_unfolds: int = 6,
+        epsilon: float = 1e-8,
+        implicit_param_constraints: bool = False,
         **kwargs
     ):
         """
@@ -54,6 +59,25 @@ class LTC(Module):
         self.return_state = return_state
         self.batch_first = batch_first
         self.mixed_memory = mixed_memory
+        
+        # LTCCell parameters
+        self.input_mapping = input_mapping
+        self.output_mapping = output_mapping
+        self.ode_unfolds = ode_unfolds
+        self.epsilon = epsilon
+        self.implicit_param_constraints = implicit_param_constraints
+        self.make_positive_fn = get_activation("softplus") if implicit_param_constraints else lambda x: x
+        self._init_ranges = {
+            "gleak": (0.001, 1.0),
+            "vleak": (-0.2, 0.2),
+            "cm": (0.4, 0.6),
+            "w": (0.001, 1.0),
+            "sigma": (3, 8),
+            "mu": (0.3, 0.8),
+            "sensory_w": (0.001, 1.0),
+            "sensory_sigma": (3, 8),
+            "sensory_mu": (0.3, 0.8),
+        }
         
         # Set input_size from neuron_map.input_dim if the map is already built
         # Otherwise, it will be set during the first forward pass
@@ -175,38 +199,37 @@ class LTC(Module):
                 h_prev, c_prev = states
                 
                 # Input gate
-                i = ops.sigmoid(
-                    ops.matmul(inputs, self.input_kernel) +
-                    ops.matmul(h_prev, self.input_recurrent_kernel) +
-                    self.input_bias
-                )
+                i_term1 = ops.matmul(inputs, self.input_kernel)
+                i_term2 = ops.matmul(h_prev, self.input_recurrent_kernel)
+                i_sum = ops.add(ops.add(i_term1, i_term2), self.input_bias)
+                i = ops.sigmoid(i_sum)
                 
                 # Forget gate
-                f = ops.sigmoid(
-                    ops.matmul(inputs, self.forget_kernel) +
-                    ops.matmul(h_prev, self.forget_recurrent_kernel) +
-                    self.forget_bias
-                )
+                f_term1 = ops.matmul(inputs, self.forget_kernel)
+                f_term2 = ops.matmul(h_prev, self.forget_recurrent_kernel)
+                f_sum = ops.add(ops.add(f_term1, f_term2), self.forget_bias)
+                f = ops.sigmoid(f_sum)
                 
                 # Cell gate
-                g = ops.tanh(
-                    ops.matmul(inputs, self.cell_kernel) +
-                    ops.matmul(h_prev, self.cell_recurrent_kernel) +
-                    self.cell_bias
-                )
+                g_term1 = ops.matmul(inputs, self.cell_kernel)
+                g_term2 = ops.matmul(h_prev, self.cell_recurrent_kernel)
+                g_sum = ops.add(ops.add(g_term1, g_term2), self.cell_bias)
+                g = ops.tanh(g_sum)
                 
                 # Output gate
-                o = ops.sigmoid(
-                    ops.matmul(inputs, self.output_kernel) +
-                    ops.matmul(h_prev, self.output_recurrent_kernel) +
-                    self.output_bias
-                )
+                o_term1 = ops.matmul(inputs, self.output_kernel)
+                o_term2 = ops.matmul(h_prev, self.output_recurrent_kernel)
+                o_sum = ops.add(ops.add(o_term1, o_term2), self.output_bias)
+                o = ops.sigmoid(o_sum)
                 
                 # Update cell state
-                c = f * c_prev + i * g
+                fc = ops.multiply(f, c_prev)
+                ig = ops.multiply(i, g)
+                c = ops.add(fc, ig)
                 
                 # Update hidden state
-                h = o * ops.tanh(c)
+                tanh_c = ops.tanh(c)
+                h = ops.multiply(o, tanh_c)
                 
                 return h, (h, c)
         
@@ -214,15 +237,17 @@ class LTC(Module):
     
     def _ode_solver(self, inputs, state, elapsed_time):
         """Solve the ODE for the LTC dynamics."""
-        # Get parameters from neuron_map
-        ode_unfolds = self.neuron_map.ode_unfolds
-        epsilon = self.neuron_map.epsilon
-        implicit_param_constraints = self.neuron_map.implicit_param_constraints
+        # Use parameters from the layer
+        ode_unfolds = self.ode_unfolds
+        epsilon = self.epsilon
+        implicit_param_constraints = self.implicit_param_constraints
         
         # Apply constraints to parameters if needed
         if implicit_param_constraints:
-            gleak = ops.abs(self.gleak) + epsilon
-            cm = ops.abs(self.cm) + epsilon
+            gleak_abs = ops.abs(self.gleak)
+            gleak = ops.add(gleak_abs, epsilon)
+            cm_abs = ops.abs(self.cm)
+            cm = ops.add(cm_abs, epsilon)
         else:
             gleak = self.gleak
             cm = self.cm
@@ -266,7 +291,7 @@ class LTC(Module):
             syn_current = ops.stats.sum(ops.multiply(syn_current, erev_minus_v), axis=2)
             
             # Calculate sensory current
-            sensory_current = 0
+            sensory_current = tensor.zeros_like(syn_current)
             if self.neuron_map.input_mapping in ["affine", "linear"]:
                 # Apply activation to inputs
                 sensory_activation = get_activation(self.neuron_map.activation)(inputs)
@@ -315,18 +340,18 @@ class LTC(Module):
     
     def _map_inputs(self, inputs):
         """Map inputs using the specified input mapping."""
-        if self.neuron_map.input_mapping == "affine":
+        if self.input_mapping == "affine":
             return ops.add(ops.matmul(inputs, self.input_kernel), self.input_bias)
-        elif self.neuron_map.input_mapping == "linear":
+        elif self.input_mapping == "linear":
             return ops.matmul(inputs, self.input_kernel)
         else:
             return inputs
     
     def _map_outputs(self, state):
         """Map outputs using the specified output mapping."""
-        if self.neuron_map.output_mapping == "affine":
+        if self.output_mapping == "affine":
             return ops.add(ops.matmul(state, self.output_kernel), self.output_bias)
-        elif self.neuron_map.output_mapping == "linear":
+        elif self.output_mapping == "linear":
             return ops.matmul(state, self.output_kernel)
         else:
             return state
@@ -360,8 +385,8 @@ class LTC(Module):
         sensory_matrix_tensor = tensor.convert_to_tensor(self.neuron_map.sensory_adjacency_matrix)
         # sum result might be a 0-dim tensor, convert to float if necessary
         sum_val = ops.stats.sum(tensor.abs(sensory_matrix_tensor))
-        # Use item() to get Python scalar
-        return float(tensor.item(sum_val))
+        # Convert to scalar without using float() cast
+        return tensor.item(sum_val)
     
     def forward(self, inputs, initial_state=None, timespans=None):
         """
@@ -497,7 +522,12 @@ class LTC(Module):
             "return_sequences": self.return_sequences,
             "return_state": self.return_state,
             "batch_first": self.batch_first,
-            "mixed_memory": self.mixed_memory
+            "mixed_memory": self.mixed_memory,
+            "input_mapping": self.input_mapping,
+            "output_mapping": self.output_mapping,
+            "ode_unfolds": self.ode_unfolds,
+            "epsilon": self.epsilon,
+            "implicit_param_constraints": self.implicit_param_constraints
         })
         return config
     

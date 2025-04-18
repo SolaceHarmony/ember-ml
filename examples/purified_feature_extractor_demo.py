@@ -10,7 +10,7 @@ import os
 import sys
 import logging
 import pandas as pd
-from ember_ml.nn import tensor  # Import tensor from ember_ml.utils for backend-agnostic operations
+from ember_ml.nn import tensor  # Import tensor from ember_ml.nn for backend-agnostic operations
 # Add parent directory to path to import ember_ml
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -26,7 +26,7 @@ from ember_ml.utils import backend_utils
 from ember_ml import ops
 
 # Import the TerabyteFeatureExtractor (now using the purified backend-agnostic implementation)
-from ember_ml.features.terabyte_feature_extractor import TerabyteFeatureExtractor
+from ember_ml.nn.features.terabyte_feature_extractor import TerabyteFeatureExtractor
 
 def create_sample_data(num_rows=1000):
     """Create sample data for demonstration."""
@@ -37,9 +37,8 @@ def create_sample_data(num_rows=1000):
     numeric1 = backend_utils.tensor_to_numpy_safe(tensor.random_normal(shape=(num_rows,)))
     numeric2 = backend_utils.tensor_to_numpy_safe(tensor.random_normal(shape=(num_rows,)))
     
-    # For categorical data, we still need to use pandas/numpy directly
-    # but we can minimize direct numpy usage
-    import numpy as np  # Local import only where needed
+    # For categorical data, we still need to use pandas directly
+    # but we can avoid direct numpy usage
     category1_idx = backend_utils.tensor_to_numpy_safe(
         tensor.random_uniform(shape=(num_rows,), minval=0, maxval=3).astype(tensor.int32)
     )
@@ -61,8 +60,21 @@ def create_sample_data(num_rows=1000):
     })
     
     # Create target variable using backend-agnostic operations
-    noise = backend_utils.tensor_to_numpy_safe(tensor.random_normal(shape=(num_rows,)) * 0.5)
-    df['target'] = 2 * df['numeric1'] - 3 * df['numeric2'] + noise
+    # First generate noise using tensor operations
+    noise_tensor = ops.multiply(tensor.random_normal(shape=(num_rows,)), tensor.convert_to_tensor(0.5))
+    noise = backend_utils.tensor_to_numpy_safe(noise_tensor)
+    
+    # Convert pandas series to tensors, perform operations using ops functions
+    numeric1_tensor = tensor.convert_to_tensor(df['numeric1'].values)
+    numeric2_tensor = tensor.convert_to_tensor(df['numeric2'].values)
+    
+    # Calculate target using ops functions: 2*numeric1 - 3*numeric2 + noise
+    term1 = ops.multiply(tensor.convert_to_tensor(2.0), numeric1_tensor)
+    term2 = ops.multiply(tensor.convert_to_tensor(3.0), numeric2_tensor)
+    target_tensor = ops.add(ops.subtract(term1, term2), noise_tensor)
+    
+    # Convert back to numpy for DataFrame
+    df['target'] = backend_utils.tensor_to_numpy_safe(target_tensor)
     
     return df
 
@@ -128,9 +140,9 @@ def run_demo():
                     # Convert train data to tensor
                     train_tensor = backend_utils.convert_to_tensor_safe(train_df[train_features].values)
                     
-                    # Perform some operations
-                    mean = backend_utils.tensor_to_numpy_safe(train_tensor.mean(axis=0))
-                    std = backend_utils.tensor_to_numpy_safe(train_tensor.std(axis=0))
+                    # Perform operations using ops abstraction layer
+                    mean = backend_utils.tensor_to_numpy_safe(ops.mean(train_tensor, axis=0))
+                    std = backend_utils.tensor_to_numpy_safe(ops.std(train_tensor, axis=0))
                     
                     logger.info(f"Mean of first 5 features: {mean[:5]}")
                     logger.info(f"Std of first 5 features: {std[:5]}")

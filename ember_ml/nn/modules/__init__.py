@@ -55,8 +55,7 @@ Available Modules:
 """
 
 from ember_ml.nn.modules.base_module import BaseModule as Module, BaseModule, Parameter
-from ember_ml.nn.modules.module_cell import ModuleCell
-from ember_ml.nn.modules.module_wired_cell import ModuleWiredCell
+# Removed ModuleCell and ModuleWiredCell imports
 from ember_ml.nn.modules.ncp import NCP
 from ember_ml.nn.modules.auto_ncp import AutoNCP
 from ember_ml.nn.modules.guce_ncp import GUCENCP, AutoGUCENCP
@@ -66,14 +65,13 @@ from ember_ml.nn.modules.wiring import (
     NeuronMap, NCPMap, FullyConnectedMap, RandomMap,
     LanguageWiring, RoboticsWiring, SignalWiring, FrequencyWiring, VisionWiring
 )
-# Import RNN modules (keep existing)
-from ember_ml.nn.modules.rnn import RNN, LSTM, GRU, RNNCell, LSTMCell, GRUCell, StrideAware, StrideAwareCfC, StrideAwareCell
+# Import RNN modules (keep existing) - Removed StrideAwareCfC from this line
+from ember_ml.nn.modules.rnn import RNN, LSTM, GRU, StrideAware
 # Import the separated layer and corrected cell import
 from ember_ml.nn.modules.rnn import (
-    CfC, CfCCell, WiredCfCCell, StrideAwareWiredCfCCell, LTC, LTCCell,
-    ELTC, ODESolver, CTGRU, CTRNN, GUCE
+    CfC, LTC, ELTC, ODESolver, CTGRU, CTRNN, GUCE
 )
-from ember_ml.nn.modules.rnn.stride_aware_cfc_layer import StrideAwareCfC
+# from ember_ml.nn.modules.rnn.stride_aware_cfc_layer import StrideAwareCfC
 # Import activation modules
 from ember_ml.nn.modules.activations import ReLU, Tanh, Sigmoid, Softmax, Softplus, LeCunTanh, Dropout
 # Import solver modules
@@ -89,10 +87,8 @@ __all__ = [
     # Base
     'Module',
     'Parameter',
-    'Module',
     'BaseModule',
-    'ModuleCell',
-    'ModuleWiredCell',
+    # Removed ModuleCell and ModuleWiredCell from exports
     'Dense', # Add Dense export
     'NCP',
     'AutoNCP', # Layer convenience class
@@ -114,22 +110,14 @@ __all__ = [
     'RNN',
     'LSTM',
     'GRU',
-    'RNNCell',
-    'LSTMCell', 
-    'GRUCell',
     
     # Stride-aware
     'StrideAware',
-    'StrideAwareCell',
-    'StrideAwareWiredCfCCell',
-    'StrideAwareCfC', # Now correctly imported layer class
+    # 'StrideAwareCfC', # Temporarily commented out
     
     # Advanced modules
     'CfC',
-    'CfCCell',
-    'WiredCfCCell',
     'LTC',
-    'LTCCell',
     'ELTC',
     'ODESolver',
     'CTGRU',

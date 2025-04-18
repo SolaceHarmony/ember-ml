@@ -236,13 +236,13 @@ class SmallWorldNeuronMap(NeuronMap):
         return cls(**config)
 ```
 
-### Using Neuron Maps with RNN Cells
+### Using Neuron Maps with RNN Layers
 
-Neuron maps are primarily used with wired RNN cells:
+Neuron maps are primarily used with RNN layers that support wired connectivity:
 
 ```python
 from ember_ml.nn.modules.wiring import NCPMap
-from ember_ml.nn.modules.rnn import WiredCfCCell
+from ember_ml.nn.modules.rnn import CfC
 from ember_ml.nn import tensor
 
 # Create a neuron map
@@ -254,16 +254,15 @@ neuron_map = NCPMap(
     seed=42
 )
 
-# Create a wired CfC cell with the neuron map
-cell = WiredCfCCell(
+# Create a CfC layer with the neuron map
+cfc_layer = CfC(
     neuron_map=neuron_map,
-    mixed_memory=True
+    return_sequences=True
 )
 
 # Forward pass
-x_t = tensor.random_normal((32, 8))  # Batch of 32 with 8 features
-h_prev = tensor.random_normal((32, 18))  # Previous hidden state (18 = 10 + 5 + 3)
-h_next = cell(x_t, h_prev)  # Next hidden state
+x = tensor.random_normal((32, 10, 8))  # Batch of 32 sequences of length 10 with 8 features
+output = cfc_layer(x)  # Shape: (32, 10, 3) if return_sequences=True
 ```
 
 ### Visualizing Neuron Maps
@@ -316,7 +315,7 @@ The neuron map module is implemented using a layered architecture:
 
 1. **Base Class**: Provides common functionality for all neuron maps
 2. **Specific Implementations**: Implement different connectivity patterns
-3. **Integration with RNN Cells**: Neuron maps are used by wired RNN cells to define connectivity
+3. **Integration with RNN Layers**: Neuron maps are used by RNN layers to define connectivity
 
 This architecture allows Ember ML to provide a consistent API for defining custom connectivity patterns in neural networks.
 
@@ -328,7 +327,7 @@ The neuron map module was previously called "wirings" and has been refactored an
 
 ```python
 from ember_ml.nn.wirings import NCPWiring
-from ember_ml.nn.modules.rnn import WiredCfCCell
+from ember_ml.nn.modules.rnn import CfC
 
 # Create a wiring
 wiring = NCPWiring(
@@ -339,10 +338,10 @@ wiring = NCPWiring(
     seed=42
 )
 
-# Create a wired CfC cell with the wiring
-cell = WiredCfCCell(
+# Create a CfC layer with the wiring
+cfc_layer = CfC(
     wiring=wiring,
-    mixed_memory=True
+    return_sequences=True
 )
 ```
 
@@ -350,7 +349,7 @@ cell = WiredCfCCell(
 
 ```python
 from ember_ml.nn.modules.wiring import NCPMap
-from ember_ml.nn.modules.rnn import WiredCfCCell
+from ember_ml.nn.modules.rnn import CfC
 
 # Create a neuron map
 neuron_map = NCPMap(
@@ -361,10 +360,10 @@ neuron_map = NCPMap(
     seed=42
 )
 
-# Create a wired CfC cell with the neuron map
-cell = WiredCfCCell(
+# Create a CfC layer with the neuron map
+cfc_layer = CfC(
     neuron_map=neuron_map,
-    mixed_memory=True
+    return_sequences=True
 )
 ```
 

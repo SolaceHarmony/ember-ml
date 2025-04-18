@@ -458,7 +458,11 @@ def _create_new_tensor(creation_func: callable, dtype: Optional[Any] = None, dev
         if 'shape' in kwargs:
             shape_arg = kwargs['shape']
             if isinstance(shape_arg, int):
-                kwargs['shape'] = (shape_arg,)
+                # Special case: if shape is 0, treat it as a scalar tensor
+                if shape_arg == 0:
+                    kwargs['shape'] = (1,)  # Create a 1D tensor with a single element
+                else:
+                    kwargs['shape'] = (shape_arg,)
             elif not isinstance(shape_arg, tuple):
                 kwargs['shape'] = tuple(shape_arg)
 

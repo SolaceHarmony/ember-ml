@@ -20,6 +20,17 @@ from ember_ml.backend import get_backend, get_backend_module
 from ember_ml.nn.features.pca_features import PCA
 from ember_ml.nn.features.standardize_features import Standardize
 from ember_ml.nn.features.normalize_features import Normalize
+from ember_ml.nn.features.temporal_processor import TemporalStrideProcessor
+from ember_ml.nn.features.feature_engineer import GenericFeatureEngineer
+from ember_ml.nn.features.generic_csv_loader import GenericCSVLoader
+from ember_ml.nn.features.generic_type_detector import GenericTypeDetector
+from ember_ml.nn.features.test_feature_extraction import test_feature_extraction
+from ember_ml.nn.features.column_feature_extraction import ColumnFeatureExtractor, ColumnPCAFeatureExtractor, TemporalColumnFeatureExtractor
+from ember_ml.nn.features.terabyte_feature_extractor import TerabyteFeatureExtractor, TerabyteTemporalStrideProcessor
+from ember_ml.nn.features.bigquery_feature_extractor import BigQueryFeatureExtractor
+from ember_ml.nn.features.animated_feature_processor import AnimatedFeatureProcessor
+from ember_ml.nn.features.speedtest_event_processor import SpeedtestEventProcessor
+from ember_ml.nn.features.enhanced_type_detector import EnhancedTypeDetector
 # The one_hot implementation lives in tensor_features.py
 
 # Define Factory Functions locally
@@ -154,4 +165,18 @@ __all__ = [
     'PCA',
     'Standardize',
     'Normalize',
+    'TemporalStrideProcessor',
+    'GenericFeatureEngineer',
+    'GenericCSVLoader',
+    'GenericTypeDetector',
+    'test_feature_extraction',
+    'ColumnFeatureExtractor',
+    'ColumnPCAFeatureExtractor',
+    'TemporalColumnFeatureExtractor',
+    'TerabyteFeatureExtractor',
+    'TerabyteTemporalStrideProcessor',
+    'BigQueryFeatureExtractor',
+    'AnimatedFeatureProcessor',
+    'SpeedtestEventProcessor',
+    'EnhancedTypeDetector',
 ]

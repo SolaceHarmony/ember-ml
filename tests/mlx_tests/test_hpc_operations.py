@@ -8,7 +8,6 @@ standard floating-point arithmetic.
 
 import pytest
 import numpy as np
-import math
 
 from ember_ml import ops
 from ember_ml.nn import tensor
@@ -19,11 +18,10 @@ from ember_ml.backend.mlx.linearalg.hpc_nonsquare import orthogonalize_nonsquare
 @pytest.fixture
 def mlx_backend():
     """Set up MLX backend for tests."""
-    from ember_ml.backend import set_backend
     prev_backend = ops.get_backend()
-    set_backend('mlx')
+    ops.set_backend('mlx')
     yield None
-    set_backend(prev_backend)
+    ops.set_backend(prev_backend)
 
 def test_hpc_orthogonal_vs_standard_qr(mlx_backend):
     """
@@ -44,12 +42,16 @@ def test_hpc_orthogonal_vs_standard_qr(mlx_backend):
     u_orth = ops.linearalg.orthogonal((n, m))
     v_orth = ops.linearalg.orthogonal((m, m))
     
-    # Create diagonal matrix with singular values
-    diag_s = tensor.zeros((n, m))
-    for i in range(m):
-        # Ensure we're only updating valid indices
-        if i < min(n, m):
-            diag_s = tensor.index_update(diag_s, i, i, s[i])
+    # Create diagonal matrix with singular values using ops.linearalg.diag
+    diag_s_small = ops.linearalg.diag(s)
+    
+    # Pad to the correct size if needed (n x m)
+    if n > m:
+        # Pad with zeros to make it n x m
+        diag_s = tensor.pad(diag_s_small, [[0, n - m], [0, 0]])
+    else:
+        # Use as is or pad if needed
+        diag_s = diag_s_small
     
     # Compute A = U * diag(s) * V^T
     a = ops.matmul(ops.matmul(u_orth, diag_s), ops.transpose(v_orth))

@@ -1,182 +1,175 @@
 """
-Sequential container module for ember_ml.
+Sequential container implementation for ember_ml.
 
-This module provides a backend-agnostic implementation of the Sequential container
+This module provides a backend-agnostic implementation of a sequential container
 that works with any backend (NumPy, PyTorch, MLX).
 """
 
-from collections import OrderedDict
-from typing import Dict, Iterator, List, Optional, Tuple, Union, Any, Sequence
+from typing import Optional, Union, Tuple, Any, Dict, List, Sequence
 
+from ember_ml import ops
 from ember_ml.nn.modules import Module
-
+from ember_ml.nn import tensor
 class Sequential(Module):
     """
-    A sequential container that runs modules in the order they were added.
+    A sequential container.
     
-    Example:
-        ```
-        model = Sequential(
-            Linear(10, 20),
-            ReLU(),
-            Linear(20, 1)
-        )
-        ```
-        
-        or
-        
-        ```
-        model = Sequential()
-        model.add_module('fc1', Linear(10, 20))
-        model.add_module('relu', ReLU())
-        model.add_module('fc2', Linear(20, 1))
-        ```
+    Modules will be added to it in the order they are passed in the constructor.
+    Alternatively, an ordered dict of modules can be passed in.
+    
+    Args:
+        layers: An ordered list of modules to add
     """
     
-    def __init__(self, *args):
-        """
-        Initialize a Sequential container.
-        
-        Args:
-            *args: Modules to add to the container
-        """
+    def __init__(
+        self,
+        layers: Optional[List[Any]] = None
+    ):
         super().__init__()
+        self.layers = []
         
-        if len(args) == 1 and isinstance(args[0], OrderedDict):
-            # If a single OrderedDict is provided, use it as the module dict
-            for key, module in args[0].items():
-                self.add_module(key, module)
-        else:
-            # Add modules in order
-            for idx, module in enumerate(args):
-                self.add_module(str(idx), module)
+        if layers is not None:
+            for layer in layers:
+                self.add(layer)
     
     def forward(self, x):
         """
-        Forward pass through all modules in sequence.
+        Forward pass through the sequential container.
         
         Args:
             x: Input tensor
             
         Returns:
-            Output tensor after passing through all modules
+            Output tensor after passing through all layers
         """
-        for module in self._modules.values():
-            x = module(x)
+        # Ensure x is a tensor
+        x = tensor.convert_to_tensor(x)
+        
+        # Pass input through each layer in sequence
+        for layer in self.layers:
+            x = layer(x)
+        
         return x
     
-    def append(self, module):
+    def add(self, layer: Any) -> None:
         """
-        Append a module to the end of the container.
+        Add a layer to the container.
         
         Args:
-            module: Module to append
+            layer: Layer to add
+        """
+        self.layers.append(layer)
+    
+    def build(self, input_shape: Union[List[int], Tuple[int, ...]]) -> None:
+        """
+        Build the container for a specific input shape.
+        
+        Args:
+            input_shape: Shape of the input tensor
+        """
+        # Build each layer in sequence
+        shape = input_shape
+        for layer in self.layers:
+            if hasattr(layer, 'build'):
+                layer.build(shape)
+            
+            # Update shape for next layer
+            if hasattr(layer, 'compute_output_shape'):
+                shape = layer.compute_output_shape(shape)
+    
+    def get_config(self) -> Dict[str, Any]:
+        """
+        Get the configuration of the container.
+        
+        Returns:
+            Dictionary containing the configuration
+        """
+        return {
+            'layers': [
+                {
+                    'class_name': layer.__class__.__name__,
+                    'config': layer.get_config() if hasattr(layer, 'get_config') else {}
+                }
+                for layer in self.layers
+            ]
+        }
+    
+    def state_dict(self) -> Dict[str, Any]:
+        """
+        Get the state dictionary of the container.
+        
+        Returns:
+            Dictionary containing the state
+        """
+        return {
+            f'layer_{i}': layer.state_dict() if hasattr(layer, 'state_dict') else {}
+            for i, layer in enumerate(self.layers)
+        }
+    
+    def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
+        """
+        Load the state dictionary into the container.
+        
+        Args:
+            state_dict: Dictionary containing the state
+        """
+        for i, layer in enumerate(self.layers):
+            layer_key = f'layer_{i}'
+            if layer_key in state_dict and hasattr(layer, 'load_state_dict'):
+                layer.load_state_dict(state_dict[layer_key])
+    
+    def train(self, mode: bool = True) -> 'Sequential':
+        """
+        Set the container in training mode.
+        
+        Args:
+            mode: Whether to set training mode (True) or evaluation mode (False)
             
         Returns:
-            self
+            Self
         """
-        self.add_module(str(len(self)), module)
+        for layer in self.layers:
+            if hasattr(layer, 'train'):
+                layer.train(mode)
         return self
     
-    def __getitem__(self, idx):
+    def eval(self) -> 'Sequential':
         """
-        Get a module or slice of modules from the container.
+        Set the container in evaluation mode.
+        
+        Returns:
+            Self
+        """
+        return self.train(False)
+    
+    def extra_repr(self) -> str:
+        """Return a string with extra information."""
+        return f"layers={len(self.layers)}"
+    
+    def __repr__(self):
+        layer_reprs = [f"  ({i}): {repr(layer)}" for i, layer in enumerate(self.layers)]
+        return "Sequential(\n" + "\n".join(layer_reprs) + "\n)"
+    
+    def __getitem__(self, idx: Union[int, slice]) -> Union[Any, 'Sequential']:
+        """
+        Get a layer or a new Sequential container with the specified layers.
         
         Args:
             idx: Index or slice
             
         Returns:
-            Module or Sequential container with sliced modules
+            Layer or new Sequential container
         """
         if isinstance(idx, slice):
-            # Return a new Sequential container with the sliced modules
-            return Sequential(OrderedDict(list(self._modules.items())[idx]))
+            return Sequential(self.layers[idx])
         else:
-            # Convert to integer index if needed
-            if not isinstance(idx, int):
-                idx = int(idx)
-            
-            # Handle negative indices
-            if idx < 0:
-                idx += len(self)
-            
-            # Check bounds
-            if idx < 0 or idx >= len(self):
-                raise IndexError(f"Index {idx} out of range for Sequential with length {len(self)}")
-            
-            # Return the module at the specified index
-            return list(self._modules.values())[idx]
+            return self.layers[idx]
     
-    def __len__(self):
-        """Return the number of modules in the container."""
-        return len(self._modules)
-    
-    def __iter__(self):
-        """Return an iterator over the modules in the container."""
-        return iter(self._modules.values())
-    
-    def __repr__(self):
-        """Return a string representation of the container."""
-        if not self._modules:
-            return "Sequential()"
+    def __len__(self) -> int:
+        """
+        Get the number of layers in the container.
         
-        module_str = ",\n  ".join(repr(module) for module in self._modules.values())
-        return f"Sequential(\n  {module_str}\n)"
-
-    def get_config(self) -> Dict[str, Any]:
-        """Returns the configuration of the Sequential container."""
-        config = super().get_config()
-        modules_config = []
-        # Use self._modules directly to preserve order and names
-        for name, module in self._modules.items():
-            module_config = module.get_config()
-            module_config['class_name'] = module.__class__.__name__
-            # Store name used in the OrderedDict if needed for reconstruction order/naming
-            module_config['registered_name'] = name
-            modules_config.append(module_config)
-        config['modules'] = modules_config
-        return config
-
-    @classmethod
-    def from_config(cls, config: Dict[str, Any]) -> 'Sequential':
-        """Creates a Sequential container from its configuration."""
-        modules_config = config.pop("modules", [])
-
-        # Import necessary module classes dynamically based on class_name
-        # This requires a robust way to map class names to actual classes
-        # For now, assume common ones might be imported or use importlib
-        import importlib
-        from ember_ml.nn import modules as nn_modules # Access point for layers/cells/activations/maps
-
-        reconstructed_modules = OrderedDict()
-        for module_config in modules_config:
-            class_name = module_config.pop('class_name')
-            registered_name = module_config.pop('registered_name') # Get the original name/key
-
-            # Find the class object
-            module_class = None
-            try:
-                 # Check if it's directly available via nn.modules (which exports many things)
-                 module_class = getattr(nn_modules, class_name)
-            except AttributeError:
-                 # If not found directly, try importing dynamically from subpackages
-                 # This part is complex and might need refinement based on final structure
-                 subpackages = ['rnn', 'activations', 'wiring', 'container'] # Add other relevant subpackages
-                 for subpackage in subpackages:
-                     try:
-                         mod = importlib.import_module(f"ember_ml.nn.modules.{subpackage}")
-                         if hasattr(mod, class_name):
-                             module_class = getattr(mod, class_name)
-                             break
-                     except (ImportError, AttributeError):
-                         continue
-                 if module_class is None:
-                      raise ImportError(f"Could not find module class '{class_name}' for deserialization.")
-
-            # Reconstruct the module using its from_config
-            module_instance = module_class.from_config(module_config)
-            reconstructed_modules[registered_name] = module_instance
-
-        # Create Sequential instance using the reconstructed OrderedDict
-        instance = cls(reconstructed_modules)
-        return instance
+        Returns:
+            Number of layers
+        """
+        return len(self.layers)

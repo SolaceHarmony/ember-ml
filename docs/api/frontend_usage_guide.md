@@ -291,12 +291,16 @@ ltc = LTC(
     batch_first=True
 )
 
-# Create a CfC Cell first
-from ember_ml.nn.modules.rnn import CfCCell
-cell_cfc = CfCCell(input_size=10, hidden_size=20)
-# Create a CFC (Closed-form Continuous-time) network using the cell
+# Create a CFC (Closed-form Continuous-time) network
+from ember_ml.nn.modules.wiring import NCPMap
+neuron_map_cfc = NCPMap(
+    inter_neurons=10,
+    command_neurons=5,
+    motor_neurons=5,
+    sensory_neurons=10
+)
 cfc = CFC(
-    cell_or_map=cell_cfc,
+    neuron_map=neuron_map_cfc,
     batch_first=True
 )
 

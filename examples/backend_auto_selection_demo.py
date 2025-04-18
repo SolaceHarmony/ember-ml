@@ -85,9 +85,10 @@ def demonstrate_auto_selection():
 def demonstrate_backend_switching():
     """Demonstrate switching between backends."""
     print("Demonstrating Backend Switching:")
-    
+    from ember_ml import ops
     # Save the original backend and device
     original_backend = get_backend()
+    ops.set_backend(original_backend)
     # Create a dummy tensor to get the device
     dummy = nl.zeros((1, 1))
     original_device = get_device(dummy)

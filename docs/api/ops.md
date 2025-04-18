@@ -96,7 +96,7 @@ from ember_ml import ops
 
 | Function | Description |
 |----------|-------------|
-| `ops.mean_squared_error(y_true, y_pred)` | Mean squared error loss |
+| `ops.mse(y_true, y_pred)` | Mean squared error loss |
 | `ops.mean_absolute_error(y_true, y_pred)` | Mean absolute error loss |
 | `ops.binary_crossentropy(y_true, y_pred, from_logits=False)` | Binary crossentropy loss |
 | `ops.categorical_crossentropy(y_true, y_pred, from_logits=False)` | Categorical crossentropy loss |

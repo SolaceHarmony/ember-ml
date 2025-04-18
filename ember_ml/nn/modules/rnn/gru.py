@@ -5,11 +5,11 @@ This module provides an implementation of the GRU layer,
 which wraps a GRUCell to create a recurrent layer.
 """
 
-from typing import Optional, List, Dict, Any, Union, Tuple
+from typing import Dict, Any
 
 from ember_ml import ops
 from ember_ml.nn.modules import Module
-from ember_ml.nn.modules.rnn.gru_cell import GRUCell
+# Removed GRUCell import
 from ember_ml.nn import tensor
 
 class GRU(Module):
@@ -30,6 +30,12 @@ class GRU(Module):
         bidirectional: bool = False,
         return_sequences: bool = True,
         return_state: bool = False,
+        use_bias: bool = True,
+        activation: str = "tanh",
+        recurrent_activation: str = "sigmoid",
+        kernel_initializer: str = "glorot_uniform",
+        recurrent_initializer: str = "orthogonal",
+        bias_initializer: str = "zeros",
         **kwargs
     ):
         """
@@ -59,36 +65,97 @@ class GRU(Module):
         self.return_sequences = return_sequences
         self.return_state = return_state
         
-        # Create GRU cells for each layer and direction
-        self.forward_cells = []
-        self.backward_cells = []
+        # GRUCell parameters
+        self.use_bias = use_bias
+        self.activation = activation
+        self.recurrent_activation = recurrent_activation
+        self.kernel_initializer = kernel_initializer
+        self.recurrent_initializer = recurrent_initializer
+        self.bias_initializer = bias_initializer
+        
+        # Initialize parameters for GRU cells
+        self._initialize_parameters()
+        
+    def _initialize_parameters(self):
+        """Initialize parameters for GRU cells."""
+        from ember_ml.nn.initializers import glorot_uniform, orthogonal
         
         # Input size for the first layer is the input size
         # For subsequent layers, it's the hidden size (or 2x hidden size if bidirectional)
-        layer_input_size = input_size
+        layer_input_size = self.input_size
         
-        for layer in range(num_layers):
-            # Forward direction cell
-            self.forward_cells.append(
-                GRUCell(
-                    input_size=layer_input_size,
-                    hidden_size=hidden_size,
-                    bias=bias
-                )
-            )
+        # Initialize parameters for each layer
+        self.kernel_z = []
+        self.kernel_r = []
+        self.kernel_h = []
+        self.recurrent_kernel_z = []
+        self.recurrent_kernel_r = []
+        self.recurrent_kernel_h = []
+        self.bias_z = []
+        self.bias_r = []
+        self.bias_h = []
+        self.recurrent_bias_z = []
+        self.recurrent_bias_r = []
+        self.recurrent_bias_h = []
+        
+        # For bidirectional GRU
+        if self.bidirectional:
+            self.backward_kernel_z = []
+            self.backward_kernel_r = []
+            self.backward_kernel_h = []
+            self.backward_recurrent_kernel_z = []
+            self.backward_recurrent_kernel_r = []
+            self.backward_recurrent_kernel_h = []
+            self.backward_bias_z = []
+            self.backward_bias_r = []
+            self.backward_bias_h = []
+            self.backward_recurrent_bias_z = []
+            self.backward_recurrent_bias_r = []
+            self.backward_recurrent_bias_h = []
+        
+        for layer in range(self.num_layers):
+            # Forward direction parameters
+            self.kernel_z.append(glorot_uniform((layer_input_size, self.hidden_size)))
+            self.kernel_r.append(glorot_uniform((layer_input_size, self.hidden_size)))
+            self.kernel_h.append(glorot_uniform((layer_input_size, self.hidden_size)))
             
-            # Backward direction cell (if bidirectional)
-            if bidirectional:
-                self.backward_cells.append(
-                    GRUCell(
-                        input_size=layer_input_size,
-                        hidden_size=hidden_size,
-                        bias=bias
-                    )
-                )
+            self.recurrent_kernel_z.append(orthogonal((self.hidden_size, self.hidden_size)))
+            self.recurrent_kernel_r.append(orthogonal((self.hidden_size, self.hidden_size)))
+            self.recurrent_kernel_h.append(orthogonal((self.hidden_size, self.hidden_size)))
+            
+            if self.use_bias:
+                self.bias_z.append(tensor.zeros((self.hidden_size,)))
+                self.bias_r.append(tensor.zeros((self.hidden_size,)))
+                self.bias_h.append(tensor.zeros((self.hidden_size,)))
+                
+                self.recurrent_bias_z.append(tensor.zeros((self.hidden_size,)))
+                self.recurrent_bias_r.append(tensor.zeros((self.hidden_size,)))
+                self.recurrent_bias_h.append(tensor.zeros((self.hidden_size,)))
+            
+            # Backward direction parameters (if bidirectional)
+            if self.bidirectional:
+                self.backward_kernel_z.append(glorot_uniform((layer_input_size, self.hidden_size)))
+                self.backward_kernel_r.append(glorot_uniform((layer_input_size, self.hidden_size)))
+                self.backward_kernel_h.append(glorot_uniform((layer_input_size, self.hidden_size)))
+                
+                self.backward_recurrent_kernel_z.append(orthogonal((self.hidden_size, self.hidden_size)))
+                self.backward_recurrent_kernel_r.append(orthogonal((self.hidden_size, self.hidden_size)))
+                self.backward_recurrent_kernel_h.append(orthogonal((self.hidden_size, self.hidden_size)))
+                
+                if self.use_bias:
+                    self.backward_bias_z.append(tensor.zeros((self.hidden_size,)))
+                    self.backward_bias_r.append(tensor.zeros((self.hidden_size,)))
+                    self.backward_bias_h.append(tensor.zeros((self.hidden_size,)))
+                    
+                    self.backward_recurrent_bias_z.append(tensor.zeros((self.hidden_size,)))
+                    self.backward_recurrent_bias_r.append(tensor.zeros((self.hidden_size,)))
+                    self.backward_recurrent_bias_h.append(tensor.zeros((self.hidden_size,)))
             
             # Update input size for the next layer
-            layer_input_size = hidden_size * (2 if bidirectional else 1)
+            if self.bidirectional:
+                layer_input_size = ops.multiply(self.hidden_size, 2)
+            else:
+                layer_input_size = self.hidden_size
     
     def forward(self, inputs, initial_state=None):
         """
@@ -135,12 +202,15 @@ class GRU(Module):
         final_h_states = []
         
         for layer in range(self.num_layers):
-            # Get cells for this layer
-            forward_cell = self.forward_cells[layer]
-            backward_cell = self.backward_cells[layer] if self.bidirectional else None
+            # Create GRU cells for this layer
+            # Since we removed GRUCell, we'll implement the GRU logic directly here
+            # This is a temporary solution until we refactor the GRU layer completely
             
             # Get initial states for this layer
-            layer_idx = layer * (2 if self.bidirectional else 1)
+            if self.bidirectional:
+                layer_idx = ops.multiply(layer, 2)
+            else:
+                layer_idx = layer
             forward_h = h_states[layer_idx]
             
             if self.bidirectional:
@@ -158,21 +228,94 @@ class GRU(Module):
                 else:
                     current_input = layer_outputs[t]
                 
-                # Apply forward cell
-                forward_h, [forward_h] = forward_cell(current_input, [forward_h])
+                # GRU forward pass implementation
+                # Input projection
+                x_z = ops.matmul(current_input, self.kernel_z[layer])
+                x_r = ops.matmul(current_input, self.kernel_r[layer])
+                x_h = ops.matmul(current_input, self.kernel_h[layer])
+                
+                # Recurrent projection
+                h_z = ops.matmul(forward_h, self.recurrent_kernel_z[layer])
+                h_r = ops.matmul(forward_h, self.recurrent_kernel_r[layer])
+                h_h = ops.matmul(forward_h, self.recurrent_kernel_h[layer])
+                
+                # Add bias if needed
+                if self.use_bias:
+                    x_z = ops.add(x_z, self.bias_z[layer])
+                    x_r = ops.add(x_r, self.bias_r[layer])
+                    x_h = ops.add(x_h, self.bias_h[layer])
+                    h_z = ops.add(h_z, self.recurrent_bias_z[layer])
+                    h_r = ops.add(h_r, self.recurrent_bias_r[layer])
+                    h_h = ops.add(h_h, self.recurrent_bias_h[layer])
+                
+                # Compute gates using recurrent_activation
+                from ember_ml.nn.modules.activations import get_activation
+                rec_activation_fn = get_activation(self.recurrent_activation)
+                z = rec_activation_fn(ops.add(x_z, h_z))  # Update gate
+                r = rec_activation_fn(ops.add(x_r, h_r))  # Reset gate
+                
+                # Compute candidate hidden state using activation
+                activation_fn = get_activation(self.activation)
+                h_tilde = activation_fn(ops.add(x_h, ops.multiply(r, h_h)))
+                
+                # Compute new hidden state
+                one_minus_z = ops.subtract(tensor.ones_like(z), z)
+                scaled_h_tilde = ops.multiply(one_minus_z, h_tilde)
+                scaled_prev_h = ops.multiply(z, forward_h)
+                forward_h = ops.add(scaled_prev_h, scaled_h_tilde)
                 forward_outputs.append(forward_h)
             
             # Backward direction (if bidirectional)
             if self.bidirectional:
-                for t in range(seq_length - 1, -1, -1):
+                # Create a list of indices in reverse order
+                indices = []
+                for i in range(seq_length):
+                    idx = ops.subtract(ops.subtract(seq_length, 1), i)
+                    indices.append(idx)
+                
+                # Process each index
+                for t in indices:
                     # Get input for current time step
                     if self.batch_first:
                         current_input = layer_outputs[:, t]
                     else:
                         current_input = layer_outputs[t]
                     
-                    # Apply backward cell
-                    backward_h, [backward_h] = backward_cell(current_input, [backward_h])
+                    # GRU backward pass implementation
+                    # Input projection
+                    x_z = ops.matmul(current_input, self.backward_kernel_z[layer])
+                    x_r = ops.matmul(current_input, self.backward_kernel_r[layer])
+                    x_h = ops.matmul(current_input, self.backward_kernel_h[layer])
+                    
+                    # Recurrent projection
+                    h_z = ops.matmul(backward_h, self.backward_recurrent_kernel_z[layer])
+                    h_r = ops.matmul(backward_h, self.backward_recurrent_kernel_r[layer])
+                    h_h = ops.matmul(backward_h, self.backward_recurrent_kernel_h[layer])
+                    
+                    # Add bias if needed
+                    if self.use_bias:
+                        x_z = ops.add(x_z, self.backward_bias_z[layer])
+                        x_r = ops.add(x_r, self.backward_bias_r[layer])
+                        x_h = ops.add(x_h, self.backward_bias_h[layer])
+                        h_z = ops.add(h_z, self.backward_recurrent_bias_z[layer])
+                        h_r = ops.add(h_r, self.backward_recurrent_bias_r[layer])
+                        h_h = ops.add(h_h, self.backward_recurrent_bias_h[layer])
+                    
+                    # Compute gates using recurrent_activation
+                    from ember_ml.nn.modules.activations import get_activation
+                    rec_activation_fn = get_activation(self.recurrent_activation)
+                    z = rec_activation_fn(ops.add(x_z, h_z))  # Update gate
+                    r = rec_activation_fn(ops.add(x_r, h_r))  # Reset gate
+                    
+                    # Compute candidate hidden state using activation
+                    activation_fn = get_activation(self.activation)
+                    h_tilde = activation_fn(ops.add(x_h, ops.multiply(r, h_h)))
+                    
+                    # Compute new hidden state
+                    one_minus_z = ops.subtract(tensor.ones_like(z), z)
+                    scaled_h_tilde = ops.multiply(one_minus_z, h_tilde)
+                    scaled_prev_h = ops.multiply(z, backward_h)
+                    backward_h = ops.add(scaled_prev_h, scaled_h_tilde)
                     backward_outputs.insert(0, backward_h)
             
             # Combine outputs
@@ -191,7 +334,8 @@ class GRU(Module):
                 layer_outputs = tensor.stack(combined_outputs, axis=0)
             
             # Apply dropout (except for the last layer)
-            if layer < self.num_layers - 1 and self.dropout > 0:
+            is_last_layer = ops.equal(layer, ops.subtract(self.num_layers, 1))
+            if not is_last_layer and self.dropout > 0:
                 layer_outputs = ops.dropout(layer_outputs, self.dropout)
             
             # Store final states for this layer
@@ -256,12 +400,18 @@ class GRU(Module):
             "bidirectional": self.bidirectional,
             "return_sequences": self.return_sequences,
             "return_state": self.return_state,
+            "use_bias": self.use_bias,
+            "activation": self.activation,
+            "recurrent_activation": self.recurrent_activation,
+            "kernel_initializer": self.kernel_initializer,
+            "recurrent_initializer": self.recurrent_initializer,
+            "bias_initializer": self.bias_initializer
         })
         # Cell is reconstructed in __init__ based on these args
         return config
 
     @classmethod
-    def from_config(cls, config: Dict[str, Any]) -> 'GRU':
+    def from_config(cls, config: Dict[str, Any]):
         """Creates a GRU layer from its configuration."""
-        # BaseModule.from_config handles calling cls(**config)
-        return super(GRU, cls).from_config(config)
+        # Create instance directly from config
+        return cls(**config)

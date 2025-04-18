@@ -523,7 +523,7 @@ def integrate_liquid_neurons_with_visualization(
             outputs = model['outputs']['main']
             
             # Compute loss
-            loss = ops.mean_squared_error(batch_y, outputs)
+            loss = ops.mse(batch_y, outputs)
             mae = ops.mean_absolute_error(batch_y, outputs)
             
             # Update metrics
@@ -556,7 +556,7 @@ def integrate_liquid_neurons_with_visualization(
             outputs = model['outputs']['main']
             
             # Compute loss
-            loss = ops.mean_squared_error(batch_y, outputs)
+            loss = ops.mse(batch_y, outputs)
             mae = ops.mean_absolute_error(batch_y, outputs)
             
             # Update metrics
@@ -598,7 +598,7 @@ def integrate_liquid_neurons_with_visualization(
         outputs = model['outputs']['main']
         
         # Compute loss
-        loss = ops.mean_squared_error(batch_y, outputs)
+        loss = ops.mse(batch_y, outputs)
         mae = ops.mean_absolute_error(batch_y, outputs)
         
         # Update metrics

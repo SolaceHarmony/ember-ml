@@ -195,10 +195,10 @@ def set_device(device):
             raise ValueError(f"Invalid device for PyTorch: {device_str}")
         torch.device(device_str)
     elif backend == 'mlx':
-        import mlx.core as mx
+        import mlx
         # MLX uses 'gpu' or 'cpu' internally
         if device_str in ['metal', 'gpu']:
-            # MLX doesn't support explicit device setting yet
+            mlx.core.metal.set_device(mlx.core.DeviceType.gpu)
             return
         if device_str != 'cpu':
             raise ValueError(f"Invalid device for MLX: {device_str}")

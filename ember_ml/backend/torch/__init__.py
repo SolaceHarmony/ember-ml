@@ -50,7 +50,7 @@ __all__ = [
     'partial_interference', 'fft', 'ifft', 'fft2', 'ifft2', 'fftn',
     'ifftn', 'rfft', 'irfft', 'rfft2', 'irfft2', 'rfftn', 'irfftn', # Removed gaussian
     # Loss Ops Functions (added)
-    'mean_squared_error', 'mean_absolute_error', 'binary_crossentropy', 'categorical_crossentropy',
+    'mse', 'mean_absolute_error', 'binary_crossentropy', 'categorical_crossentropy',
     'sparse_categorical_crossentropy', 'huber_loss', 'log_cosh_loss',
 
     # Functional Tensor Ops (from tensor.ops - added)
@@ -173,7 +173,7 @@ from ember_ml.backend.torch.io_ops import (
 
 # Import specific functions from loss_ops (Added)
 from ember_ml.backend.torch.loss_ops import (
-   mean_squared_error, mean_absolute_error, binary_crossentropy, categorical_crossentropy,
+   mse, mean_absolute_error, binary_crossentropy, categorical_crossentropy,
    sparse_categorical_crossentropy, huber_loss, log_cosh_loss
 )
 

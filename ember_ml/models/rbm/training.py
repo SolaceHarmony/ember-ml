@@ -9,6 +9,7 @@ import json
 
 from ember_ml import ops
 from ember_ml.nn import tensor
+from ember_ml.nn.container import Linear
 
 def contrastive_divergence_step(rbm, batch_data, k=1):
     """

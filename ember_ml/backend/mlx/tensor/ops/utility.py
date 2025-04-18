@@ -45,7 +45,7 @@ def _validate_and_get_mlx_dtype(dtype: Optional[Any]) -> Optional[mx.Dtype]:
         elif dtype_name == 'int64':
             return mx.int64
         elif dtype_name in ('bool', 'bool_'):
-            return getattr(mx, 'bool_', mx.uint8) # Fallback
+            return mx.bool_ # Fallback
         elif dtype_name == 'int8':
             return mx.int8
         elif dtype_name == 'int16':
@@ -478,7 +478,11 @@ def _create_new_tensor(creation_func: callable, dtype: Optional[Any] = None, dev
     if 'shape' in kwargs:
         shape_arg = kwargs['shape']
         if isinstance(shape_arg, int):
-            kwargs['shape'] = (shape_arg,)
+            # Special case: if shape is 0, treat it as a scalar tensor
+            if shape_arg == 0:
+                kwargs['shape'] = (1,)  # Create a 1D tensor with a single element
+            else:
+                kwargs['shape'] = (shape_arg,)
         elif not isinstance(shape_arg, tuple):
             kwargs['shape'] = tuple(shape_arg)
 

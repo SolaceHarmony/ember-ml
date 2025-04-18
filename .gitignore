@@ -188,3 +188,8 @@ tests/test_ops_tensor_results.txt
 outputs/
 examples/rbm/telemetry_data.csv
 telemetry_data.csv
+.roo/system-prompt-leading-with-vulnerability
+.roo/system-prompt-weights-removal-discussion
+.roo/system-prompt-weights-removal-discussion
+.roo/system-prompt-weights-removal-discussion
+.roo/system-prompt-weights-removal-discussion

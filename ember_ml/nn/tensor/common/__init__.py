@@ -65,42 +65,9 @@ tile = lambda *args, **kwargs: _get_backend_tensor_ops_module().tile(*args, **kw
 gather = lambda *args, **kwargs: _get_backend_tensor_ops_module().gather(*args, **kwargs)
 scatter = lambda *args, **kwargs: _get_backend_tensor_ops_module().scatter(*args, **kwargs)
 tensor_scatter_nd_update = lambda *args, **kwargs: _get_backend_tensor_ops_module().tensor_scatter_nd_update(*args, **kwargs)
-# Define slice as a function that handles both callable and non-callable backend slices
-def slice(data, starts=None, sizes=None, begin=None, size=None):
-    """
-    Extract a slice from a tensor.
-    
-    This function supports both parameter naming conventions:
-    - starts/sizes (backend native)
-    - begin/size (used in tests)
-    
-    Args:
-        data: Input tensor
-        starts: Starting indices for each dimension (backend native)
-        sizes: Size of the slice in each dimension (backend native)
-        begin: Starting indices for each dimension (alternative name used in tests)
-        size: Size of the slice in each dimension (alternative name used in tests)
-        
-    Returns:
-        Sliced tensor
-    """
-    # Use the parameters that are provided, with priority to starts/sizes
-    actual_starts = starts if starts is not None else begin
-    actual_sizes = sizes if sizes is not None else size
-    
-    if actual_starts is None or actual_sizes is None:
-        raise ValueError("Either (starts, sizes) or (begin, size) must be provided")
-        
-    # Use the slice function directly from the backend ops module
-    # Note: NumPy uses 'slice_tensor' in its ops module, others might use 'slice'.
-    # We might need a lookup or consistent naming. Assuming 'slice' for now.
-    # Revisit if errors occur for specific backends.
-    ops_module = _get_backend_tensor_ops_module()
-    slice_func = getattr(ops_module, 'slice', getattr(ops_module, 'slice_tensor', None))
-    if slice_func:
-        return slice_func(data, actual_starts, actual_sizes)
-    else:
-        raise AttributeError(f"Backend '{get_backend()}' tensor ops module does not have a 'slice' or 'slice_tensor' function.")
+index_update = lambda *args, **kwargs: _get_backend_tensor_ops_module().index_update(*args, **kwargs)
+# Use slice_tensor directly to avoid conflicts with built-in slice
+slice_tensor = lambda *args, **kwargs: _get_backend_tensor_ops_module().slice_tensor(*args, **kwargs)
 slice_update = lambda *args, **kwargs: _get_backend_tensor_ops_module().slice_update(*args, **kwargs)
 
 # Rename the current function to indicate it's internal
@@ -192,7 +159,8 @@ __all__ = [
     'gather',
     'scatter',
     'tensor_scatter_nd_update',
-    'slice',
+    'index_update',
+    'slice_tensor',
     'slice_update',
     'shape',
     'dtype',

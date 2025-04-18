@@ -14,18 +14,19 @@ def _get_rnn_params():
     seq_len = 3
     return input_size, hidden_size, batch_size, seq_len
 
-def test_rnn_cell_forward_torch(torch_backend): # Use fixture
-    """Tests RNNCell forward pass shape with PyTorch backend."""
+def test_rnn_forward_torch(torch_backend): # Use fixture
+    """Tests RNN layer single step forward pass with PyTorch backend."""
     input_size, hidden_size, batch_size, _ = _get_rnn_params()
-    cell = modules.RNNCell(input_size, hidden_size)
-    x_t = tensor.random_normal((batch_size, input_size))
-    h_prev = tensor.random_normal((batch_size, hidden_size))
-    # cell.forward returns output, new_state where new_state=[h_next]
-    output, new_state = cell(x_t, [h_prev]) # Pass state as list
-    h_next = output # For simple RNN, output is the new hidden state
-    assert tensor.shape(h_next) == (batch_size, hidden_size), "Shape mismatch"
-    assert isinstance(new_state, list) and len(new_state) == 1, "New state should be a list with one element"
-    assert tensor.shape(new_state[0]) == (batch_size, hidden_size), "State shape mismatch"
+    layer = modules.RNN(input_size, hidden_size, return_sequences=False, return_state=True)
+    x_t = tensor.random_normal((batch_size, 1, input_size))  # Single time step
+    h_prev = tensor.zeros((1, batch_size, hidden_size))  # Initial state
+    
+    # Forward pass with initial state
+    output, new_state = layer(x_t, h_prev)
+    
+    # Check shapes
+    assert tensor.shape(output) == (batch_size, hidden_size), "Output shape mismatch"
+    assert tensor.shape(new_state[0]) == (1, batch_size, hidden_size), "State shape mismatch"
 
 def test_rnn_layer_forward_torch(torch_backend): # Use fixture
     """Tests RNN layer forward pass shape with PyTorch backend."""
@@ -43,21 +44,22 @@ def test_rnn_layer_forward_torch(torch_backend): # Use fixture
     # Shape is (num_layers * num_directions, batch_size, hidden_size)
     assert tensor.shape(h_final) == (1, batch_size, hidden_size), "h_final shape mismatch"
 
-def test_lstm_cell_forward_torch(torch_backend): # Use fixture
-    """Tests LSTMCell forward pass shape with PyTorch backend."""
+def test_lstm_forward_torch(torch_backend): # Use fixture
+    """Tests LSTM layer single step forward pass with PyTorch backend."""
     input_size, hidden_size, batch_size, _ = _get_rnn_params()
-    cell = modules.LSTMCell(input_size, hidden_size)
-    x_t = tensor.random_normal((batch_size, input_size))
-    h_prev = tensor.random_normal((batch_size, hidden_size))
-    c_prev = tensor.random_normal((batch_size, hidden_size))
-    # cell.forward returns output, new_state where new_state=[h_next, c_next]
-    output, new_state = cell(x_t, [h_prev, c_prev]) # Pass state as list
-    h_next = output # For LSTM, output is the new hidden state h_next
-    c_next = new_state[1] # Get cell state c_next from new_state list
-    assert tensor.shape(h_next) == (batch_size, hidden_size), "h_next shape mismatch"
-    assert tensor.shape(c_next) == (batch_size, hidden_size), "c_next shape mismatch"
-    assert isinstance(new_state, list) and len(new_state) == 2, "New state should be a list with two elements"
-    assert tensor.shape(new_state[0]) == (batch_size, hidden_size), "h_next state shape mismatch"
+    layer = modules.LSTM(input_size, hidden_size, return_sequences=False, return_state=True)
+    x_t = tensor.random_normal((batch_size, 1, input_size))  # Single time step
+    h_prev = tensor.zeros((1, batch_size, hidden_size))  # Initial hidden state
+    c_prev = tensor.zeros((1, batch_size, hidden_size))  # Initial cell state
+    
+    # Forward pass with initial state
+    output, new_state = layer(x_t, (h_prev, c_prev))
+    h_next, c_next = new_state  # Unpack state tuple
+    
+    # Check shapes
+    assert tensor.shape(output) == (batch_size, hidden_size), "Output shape mismatch"
+    assert tensor.shape(h_next) == (1, batch_size, hidden_size), "h_next shape mismatch"
+    assert tensor.shape(c_next) == (1, batch_size, hidden_size), "c_next shape mismatch"
 
 def test_lstm_layer_forward_torch(torch_backend): # Use fixture
     """Tests LSTM layer forward pass shape with PyTorch backend."""
@@ -76,18 +78,19 @@ def test_lstm_layer_forward_torch(torch_backend): # Use fixture
     assert tensor.shape(h_final) == (1, batch_size, hidden_size), "h_final shape mismatch"
     assert tensor.shape(c_final) == (1, batch_size, hidden_size), "c_final shape mismatch"
 
-def test_gru_cell_forward_torch(torch_backend): # Use fixture
-    """Tests GRUCell forward pass shape with PyTorch backend."""
+def test_gru_forward_torch(torch_backend): # Use fixture
+    """Tests GRU layer single step forward pass with PyTorch backend."""
     input_size, hidden_size, batch_size, _ = _get_rnn_params()
-    cell = modules.GRUCell(input_size, hidden_size)
-    x_t = tensor.random_normal((batch_size, input_size))
-    h_prev = tensor.random_normal((batch_size, hidden_size))
-    # cell.forward returns output, new_state where new_state=[h_next]
-    output, new_state = cell(x_t, [h_prev]) # Pass state as list
-    h_next = output # For GRU, output is the new hidden state
-    assert tensor.shape(h_next) == (batch_size, hidden_size), "Shape mismatch"
-    assert isinstance(new_state, list) and len(new_state) == 1, "New state should be a list with one element"
-    assert tensor.shape(new_state[0]) == (batch_size, hidden_size), "State shape mismatch"
+    layer = modules.GRU(input_size, hidden_size, return_sequences=False, return_state=True)
+    x_t = tensor.random_normal((batch_size, 1, input_size))  # Single time step
+    h_prev = tensor.zeros((1, batch_size, hidden_size))  # Initial state
+    
+    # Forward pass with initial state
+    output, new_state = layer(x_t, h_prev)
+    
+    # Check shapes
+    assert tensor.shape(output) == (batch_size, hidden_size), "Output shape mismatch"
+    assert tensor.shape(new_state[0]) == (1, batch_size, hidden_size), "State shape mismatch"
 
 def test_gru_layer_forward_torch(torch_backend): # Use fixture
     """Tests GRU layer forward pass shape with PyTorch backend."""

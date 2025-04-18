@@ -10,16 +10,41 @@ EPSILON = 1e-7
 
 # --- Standalone Loss Functions ---
 
-def mean_squared_error(y_true: TensorLike, y_pred: TensorLike,
+def mse(y_true: TensorLike, y_pred: TensorLike,
                        axis: Optional[Union[int, Sequence[int]]] = None,
-                       keepdims: bool = False) -> np.ndarray:
-    """NumPy implementation of mean squared error."""
+                       keepdims: bool = False,
+                       reduction: str = 'mean') -> np.ndarray:
+    """
+    Compute the mean squared error between predictions and targets.
+    
+    Args:
+        y_true: Target values
+        y_pred: Predicted values
+        axis: Axis or axes along which to compute the MSE
+        keepdims: Whether to keep the reduced dimensions
+        reduction: Type of reduction to apply ('mean', 'sum', or 'none')
+        
+    Returns:
+        Mean squared error
+    """
     from ember_ml.backend.numpy.tensor import NumpyTensor # Lazy load
     tensor = NumpyTensor()
     y_true_arr = tensor.convert_to_tensor(data=y_true)
     y_pred_arr = tensor.convert_to_tensor(data=y_pred)
+    
+    # Calculate squared difference
     squared_diff = np.square(y_pred_arr - y_true_arr)
-    return np.mean(squared_diff, axis=axis, keepdims=keepdims)
+    
+    # Apply reduction
+    if reduction == 'none':
+        return squared_diff
+    elif reduction == 'mean':
+        return np.mean(squared_diff, axis=axis, keepdims=keepdims)
+    elif reduction == 'sum':
+        return np.sum(squared_diff, axis=axis, keepdims=keepdims)
+    else:
+        raise ValueError(f"Invalid reduction: {reduction}")
+
 
 def mean_absolute_error(y_true: TensorLike, y_pred: TensorLike,
                          axis: Optional[Union[int, Sequence[int]]] = None,

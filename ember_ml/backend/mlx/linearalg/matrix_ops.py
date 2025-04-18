@@ -221,16 +221,19 @@ def diag(x: TensorLike, k: int = 0) -> mx.array:
         m = n + abs(k)
             
         # Create a zero matrix
-        result = mx.zeros((m, m), dtype=x_array.dtype)
+        from ember_ml.backend.mlx.tensor.ops.creation import zeros
+        result = zeros((m, m), dtype=x_array.dtype)
        
         # Fill the diagonal
+        from ember_ml.backend.mlx.tensor.ops.indexing import scatter
+
         for i in range(n):
             if k >= 0:
                 # Diagonal above main
-                result = mx.scatter(result, mx.array([i, i + k]), x_array[i])
+                result = scatter(result, mx.array([i, i + k]), x_array[i])
             else:
                 # Diagonal below main
-                result = mx.scatter(result, mx.array([i - k, i]), x_array[i])
+                result = scatter(result, mx.array([i - k, i]), x_array[i])
                 
         return result
     
@@ -339,6 +342,8 @@ def diagonal(x: TensorLike, offset: int = 0, axis1: int = 0, axis2: int = 1) -> 
                 
         # Extract the diagonal element and set it in the result
         src_value = x_array[tuple(src_slice)]
-        result = mx.scatter(result, mx.array([i] + [slice(None)] * (len(dst_slice) - 1)), src_value)
+        from ember_ml.backend.mlx.tensor.ops.indexing import scatter
+
+        result = scatter(result, mx.array([i] + [slice(None)] * (len(dst_slice) - 1)), src_value)
     
     return result

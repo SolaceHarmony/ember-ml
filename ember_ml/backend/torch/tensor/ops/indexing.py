@@ -63,8 +63,7 @@ def slice_tensor(tensor: TensorLike, starts: Shape, sizes: Shape) -> torch.Tenso
     # Extract the slice
     return tensor_array[tuple(slice_objects)]
 
-# Alias for slice_tensor to match Torch naming
-slice = slice_tensor
+# No alias for slice_tensor to avoid conflicts with built-in slice
 
 def slice_update(data: TensorLike, slices: TensorLike, updates: Optional[TensorLike] = None) -> torch.Tensor:
     """
@@ -484,5 +483,46 @@ def scatter_softmax(data: TensorLike, indices: TensorLike, dim_size: Optional[in
     # Scatter the softmax values
     result = torch.zeros(output_shape, dtype=tensor_torch.dtype, device=tensor_torch.device)
     result = result.scatter_add_(axis, indices_torch, softmax_data)
+    
+    return result
+
+def index_update(tensor: TensorLike, *indices, value: TensorLike) -> torch.Tensor:
+    """
+    Update the tensor at the specified indices with the given value.
+    
+    Args:
+        tensor: The tensor to update
+        *indices: The indices to update (can be integers, slices, or tensors)
+        value: The value to set at the specified indices
+        
+    Returns:
+        Updated tensor
+    """
+    # Convert inputs to PyTorch tensors
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    tensor_torch = tensor_ops.convert_to_tensor(tensor)
+    value_torch = tensor_ops.convert_to_tensor(value)
+    
+    # Create a copy of the tensor to avoid in-place modification
+    result = tensor_torch.clone()
+    
+    # Handle different indexing patterns
+    if len(indices) == 1:
+        # Single index
+        idx = indices[0]
+        result[idx] = value_torch
+    elif len(indices) == 2:
+        # Two indices (common case for 2D tensors)
+        i, j = indices
+        result[i, j] = value_torch
+    elif len(indices) == 3:
+        # Three indices
+        i, j, k = indices
+        result[i, j, k] = value_torch
+    else:
+        # General case
+        idx_tuple = tuple(indices)
+        result[idx_tuple] = value_torch
     
     return result

@@ -487,34 +487,7 @@ def scatter_softmax(values: TensorLike, index: TensorLike, dim_size: int, axis: 
     
     # Zero out invalid indices
     return mx.where(valid_mask, softmax_result, mx.zeros_like(softmax_result))
-
-# Compatibility wrapper for slice that handles both parameter naming conventions
-def slice(tensor: TensorLike, starts=None, sizes=None, begin=None, size=None) -> mx.array:
-    """
-    Extract a slice from a tensor.
-    
-    This function supports both parameter naming conventions:
-    - starts/sizes (backend native)
-    - begin/size (used in tests)
-    
-    Args:
-        tensor: Input tensor
-        starts: Starting indices for each dimension (backend native)
-        sizes: Size of the slice in each dimension (backend native)
-        begin: Starting indices for each dimension (alternative name used in tests)
-        size: Size of the slice in each dimension (alternative name used in tests)
-        
-    Returns:
-        Sliced tensor
-    """
-    # Use the parameters that are provided, with priority to starts/sizes
-    actual_starts = starts if starts is not None else begin
-    actual_sizes = sizes if sizes is not None else size
-    
-    if actual_starts is None or actual_sizes is None:
-        raise ValueError("Either (starts, sizes) or (begin, size) must be provided")
-    
-    # Call the backend's slice_tensor function
+# No compatibility wrapper for slice_tensor to avoid conflicts with built-in slice
     return slice_tensor(tensor, actual_starts, actual_sizes)
 
 def nonzero(tensor: TensorLike) -> mx.array:
@@ -579,3 +552,45 @@ def meshgrid(*arrays: TensorLike, indexing: Literal['xy', 'ij'] = 'xy') -> List[
     result = mx.meshgrid(*mlx_arrays, indexing=mlx_indexing)
     # Convert MLX array to list of arrays if needed
     return list(result) if isinstance(result, (list, tuple)) else [result]
+
+def index_update(tensor: TensorLike, *indices, value: TensorLike) -> mx.array:
+    """
+    Update the tensor at the specified indices with the given value.
+    
+    Args:
+        tensor: The tensor to update
+        *indices: The indices to update (can be integers, slices, or arrays)
+        value: The value to set at the specified indices
+        
+    Returns:
+        Updated tensor
+    """
+    # Convert inputs to MLX arrays
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+    Tensor = MLXTensor()
+    tensor_array = Tensor.convert_to_tensor(tensor)
+    value_array = Tensor.convert_to_tensor(value)
+    
+    # Create a copy of the tensor
+    result = mx.array(tensor_array)
+    
+    # Handle different indexing patterns
+    if len(indices) == 1:
+        # Single index
+        idx = indices[0]
+        # Use MLX's at/set for updating
+        result = result.at[idx].set(value_array)
+    elif len(indices) == 2:
+        # Two indices (common case for 2D tensors)
+        i, j = indices
+        result = result.at[i, j].set(value_array)
+    elif len(indices) == 3:
+        # Three indices
+        i, j, k = indices
+        result = result.at[i, j, k].set(value_array)
+    else:
+        # General case
+        idx_tuple = tuple(indices)
+        result = result.at[idx_tuple].set(value_array)
+    
+    return result

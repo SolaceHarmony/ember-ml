@@ -44,21 +44,9 @@ def random_uniform(shape: Shape, minval: float = 0.0, maxval: float = 1.0,
     Returns:
         NumPy array with random uniform values
     """
-    # Note that NumPy's uniform takes low, high, size but not shape.
-    # We need to pass shape as the size parameter.
-    
-    # Create scalar tensors for min/max values using _create_new_tensor for consistency
-    minval_tensor = _create_new_tensor(np.array, dtype=dtype, device=device, object=minval)
-    maxval_tensor = _create_new_tensor(np.array, dtype=dtype, device=device, object=maxval)
-    
-    # Handle None shape
-    if shape is None:
-        shape = (1,)
-    
-    # Use the helper function, passing np.random.uniform and its specific args
+    # Use the helper function directly, passing np.random.uniform and its specific args
     # Note: np.random.uniform expects 'size' instead of 'shape'
-    return _create_new_tensor(np.random.uniform, dtype=dtype, device=device,
-                             size=shape, low=minval_tensor, high=maxval_tensor)
+    return _create_new_tensor(np.random.uniform, dtype=dtype, device=device, size=shape, low=minval, high=maxval)
 
 def random_binomial(shape: Shape, p: float = 0.5,
                    dtype: Optional[DType] = None, device: Optional[str] = None) -> np.ndarray:

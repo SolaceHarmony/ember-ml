@@ -5,12 +5,13 @@ This module provides an implementation of the LSTM layer,
 which wraps an LSTMCell to create a recurrent layer.
 """
 
-from typing import Optional, List, Dict, Any, Union, Tuple
+from typing import Dict, Any
 
 from ember_ml import ops
-from ember_ml.nn.modules import Module
-from ember_ml.nn.modules.rnn.lstm_cell import LSTMCell
+from ember_ml.nn.modules import Module, Parameter
 from ember_ml.nn import tensor
+from ember_ml.nn.initializers import glorot_uniform, orthogonal
+from ember_ml.nn.modules.activations import get_activation
 
 class LSTM(Module):
     """
@@ -30,6 +31,10 @@ class LSTM(Module):
         bidirectional: bool = False,
         return_sequences: bool = True,
         return_state: bool = False,
+        use_bias: bool = True,
+        kernel_initializer: str = "glorot_uniform",
+        recurrent_initializer: str = "orthogonal",
+        bias_initializer: str = "zeros",
         **kwargs
     ):
         """
@@ -59,36 +64,83 @@ class LSTM(Module):
         self.return_sequences = return_sequences
         self.return_state = return_state
         
-        # Create LSTM cells for each layer and direction
-        self.forward_cells = []
-        self.backward_cells = []
+        # LSTMCell parameters
+        self.use_bias = use_bias
+        self.kernel_initializer = kernel_initializer
+        self.recurrent_initializer = recurrent_initializer
+        self.bias_initializer = bias_initializer
+        
+        # Create lists for storing parameters
+        self.forward_cells: list = []
+        self.backward_cells: list = []
         
         # Input size for the first layer is the input size
         # For subsequent layers, it's the hidden size (or 2x hidden size if bidirectional)
         layer_input_size = input_size
         
         for layer in range(num_layers):
-            # Forward direction cell
-            self.forward_cells.append(
-                LSTMCell(
-                    input_size=layer_input_size,
-                    hidden_size=hidden_size,
-                    bias=bias
-                )
-            )
+            # Initialize parameters for this layer
+            self._initialize_layer_parameters(layer, layer_input_size)
+    
+    def _initialize_layer_parameters(self, layer, input_size):
+        """Initialize parameters for a specific layer."""
+        # Input weights
+        self.input_kernels = getattr(self, 'input_kernels', [])
+        self.recurrent_kernels = getattr(self, 'recurrent_kernels', [])
+        self.biases = getattr(self, 'biases', [])
+        
+        # Backward direction weights
+        self.backward_input_kernels = getattr(self, 'backward_input_kernels', [])
+        self.backward_recurrent_kernels = getattr(self, 'backward_recurrent_kernels', [])
+        self.backward_biases = getattr(self, 'backward_biases', [])
+        
+        # Forward direction weights
+        kernel_shape = (input_size, ops.multiply(self.hidden_size, 4))
+        recurrent_shape = (self.hidden_size, ops.multiply(self.hidden_size, 4))
+        
+        # Initialize forward weights
+        self.input_kernels.append(Parameter(glorot_uniform(kernel_shape)))
+        self.recurrent_kernels.append(Parameter(orthogonal(recurrent_shape)))
+        
+        if self.use_bias:
+            bias_shape = (ops.multiply(self.hidden_size, 4),)
+            bias_data = tensor.zeros(bias_shape)
             
-            # Backward direction cell (if bidirectional)
-            if bidirectional:
-                self.backward_cells.append(
-                    LSTMCell(
-                        input_size=layer_input_size,
-                        hidden_size=hidden_size,
-                        bias=bias
-                    )
-                )
+            # Initialize forget gate bias to 1.0 for better gradient flow
+            # Use a simpler approach that works with all backends
+            bias_data_list = bias_data.tolist() if hasattr(bias_data, 'tolist') else bias_data
             
-            # Update input size for the next layer
-            layer_input_size = hidden_size * (2 if bidirectional else 1)
+            # Set the forget gate bias (second quarter of the bias) to 1.0
+            hidden_size_int = int(self.hidden_size) if not isinstance(self.hidden_size, int) else self.hidden_size
+            for i in range(hidden_size_int, hidden_size_int * 2):
+                bias_data_list[i] = 1.0
+                
+            bias_data = tensor.convert_to_tensor(bias_data_list)
+            forget_gate_bias = tensor.ones((self.hidden_size,))
+            
+            
+            self.biases.append(Parameter(bias_data))
+        
+        # Initialize backward weights if bidirectional
+        if self.bidirectional:
+            self.backward_input_kernels.append(Parameter(glorot_uniform(kernel_shape)))
+            self.backward_recurrent_kernels.append(Parameter(orthogonal(recurrent_shape)))
+            
+            if self.use_bias:
+                backward_bias_data = tensor.zeros(bias_shape)
+                
+                # Initialize forget gate bias to 1.0 for better gradient flow
+                # Use a simpler approach that works with all backends
+                backward_bias_data_list = backward_bias_data.tolist() if hasattr(backward_bias_data, 'tolist') else backward_bias_data
+                
+                # Set the forget gate bias (second quarter of the bias) to 1.0
+                for i in range(hidden_size_int, hidden_size_int * 2):
+                    backward_bias_data_list[i] = 1.0
+                    
+                backward_bias_data = tensor.convert_to_tensor(backward_bias_data_list)
+                
+                self.backward_biases.append(Parameter(backward_bias_data))
+            
     
     def forward(self, inputs, initial_state=None):
         """
@@ -139,12 +191,21 @@ class LSTM(Module):
         final_c_states = []
         
         for layer in range(self.num_layers):
-            # Get cells for this layer
-            forward_cell = self.forward_cells[layer]
-            backward_cell = self.backward_cells[layer] if self.bidirectional else None
+            # Get parameters for this layer
+            input_kernel = self.input_kernels[layer]
+            recurrent_kernel = self.recurrent_kernels[layer]
+            bias = self.biases[layer] if self.use_bias else None
+            
+            if self.bidirectional:
+                backward_input_kernel = self.backward_input_kernels[layer]
+                backward_recurrent_kernel = self.backward_recurrent_kernels[layer]
+                backward_bias = self.backward_biases[layer] if self.use_bias else None
             
             # Get initial states for this layer
-            layer_idx = layer * (2 if self.bidirectional else 1)
+            if self.bidirectional:
+                layer_idx = ops.multiply(layer, 2)
+            else:
+                layer_idx = layer
             forward_h = h_states[layer_idx]
             forward_c = c_states[layer_idx]
             
@@ -157,41 +218,85 @@ class LSTM(Module):
             backward_outputs = []
             
             # Forward direction
-            for t in range(seq_length):
+            for t in list(range(seq_length)):
                 # Get input for current time step
                 if self.batch_first:
                     current_input = layer_outputs[:, t]
                 else:
                     current_input = layer_outputs[t]
                 
-                # Apply forward cell
-                # forward_cell returns (output, new_state=[h_next, c_next])
-                output, new_state = forward_cell(current_input, [forward_h, forward_c])
-                forward_h = output # Output is the new hidden state for this step
-                forward_c = new_state[1] # Update cell state from list
+                # LSTM forward pass implementation
+                # Project input
+                z = ops.matmul(current_input, input_kernel)
+                z = ops.add(z, ops.matmul(forward_h, recurrent_kernel))
+                if self.use_bias:
+                    z = ops.add(z, bias)
+                
+                # Split into gates
+                z_chunks = tensor.split(z, 4, axis=-1)
+                z_i, z_f, z_o, z_c = z_chunks
+                
+                # Apply activations
+                activation_fn = get_activation("tanh")
+                rec_activation_fn = get_activation("sigmoid")
+                
+                i = rec_activation_fn(z_i)  # Input gate
+                f = rec_activation_fn(z_f)  # Forget gate
+                o = rec_activation_fn(z_o)  # Output gate
+                c = activation_fn(z_c)      # Cell input
+                
+                # Update cell state
+                forward_c = ops.add(ops.multiply(f, forward_c), ops.multiply(i, c))
+                
+                # Update hidden state
+                forward_h = ops.multiply(o, activation_fn(forward_c))
                 forward_outputs.append(forward_h)
             
             # Backward direction (if bidirectional)
             if self.bidirectional:
-                for t in range(seq_length - 1, -1, -1):
+                # Process in reverse order
+                reversed_indices = []
+                for i in range(seq_length):
+                    idx = ops.subtract(ops.subtract(seq_length, 1), i)
+                    reversed_indices.append(idx)
+                
+                # Process each index
+                for t in reversed_indices:
                     # Get input for current time step
                     if self.batch_first:
                         current_input = layer_outputs[:, t]
                     else:
                         current_input = layer_outputs[t]
                     
-                    # Apply backward cell
-                    # backward_cell returns (output, new_state=[h_next, c_next])
-                    output, new_state = backward_cell(current_input, [backward_h, backward_c])
-                    backward_h = output # Output is the new hidden state for this step
-                    backward_c = new_state[1] # Update cell state from list
+                    # LSTM backward pass implementation
+                    # Project input
+                    z = ops.matmul(current_input, backward_input_kernel)
+                    z = ops.add(z, ops.matmul(backward_h, backward_recurrent_kernel))
+                    if self.use_bias:
+                        z = ops.add(z, backward_bias)
+                    
+                    # Split into gates
+                    z_chunks = tensor.split(z, 4, axis=-1)
+                    z_i, z_f, z_o, z_c = z_chunks
+                    
+                    # Apply activations
+                    i = rec_activation_fn(z_i)  # Input gate
+                    f = rec_activation_fn(z_f)  # Forget gate
+                    o = rec_activation_fn(z_o)  # Output gate
+                    c = activation_fn(z_c)      # Cell input
+                    
+                    # Update cell state
+                    backward_c = ops.add(ops.multiply(f, backward_c), ops.multiply(i, c))
+                    
+                    # Update hidden state
+                    backward_h = ops.multiply(o, activation_fn(backward_c))
                     backward_outputs.insert(0, backward_h)
             
             # Combine outputs
             if self.bidirectional:
                 combined_outputs = []
-                for t in range(seq_length):
-                    combined = ops.concat([forward_outputs[t], backward_outputs[t]], axis=-1)
+                for t in list(range(seq_length)):
+                    combined = tensor.concatenate([forward_outputs[t], backward_outputs[t]], axis=-1)
                     combined_outputs.append(combined)
             else:
                 combined_outputs = forward_outputs
@@ -203,7 +308,8 @@ class LSTM(Module):
                 layer_outputs = tensor.stack(combined_outputs, axis=0)
             
             # Apply dropout (except for the last layer)
-            if layer < self.num_layers - 1 and self.dropout > 0:
+            is_last_layer = ops.equal(layer, ops.subtract(self.num_layers, 1))
+            if not is_last_layer and self.dropout > 0:
                 layer_outputs = ops.dropout(layer_outputs, self.dropout)
             
             # Store final states for this layer
@@ -272,13 +378,17 @@ class LSTM(Module):
             "bidirectional": self.bidirectional,
             "return_sequences": self.return_sequences,
             "return_state": self.return_state,
+            "use_bias": self.use_bias,
+            "kernel_initializer": self.kernel_initializer,
+            "recurrent_initializer": self.recurrent_initializer,
+            "bias_initializer": self.bias_initializer
         })
         # Note: We don't save the cell configs directly, as they are reconstructed
         # based on the layer's parameters in __init__.
         return config
 
     @classmethod
-    def from_config(cls, config: Dict[str, Any]) -> 'LSTM':
+    def from_config(cls, config: Dict[str, Any]):
         """Creates an LSTM layer from its configuration."""
-        # BaseModule.from_config handles calling cls(**config)
-        return super(LSTM, cls).from_config(config)
+        # Create instance directly from config
+        return cls(**config)

@@ -140,12 +140,12 @@ Ember ML provides two ways to use activations:
 2.  **Functional Activations (Functions):**
     *   Plain functions like `activations.relu`, `activations.tanh`, etc.
     *   Dynamically aliased from the active backend's implementation into the `ember_ml.nn.modules.activations` namespace.
-    *   Intended for direct use *within* the `forward` method of complex modules (like custom RNN cells) where applying an activation is part of an internal computation, not a separate layer.
+    *   Intended for direct use *within* the `forward` method of complex modules where applying an activation is part of an internal computation, not a separate layer.
 
 ### Choosing Between Modules and Functions
 
 *   Use **Activation Modules** when adding an activation step between distinct layers (e.g., after a `Dense` layer in a `Sequential` model).
-*   Use **Functional Activations** when applying an activation to an intermediate result inside a module's `forward` method (e.g., activating gates in an LSTM cell).
+*   Use **Functional Activations** when applying an activation to an intermediate result inside a module's `forward` method (e.g., activating gates in a recurrent network).
 
 ## Activation Modules Usage
 

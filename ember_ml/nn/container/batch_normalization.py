@@ -1,95 +1,144 @@
 """
-Batch normalization module for ember_ml.
+Batch Normalization module for ember_ml.
 
-This module provides a backend-agnostic implementation of batch normalization
+This module provides a backend-agnostic implementation of a batch normalization layer
 that works with any backend (NumPy, PyTorch, MLX).
 """
 
-from typing import Optional, Union, Tuple, Any
+from typing import Optional, Any, Tuple
 
 from ember_ml import ops
-from ember_ml.nn.modules import Module, Parameter
+from ember_ml.nn.modules.base_module import BaseModule as Module, Parameter
 from ember_ml.nn import tensor
 class BatchNormalization(Module):
     """
-    Batch normalization layer.
+    Batch Normalization layer.
     
-    Normalizes the activations of the previous layer at each batch, i.e. applies a
-    transformation that maintains the mean activation close to 0 and the activation
-    standard deviation close to 1.
+    Normalizes the activations of the previous layer at each batch.
     
     Attributes:
-        epsilon: Small constant for numerical stability
-        momentum: Momentum for moving averages
-        gamma: Scale parameter
-        beta: Shift parameter
-        moving_mean: Running mean
-        moving_var: Running variance
+        epsilon: Small float added to variance to avoid dividing by zero
+        momentum: Momentum for the moving average
+        axis: Integer, the axis that should be normalized
+        center: If True, add offset of beta to normalized tensor
+        scale: If True, multiply by gamma
+        beta_initializer: Initializer for the beta weight
+        gamma_initializer: Initializer for the gamma weight
+        moving_mean_initializer: Initializer for the moving mean
+        moving_variance_initializer: Initializer for the moving variance
+        beta: Offset tensor
+        gamma: Scale tensor
+        moving_mean: Moving mean tensor
+        moving_variance: Moving variance tensor
         initialized: Whether the layer has been initialized
     """
     
-    def __init__(self, epsilon: float = 1e-5, momentum: float = 0.9):
+    def __init__(
+        self,
+        axis: int = -1,
+        momentum: float = 0.99,
+        epsilon: float = 1e-3,
+        center: bool = True,
+        scale: bool = True,
+    ):
         """
         Initialize a batch normalization layer.
         
         Args:
-            epsilon: Small constant for numerical stability
-            momentum: Momentum for moving averages
+            axis: Integer, the axis that should be normalized
+            momentum: Momentum for the moving average
+            epsilon: Small float added to variance to avoid dividing by zero
+            center: If True, add offset of beta to normalized tensor
+            scale: If True, multiply by gamma
         """
         super().__init__()
-        self.epsilon = epsilon
+        self.axis = axis
         self.momentum = momentum
-        self.gamma = None  # Scale parameter
-        self.beta = None   # Shift parameter
+        self.epsilon = epsilon
+        self.center = center
+        self.scale = scale
+        
+        self.beta = None
+        self.gamma = None
         self.moving_mean = None
-        self.moving_var = None
+        self.moving_variance = None
         self.initialized = False
     
-    def forward(self, x: Any) -> Any:
+    def forward(self, x: Any, training: bool = False) -> Any:
         """
         Forward pass through the layer.
         
         Args:
             x: Input tensor
+            training: Whether to use the moving statistics (False) or compute new statistics (True)
             
         Returns:
-            Normalized tensor
+            Normalized output tensor
         """
         # Get input shape
         input_shape = tensor.shape(x)
+        ndim = len(input_shape)
+        
+        # Convert axis to positive index
+        axis = self.axis if self.axis >= 0 else ndim + self.axis
+        
+        # Get the dimension to normalize
+        dim = input_shape[axis]
         
         # Initialize parameters if not already done
         if not self.initialized:
-            self.gamma = Parameter(tensor.ones((input_shape[-1],)))
-            self.beta = Parameter(tensor.zeros((input_shape[-1],)))
-            self.moving_mean = tensor.zeros((input_shape[-1],))
-            self.moving_var = tensor.ones((input_shape[-1],))
+            param_shape = [1] * ndim
+            param_shape[axis] = dim
+            
+            if self.scale:
+                self.gamma = Parameter(tensor.ones(param_shape))
+            
+            if self.center:
+                self.beta = Parameter(tensor.zeros(param_shape))
+            
+            # Initialize moving statistics
+            self.moving_mean = tensor.zeros(param_shape)
+            self.moving_variance = tensor.ones(param_shape)
+            
             self.initialized = True
         
-        # Training mode: use batch statistics
-        # Compute batch mean and variance
-        batch_mean = ops.mean(x, axis=(0, 1))
-        batch_var = tensor.var(x, axis=(0, 1))
+        # Compute the axes to reduce over (all except the axis to normalize)
+        reduction_axes = list(range(ndim))
+        reduction_axes.pop(axis)
         
-        # Update moving statistics
-        self.moving_mean = ops.add(
-            ops.multiply(self.momentum, self.moving_mean),
-            ops.multiply(1 - self.momentum, batch_mean)
-        )
-        self.moving_var = ops.add(
-            ops.multiply(self.momentum, self.moving_var),
-            ops.multiply(1 - self.momentum, batch_var)
-        )
+        # Compute mean and variance
+        if training:
+            # Compute statistics from mini-batch
+            mean = ops.mean(x, axis=reduction_axes, keepdims=True)
+            variance = tensor.var(x, axis=reduction_axes, keepdims=True)
+            
+            # Update moving statistics
+            self.moving_mean = ops.add(
+                ops.multiply(self.moving_mean, self.momentum),
+                ops.multiply(mean, 1.0 - self.momentum)
+            )
+            self.moving_variance = ops.add(
+                ops.multiply(self.moving_variance, self.momentum),
+                ops.multiply(variance, 1.0 - self.momentum)
+            )
+        else:
+            # Use moving statistics
+            mean = self.moving_mean
+            variance = self.moving_variance
         
         # Normalize
-        x_norm = ops.divide(
-            ops.subtract(x, batch_mean),
-            ops.sqrt(ops.add(batch_var, self.epsilon))
-        )
+        x_centered = ops.subtract(x, mean)
+        x_normalized = ops.divide(x_centered, ops.sqrt(ops.add(variance, self.epsilon)))
         
         # Scale and shift
-        return ops.add(ops.multiply(self.gamma, x_norm), self.beta)
+        if self.scale:
+            x_normalized = ops.multiply(x_normalized, self.gamma)
+        
+        if self.center:
+            x_normalized = ops.add(x_normalized, self.beta)
+        
+        return x_normalized
     
     def __repr__(self) -> str:
         """Return a string representation of the layer."""
-        return f"BatchNormalization(epsilon={self.epsilon}, momentum={self.momentum})"
+        return f"BatchNormalization(axis={self.axis}, momentum={self.momentum}, epsilon={self.epsilon})"

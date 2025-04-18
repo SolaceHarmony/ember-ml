@@ -4,14 +4,17 @@ Metrics utilities for the ember_ml library.
 This module provides metrics utilities for the ember_ml library.
 """
 
-import numpy as np
 from typing import Union, List, Tuple, Optional, Dict, Any
+from ember_ml.nn import tensor
+from ember_ml.nn.tensor.types import TensorLike
+from ember_ml import ops
+
+# Import sklearn metrics that we haven't implemented yet
 from sklearn.metrics import (
-    accuracy_score, precision_score, recall_score, f1_score,
-    mean_squared_error, mean_absolute_error, r2_score
+    accuracy_score, precision_score, recall_score, f1_score, r2_score
 )
 
-def classification_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, float]:
+def classification_metrics(y_true: TensorLike, y_pred: TensorLike) -> Dict[str, float]:
     """
     Compute classification metrics.
     
@@ -29,7 +32,7 @@ def classification_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, 
         'f1': f1_score(y_true, y_pred, average='macro')
     }
 
-def regression_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, float]:
+def regression_metrics(y_true: TensorLike, y_pred: TensorLike) -> Dict[str, float]:
     """
     Compute regression metrics.
     
@@ -41,13 +44,13 @@ def regression_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, floa
         Dictionary of metrics
     """
     return {
-        'mse': mean_squared_error(y_true, y_pred),
-        'rmse': np.sqrt(mean_squared_error(y_true, y_pred)),
-        'mae': mean_absolute_error(y_true, y_pred),
+        'mse': float(ops.mse(y_true, y_pred)),
+        'rmse': float(ops.sqrt(ops.mse(y_true, y_pred))),
+        'mae': float(ops.mean_absolute_error(y_true, y_pred)),
         'r2': r2_score(y_true, y_pred)
     }
 
-def binary_classification_metrics(y_true: np.ndarray, y_pred: np.ndarray, threshold: float = 0.5) -> Dict[str, float]:
+def binary_classification_metrics(y_true: TensorLike, y_pred: TensorLike, threshold: float = 0.5) -> Dict[str, float]:
     """
     Compute binary classification metrics.
     
@@ -59,30 +62,59 @@ def binary_classification_metrics(y_true: np.ndarray, y_pred: np.ndarray, thresh
     Returns:
         Dictionary of metrics
     """
-    y_pred_binary = (y_pred > threshold).astype(int)
+    # Convert to tensor and apply threshold
+    y_true_tensor = tensor.convert_to_tensor(y_true)
+    y_pred_tensor = tensor.convert_to_tensor(y_pred)
+    y_pred_binary = tensor.cast(ops.greater(y_pred_tensor, tensor.convert_to_tensor(threshold)), dtype=tensor.int32)
     
-    tp = np.sum((y_true == 1) & (y_pred_binary == 1))
-    tn = np.sum((y_true == 0) & (y_pred_binary == 0))
-    fp = np.sum((y_true == 0) & (y_pred_binary == 1))
-    fn = np.sum((y_true == 1) & (y_pred_binary == 0))
+    # Calculate confusion matrix elements using tensor operations
+    tp = ops.sum(ops.logical_and(ops.equal(y_true_tensor, 1), ops.equal(y_pred_binary, 1)))
+    tn = ops.sum(ops.logical_and(ops.equal(y_true_tensor, 0), ops.equal(y_pred_binary, 0)))
+    fp = ops.sum(ops.logical_and(ops.equal(y_true_tensor, 0), ops.equal(y_pred_binary, 1)))
+    fn = ops.sum(ops.logical_and(ops.equal(y_true_tensor, 1), ops.equal(y_pred_binary, 0)))
     
-    accuracy = (tp + tn) / (tp + tn + fp + fn)
-    precision = tp / (tp + fp) if (tp + fp) > 0 else 0
-    recall = tp / (tp + fn) if (tp + fn) > 0 else 0
-    f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0
+    # Calculate metrics using tensor operations
+    total = ops.add(ops.add(tp, tn), ops.add(fp, fn))
+    accuracy = ops.divide(ops.add(tp, tn), total)
     
+    # Handle division by zero cases
+    precision_denominator = ops.add(tp, fp)
+    precision = ops.where(
+        ops.greater(precision_denominator, 0),
+        ops.divide(tp, precision_denominator),
+        tensor.convert_to_tensor(0.0)
+    )
+    
+    recall_denominator = ops.add(tp, fn)
+    recall = ops.where(
+        ops.greater(recall_denominator, 0),
+        ops.divide(tp, recall_denominator),
+        tensor.convert_to_tensor(0.0)
+    )
+    
+    precision_recall_sum = ops.add(precision, recall)
+    f1 = ops.where(
+        ops.greater(precision_recall_sum, 0),
+        ops.divide(
+            ops.multiply(tensor.convert_to_tensor(2.0), ops.multiply(precision, recall)),
+            precision_recall_sum
+        ),
+        tensor.convert_to_tensor(0.0)
+    )
+    
+    # Convert tensor values to Python floats for the return dictionary
     return {
-        'accuracy': accuracy,
-        'precision': precision,
-        'recall': recall,
-        'f1': f1,
-        'tp': tp,
-        'tn': tn,
-        'fp': fp,
-        'fn': fn
+        'accuracy': float(tensor.item(accuracy)),
+        'precision': float(tensor.item(precision)),
+        'recall': float(tensor.item(recall)),
+        'f1': float(tensor.item(f1)),
+        'tp': float(tensor.item(tp)),
+        'tn': float(tensor.item(tn)),
+        'fp': float(tensor.item(fp)),
+        'fn': float(tensor.item(fn))
     }
 
-def confusion_matrix(y_true: np.ndarray, y_pred: np.ndarray, normalize: bool = False) -> np.ndarray:
+def confusion_matrix(y_true: TensorLike, y_pred: TensorLike, normalize: bool = False) -> TensorLike:
     """
     Compute confusion matrix.
     
@@ -94,20 +126,55 @@ def confusion_matrix(y_true: np.ndarray, y_pred: np.ndarray, normalize: bool = F
     Returns:
         Confusion matrix
     """
-    n_classes = max(np.max(y_true), np.max(y_pred)) + 1
-    cm = np.zeros((n_classes, n_classes), dtype=int)
+    # Convert inputs to tensors
+    y_true_tensor = tensor.convert_to_tensor(y_true)
+    y_pred_tensor = tensor.convert_to_tensor(y_pred)
     
-    for i in range(len(y_true)):
-        cm[y_true[i], y_pred[i]] += 1
+    # Get number of classes
+    n_classes = tensor.cast(
+        ops.add(
+            ops.maximum(
+                ops.max(y_true_tensor),
+                ops.max(y_pred_tensor)
+            ),
+            tensor.convert_to_tensor(1)
+        ),
+        dtype=tensor.int32
+    )
     
+    # Initialize confusion matrix
+    cm = tensor.zeros((n_classes, n_classes), dtype=tensor.int32)
+    
+    # Build confusion matrix using tensor operations
+    for i in range(tensor.shape(y_true_tensor)[0]):
+        true_idx = tensor.cast(y_true_tensor[i], dtype=tensor.int32)
+        pred_idx = tensor.cast(y_pred_tensor[i], dtype=tensor.int32)
+        
+        # Use tensor indexing and update
+        cm_i = cm[true_idx]
+        cm_i = tensor.tensor_scatter_nd_update(
+            cm_i,
+            [[pred_idx]],
+            [ops.add(cm_i[pred_idx], tensor.convert_to_tensor(1))]
+        )
+        cm = tensor.tensor_scatter_nd_update(
+            cm,
+            [[true_idx]],
+            [cm_i]
+        )
+    
+    # Normalize if requested
     if normalize:
-        cm = cm.astype(float)
-        row_sums = cm.sum(axis=1)
-        cm = cm / row_sums[:, np.newaxis]
+        cm = tensor.cast(cm, dtype=tensor.float32)
+        row_sums = ops.sum(cm, axis=1)
+        row_sums = tensor.expand_dims(row_sums, axis=1)
+        # Avoid division by zero
+        row_sums = ops.maximum(row_sums, tensor.convert_to_tensor(1e-10))
+        cm = ops.divide(cm, row_sums)
         
     return cm
 
-def roc_auc(y_true: np.ndarray, y_score: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, float]:
+def roc_auc(y_true: TensorLike, y_score: TensorLike) -> Tuple[TensorLike, TensorLike, TensorLike, float]:
     """
     Compute ROC curve and AUC.
     
@@ -125,7 +192,7 @@ def roc_auc(y_true: np.ndarray, y_score: np.ndarray) -> Tuple[np.ndarray, np.nda
     
     return fpr, tpr, thresholds, roc_auc
 
-def precision_recall_curve(y_true: np.ndarray, y_score: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+def precision_recall_curve(y_true: TensorLike, y_score: TensorLike) -> Tuple[TensorLike, TensorLike, TensorLike]:
     """
     Compute precision-recall curve.
     
@@ -142,7 +209,7 @@ def precision_recall_curve(y_true: np.ndarray, y_score: np.ndarray) -> Tuple[np.
     
     return precision, recall, thresholds
 
-def average_precision_score(y_true: np.ndarray, y_score: np.ndarray) -> float:
+def average_precision_score(y_true: TensorLike, y_score: TensorLike) -> float:
     """
     Compute average precision score.
     

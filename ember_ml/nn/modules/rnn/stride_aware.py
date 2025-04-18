@@ -5,12 +5,12 @@ This module provides an implementation of the StrideAware layer,
 which wraps a StrideAwareCell to create a recurrent layer.
 """
 
-from typing import Optional, List, Dict, Any, Union, Tuple
+# Removed unused imports
 
-import numpy as np
+# Removed numpy import
 from ember_ml import ops
 from ember_ml.nn.modules import Module
-from ember_ml.nn.modules.rnn.stride_aware_cell import StrideAwareCell
+# Removed stride_aware_cell import
 from ember_ml.nn import tensor
 
 class StrideAware(Module):
@@ -31,6 +31,9 @@ class StrideAware(Module):
         batch_first: bool = True,
         activation: str = "tanh",
         bias: bool = True,
+        use_bias: bool = True,
+        kernel_initializer: str = "glorot_uniform",
+        bias_initializer: str = "zeros",
         **kwargs
     ):
         """
@@ -56,15 +59,37 @@ class StrideAware(Module):
         self.return_sequences = return_sequences
         self.batch_first = batch_first
         
-        # Create StrideAwareCell
-        self.cell = StrideAwareCell(
-            input_size=input_size,
-            hidden_size=hidden_size,
-            stride_length=stride_length,
-            time_scale_factor=time_scale_factor,
-            activation=activation,
-            bias=bias
-        )
+        # StrideAwareCell parameters
+        self.activation = activation
+        self.bias = bias
+        self.use_bias = use_bias
+        self.kernel_initializer = kernel_initializer
+        self.bias_initializer = bias_initializer
+        
+        # Initialize parameters directly instead of creating a cell
+        self._initialize_parameters()
+    
+    def _initialize_parameters(self):
+        """Initialize parameters for the StrideAware layer."""
+        from ember_ml.nn.initializers import glorot_uniform
+        
+        # Input weights
+        self.input_kernel = tensor.Parameter(glorot_uniform((self.input_size, self.hidden_size)))
+        
+        # Hidden weights
+        self.hidden_kernel = tensor.Parameter(glorot_uniform((self.hidden_size, self.hidden_size)))
+        
+        # Output weights
+        self.output_kernel = tensor.Parameter(glorot_uniform((self.hidden_size, self.hidden_size)))
+        
+        # Bias terms
+        if self.use_bias:
+            self.input_bias = tensor.Parameter(tensor.zeros((self.hidden_size,)))
+            self.hidden_bias = tensor.Parameter(tensor.zeros((self.hidden_size,)))
+            self.output_bias = tensor.Parameter(tensor.zeros((self.hidden_size,)))
+        
+        # Time constant
+        self.tau = tensor.Parameter(tensor.ones((self.hidden_size,)))
     
     def forward(self, inputs, initial_state=None, elapsed_time=1.0):
         """
@@ -121,8 +146,35 @@ class StrideAware(Module):
             else:
                 current_input = inputs[t]
             
-            # Apply StrideAwareCell
-            output, state = self.cell(current_input, state, elapsed_time)
+            # Apply stride-specific temporal scaling
+            effective_time = ops.multiply(elapsed_time, ops.multiply(self.stride_length, self.time_scale_factor))
+            
+            # Compute input contribution
+            input_signal = ops.matmul(current_input, self.input_kernel)
+            if self.use_bias:
+                input_signal = ops.add(input_signal, self.input_bias)
+            
+            # Compute hidden contribution
+            hidden_signal = ops.matmul(state, self.hidden_kernel)
+            if self.use_bias:
+                hidden_signal = ops.add(hidden_signal, self.hidden_bias)
+            
+            # Update state using time-scaled dynamics
+            scale_factor = ops.divide(1.0, ops.multiply(self.tau, effective_time))
+            combined_signal = ops.add(input_signal, hidden_signal)
+            diff_signal = ops.subtract(combined_signal, state)
+            scaled_diff = ops.multiply(scale_factor, diff_signal)
+            state = ops.add(state, scaled_diff)
+            
+            # Compute output
+            output = ops.matmul(state, self.output_kernel)
+            if self.use_bias:
+                output = ops.add(output, self.output_bias)
+            
+            # Apply activation function
+            from ember_ml.nn.modules.activations import get_activation
+            activation_fn = get_activation(self.activation)
+            output = activation_fn(output)
             
             # Store output
             output_sequence.append(output)

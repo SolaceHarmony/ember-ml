@@ -387,12 +387,23 @@ def _create_new_tensor(creation_func: Callable, dtype: Optional[Any] = None, dev
               numpy_native_dtype = default_float
 
 
-    # Shape normalization (if 'shape' is present in kwargs)
+    # Shape normalization (if 'shape' or 'size' is present in kwargs)
     shape_arg = None
+    # Check for 'shape' parameter
     if 'shape' in kwargs:
         shape_arg = kwargs.pop('shape')  # Remove 'shape' from kwargs
+    # Check for 'size' parameter (used by NumPy random functions)
+    elif 'size' in kwargs:
+        shape_arg = kwargs.pop('size')  # Remove 'size' from kwargs
+        
+    # Normalize shape_arg if it exists
+    if shape_arg is not None:
         if isinstance(shape_arg, int):
-            shape_arg = (shape_arg,)
+            # Special case: if shape is 0, treat it as a scalar tensor
+            if shape_arg == 0:
+                shape_arg = (1,)  # Create a 1D tensor with a single element
+            else:
+                shape_arg = (shape_arg,)
         elif not isinstance(shape_arg, tuple):
             shape_arg = tuple(shape_arg)
 
