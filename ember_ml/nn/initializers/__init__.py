@@ -32,7 +32,10 @@ _INITIALIZERS = {
     'glorot_uniform': glorot_uniform,
     'glorot_normal': glorot_normal,
     'orthogonal': orthogonal,
-    'zeros': lambda shape, dtype=None, device=None: tensor.zeros(shape, dtype=dtype, device=device)
+    'zeros': tensor.zeros,
+    'ones': tensor.ones,
+    'random_uniform': tensor.random_uniform,
+    'random_normal': tensor.random_normal,
 }
 
 def get_initializer(name: str) -> Callable:
