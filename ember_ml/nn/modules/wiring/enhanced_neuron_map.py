@@ -6,6 +6,7 @@ arbitrary neuron types and dynamics, with a focus on spatial embedding.
 """
 
 from typing import Optional, List, Dict, Any, Union, Tuple
+from ember_ml.nn.tensor.types import TensorLike # Corrected import
 import numpy as np
 import scipy.spatial.distance
 

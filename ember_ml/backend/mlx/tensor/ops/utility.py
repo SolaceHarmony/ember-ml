@@ -129,31 +129,69 @@ def _convert_input(x: TensorLike, dtype: Optional[Union[None,DType]]=None, devic
             return _convert_input(x.data)
         else:
             raise ValueError(f"Parameter object does not have a 'data' attribute: {x}")
-    is_numpy_scalar = (hasattr(x, 'item') and hasattr(x, '__class__') and hasattr(x.__class__, '__module__') and x.__class__.__module__ == 'numpy') and x.shape == (1,)
+    # Better detection of numpy scalar types
+    is_numpy_scalar = (hasattr(x, 'item') and
+                      hasattr(x, '__class__') and
+                      hasattr(x.__class__, '__module__') and
+                      x.__class__.__module__.startswith('numpy') and
+                      (not hasattr(x, 'shape') or x.size == 1))
 
     # Check for NumPy arrays by type name rather than direct import
     if is_numpy_scalar is not True and (hasattr(x, '__class__') and
         x.__class__.__module__ == 'numpy' and
         x.__class__.__name__ == 'ndarray'):
-        # Ensure float64 numpy arrays become float32 mlx arrays
+        # Ensure numpy arrays are properly converted to MLX arrays
         from ember_ml.backend.mlx.tensor.dtype import MLXDType
-        backend_dtype = _validate_and_get_mlx_dtype(x.dtype) if hasattr(x, 'dtype') else default_float
+        
+        # Handle numpy dtype conversion
+        if hasattr(x, 'dtype'):
+            # Get the appropriate MLX dtype
+            backend_dtype = _validate_and_get_mlx_dtype(x.dtype)
+            
+            # Special handling for float64 - convert to float32 for MLX
+            if str(x.dtype) == 'float64':
+                backend_dtype = mx.float32
+                
+            # Special handling for bool - ensure it's converted to MLX bool_
+            if str(x.dtype) == 'bool':
+                if hasattr(mx, 'bool_'):
+                    backend_dtype = mx.bool_
+                else:
+                    backend_dtype = mx.uint8
+        else:
+            backend_dtype = default_float
+            
         return mx.array(x, dtype=backend_dtype)
         
     # Handle NumPy scalar types using hasattr
     if is_numpy_scalar:
         try:
             # Convert NumPy scalar to its Python equivalent, then to MLX array
-            # Use the new validation function to get the appropriate MLX dtype
             py_scalar = x.item()
-            mlx_dtype = _validate_and_get_mlx_dtype(x.dtype) # Get MLX dtype from numpy dtype
-            if mlx_dtype:
-                 return mx.array(py_scalar, dtype=mlx_dtype)
+            
+            # Get MLX dtype from numpy dtype with special handling
+            if hasattr(x, 'dtype'):
+                # Special handling for float64 - convert to float32 for MLX
+                if str(x.dtype) == 'float64':
+                    mlx_dtype = mx.float32
+                # Special handling for bool - ensure it's converted to MLX bool_
+                elif str(x.dtype) == 'bool':
+                    if hasattr(mx, 'bool_'):
+                        mlx_dtype = mx.bool_
+                    else:
+                        mlx_dtype = mx.uint8
+                else:
+                    mlx_dtype = _validate_and_get_mlx_dtype(x.dtype)
             else:
-                 # Fallback if dtype validation fails
-                 return mx.array(py_scalar)
+                mlx_dtype = None
+                
+            if mlx_dtype:
+                return mx.array(py_scalar, dtype=mlx_dtype)
+            else:
+                # Fallback if dtype validation fails
+                return mx.array(py_scalar)
         except Exception as e:
-             raise ValueError(f"Cannot convert NumPy scalar {type(x)} to MLX array: {e}")
+            raise ValueError(f"Cannot convert NumPy scalar {type(x)} to MLX array: {e}")
 
     # Handle Python scalars (int, float, bool), EXCLUDING NumPy scalars handled above
     is_python_scalar = isinstance(x, (int, float, bool))
@@ -487,13 +525,38 @@ def _create_new_tensor(creation_func: Callable, dtype: Optional[Any] = None, dev
     # For simplicity, we'll add it and let MLX error if unsupported for a specific func
     kwargs.pop('requires_grad',None)
 
-    # Special case for mx.random.normal which expects 'size' as a positional argument
-    if creation_func in [ mx.random.normal,mx.random.uniform]:
+    # Special case for mx.random.normal and mx.random.uniform which expect 'shape' as a keyword argument
+    if creation_func in [mx.random.normal, mx.random.uniform]:
             # Use the shape_kwarg that was extracted earlier
             if shape_kwarg is not None:
                 return creation_func(shape=shape_kwarg, **kwargs)
             else:
-                raise ValueError("mx.random.normal requires 'shape' parameter")
+                raise ValueError(f"{creation_func.__name__} requires 'shape' parameter")
+    # Special case for mx.random.bernoulli which expects 'p' as first positional argument and 'shape' as second positional argument
+    elif creation_func == mx.random.bernoulli:
+            # Extract p from kwargs
+            p = kwargs.pop('p', 0.5)  # Default to 0.5 if not provided
+            # Use the shape_kwarg that was extracted earlier
+            if shape_kwarg is not None:
+                # Get the shape of the input tensor
+                if hasattr(shape_kwarg, 'shape'):
+                    # If shape_kwarg is an array, use its shape
+                    shape_tuple = shape_kwarg.shape
+                elif isinstance(shape_kwarg, tuple) and len(shape_kwarg) > 0 and hasattr(shape_kwarg[0], 'shape'):
+                    # If shape_kwarg is a tuple of arrays, use the shape of the first array
+                    # This is a simplification to avoid memory issues
+                    shape_tuple = shape_kwarg[0].shape
+                else:
+                    # If shape_kwarg is already a tuple of integers, use it directly
+                    shape_tuple = shape_kwarg
+                # Call bernoulli with positional arguments
+                result = creation_func(p, shape_tuple)
+                # Apply dtype if specified
+                if kwargs.get('dtype') is not None:
+                    result = result.astype(kwargs['dtype'])
+                return result
+            else:
+                raise ValueError(f"{creation_func.__name__} requires 'shape' parameter")
     # Handle functions that take shape as a positional argument
     elif shape_kwarg is not None and creation_func in [mx.zeros, mx.ones, mx.full]:
             return creation_func(shape_kwarg, **kwargs)

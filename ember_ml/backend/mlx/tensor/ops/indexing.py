@@ -13,7 +13,7 @@ def slice_tensor(tensor: TensorLike, starts: Shape, sizes: Shape) -> mx.array:
     Extract a slice from a tensor.
     
     Args:
-        data: Input tensor
+        tensor: Input tensor
         starts: Starting indices for each dimension
         sizes: Size of the slice in each dimension. A value of -1 means "all remaining elements in this dimension"
         
@@ -27,29 +27,39 @@ def slice_tensor(tensor: TensorLike, starts: Shape, sizes: Shape) -> mx.array:
     
     # Handle scalar starts/sizes by converting to lists
     if isinstance(starts, (int, float)):
-        starts = [starts]
+        starts = [int(starts)]
     if isinstance(sizes, (int, float)):
-        sizes = [sizes]
+        sizes = [int(sizes)]
     
-    # Convert starts to MLX array for consistent operations
-    starts_array = mx.array(starts, dtype=mx.int32)
-    
-    # Create axes list for dimension indices
-    axes = list(range(len(starts)))
+    # Ensure starts and sizes are the same length
+    if len(starts) != len(sizes):
+        raise ValueError(f"starts and sizes must have the same length, got {len(starts)} and {len(sizes)}")
     
     # Handle -1 in sizes by calculating actual sizes
-    tensor_shape = tensor_array.shape  # Get shape directly as tuple
+    tensor_shape = tensor_array.shape
     sizes_list = []
     for i, size in enumerate(sizes):
         if size == -1:
-            # Calculate remaining size for this dimension using MLX operations
-            remaining_size = tensor_shape[i] - starts[i]  # Use Python integers directly
+            # Calculate remaining size for this dimension
+            remaining_size = tensor_shape[i] - starts[i]
             sizes_list.append(remaining_size)
         else:
             sizes_list.append(size)
     
-    # Pass sizes as a Python list since MLX slice expects Sequence[int]
-    return mx.slice(tensor_array, starts_array, axes, sizes_list)
+    # Create a list of slice objects for each dimension
+    slices = []
+    for start, size in zip(starts, sizes_list):
+        slices.append(slice(start, start + size))
+    
+    # Apply the slices to the tensor
+    # For dimensions not specified, use the full range
+    full_slices = [slice(None)] * tensor_array.ndim
+    for i, s in enumerate(slices):
+        if i < tensor_array.ndim:
+            full_slices[i] = s
+    
+    # Extract the slice using standard indexing
+    return tensor_array[tuple(full_slices)]
 
 def gather(tensor: TensorLike, indices: TensorLike, axis: int = 0) -> mx.array:
     """

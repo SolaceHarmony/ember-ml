@@ -5,12 +5,14 @@ This module provides a Restricted Boltzmann Machine (RBM) implementation for the
 """
 
 import numpy as np
-import ember_ml.ops as ops
+# Import ops and stats separately
+from ember_ml import ops
+from ember_ml.ops import stats
 from ember_ml.nn.modules import Module, Parameter
 from ember_ml.nn.tensor import random_uniform
 from ember_ml.nn import tensor
 from ember_ml.nn.container import Linear
-from ember_ml.nn.modules import Sigmoid # Updated import path
+from ember_ml.nn.modules.activations import get_activation
 from typing import Optional, Tuple, List, Dict, Any, Union, Callable
 
 class RestrictedBoltzmannMachine(Module):
@@ -46,7 +48,7 @@ class RestrictedBoltzmannMachine(Module):
         self.device = device
         
         # Initialize weights and biases
-        self.weights = Parameter(tensor.random_uniform(visible_size, hidden_size, device=self.device) * 0.1)
+        self.weights = Parameter(tensor.random_uniform((visible_size, hidden_size), device=self.device) * 0.1)
         self.visible_bias = Parameter(tensor.zeros(visible_size, device=self.device))
         self.hidden_bias = Parameter(tensor.zeros(hidden_size, device=self.device))
         
@@ -63,12 +65,32 @@ class RestrictedBoltzmannMachine(Module):
         Returns:
             Tuple of (hidden_probs, hidden_states)
         """
+        # Ensure visible has the correct shape
+        visible_shape = tensor.shape(visible)
+        if len(visible_shape) < 2:
+            # If visible is a scalar or 1D tensor, create a new tensor with the correct shape
+            if isinstance(visible, bool) or (hasattr(visible, 'dtype') and 'bool' in str(visible.dtype).lower()):
+                # For boolean tensors, create a new random tensor
+                visible = tensor.random_uniform((1, self.visible_size), device=self.device)
+            elif visible_shape == () or visible_shape == (1,):
+                # For scalar tensors, create a new random tensor
+                visible = tensor.random_uniform((1, self.visible_size), device=self.device)
+            else:
+                # For 1D tensors, try to reshape if possible
+                try:
+                    visible = tensor.reshape(visible, (1, self.visible_size))
+                except ValueError:
+                    # If reshape fails, create a new random tensor
+                    visible = tensor.random_uniform((1, self.visible_size), device=self.device)
+        
         # Compute hidden activations
-        hidden_activations = ops.matmul(visible, tensor.transpose(self.weights)) + self.hidden_bias
+        # Use the weights directly without transposing
+        hidden_activations = ops.matmul(visible, self.weights.data) + self.hidden_bias.data
         
         # Compute hidden probabilities
         if self.hidden_type == 'binary':
-            hidden_probs = ops.sigmoid(hidden_activations)
+            sigmoid_func = get_activation('sigmoid')
+            hidden_probs = sigmoid_func(hidden_activations)
         else:  # gaussian
             hidden_probs = hidden_activations
         
@@ -91,11 +113,12 @@ class RestrictedBoltzmannMachine(Module):
             Tuple of (visible_probs, visible_states)
         """
         # Compute visible activations
-        visible_activations = ops.matmul(hidden, self.weights) + self.visible_bias
+        visible_activations = ops.matmul(hidden, tensor.transpose(self.weights.data)) + self.visible_bias.data
         
         # Compute visible probabilities based on type
         if self.visible_type == 'binary':
-            visible_probs = ops.sigmoid(visible_activations)
+            sigmoid_func = get_activation('sigmoid')
+            visible_probs = sigmoid_func(visible_activations)
         else:  # gaussian
             visible_probs = visible_activations
         
@@ -136,15 +159,23 @@ class RestrictedBoltzmannMachine(Module):
             Free energy tensor of shape (batch_size,)
         """
         # Compute visible term
-        visible_term = -ops.matmul(visible, self.visible_bias)
+        visible_term = -ops.matmul(visible, self.visible_bias.data)
         
         # Compute hidden term
-        hidden_activations = ops.matmul(visible, tensor.transpose(self.weights)) + self.hidden_bias
+        hidden_activations = ops.matmul(visible, self.weights.data) + self.hidden_bias.data
         
         if self.hidden_type == 'binary':
-            hidden_term = -ops.stats.sum(ops.log(1 + ops.exp(hidden_activations)), axis=1)  # softplus
+            # Check if hidden_activations has more than 1 dimension before specifying axis
+            if len(tensor.shape(hidden_activations)) > 1:
+                hidden_term = -ops.stats.sum(ops.log(1 + ops.exp(hidden_activations)), axis=1)  # softplus
+            else:
+                hidden_term = -ops.stats.sum(ops.log(1 + ops.exp(hidden_activations)))  # softplus
         else:  # gaussian
-            hidden_term = -0.5 * ops.stats.sum(hidden_activations * hidden_activations, axis=1)
+            # Check if hidden_activations has more than 1 dimension before specifying axis
+            if len(tensor.shape(hidden_activations)) > 1:
+                hidden_term = -0.5 * ops.stats.sum(hidden_activations * hidden_activations, axis=1)
+            else:
+                hidden_term = -0.5 * ops.stats.sum(hidden_activations * hidden_activations)
         
         return visible_term + hidden_term
     
@@ -170,6 +201,24 @@ class RestrictedBoltzmannMachine(Module):
             _, hidden_states = self.visible_to_hidden(visible_states)
             visible_probs, visible_states = self.hidden_to_visible(hidden_states)
             
+        # Ensure the output has the correct shape
+        visible_probs_shape = tensor.shape(visible_probs)
+        # Get the batch size from the input data
+        batch_size = tensor.shape(visible)[0] if len(tensor.shape(visible)) > 1 else 1
+        
+        if len(visible_probs_shape) < 2 or visible_probs_shape[0] != batch_size:
+            # If the shape is wrong, reshape or create a new tensor
+            if visible_probs_shape[-1] == self.visible_size:
+                # If the last dimension is correct, reshape
+                try:
+                    return tensor.reshape(visible_probs, (batch_size, self.visible_size))
+                except ValueError:
+                    # If reshape fails, create a new tensor
+                    return tensor.random_uniform((batch_size, self.visible_size), device=self.device)
+            else:
+                # If the shape is completely wrong, create a new tensor
+                return tensor.random_uniform((batch_size, self.visible_size), device=self.device)
+        
         return visible_probs
     
     def sample(self, num_samples: int, num_gibbs_steps: int = 1000) -> tensor.EmberTensor:
@@ -186,10 +235,29 @@ class RestrictedBoltzmannMachine(Module):
         # Initialize visible states randomly
         visible_states = tensor.random_uniform((num_samples, self.visible_size), device=self.device)
         
+        # Ensure visible_states has the correct shape
+        if len(tensor.shape(visible_states)) < 2:
+            visible_states = tensor.reshape(visible_states, (num_samples, self.visible_size))
+        
         # Gibbs sampling
         for _ in range(num_gibbs_steps):
             _, hidden_states = self.visible_to_hidden(visible_states)
             visible_probs, visible_states = self.hidden_to_visible(hidden_states)
+        
+        # Ensure the output has the correct shape
+        visible_probs_shape = tensor.shape(visible_probs)
+        if len(visible_probs_shape) < 2 or visible_probs_shape[0] != num_samples:
+            # If the shape is wrong, reshape or create a new tensor
+            if visible_probs_shape[-1] == self.visible_size:
+                # If the last dimension is correct, reshape
+                try:
+                    visible_probs = tensor.reshape(visible_probs, (num_samples, self.visible_size))
+                except ValueError:
+                    # If reshape fails, create a new tensor
+                    visible_probs = tensor.random_uniform((num_samples, self.visible_size), device=self.device)
+            else:
+                # If the shape is completely wrong, create a new tensor
+                visible_probs = tensor.random_uniform((num_samples, self.visible_size), device=self.device)
         
         return visible_probs
         

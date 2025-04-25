@@ -323,6 +323,21 @@ class MLXTensor:
         """
         from ember_ml.backend.mlx.tensor.ops.manipulation import split as split_func
         return split_func(data, num_or_size_splits, axis)
+    
+    def split_tensor(self, data: TensorLike, num_splits: int, axis: int = 0) -> List[mx.array]:
+        """
+        Split a tensor into num_splits equal parts along the given axis.
+        
+        Args:
+            data: Input tensor
+            num_splits: Number of equal parts to split into
+            axis: Axis along which to split
+            
+        Returns:
+            List of sub-tensors
+        """
+        from ember_ml.backend.mlx.tensor.ops.manipulation import split_tensor as split_tensor_func
+        return split_tensor_func(data, num_splits, axis)
 
     def expand_dims(self, data: TensorLike, axis: Union[int, List[int]]) -> mx.array:
         """

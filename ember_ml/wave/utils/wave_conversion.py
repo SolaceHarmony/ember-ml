@@ -6,6 +6,8 @@ This module provides utilities for converting between different wave representat
 
 import numpy as np
 from typing import Union, List, Tuple, Optional
+from ember_ml.nn.tensor.types import TensorLike # Added import
+from ember_ml import ops # Moved import to top level
 
 def pcm_to_float(pcm_data: TensorLike, dtype: np.dtype = np.float32) -> TensorLike:
     """
@@ -71,6 +73,7 @@ def pcm_to_db(pcm_data: TensorLike, ref: float = 1.0, min_db: float = -80.0) -> 
     """
     float_data = pcm_to_float(pcm_data)
     power = np.abs(float_data) ** 2
+    # Removed import from here: from ember_ml import ops
     db = 10 * np.log10(ops.stats.maximum(power, 1e-10) / ref)
     return ops.stats.maximum(db, min_db)
 
@@ -97,6 +100,7 @@ def amplitude_to_db(amplitude: Union[float, TensorLike], min_db: float = -80.0) 
     Returns:
         Decibel value
     """
+    # Removed import from here: from ember_ml import ops
     db = 20 * np.log10(ops.stats.maximum(np.abs(amplitude), 1e-10))
     return ops.stats.maximum(db, min_db)
 
@@ -156,8 +160,10 @@ def phase_to_pcm(phase_data: TensorLike, magnitude: Optional[TensorLike] = None,
         PCM representation
     """
     if magnitude is None:
+        # Need to import tensor here if not already imported
+        from ember_ml.nn import tensor
         magnitude = tensor.ones_like(phase_data)
-    
+
     complex_data = magnitude * np.exp(1j * phase_data)
     float_data = np.real(np.fft.ifft(complex_data))
     return float_to_pcm(float_data, dtype)

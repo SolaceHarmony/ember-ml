@@ -8,7 +8,7 @@ from ember_ml.backend.mlx.types import DType, TensorLike
 
 # _validate_dtype helper function removed. Logic should exist in MLXDType.validate_dtype
 
-def cast(tensor: TensorLike, dtype: DType) -> mlx.core.array: # Use direct type hint
+def cast(tensor: TensorLike, dtype: DType) -> mlx.core.array:
     """
     Cast a tensor to a new data type using MLX backend.
 
@@ -24,40 +24,38 @@ def cast(tensor: TensorLike, dtype: DType) -> mlx.core.array: # Use direct type 
     """
     # Import MLX specifics lazily
     from ember_ml.backend.mlx.tensor.tensor import MLXTensor
-    # MLXDType import removed
+    from ember_ml.backend.mlx.tensor.dtype import MLXDType
 
-    # 1. Validate the target dtype using the class method
-    # 1. Validate the target dtype using the utility function (lazy import)
+    # 1. Validate and get the MLX dtype
     from ember_ml.backend.mlx.tensor.ops.utility import _validate_and_get_mlx_dtype
     mlx_dtype = _validate_and_get_mlx_dtype(dtype)
 
-    # 2. Convert the input tensor to a base MLX array (without casting yet)
-    # Ensure convert_to_tensor doesn't apply the final dtype cast itself
-    # It should just return a standard mlx.core.array representation.
-    # Assuming MLXTensor().convert_to_tensor(tensor) handles this correctly.
-    # If convert_to_tensor *requires* a dtype, this needs adjustment.
-    # Let's assume for now it can convert without a target dtype.
+    # 2. Convert the input tensor to an MLX array
     tensor_obj = MLXTensor()
-    # Check if convert_to_tensor accepts None or omits dtype
-    # If not, pass the original tensor's dtype? Or a default?
-    # Let's assume it converts to MLX array naturally first.
-    try:
-         # Try converting without specifying dtype first
-         tensor_array = tensor_obj.convert_to_tensor(tensor)
-    except TypeError:
-         # If convert_to_tensor requires a dtype arg, maybe pass None or original?
-         # This depends on the implementation of convert_to_tensor.
-         # For now, let's stick to the pattern assuming it works without dtype.
-         # If this fails, we need to inspect MLXTensor.convert_to_tensor.
-         # Re-raising for clarity if this assumption is wrong.
-         raise RuntimeError("Assumption failed: MLXTensor.convert_to_tensor potentially requires dtype argument which conflicts with this casting logic.")
-
+    tensor_array = tensor_obj.convert_to_tensor(tensor)
 
     # 3. If the validated dtype is None (meaning no cast needed), return original array
     if mlx_dtype is None:
         return tensor_array
 
-    # 4. Perform the cast using the validated mlx_dtype
-    # MLX uses astype() for casting
-    return tensor_array.astype(mlx_dtype)
+    # 4. Special handling for bool type
+    if hasattr(mlx_dtype, 'name') and mlx_dtype.name == 'bool_':
+        # For bool type, we need to compare with zero
+        if hasattr(mx, 'bool_'):
+            # If MLX has bool_ type, use it
+            return mx.array(tensor_array != 0, dtype=mx.bool_)
+        else:
+            # Otherwise use uint8 as fallback
+            return mx.array(tensor_array != 0, dtype=mx.uint8)
+
+    # 5. Perform the cast using the validated mlx_dtype
+    try:
+        return tensor_array.astype(mlx_dtype)
+    except ValueError as e:
+        # Handle float64 conversion if not supported
+        if "float64 is not supported" in str(e).lower() and str(mlx_dtype) == 'float64':
+            # Fall back to float32
+            return tensor_array.astype(mx.float32)
+        else:
+            raise e
         

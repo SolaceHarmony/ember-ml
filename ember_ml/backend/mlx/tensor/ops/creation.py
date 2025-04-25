@@ -1,6 +1,6 @@
 """MLX tensor creation operations."""
 
-from typing import Any, List, Optional, Union
+from typing import Any, List, Optional, Union, Tuple
 
 import mlx.core as mx
 import numpy as np
@@ -12,7 +12,22 @@ def zeros(shape: 'Shape', dtype: 'Optional[DType]' = None, device: Optional[str]
     """Create an MLX array of zeros."""
     # Validate dtype
     from ember_ml.backend.mlx.tensor.ops.utility import _create_new_tensor
-    x = _create_new_tensor(mx.zeros, dtype, device,shape=shape)
+    # Ensure shape is a tuple
+    if isinstance(shape, int):
+        shape = (shape,)
+    elif not isinstance(shape, tuple):
+        shape = tuple(shape)
+        
+    # Validate dtype
+    from ember_ml.backend.mlx.tensor.ops.utility import _validate_and_get_mlx_dtype
+    mlx_dtype = _validate_and_get_mlx_dtype(dtype)
+    
+    # Handle float64 not supported in MLX
+    if str(mlx_dtype) == 'float64':
+        mlx_dtype = mx.float32
+        
+    # Create zeros array with the specified shape and dtype
+    x = mx.zeros(shape, dtype=mlx_dtype)
     # Create zeros array with the specified shape and dtype
     return x
 
@@ -20,7 +35,22 @@ def ones(shape: 'Shape', dtype: 'Optional[DType]' = None, device: Optional[str] 
     """Create an MLX array of ones."""
     # Validate dtype
     from ember_ml.backend.mlx.tensor.ops.utility import _create_new_tensor
-    x = _create_new_tensor(mx.ones, dtype, device,shape=shape)
+    # Ensure shape is a tuple
+    if isinstance(shape, int):
+        shape = (shape,)
+    elif not isinstance(shape, tuple):
+        shape = tuple(shape)
+        
+    # Validate dtype
+    from ember_ml.backend.mlx.tensor.ops.utility import _validate_and_get_mlx_dtype
+    mlx_dtype = _validate_and_get_mlx_dtype(dtype)
+    
+    # Handle float64 not supported in MLX
+    if str(mlx_dtype) == 'float64':
+        mlx_dtype = mx.float32
+        
+    # Create ones array with the specified shape and dtype
+    x = mx.ones(shape, dtype=mlx_dtype)
     
     # Create ones array with the specified shape and dtype
     return x
@@ -56,7 +86,26 @@ def full(shape: 'ShapeLike', fill_value: 'ScalarLike', dtype: 'Optional[DType]' 
         shape = (shape,)
         
     from ember_ml.backend.mlx.tensor.ops.utility import _create_new_tensor
-    x = _create_new_tensor(mx.full, dtype, device,shape=shape)
+    # Ensure shape is a tuple
+    if isinstance(shape, int):
+        shape = (shape,)
+    elif not isinstance(shape, tuple):
+        shape = tuple(shape)
+        
+    # Convert fill_value to a tensor
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+    fill_value_tensor = MLXTensor().convert_to_tensor(fill_value)
+    
+    # Validate dtype
+    from ember_ml.backend.mlx.tensor.ops.utility import _validate_and_get_mlx_dtype
+    mlx_dtype = _validate_and_get_mlx_dtype(dtype)
+    
+    # Handle float64 not supported in MLX
+    if str(mlx_dtype) == 'float64':
+        mlx_dtype = mx.float32
+        
+    # Create full array with the specified shape and fill value
+    x = mx.full(shape, fill_value_tensor.item(), dtype=mlx_dtype)
     
     # Create array of the specified shape filled with fill_value
     return x
@@ -91,7 +140,16 @@ def eye(n, m=None, dtype=None, device=None):
     
     # Create a zeros tensor with shape (n, m)
     from ember_ml.backend.mlx.tensor.ops.utility import _create_new_tensor
-    x = _create_new_tensor(mx.zeros, dtype, device, shape=(n, m))
+    # Validate dtype
+    from ember_ml.backend.mlx.tensor.ops.utility import _validate_and_get_mlx_dtype
+    mlx_dtype = _validate_and_get_mlx_dtype(dtype)
+    
+    # Handle float64 not supported in MLX
+    if str(mlx_dtype) == 'float64':
+        mlx_dtype = mx.float32
+        
+    # Create a zeros tensor with shape (n, m)
+    x = mx.zeros((n, m), dtype=mlx_dtype)
     
     # Set diagonal elements to 1
     min_dim = min(n, m)
@@ -129,7 +187,16 @@ def arange(start: ScalarLike, stop: ScalarLike = None, step: int = 1,
         stop = float(stop.item())
 
     from ember_ml.backend.mlx.tensor.ops.utility import _create_new_tensor
-    x = _create_new_tensor(mx.arange, dtype=dtype,start=start, stop=stop, step=step)
+    # Validate dtype
+    from ember_ml.backend.mlx.tensor.ops.utility import _validate_and_get_mlx_dtype
+    mlx_dtype = _validate_and_get_mlx_dtype(dtype)
+    
+    # Handle float64 not supported in MLX
+    if str(mlx_dtype) == 'float64':
+        mlx_dtype = mx.float32
+        
+    # Create sequence
+    x = mx.arange(start, stop, step, dtype=mlx_dtype)
     # Create sequence
     return x
 
@@ -142,7 +209,70 @@ def linspace(start: Union[int, float], stop: Union[int, float], num: int,
     stop_tensor = MLXTensor().convert_to_tensor(stop)
     num_tensor = MLXTensor().convert_to_tensor(num)
     from ember_ml.backend.mlx.tensor.ops.utility import _create_new_tensor
-    x = _create_new_tensor(mx.linspace, dtype=dtype,start=start_tensor, stop=stop_tensor, num=num_tensor)
+    # Validate dtype
+    from ember_ml.backend.mlx.tensor.ops.utility import _validate_and_get_mlx_dtype
+    mlx_dtype = _validate_and_get_mlx_dtype(dtype)
+    
+    # Handle float64 not supported in MLX
+    if str(mlx_dtype) == 'float64':
+        mlx_dtype = mx.float32
+        
+    # Create evenly spaced sequence
+    x = mx.linspace(start, stop, num, dtype=mlx_dtype)
     
     # Create evenly spaced sequence
     return x
+
+def meshgrid(*tensors, indexing='xy'):
+    """Create coordinate matrices from coordinate vectors.
+    
+    Args:
+        *tensors: One or more tensors with the same dtype
+        indexing: Cartesian ('xy', default) or matrix ('ij') indexing of output
+        
+    Returns:
+        List of tensors with shapes determined by the broadcast shape of the
+        input tensors and the indexing mode.
+    """
+    # Convert all inputs to MLX arrays
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor as Tensor
+    tensor_arrays = [Tensor().convert_to_tensor(t) for t in tensors]
+    
+    # Get shapes of input tensors
+    shapes = [tensor.shape for tensor in tensor_arrays]
+    
+    # Check that all inputs are 1D
+    for i, shape in enumerate(shapes):
+        if len(shape) != 1:
+            raise ValueError(f"Expected 1D tensor, got shape {shape} for input {i}")
+    
+    # Create output tensors
+    output_tensors = []
+    
+    if indexing == 'xy':
+        # For 'xy' indexing, the first tensor corresponds to the column indices,
+        # and the second tensor corresponds to the row indices
+        if len(tensor_arrays) >= 2:
+            # Swap the first two tensors for 'xy' indexing
+            tensor_arrays[0], tensor_arrays[1] = tensor_arrays[1], tensor_arrays[0]
+    
+    # Create meshgrid
+    for i, tensor in enumerate(tensor_arrays):
+        # Create shape for broadcasting
+        shape = [1] * len(tensor_arrays)
+        shape[i] = len(tensor)
+        
+        # Reshape tensor for broadcasting
+        reshaped = mx.reshape(tensor, shape)
+        
+        # Create full tensor by broadcasting
+        full_shape = [len(t) for t in tensor_arrays]
+        output = mx.broadcast_to(reshaped, full_shape)
+        
+        output_tensors.append(output)
+    
+    if indexing == 'xy' and len(tensor_arrays) >= 2:
+        # Swap back the first two tensors for 'xy' indexing
+        output_tensors[0], output_tensors[1] = output_tensors[1], output_tensors[0]
+    
+    return tuple(output_tensors)

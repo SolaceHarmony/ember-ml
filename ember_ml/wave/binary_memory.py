@@ -2,10 +2,13 @@
 Wave-based memory storage and pattern retrieval mechanisms.
 """
 
-import torch
-import torch.nn as nn
 from typing import Optional, List, Dict, Tuple, Any
 from dataclasses import dataclass
+from ember_ml import ops
+from ember_ml.nn import tensor
+from ember_ml.nn import modules
+from ember_ml.nn import container
+from ember_ml.nn.modules import activations
 from .binary_wave import WaveConfig, BinaryWave
 
 @dataclass
@@ -16,17 +19,20 @@ class MemoryPattern:
     timestamp: float
     metadata: Dict[str, Any]
     
-    def similarity(self, other: 'MemoryPattern') -> float:
+    def similarity(self, other) -> float:
         """
         Compute similarity with another pattern.
 
         Args:
-            other: Pattern to compare with
+            other: Pattern to compare with (can be a MemoryPattern or a tensor)
 
         Returns:
             Similarity score
         """
-        return 1.0 - torch.mean(torch.abs(self.pattern - other.pattern)).item()
+        # Handle both MemoryPattern objects and raw tensors
+        other_pattern = other.pattern if hasattr(other, 'pattern') else other
+        from ember_ml.backend.mlx.stats import descriptive as mlx_stats
+        return 1.0 - mlx_stats.mean(ops.abs(self.pattern - other_pattern)).item()
 
 class WaveStorage:
     """Storage mechanism for wave patterns."""
@@ -56,8 +62,9 @@ class WaveStorage:
         if metadata is None:
             metadata = {}
             
+        # MLX arrays don't have clone(), so we'll create a copy differently
         memory_pattern = MemoryPattern(
-            pattern=pattern.clone(),
+            pattern=pattern,  # MLX arrays are immutable, so no need to clone
             timestamp=timestamp,
             metadata=metadata
         )
@@ -98,11 +105,12 @@ class WaveStorage:
         """Clear all stored patterns."""
         self.patterns.clear()
 
-class BinaryMemory(nn.Module):
+class BinaryMemory(modules.Module):
     """Wave-based memory system with interference-based storage and retrieval."""
     
     def __init__(self,
-                 config: WaveConfig = WaveConfig(),
+                 grid_size=None,
+                 num_phases=None,
                  capacity: int = 1000):
         """
         Initialize binary memory.
@@ -112,20 +120,33 @@ class BinaryMemory(nn.Module):
             capacity: Memory capacity
         """
         super().__init__()
-        self.config = config
-        self.wave_processor = BinaryWave(config)
+        
+        # Handle different ways of initializing
+        if isinstance(grid_size, WaveConfig):
+            self.config = grid_size
+        else:
+            # Create a config from the provided parameters
+            self.config = WaveConfig(grid_size=grid_size, num_phases=num_phases)
+            
+        self.encoder = BinaryWave(self.config)
         self.storage = WaveStorage(capacity)
         
         # Learnable components
-        self.store_gate = nn.Sequential(
-            nn.Linear(config.grid_size * config.grid_size, config.grid_size * config.grid_size),
-            nn.Sigmoid()
-        )
+        grid_size = self.config.grid_size
+        if isinstance(grid_size, tuple):
+            input_size = grid_size[0] * grid_size[1]
+        else:
+            input_size = grid_size * grid_size
+            
+        self.store_gate = container.Sequential([
+            container.Linear(input_size, input_size),
+            activations.Sigmoid()
+        ])
         
-        self.retrieve_gate = nn.Sequential(
-            nn.Linear(config.grid_size * config.grid_size, config.grid_size * config.grid_size),
-            nn.Sigmoid()
-        )
+        self.retrieve_gate = container.Sequential([
+            container.Linear(input_size, input_size),
+            activations.Sigmoid()
+        ])
         
     def store_pattern(self,
                      pattern: tensor.convert_to_tensor,
@@ -141,16 +162,14 @@ class BinaryMemory(nn.Module):
         wave = self.wave_processor.encode(pattern)
         
         # Apply storage gate
-        flat_wave = wave.view(-1, self.config.grid_size * self.config.grid_size)
+        flat_wave = tensor.reshape(wave, (-1, self.config.grid_size * self.config.grid_size))
         gated = self.store_gate(flat_wave)
-        gated = gated.view_as(wave)
+        gated = tensor.reshape(gated, tensor.shape(wave))
         
         # Store with current timestamp
         self.storage.store(
             gated,
-            timestamp=torch.cuda.current_stream().elapsed_time(None)
-            if torch.cuda.is_available()
-            else tensor.convert_to_tensor(0.0),
+            timestamp=0.0,  # Use a simple timestamp for now
             metadata=metadata
         )
         
@@ -171,9 +190,9 @@ class BinaryMemory(nn.Module):
         wave_query = self.wave_processor.encode(query)
         
         # Apply retrieval gate
-        flat_query = wave_query.view(-1, self.config.grid_size * self.config.grid_size)
+        flat_query = tensor.reshape(wave_query, (-1, self.config.grid_size * self.config.grid_size))
         gated = self.retrieve_gate(flat_query)
-        gated = gated.view_as(wave_query)
+        gated = tensor.reshape(gated, tensor.shape(wave_query))
         
         # Retrieve similar patterns
         matches = self.storage.retrieve(gated, threshold)

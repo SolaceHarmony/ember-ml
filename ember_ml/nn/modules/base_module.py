@@ -124,9 +124,7 @@ class BaseModule:
             # Determine input shape from the first argument primarily
             # Assumes the first argument is the main input tensor or a tuple/list of them
             # More complex input structures might need custom handling in __call__ overrides
-            import mlx.core as mx
-            import numpy as np
-            import torch
+
             if isinstance(args[0], (list, tuple)):
                  # Handle multiple inputs - pass list/tuple of shapes
                  try:
@@ -135,7 +133,6 @@ class BaseModule:
                      input_shape = tuple(input_shape) if len(input_shape) > 1 else input_shape[0]
                  except Exception as e:
                      raise ValueError(f"Could not determine input shape from list/tuple input {args[0]}: {e}")
-
             else:
                  # Assume single input tensor
                  try:

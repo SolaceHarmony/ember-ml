@@ -5,15 +5,14 @@ This module provides an efficient implementation of Restricted Boltzmann Machine
 optimized for CPU usage with minimal computational requirements.
 """
 
-import numpy as np
 import time
 from datetime import datetime
 import os
 from typing import Dict, List, Optional, Tuple, Union, Any
-import torch
 from ember_ml import ops
 from ember_ml.nn import tensor
 from ember_ml.nn.tensor import TensorLike
+from ember_ml.nn.modules.activations import sigmoid as sigmoid_activation
 class RestrictedBoltzmannMachine:
     """
     CPU-friendly implementation of a Restricted Boltzmann Machine.
@@ -102,7 +101,7 @@ class RestrictedBoltzmannMachine:
         """
         # Clip values to avoid overflow/underflow
         x = ops.clip(x, -15, 15)
-        return 1.0 / (1.0 + np.exp(-x))
+        return sigmoid_activation(x)
     
     def compute_hidden_probabilities(self, visible_states: TensorLike) -> TensorLike:
         """
@@ -115,7 +114,10 @@ class RestrictedBoltzmannMachine:
             Probabilities of hidden units [batch_size, n_hidden]
         """
         # Compute activations: visible_states @ weights + hidden_bias
-        hidden_activations = np.dot(visible_states, self.weights) + self.hidden_bias
+        hidden_activations = ops.add(
+            ops.dot(visible_states, self.weights),
+            self.hidden_bias
+        )
         return self.sigmoid(hidden_activations)
     
     def sample_hidden_states(self, hidden_probs: TensorLike) -> TensorLike:
@@ -131,7 +133,10 @@ class RestrictedBoltzmannMachine:
         if not self.use_binary_states:
             return hidden_probs
         
-        return (hidden_probs > np.random.random(hidden_probs.shape)).astype(np.float32)
+        return tensor.cast(
+            ops.greater(hidden_probs, tensor.random_uniform(tensor.shape(hidden_probs))),
+            dtype=tensor.float32
+        )
     
     def compute_visible_probabilities(self, hidden_states: TensorLike) -> TensorLike:
         """
@@ -144,7 +149,10 @@ class RestrictedBoltzmannMachine:
             Probabilities of visible units [batch_size, n_visible]
         """
         # Compute activations: hidden_states @ weights.T + visible_bias
-        visible_activations = np.dot(hidden_states, self.weights.T) + self.visible_bias
+        visible_activations = ops.add(
+            ops.dot(hidden_states, tensor.transpose(self.weights)),
+            self.visible_bias
+        )
         return self.sigmoid(visible_activations)
     
     def sample_visible_states(self, visible_probs: TensorLike) -> TensorLike:
@@ -160,7 +168,10 @@ class RestrictedBoltzmannMachine:
         if not self.use_binary_states:
             return visible_probs
         
-        return (visible_probs > np.random.random(visible_probs.shape)).astype(np.float32)
+        return tensor.cast(
+            ops.greater(visible_probs, tensor.random_uniform(tensor.shape(visible_probs))),
+            dtype=tensor.float32
+        )
     
     def contrastive_divergence(self, batch_data: TensorLike, k: int = 1) -> float:
         """
@@ -176,7 +187,7 @@ class RestrictedBoltzmannMachine:
         Returns:
             Reconstruction error for this batch
         """
-        batch_size = len(batch_data)
+        batch_size = tensor.shape(batch_data)[0]
         
         # Positive phase
         # Compute hidden probabilities and states
@@ -184,11 +195,11 @@ class RestrictedBoltzmannMachine:
         pos_hidden_states = self.sample_hidden_states(pos_hidden_probs)
         
         # Compute positive associations
-        pos_associations = np.dot(batch_data.T, pos_hidden_probs)
+        pos_associations = ops.dot(tensor.transpose(batch_data), pos_hidden_probs)
         
         # Negative phase
         # Start with the hidden states from positive phase
-        neg_hidden_states = pos_hidden_states.copy()
+        neg_hidden_states = tensor.copy(pos_hidden_states)
         
         # Perform k steps of Gibbs sampling
         for _ in range(k):
@@ -201,38 +212,65 @@ class RestrictedBoltzmannMachine:
             neg_hidden_states = self.sample_hidden_states(neg_hidden_probs)
         
         # Compute negative associations
-        neg_associations = np.dot(neg_visible_states.T, neg_hidden_probs)
+        neg_associations = ops.dot(tensor.transpose(neg_visible_states), neg_hidden_probs)
         
         # Compute gradients
-        weights_gradient = (pos_associations - neg_associations) / batch_size
-        visible_bias_gradient = np.mean(batch_data - neg_visible_states, axis=0)
-        hidden_bias_gradient = np.mean(pos_hidden_probs - neg_hidden_probs, axis=0)
+        weights_gradient = ops.divide(ops.subtract(pos_associations, neg_associations),
+                                     tensor.convert_to_tensor(batch_size, dtype=tensor.float32))
+        visible_bias_gradient = ops.stats.mean(ops.subtract(batch_data, neg_visible_states), axis=0)
+        hidden_bias_gradient = ops.stats.mean(ops.subtract(pos_hidden_probs, neg_hidden_probs), axis=0)
         
         # Update with momentum and weight decay
-        self.weights_momentum = self.momentum * self.weights_momentum + weights_gradient
-        self.visible_bias_momentum = self.momentum * self.visible_bias_momentum + visible_bias_gradient
-        self.hidden_bias_momentum = self.momentum * self.hidden_bias_momentum + hidden_bias_gradient
+        self.weights_momentum = ops.add(
+            ops.multiply(self.momentum, self.weights_momentum),
+            weights_gradient
+        )
+        self.visible_bias_momentum = ops.add(
+            ops.multiply(self.momentum, self.visible_bias_momentum),
+            visible_bias_gradient
+        )
+        self.hidden_bias_momentum = ops.add(
+            ops.multiply(self.momentum, self.hidden_bias_momentum),
+            hidden_bias_gradient
+        )
         
         # Apply updates
-        self.weights += self.learning_rate * (self.weights_momentum - self.weight_decay * self.weights)
-        self.visible_bias += self.learning_rate * self.visible_bias_momentum
-        self.hidden_bias += self.learning_rate * self.hidden_bias_momentum
+        self.weights = ops.add(
+            self.weights,
+            ops.multiply(
+                self.learning_rate,
+                ops.subtract(
+                    self.weights_momentum,
+                    ops.multiply(self.weight_decay, self.weights)
+                )
+            )
+        )
+        self.visible_bias = ops.add(
+            self.visible_bias,
+            ops.multiply(self.learning_rate, self.visible_bias_momentum)
+        )
+        self.hidden_bias = ops.add(
+            self.hidden_bias,
+            ops.multiply(self.learning_rate, self.hidden_bias_momentum)
+        )
         
         # Compute reconstruction error
-        reconstruction_error = np.mean(ops.stats.sum((batch_data - neg_visible_probs) ** 2, axis=1))
+        squared_diff = ops.square(ops.subtract(batch_data, neg_visible_probs))
+        reconstruction_error = ops.stats.mean(ops.stats.sum(squared_diff, axis=1))
+        reconstruction_error_value = tensor.item(reconstruction_error)
         
         # Track state if enabled
         if self.track_states and len(self.training_states) < self.max_tracked_states:
             self.training_states.append({
-                'weights': self.weights.copy(),
-                'visible_bias': self.visible_bias.copy(),
-                'hidden_bias': self.hidden_bias.copy(),
-                'error': reconstruction_error,
-                'visible_sample': neg_visible_states[0].copy() if batch_size > 0 else None,
-                'hidden_sample': neg_hidden_states[0].copy() if batch_size > 0 else None
+                'weights': tensor.copy(self.weights),
+                'visible_bias': tensor.copy(self.visible_bias),
+                'hidden_bias': tensor.copy(self.hidden_bias),
+                'error': reconstruction_error_value,
+                'visible_sample': tensor.copy(neg_visible_states[0]) if batch_size > 0 else None,
+                'hidden_sample': tensor.copy(neg_hidden_states[0]) if batch_size > 0 else None
             })
         
-        return reconstruction_error
+        return reconstruction_error_value
     
     def train(
         self,
@@ -257,7 +295,7 @@ class RestrictedBoltzmannMachine:
         Returns:
             List of reconstruction errors per epoch
         """
-        n_samples = len(data)
+        n_samples = tensor.shape(data)[0]
         n_batches = max(n_samples // self.batch_size, 1)
         
         start_time = time.time()
@@ -266,8 +304,8 @@ class RestrictedBoltzmannMachine:
         
         for epoch in range(epochs):
             # Shuffle data for each epoch
-            indices = np.random.permutation(n_samples)
-            shuffled_data = data[indices]
+            indices = tensor.random_permutation(n_samples)
+            shuffled_data = tensor.gather(data, indices)
             
             epoch_error = 0
             for batch_idx in range(n_batches):
@@ -276,7 +314,7 @@ class RestrictedBoltzmannMachine:
                 batch = shuffled_data[batch_start:batch_end]
                 
                 # Skip empty batches
-                if len(batch) == 0:
+                if tensor.shape(batch)[0] == 0:
                     continue
                 
                 # Train on batch
@@ -315,11 +353,13 @@ class RestrictedBoltzmannMachine:
         # Compute threshold for anomaly detection based on training data
         if self.reconstruction_error_threshold is None:
             errors = self.reconstruction_error(data, per_sample=True)
-            self.reconstruction_error_threshold = np.percentile(errors, 95)  # 95th percentile
+            # Use ops.stats.percentile when available, for now use a simple threshold
+            self.reconstruction_error_threshold = ops.stats.mean(errors) + 2 * ops.stats.std(errors)
         
         if self.free_energy_threshold is None:
             energies = self.free_energy(data)
-            self.free_energy_threshold = np.percentile(energies, 5)  # 5th percentile
+            # Use ops.stats.percentile when available, for now use a simple threshold
+            self.free_energy_threshold = ops.stats.mean(energies) - 2 * ops.stats.std(energies)
         
         return self.training_errors
     
@@ -362,12 +402,12 @@ class RestrictedBoltzmannMachine:
             Reconstruction error (mean or per sample)
         """
         reconstructed = self.reconstruct(data)
-        squared_error = ops.stats.sum((data - reconstructed) ** 2, axis=1)
+        squared_error = ops.stats.sum(ops.square(ops.subtract(data, reconstructed)), axis=1)
         
         if per_sample:
             return squared_error
         
-        return np.mean(squared_error)
+        return tensor.item(ops.stats.mean(squared_error))
     
     def free_energy(self, data: TensorLike) -> TensorLike:
         """
@@ -382,13 +422,14 @@ class RestrictedBoltzmannMachine:
         Returns:
             Free energy for each sample [n_samples]
         """
-        visible_bias_term = np.dot(data, self.visible_bias)
+        visible_bias_term = ops.dot(data, self.visible_bias)
+        hidden_activations = ops.add(ops.dot(data, self.weights), self.hidden_bias)
         hidden_term = ops.stats.sum(
-            np.log(1 + np.exp(np.dot(data, self.weights) + self.hidden_bias)),
+            ops.log(ops.add(1.0, ops.exp(hidden_activations))),
             axis=1
         )
         
-        return -hidden_term - visible_bias_term
+        return ops.negative(ops.add(hidden_term, visible_bias_term))
     
     def anomaly_score(self, data: TensorLike, method: str = 'reconstruction') -> TensorLike:
         """
@@ -405,7 +446,7 @@ class RestrictedBoltzmannMachine:
             return self.reconstruction_error(data, per_sample=True)
         elif method == 'free_energy':
             # For free energy, lower is better, so we negate
-            return -self.free_energy(data)
+            return ops.negative(self.free_energy(data))
         else:
             raise ValueError(f"Unknown method: {method}")
     
@@ -423,9 +464,9 @@ class RestrictedBoltzmannMachine:
         scores = self.anomaly_score(data, method)
         
         if method == 'reconstruction':
-            return scores > self.reconstruction_error_threshold
+            return ops.greater(scores, self.reconstruction_error_threshold)
         elif method == 'free_energy':
-            return scores < self.free_energy_threshold
+            return ops.less(scores, self.free_energy_threshold)
         else:
             raise ValueError(f"Unknown method: {method}")
     
@@ -445,9 +486,9 @@ class RestrictedBoltzmannMachine:
         """
         # Initialize visible state
         if start_data is not None:
-            visible_state = start_data.copy()
+            visible_state = tensor.copy(start_data)
         else:
-            visible_state = np.random.random((1, self.n_visible))
+            visible_state = tensor.random_uniform((1, self.n_visible))
         
         # Clear previous dream states
         self.dream_states = []
@@ -463,7 +504,7 @@ class RestrictedBoltzmannMachine:
             visible_state = self.sample_visible_states(visible_probs)
             
             # Store state
-            self.dream_states.append(visible_state.copy())
+            self.dream_states.append(tensor.copy(visible_state))
         
         return self.dream_states
     
@@ -477,11 +518,16 @@ class RestrictedBoltzmannMachine:
         # Create directory if it doesn't exist
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
         
+        # Convert tensors to numpy for saving
+        weights_np = tensor.to_numpy(self.weights)
+        visible_bias_np = tensor.to_numpy(self.visible_bias)
+        hidden_bias_np = tensor.to_numpy(self.hidden_bias)
+        
         # Prepare model data
         model_data = {
-            'weights': self.weights,
-            'visible_bias': self.visible_bias,
-            'hidden_bias': self.hidden_bias,
+            'weights': weights_np,
+            'visible_bias': visible_bias_np,
+            'hidden_bias': hidden_bias_np,
             'n_visible': self.n_visible,
             'n_hidden': self.n_hidden,
             'learning_rate': self.learning_rate,
@@ -490,14 +536,15 @@ class RestrictedBoltzmannMachine:
             'batch_size': self.batch_size,
             'use_binary_states': self.use_binary_states,
             'training_errors': self.training_errors,
-            'reconstruction_error_threshold': self.reconstruction_error_threshold,
-            'free_energy_threshold': self.free_energy_threshold,
+            'reconstruction_error_threshold': tensor.to_numpy(self.reconstruction_error_threshold) if self.reconstruction_error_threshold is not None else None,
+            'free_energy_threshold': tensor.to_numpy(self.free_energy_threshold) if self.free_energy_threshold is not None else None,
             'training_time': self.training_time,
             'n_epochs_trained': self.n_epochs_trained,
             'timestamp': datetime.now().isoformat()
         }
         
-        # Save to file
+        # Use ops.save when available, for now use numpy
+        import numpy as np
         np.save(filepath, model_data, allow_pickle=True)
         print(f"Model saved to {filepath}")
     
@@ -512,7 +559,8 @@ class RestrictedBoltzmannMachine:
         Returns:
             Loaded RBM model
         """
-        # Load model data
+        # Use ops.load when available, for now use numpy
+        import numpy as np
         model_data = np.load(filepath, allow_pickle=True).item()
         
         # Create model
@@ -527,12 +575,12 @@ class RestrictedBoltzmannMachine:
         )
         
         # Set model parameters
-        rbm.weights = model_data['weights']
-        rbm.visible_bias = model_data['visible_bias']
-        rbm.hidden_bias = model_data['hidden_bias']
+        rbm.weights = tensor.convert_to_tensor(model_data['weights'])
+        rbm.visible_bias = tensor.convert_to_tensor(model_data['visible_bias'])
+        rbm.hidden_bias = tensor.convert_to_tensor(model_data['hidden_bias'])
         rbm.training_errors = model_data['training_errors']
-        rbm.reconstruction_error_threshold = model_data['reconstruction_error_threshold']
-        rbm.free_energy_threshold = model_data['free_energy_threshold']
+        rbm.reconstruction_error_threshold = tensor.convert_to_tensor(model_data['reconstruction_error_threshold']) if model_data['reconstruction_error_threshold'] is not None else None
+        rbm.free_energy_threshold = tensor.convert_to_tensor(model_data['free_energy_threshold']) if model_data['free_energy_threshold'] is not None else None
         rbm.training_time = model_data['training_time']
         rbm.n_epochs_trained = model_data['n_epochs_trained']
         

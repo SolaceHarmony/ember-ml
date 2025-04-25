@@ -23,8 +23,12 @@ def get_device(tensor: Optional[Any] = None) -> str:
     if tensor is not None:
         # If a tensor is provided, try to get its device
         if hasattr(tensor, 'device'):
-            # MLX device is a DeviceType object, convert to string
-            return str(tensor.device.type).lower() # e.g., 'cpu', 'gpu'
+            # Handle both string devices and MLX device objects
+            if isinstance(tensor.device, str):
+                return tensor.device.lower()
+            else:
+                # MLX device is a DeviceType object, convert to string
+                return str(tensor.device.type).lower() # e.g., 'cpu', 'gpu'
 
     # Return the default MLX device type as a string
     return str(mx.default_device().type).lower()
@@ -35,6 +39,7 @@ def set_device(device: Any) -> None:
 
     Args:
         device: Device name as a string ('cpu', 'gpu') or an mx.Device object.
+               Empty string will use GPU if available, otherwise CPU.
 
     Raises:
         ValueError: If the device is not valid for MLX.
@@ -52,6 +57,14 @@ def set_device(device: Any) -> None:
         elif device_str in ['gpu', 'metal']: # Accept 'gpu' or 'metal'
             target_device_obj = mx.Device(mx.DeviceType.gpu)
             target_device_str = 'gpu'
+        elif device_str == '':
+            # Empty string - try GPU first, fall back to CPU
+            try:
+                target_device_obj = mx.Device(mx.DeviceType.gpu)
+                target_device_str = 'gpu'
+            except:
+                target_device_obj = mx.Device(mx.DeviceType.cpu)
+                target_device_str = 'cpu'
         else:
             raise ValueError(f"Invalid device string for MLX: {device}. Use 'cpu' or 'gpu'.")
     else:
@@ -82,8 +95,9 @@ def to_device(x: TensorLike, device: str) -> mx.array:
     # Validate the target device string, but MLX handles placement implicitly
     set_device(device) # This validates and sets the default if possible
     # Ensure input is converted if needed
-    from ember_ml.backend.mlx.tensor.ops.utility import convert_to_mlx_tensor
-    x_tensor = convert_to_mlx_tensor(x)
+    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+    tensor = MLXTensor()
+    x_tensor = tensor.convert_to_tensor(x)
     # In MLX, tensors generally reside on the default device.
     # Explicit movement isn't the primary mechanism like in PyTorch.
     # We return the tensor, assuming it's now on the (new) default device.

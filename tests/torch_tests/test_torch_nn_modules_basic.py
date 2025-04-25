@@ -87,10 +87,14 @@ def test_dense_activation_torch(torch_backend): # Use fixture
     out_features = 3
     layer = modules.Dense(input_dim=in_features, units=out_features, activation='relu')
     batch_size = 2
-    input_tensor = tensor.convert_to_tensor([[-1.0, -0.5, 0.5, 1.0], [0.1, -0.1, 2.0, -2.0]])
+    # Use NumPy array instead of nested list for PyTorch compatibility
+    import numpy as np
+    input_tensor = tensor.convert_to_tensor(np.array([[-1.0, -0.5, 0.5, 1.0], [0.1, -0.1, 2.0, -2.0]]))
     output = layer(input_tensor)
     assert tensor.shape(output) == (batch_size, out_features), "Shape mismatch"
-    min_val = tensor.item(stats.min(output))
+    # Use tensor.to_numpy and np.min for compatibility
+    output_np = tensor.to_numpy(output)
+    min_val = float(np.min(output_np))
     threshold = ops.subtract(tensor.convert_to_tensor(0.0), tensor.convert_to_tensor(1e-7))
     assert min_val >= tensor.item(threshold), f"ReLU output negative: {min_val}"
 

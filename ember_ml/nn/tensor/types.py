@@ -42,7 +42,9 @@ type TensorLike = Optional[Union[
     Tuple[Any, ...],
     EmberTensor,
     'TensorLike',
-    'mlx.core.array',
+    'mlx.core.array',  # MLX array type
+    'np.ndarray',      # NumPy array type
+    'torch.Tensor',    # PyTorch tensor type
     'NumpyTensor',
     'TorchTensor',
     'MLXTensor',

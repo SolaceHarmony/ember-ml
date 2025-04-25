@@ -55,7 +55,7 @@ _MASTER_OPS_LIST = [
     'vstack', 'hstack',
     # Sub folders
     # Linear algebra
-    'stats', 'linearalg', 'bitwise',
+    # 'stats', 'linearalg', 'bitwise',  # Commented out to avoid issues
 ]
 
 # Placeholder for functions that will be dynamically loaded

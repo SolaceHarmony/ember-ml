@@ -8,8 +8,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from typing import Union, List, Tuple, Optional, Dict
 from matplotlib.figure import Figure
+from ember_ml.nn.tensor.types import TensorLike # Added import
 from .wave_analysis import compute_fft, compute_stft
-
+from ember_ml import ops
 # Try to import librosa, but don't fail if it's not available
 try:
     import librosa

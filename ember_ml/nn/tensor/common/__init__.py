@@ -59,6 +59,7 @@ transpose = lambda *args, **kwargs: _get_backend_tensor_ops_module().transpose(*
 concatenate = lambda *args, **kwargs: _get_backend_tensor_ops_module().concatenate(*args, **kwargs)
 stack = lambda *args, **kwargs: _get_backend_tensor_ops_module().stack(*args, **kwargs)
 split = lambda *args, **kwargs: _get_backend_tensor_ops_module().split(*args, **kwargs)
+split_tensor = lambda *args, **kwargs: _get_backend_tensor_ops_module().split_tensor(*args, **kwargs)
 expand_dims = lambda *args, **kwargs: _get_backend_tensor_ops_module().expand_dims(*args, **kwargs)
 squeeze = lambda *args, **kwargs: _get_backend_tensor_ops_module().squeeze(*args, **kwargs)
 tile = lambda *args, **kwargs: _get_backend_tensor_ops_module().tile(*args, **kwargs)
@@ -162,6 +163,7 @@ __all__ = [
     'concatenate',
     'stack',
     'split',
+    'split_tensor',
     'expand_dims',
     'squeeze',
     'tile',

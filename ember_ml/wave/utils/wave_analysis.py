@@ -9,7 +9,7 @@ from typing import Union, List, Tuple, Optional, Dict
 from scipy import signal
 from ember_ml import ops
 from ember_ml.nn import tensor
-from ember_ml.nn.tensor import TensorLike
+from ember_ml.nn.tensor.types import TensorLike # Corrected import
 # Try to import librosa, but don't fail if it's not available
 try:
     import librosa

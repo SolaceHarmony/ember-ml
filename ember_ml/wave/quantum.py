@@ -8,6 +8,7 @@ import torch.nn.functional as F
 import math
 import cmath
 from typing import List, Dict, Optional, Tuple, Union
+from ember_ml.nn import tensor
 
 class WaveFunction:
     """Quantum wave function representation."""

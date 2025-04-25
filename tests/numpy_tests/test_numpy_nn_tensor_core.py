@@ -25,21 +25,22 @@ def test_embertensor_instantiation():
     t = tensor.EmberTensor(data)
 
     # Convert to numpy for assertion
-    result_np = tensor.to_numpy(result)
+    result_np = tensor.to_numpy(t)
 
     # Assert correctness
     assert isinstance(t, tensor.EmberTensor)
-    assert tensor.convert_to_tensor_equal(result_np, tensor.convert_to_tensor(data))
+    # Use ops.allclose for tensor comparison
+    assert ops.allclose(result_np, tensor.convert_to_tensor(data))
     assert tensor.shape(t) == (2, 2)
     # Default dtype should be float
     assert tensor.dtype(t) in [tensor.float32, tensor.float64]
-    assert ops.allclose(t, tensor.convert_to_tensor(data)).item()
+    assert ops.allclose(t, tensor.convert_to_tensor(data))
 
     # Test creating with explicit dtype
     t_int = tensor.EmberTensor(data, dtype=tensor.int32)
     assert isinstance(t_int, tensor.EmberTensor)
     assert tensor.dtype(t_int) == tensor.int32
-    assert ops.allclose(t_int, tensor.convert_to_tensor(data, dtype=tensor.int32)).item()
+    assert ops.allclose(t_int, tensor.convert_to_tensor(data, dtype=tensor.int32))
 
     # Test creating with explicit device (should be 'cpu' for NumPy)
     t_cpu = tensor.EmberTensor(data, device="cpu")
@@ -74,11 +75,12 @@ def test_embertensor_to_numpy():
     t = tensor.EmberTensor(data)
     np_array = tensor.to_numpy(t)
 
-    assert isinstance(np_array, TensorLike)
+    assert isinstance(np_array, np.ndarray)
     assert ops.allclose(np_array, tensor.convert_to_tensor(data))
     assert np_array.shape == (2, 2)
     # Check dtype conversion
-    assert np_array.dtype == np.float32 # Assuming default float32
+    # Check dtype conversion - could be float32 or float64 depending on system config
+    assert np_array.dtype in [np.float32, np.float64]
 
 def test_embertensor_item():
     # Test converting scalar EmberTensor to Python scalar

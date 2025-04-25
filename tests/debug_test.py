@@ -86,3 +86,7 @@ sys.stdout = sys.__stdout__
 sys.stderr = sys.__stderr__
 
 print(f"Debug output written to {os.path.abspath('debug_output.log')}")
+
+def test_debug():
+    """Simple test function for pytest to find."""
+    assert True

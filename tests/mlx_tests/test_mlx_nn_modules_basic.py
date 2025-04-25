@@ -92,7 +92,14 @@ def test_dense_activation_mlx(mlx_backend): # Use fixture
     input_tensor = tensor.convert_to_tensor([[-1.0, -0.5, 0.5, 1.0], [0.1, -0.1, 2.0, -2.0]])
     output = layer(input_tensor)
     assert tensor.shape(output) == (batch_size, out_features), "Shape mismatch"
-    min_val = tensor.item(stats.min(output))
+    # Use tensor operations to find the minimum value
+    # First flatten the tensor to 1D
+    flattened = tensor.reshape(output, (-1,))
+    # Iterate through the flattened tensor to find the minimum value
+    min_val = float('inf')
+    for i in range(tensor.shape(flattened)[0]):
+        val = tensor.item(flattened[i:i+1])
+        min_val = min(min_val, val)
     threshold = ops.subtract(tensor.convert_to_tensor(0.0), tensor.convert_to_tensor(1e-7))
     assert min_val >= tensor.item(threshold), f"ReLU output negative: {min_val}"
 

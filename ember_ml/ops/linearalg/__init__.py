@@ -8,7 +8,8 @@ This module dynamically aliases functions from the active backend
 import importlib
 import sys
 import os
-from typing import List, Optional, Callable, Any
+import numpy as np
+from typing import List, Optional, Callable, Any, Tuple, Union, Dict
 
 # Import backend control functions
 from ember_ml.backend import get_backend, get_backend_module
@@ -67,10 +68,67 @@ def _update_linearalg_aliases():
         pass
     _aliased_backend_linearalg = backend_name
 
+# --- Fallback implementations ---
+def _fallback_orthogonal(shape, gain=1.0, dtype=None, device=None):
+    """
+    Fallback implementation of orthogonal matrix initialization.
+    
+    This is used when the orthogonal function is not available in the backend.
+    It uses NumPy for the QR decomposition and then converts back to the appropriate tensor type.
+    
+    Args:
+        shape: Shape of the tensor to initialize
+        gain: Multiplicative factor to apply to the orthogonal matrix
+        dtype: Data type of the tensor (ignored in fallback)
+        device: Device to place the tensor on (ignored in fallback)
+        
+    Returns:
+        A random orthogonal matrix of the specified shape
+    """
+    # Convert shape to tuple of integers if it's not already
+    if not isinstance(shape, (list, tuple)):
+        try:
+            shape = tuple(int(dim) for dim in shape)
+        except (TypeError, ValueError):
+            raise ValueError(f"Invalid shape: {shape}")
+    
+    if len(shape) < 2:
+        raise ValueError("Shape must have at least 2 dimensions")
+    
+    # Flatten all dimensions after the first
+    rows, cols = shape[0], np.prod(shape[1:])
+    flat_shape = (rows, cols)
+    
+    # Generate a random matrix with NumPy
+    np_rand = np.random.normal(0.0, 1.0, flat_shape).astype(np.float32)
+    
+    # Use NumPy's QR decomposition
+    q, r = np.linalg.qr(np_rand)
+    
+    # Make Q uniform by multiplying by sign of diagonal of R
+    d = np.diag(r)
+    ph = np.sign(d)
+    q = q * ph
+    
+    # Apply gain and reshape
+    q = q * gain
+    
+    # Reshape to the desired shape
+    if len(shape) > 2:
+        q = q.reshape(shape)
+    
+    # Import tensor module to convert back to the appropriate tensor type
+    from ember_ml.nn import tensor
+    return tensor.convert_to_tensor(q)
+
 # --- Initial alias setup ---
 # Populate aliases when this module is first imported.
 # Relies on the backend having been determined by prior imports.
 _update_linearalg_aliases()
+
+# Add fallback for orthogonal if it's not available
+if orthogonal is None:
+    orthogonal = _fallback_orthogonal
 
 # --- Define __all__ ---
 __all__ = _LINEARALG_OPS_LIST # type: ignore

@@ -68,7 +68,11 @@ class MLXDType:
     @property
     def bool_(self):
         """Get the boolean data type."""
-        return getattr(mx, 'bool_', mx.uint8)  # Fallback to uint8 if bool_ not available
+        # MLX now has bool_ type, but we need to ensure it's used consistently
+        if hasattr(mx, 'bool_'):
+            return mx.bool_
+        else:
+            return mx.uint8  # Fallback to uint8 if bool_ not available
     
     def get_dtype(self, name):
         """Get a data type by name."""
@@ -91,6 +95,10 @@ class MLXDType:
         if isinstance(dtype, str):
             return dtype
             
+        # Handle EmberDType objects
+        if hasattr(dtype, 'name'):
+            return dtype.name
+            
         # Map MLX dtypes to EmberDType names
         dtype_map = {
             mx.float16: 'float16',
@@ -106,14 +114,34 @@ class MLXDType:
         }
 
         # Add bool type if available
-        bool_type = getattr(mx, 'bool_', None)
-        if bool_type is not None:
-            dtype_map[bool_type] = 'bool'
+        if hasattr(mx, 'bool_'):
+            dtype_map[mx.bool_] = 'bool_'  # Use 'bool_' to match EmberDType naming
+        
+        # Special handling for MLX dtype objects
+        if hasattr(dtype, 'name') and isinstance(dtype.name, str):
+            # Map MLX dtype names to EmberDType names
+            mlx_to_ember = {
+                'float16': 'float16',
+                'float32': 'float32',
+                'int8': 'int8',
+                'int16': 'int16',
+                'int32': 'int32',
+                'int64': 'int64',
+                'uint8': 'uint8',
+                'uint16': 'uint16',
+                'uint32': 'uint32',
+                'uint64': 'uint64',
+                'bool': 'bool_',
+                'bool_': 'bool_'
+            }
+            if dtype.name in mlx_to_ember:
+                return mlx_to_ember[dtype.name]
 
         if dtype in dtype_map:
             return dtype_map[dtype]
         else:
-            raise ValueError(f"Cannot convert {dtype} to EmberDType")
+            # If we can't determine the dtype, return a default
+            return str(dtype)
     # Removed validate_dtype method, logic moved to utility.py
     def from_dtype_str(self, dtype: Union[Any, str, None]) -> Optional[Any]:
         """
@@ -129,7 +157,7 @@ class MLXDType:
             return None
             
         # If it's already an MLX dtype, return it
-        if isinstance(dtype, type(mx.Dtype)):  # Using float32 as a reference type
+        if hasattr(dtype, '__class__') and dtype.__class__.__module__ == 'mlx.core' and hasattr(dtype, 'name'):
             return dtype
             
         # If it's a string, use it directly
@@ -142,31 +170,27 @@ class MLXDType:
             raise ValueError(f"Cannot convert {dtype} to MLX data type")
             
         # Map dtype names to MLX dtypes
-        if dtype_name == 'float32':
-            return mx.float32
-        elif dtype_name == 'float64': # Removed float64
-             return mx.float32
-        elif dtype_name == 'int32':
-            return mx.int32
-        elif dtype_name == 'int64':
-            return mx.int64
-        elif dtype_name == 'bool' or dtype_name == 'bool_':
-            return getattr(mx, 'bool_', mx.uint8)  # Fallback to uint8 if bool_ not available
-        elif dtype_name == 'int8':
-            return mx.int8
-        elif dtype_name == 'int16':
-            return mx.int16
-        elif dtype_name == 'uint8':
-            return mx.uint8
-        elif dtype_name == 'uint16':
-            return mx.uint16
-        elif dtype_name == 'uint32':
-            return mx.uint32
-        elif dtype_name == 'uint64':
-            return mx.uint64
-        elif dtype_name == 'float16':
-            return mx.float16
-        elif dtype_name == 'complex64':
-            return mx.complex64
+        dtype_map = {
+            'float16': mx.float16,
+            'float32': mx.float32,
+            'float64': mx.float32,  # Map float64 to float32 for MLX
+            'int8': mx.int8,
+            'int16': mx.int16,
+            'int32': mx.int32,
+            'int64': mx.int64,
+            'uint8': mx.uint8,
+            'uint16': mx.uint16,
+            'uint32': mx.uint32,
+            'uint64': mx.uint64,
+            'complex64': mx.complex64 if hasattr(mx, 'complex64') else None,
+            'bool': mx.bool_ if hasattr(mx, 'bool_') else mx.uint8,
+            'bool_': mx.bool_ if hasattr(mx, 'bool_') else mx.uint8
+        }
+        
+        if dtype_name in dtype_map:
+            result = dtype_map[dtype_name]
+            if result is None:
+                raise ValueError(f"Data type {dtype_name} is not supported in this MLX version")
+            return result
         else:
             raise ValueError(f"Unknown data type: {dtype_name}")

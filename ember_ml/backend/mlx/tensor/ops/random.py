@@ -9,7 +9,7 @@ from ember_ml.backend.mlx.tensor.ops.utility import _create_new_tensor # Import 
 # DTypeHandler instance removed, logic moved to helper/local
 
 def random_normal(shape: Shape, mean: float = 0.0, stddev: float = 1.0,
-                 dtype: Optional[DType] = None, device: Optional[str] = None) -> 'mx.array':
+                 dtype: Optional[DType] = None, device: Optional[str] = None, seed: Optional[int] = None) -> 'mx.array':
     """
     Create a tensor with random values from a normal distribution.
     
@@ -23,11 +23,15 @@ def random_normal(shape: Shape, mean: float = 0.0, stddev: float = 1.0,
     Returns:
         MLX array with random normal values
     """
+    # Set seed if provided
+    if seed is not None:
+        mx.random.seed(seed)
+        
     # Use the helper function, passing mx.random.normal and its specific args
     return _create_new_tensor(mx.random.normal, dtype=dtype, device=device, shape=shape, loc=mean, scale=stddev)
 
 def random_uniform(shape: Shape, minval: float = 0.0, maxval: float = 1.0,
-                  dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
+                  dtype: Optional[DType] = None, device: Optional[str] = None, seed: Optional[int] = None) -> mx.array:
     """
     Create a tensor with random values from a uniform distribution.
     
@@ -43,12 +47,17 @@ def random_uniform(shape: Shape, minval: float = 0.0, maxval: float = 1.0,
     """
     from ember_ml.backend.mlx.tensor.dtype import MLXDType
     
-    # Automatically work with int types or floats 
-    if 'float' in MLXDType.to_dtype_str(dtype) if dtype is not None else False:
+    # Set seed if provided
+    if seed is not None:
+        mx.random.seed(seed)
+        
+    # Automatically work with int types or floats
+    mlx_dtype_handler = MLXDType()
+    if dtype is not None and 'float' in mlx_dtype_handler.to_dtype_str(dtype):
         # For float types, use mx.random.uniform directly
         return _create_new_tensor(mx.random.uniform, dtype=dtype, device=device, 
                                 shape=shape, low=minval, high=maxval)
-    elif 'int' in MLXDType.to_dtype_str(dtype) if dtype is not None else False:
+    elif dtype is not None and 'int' in mlx_dtype_handler.to_dtype_str(dtype):
         # For integer types, generate uniform floats and then cast to int
         # MLX doesn't have a direct randint function, so we need to use uniform and then cast
         # Generate uniform values in [minval, maxval+1) to include maxval
@@ -56,16 +65,21 @@ def random_uniform(shape: Shape, minval: float = 0.0, maxval: float = 1.0,
         low = int(minval)
         
         # Generate uniform floats in [low, high)
-        floats = mx.random.uniform(shape=shape, low=low, high=high, dtype=default_int if dtype is None else MLXDType.get_dtype(dtype))
+        # MLX's random_uniform only supports float types, so we need to generate floats and then cast to int
+        floats = mx.random.uniform(shape=shape, low=low, high=high)
         
         # Cast to integer type
-        return mx.array(floats, dtype=dtype)
+        if dtype is not None:
+            mlx_dtype = mlx_dtype_handler.get_dtype(dtype)
+            return mx.floor(floats).astype(mlx_dtype)
+        else:
+            return mx.floor(floats).astype(default_int)
     else:
         # For float types, use mx.random.uniform directly
-        return _create_new_tensor(mx.random.uniform,low=minval, high=maxval,shape=shape, dtype=default_float) 
+        return _create_new_tensor(mx.random.uniform,low=minval, high=maxval,shape=shape, dtype=default_float)
 
 def random_binomial(shape: Shape, p: float = 0.5,
-                   dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
+                   dtype: Optional[DType] = None, device: Optional[str] = None, seed: Optional[int] = None) -> mx.array:
     """
     Create a tensor with random values from a binomial distribution.
     
@@ -78,9 +92,13 @@ def random_binomial(shape: Shape, p: float = 0.5,
     Returns:
         MLX array with random binomial values
     """
+    # Set seed if provided
+    if seed is not None:
+        mx.random.seed(seed)
+    
     # Use the helper function, passing mx.random.bernoulli and its specific args
-    # Pass probability p via kwargs. Helper handles dtype/device.
-    return _create_new_tensor(mx.random.bernoulli, dtype=dtype, device=device, shape=shape, p=p)
+    # Note: MLX's bernoulli function expects p and shape parameters
+    return _create_new_tensor(mx.random.bernoulli, dtype=dtype, device=device, p=p, shape=shape)
 
 def random_exponential(shape: Shape, scale: float = 1.0,
                       dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:

@@ -7,6 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from typing import Optional, Dict, Union, List, Tuple
 from dataclasses import dataclass
+from ember_ml.nn import tensor
 
 @dataclass
 class WaveConfig:

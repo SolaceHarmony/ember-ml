@@ -4,7 +4,8 @@ from ember_ml.ops import set_backend
 from ember_ml.nn import tensor
 from ember_ml import ops
 from ember_ml.models.rbm import RestrictedBoltzmannMachine
-from ember_ml.nn.modules import Module # Needed for isinstance checks
+from ember_ml.nn.modules import Module, Parameter # Needed for isinstance checks
+from ember_ml.nn.tensor import EmberDType # For dtype conversion
 
 @pytest.fixture(params=['mlx'])
 def set_backend_fixture(request):
@@ -26,19 +27,19 @@ def test_rbm_initialization(set_backend_fixture):
     """Test RestrictedBoltzmannMachine initialization."""
     n_visible = 784
     n_hidden = 256
-    rbm = RestrictedBoltzmannMachine(n_visible=n_visible, n_hidden=n_hidden)
+    rbm = RestrictedBoltzmannMachine(visible_size=n_visible, hidden_size=n_hidden, device="cpu")
     assert isinstance(rbm, RestrictedBoltzmannMachine)
     assert isinstance(rbm, Module)
-    assert rbm.n_visible == n_visible
-    assert rbm.n_hidden == n_hidden
+    assert rbm.visible_size == n_visible
+    assert rbm.hidden_size == n_hidden
     # Check if weights and biases are initialized as Parameters
-    assert hasattr(rbm, 'W') and isinstance(rbm.W, tensor.Parameter)
-    assert hasattr(rbm, 'h_bias') and isinstance(rbm.h_bias, tensor.Parameter)
-    assert hasattr(rbm, 'v_bias') and isinstance(rbm.v_bias, tensor.Parameter)
+    assert hasattr(rbm, 'weights') and isinstance(rbm.weights, Parameter)
+    assert hasattr(rbm, 'hidden_bias') and isinstance(rbm.hidden_bias, Parameter)
+    assert hasattr(rbm, 'visible_bias') and isinstance(rbm.visible_bias, Parameter)
     # Check shapes of initialized parameters
-    assert tensor.shape(rbm.W) == (n_visible, n_hidden)
-    assert tensor.shape(rbm.h_bias) == (n_hidden,)
-    assert tensor.shape(rbm.v_bias) == (n_visible,)
+    assert tensor.shape(rbm.weights) == (n_visible, n_hidden)
+    assert tensor.shape(rbm.hidden_bias) == (n_hidden,)
+    assert tensor.shape(rbm.visible_bias) == (n_visible,)
 
 # Note: Training involves iterative updates and convergence, which is hard to test
 # deterministically across backends. This test focuses on basic execution without
@@ -47,14 +48,15 @@ def test_rbm_train_basic_execution(set_backend_fixture):
     """Test RestrictedBoltzmannMachine train method (basic execution)."""
     n_visible = 10
     n_hidden = 5
-    rbm = RestrictedBoltzmannMachine(n_visible=n_visible, n_hidden=n_hidden)
+    rbm = RestrictedBoltzmannMachine(visible_size=n_visible, hidden_size=n_hidden, device="cpu")
     training_data = create_dummy_rbm_data(shape=(20, n_visible)) # 20 samples
     epochs = 5
     learning_rate = 0.1
 
     try:
         # Train for a few epochs
-        rbm.train(training_data, epochs=epochs, learning_rate=learning_rate)
+        from ember_ml.models.rbm.rbm import train_rbm
+        train_rbm(rbm, training_data, num_epochs=epochs, learning_rate=learning_rate)
         # If no exceptions are raised, assume basic execution is successful
         assert True
     except Exception as e:
@@ -64,9 +66,9 @@ def test_rbm_transform_shape(set_backend_fixture):
     """Test RestrictedBoltzmannMachine transform method shape."""
     n_visible = 784
     n_hidden = 256
-    rbm = RestrictedBoltzmannMachine(n_visible=n_visible, n_hidden=n_hidden)
+    rbm = RestrictedBoltzmannMachine(visible_size=n_visible, hidden_size=n_hidden)
     input_data = create_dummy_rbm_data(shape=(10, n_visible)) # 10 samples
-    features = rbm.transform(input_data)
+    features = rbm.compute_hidden_probabilities(input_data)
     # Transform should output features in the hidden layer dimension
     assert tensor.shape(features) == (10, n_hidden)
 
@@ -74,9 +76,9 @@ def test_rbm_generate_shape(set_backend_fixture):
     """Test RestrictedBoltzmannMachine generate method shape."""
     n_visible = 784
     n_hidden = 256
-    rbm = RestrictedBoltzmannMachine(n_visible=n_visible, n_hidden=n_hidden)
+    rbm = RestrictedBoltzmannMachine(visible_size=n_visible, hidden_size=n_hidden)
     n_samples = 10
-    generated_samples = rbm.generate(n_samples=n_samples)
+    generated_samples = rbm.sample(num_samples=n_samples)
     # Generated samples should be in the visible layer dimension
     assert tensor.shape(generated_samples) == (n_samples, n_visible)
     # Check if generated samples are binary (or close to binary for real-valued RBMs)
@@ -90,7 +92,7 @@ def test_rbm_anomaly_score_shape(set_backend_fixture):
     """Test RestrictedBoltzmannMachine anomaly_score method shape."""
     n_visible = 784
     n_hidden = 256
-    rbm = RestrictedBoltzmannMachine(n_visible=n_visible, n_hidden=n_hidden)
+    rbm = RestrictedBoltzmannMachine(visible_size=n_visible, hidden_size=n_hidden)
     input_data = create_dummy_rbm_data(shape=(10, n_visible)) # 10 samples
     anomaly_scores = rbm.anomaly_score(input_data)
     # Anomaly score should be a scalar for each sample
@@ -100,7 +102,7 @@ def test_rbm_is_anomaly_shape_and_type(set_backend_fixture):
     """Test RestrictedBoltzmannMachine is_anomaly method shape and type."""
     n_visible = 784
     n_hidden = 256
-    rbm = RestrictedBoltzmannMachine(n_visible=n_visible, n_hidden=n_hidden)
+    rbm = RestrictedBoltzmannMachine(visible_size=n_visible, hidden_size=n_hidden)
     input_data = create_dummy_rbm_data(shape=(10, n_visible)) # 10 samples
     # is_anomaly requires fitting the anomaly detector first (often part of train or a separate method)
     # Assuming a threshold is set internally or can be passed.
@@ -110,7 +112,8 @@ def test_rbm_is_anomaly_shape_and_type(set_backend_fixture):
     try:
         is_anomaly_result = rbm.is_anomaly(input_data)
         assert tensor.shape(is_anomaly_result) == (10,)
-        assert is_anomaly_result.dtype == tensor.bool_
+        # Just check if it's a boolean type
+        assert 'bool' in str(is_anomaly_result.dtype).lower()
     except Exception as e:
          # If is_anomaly requires prior fitting or a threshold, it might raise an error.
          # For now, we catch it and fail the test with a specific message.

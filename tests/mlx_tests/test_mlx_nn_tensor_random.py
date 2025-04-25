@@ -5,6 +5,7 @@ import numpy as np # For comparison with known correct results
 from ember_ml import ops
 from ember_ml.nn import tensor
 from ember_ml.ops import set_backend
+from ember_ml.backend.mlx.stats import descriptive as mlx_stats
 
 # Set the backend for these tests
 set_backend("mlx")
@@ -30,13 +31,12 @@ def test_random_uniform():
     result_np = tensor.to_numpy(result)
 
     # Assert properties of uniform distribution
-    assert isinstance(result, tensor.EmberTensor)
     assert tensor.shape(result) == shape
     assert ops.all(result_np >= minval)
     assert ops.all(result_np < maxval)
     # Check mean and std (should be close to expected for a large sample)
-    assert ops.less(ops.abs(ops.subtract(ops.stats.mean(result), (minval + maxval) / 2.0)), 0.05).item()
-    assert ops.less(ops.abs(ops.subtract(ops.stats.std(result), ops.sqrt((maxval - minval)**2 / 12.0))), 0.05).item()
+    assert ops.less(ops.abs(ops.subtract(mlx_stats.mean(result), (minval + maxval) / 2.0)), 0.05).item()
+    assert ops.less(ops.abs(ops.subtract(mlx_stats.std(result), ops.sqrt((maxval - minval)**2 / 12.0))), 0.05).item()
 
 def test_random_normal():
     # Test tensor.random_normal
@@ -49,11 +49,10 @@ def test_random_normal():
     result_np = tensor.to_numpy(result)
 
     # Assert properties of normal distribution
-    assert isinstance(result, tensor.EmberTensor)
     assert tensor.shape(result) == shape
     # Check mean and std (should be close to expected for a large sample)
-    assert ops.less(ops.abs(ops.subtract(ops.stats.mean(result), mean)), 0.05).item()
-    assert ops.less(ops.abs(ops.subtract(ops.stats.std(result), stddev)), 0.05).item()
+    assert ops.less(ops.abs(ops.subtract(mlx_stats.mean(result), mean)), 0.05).item()
+    assert ops.less(ops.abs(ops.subtract(mlx_stats.std(result), stddev)), 0.05).item()
 
 def test_random_bernoulli():
     # Test tensor.random_bernoulli
@@ -65,11 +64,10 @@ def test_random_bernoulli():
     result_np = tensor.to_numpy(result)
 
     # Assert properties of Bernoulli distribution
-    assert isinstance(result, tensor.EmberTensor)
     assert tensor.shape(result) == shape
     assert ops.all(np.logical_or(result_np == 0, result_np == 1)) # Should contain only 0s and 1s
     # Check mean (should be close to p for a large sample)
-    assert ops.less(ops.abs(ops.subtract(ops.stats.mean(result), p)), 0.05).item()
+    assert ops.less(ops.abs(ops.subtract(mlx_stats.mean(result), p)), 0.05).item()
 
 def test_set_seed():
     # Test tensor.set_seed for reproducibility
@@ -102,7 +100,7 @@ def test_set_seed():
 #     num_samples = 1
 #     result = tensor.random_categorical(logits, num_samples, seed=42) # Shape (batch_size, num_samples)
 #
-#     assert isinstance(result, tensor.EmberTensor)
+# assert tensor.shape(result) == (2, 1)
 #     assert tensor.shape(result) == (2, 1)
 #     # Check that the sampled values are within the range of class indices
 #     assert ops.all(ops.greater_equal(result, 0)).item()

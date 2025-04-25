@@ -3,6 +3,8 @@ Wave segment implementation using HPC limb arithmetic for precise wave computati
 """
 
 from typing import List, Optional
+from ember_ml.nn.tensor.types import TensorLike # Added import
+from ember_ml.nn import tensor # Moved import to top level
 import numpy as np
 from .hpc_limb import HPCLimb, hpc_add, hpc_sub, hpc_shr
 
@@ -122,4 +124,5 @@ class WaveSegmentArray:
         
     def get_wave_state(self) -> TensorLike:
         """Get array of normalized wave states."""
+        # Removed import from here: from ember_ml.nn import tensor
         return tensor.convert_to_tensor([seg.get_normalized_state() for seg in self.segments])

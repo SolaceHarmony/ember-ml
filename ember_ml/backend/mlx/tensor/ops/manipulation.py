@@ -138,7 +138,7 @@ def stack(tensors : list[TensorLike], axis: Optional[int]=0):
 
     return mx.stack([Tensor.convert_to_tensor(arr) for arr in tensors], axis=axis)
 
-def split(tensor : TensorLike, num_or_size_splits: Union[int,list[int]], axis=0) -> list[mx.array]:
+def split(tensor: TensorLike, num_or_size_splits: Union[int, list[int]], axis=0) -> list[mx.array]:
     """
     Split an MLX array into sub-arrays.
 
@@ -154,18 +154,102 @@ def split(tensor : TensorLike, num_or_size_splits: Union[int,list[int]], axis=0)
     Tensor = MLXTensor()
 
     tensor_array = Tensor.convert_to_tensor(tensor)
-
-    # MLX split returns an array or a tuple of arrays
-    result = mx.split(tensor_array, indices_or_sections=num_or_size_splits, axis=axis)
-
-    # Convert to list if it's not already a list
-    if isinstance(result, list):
-        return result
-    elif isinstance(result, tuple):
-        return list(result)
+    
+    # Handle different types of splits
+    if isinstance(num_or_size_splits, int):
+        # Split into equal parts
+        return split_tensor(tensor_array, num_or_size_splits, axis)
     else:
-        # If it's a single array, return a list with that array
-        return [result]
+        # Split at specified indices
+        return split_at_indices(tensor_array, num_or_size_splits, axis)
+
+def split_tensor(tensor: mx.array, num_splits: int, axis=0) -> list[mx.array]:
+    """
+    Split a tensor into num_splits equal parts along the given axis.
+    
+    Args:
+        tensor: Input tensor
+        num_splits: Number of equal parts to split into
+        axis: Axis along which to split
+        
+    Returns:
+        List of sub-tensors
+    """
+    # Get the size of the dimension to split
+    dim_size = tensor.shape[axis]
+    
+    # Calculate the size of each split
+    split_size = dim_size // num_splits
+    
+    # Handle case where the split doesn't divide evenly
+    remainder = dim_size % num_splits
+    
+    # Create a list to store the results
+    result = []
+    
+    # Calculate the start indices for each split
+    start_idx = 0
+    for i in range(num_splits):
+        # Adjust the size of this split if there's a remainder
+        this_split_size = split_size + (1 if i < remainder else 0)
+        
+        # Create slices for each dimension
+        slices = [slice(None)] * tensor.ndim
+        slices[axis] = slice(start_idx, start_idx + this_split_size)
+        
+        # Extract the slice and add to results
+        result.append(tensor[tuple(slices)])
+        
+        # Update the start index for the next split
+        start_idx += this_split_size
+    
+    return result
+
+def split_at_indices(tensor: mx.array, indices: list[int], axis=0) -> list[mx.array]:
+    """
+    Split a tensor at the specified indices along the given axis.
+    
+    Args:
+        tensor: Input tensor
+        indices: List of indices where to split the tensor
+        axis: Axis along which to split
+        
+    Returns:
+        List of sub-tensors
+    """
+    # Get the size of the dimension to split
+    dim_size = tensor.shape[axis]
+    
+    # Ensure indices are sorted
+    indices = sorted(indices)
+    
+    # Create a list to store the results
+    result = []
+    
+    # Calculate the start indices for each split
+    start_idx = 0
+    for idx in indices:
+        if idx <= start_idx:
+            # Skip invalid indices
+            continue
+            
+        # Create slices for each dimension
+        slices = [slice(None)] * tensor.ndim
+        slices[axis] = slice(start_idx, idx)
+        
+        # Extract the slice and add to results
+        result.append(tensor[tuple(slices)])
+        
+        # Update the start index for the next split
+        start_idx = idx
+    
+    # Add the final piece if needed
+    if start_idx < dim_size:
+        slices = [slice(None)] * tensor.ndim
+        slices[axis] = slice(start_idx, dim_size)
+        result.append(tensor[tuple(slices)])
+    
+    return result
 
 def expand_dims(tensor : TensorLike, axis: ShapeLike) -> mx.array:
     """

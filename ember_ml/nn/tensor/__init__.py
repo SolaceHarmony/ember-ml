@@ -27,7 +27,7 @@ from ember_ml.nn.tensor.common.dtypes import (  # noqa
 from ember_ml.nn.tensor.common import (  # noqa
     zeros, ones, eye, arange, linspace,
     zeros_like, ones_like, full, full_like,
-    reshape, transpose, concatenate, stack, split,
+    reshape, transpose, concatenate, stack, split, split_tensor,
     expand_dims, squeeze, tile, gather, scatter, tensor_scatter_nd_update,
     slice_tensor, slice_update, index_update, cast, copy, pad,
     to_numpy, item, shape,
@@ -100,7 +100,7 @@ __all__ = [
     # Tensor operations
     'zeros', 'ones', 'eye', 'arange', 'linspace',
     'zeros_like', 'ones_like', 'full', 'full_like',
-    'reshape', 'transpose', 'concatenate', 'stack', 'split',
+    'reshape', 'transpose', 'concatenate', 'stack', 'split', 'split_tensor',
     'expand_dims', 'squeeze', 'tile', 'gather', 'scatter', 'tensor_scatter_nd_update',
     'slice_tensor', 'slice_update', 'index_update', 'cast', 'copy', 'pad',
     'to_numpy', 'item', 'index','shape',

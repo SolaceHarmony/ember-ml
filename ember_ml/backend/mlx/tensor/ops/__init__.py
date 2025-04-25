@@ -19,7 +19,7 @@ from ember_ml.backend.mlx.tensor.ops.indexing import (
 )
 
 from ember_ml.backend.mlx.tensor.ops.manipulation import (
-    reshape, transpose, concatenate, stack, split, expand_dims, squeeze, tile, pad,
+    reshape, transpose, concatenate, stack, split, split_tensor, expand_dims, squeeze, tile, pad,
     vstack, hstack
 )
 
@@ -64,9 +64,10 @@ __all__ = [
     'reshape', 
     'transpose', 
     'concatenate', 
-    'stack', 
-    'split', 
-    'expand_dims', 
+    'stack',
+    'split',
+    'split_tensor',
+    'expand_dims',
     'squeeze', 
     'tile',
     'pad',
