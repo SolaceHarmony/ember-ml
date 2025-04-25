@@ -68,10 +68,10 @@ def binary_classification_metrics(y_true: TensorLike, y_pred: TensorLike, thresh
     y_pred_binary = tensor.cast(ops.greater(y_pred_tensor, tensor.convert_to_tensor(threshold)), dtype=tensor.int32)
     
     # Calculate confusion matrix elements using tensor operations
-    tp = ops.sum(ops.logical_and(ops.equal(y_true_tensor, 1), ops.equal(y_pred_binary, 1)))
-    tn = ops.sum(ops.logical_and(ops.equal(y_true_tensor, 0), ops.equal(y_pred_binary, 0)))
-    fp = ops.sum(ops.logical_and(ops.equal(y_true_tensor, 0), ops.equal(y_pred_binary, 1)))
-    fn = ops.sum(ops.logical_and(ops.equal(y_true_tensor, 1), ops.equal(y_pred_binary, 0)))
+    tp = ops.stats.sum(ops.logical_and(ops.equal(y_true_tensor, 1), ops.equal(y_pred_binary, 1)))
+    tn = ops.stats.sum(ops.logical_and(ops.equal(y_true_tensor, 0), ops.equal(y_pred_binary, 0)))
+    fp = ops.stats.sum(ops.logical_and(ops.equal(y_true_tensor, 0), ops.equal(y_pred_binary, 1)))
+    fn = ops.stats.sum(ops.logical_and(ops.equal(y_true_tensor, 1), ops.equal(y_pred_binary, 0)))
     
     # Calculate metrics using tensor operations
     total = ops.add(ops.add(tp, tn), ops.add(fp, fn))
@@ -133,9 +133,9 @@ def confusion_matrix(y_true: TensorLike, y_pred: TensorLike, normalize: bool = F
     # Get number of classes
     n_classes = tensor.cast(
         ops.add(
-            ops.maximum(
-                ops.max(y_true_tensor),
-                ops.max(y_pred_tensor)
+            ops.stats.max(
+                ops.stats.max(y_true_tensor),
+                ops.stats.max(y_pred_tensor)
             ),
             tensor.convert_to_tensor(1)
         ),
@@ -166,10 +166,10 @@ def confusion_matrix(y_true: TensorLike, y_pred: TensorLike, normalize: bool = F
     # Normalize if requested
     if normalize:
         cm = tensor.cast(cm, dtype=tensor.float32)
-        row_sums = ops.sum(cm, axis=1)
+        row_sums = ops.stats.sum(cm, axis=1)
         row_sums = tensor.expand_dims(row_sums, axis=1)
         # Avoid division by zero
-        row_sums = ops.maximum(row_sums, tensor.convert_to_tensor(1e-10))
+        row_sums = ops.stats.max(row_sums, tensor.convert_to_tensor(1e-10))
         cm = ops.divide(cm, row_sums)
         
     return cm

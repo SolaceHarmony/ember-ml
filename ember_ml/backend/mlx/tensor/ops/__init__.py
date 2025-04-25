@@ -19,12 +19,13 @@ from ember_ml.backend.mlx.tensor.ops.indexing import (
 )
 
 from ember_ml.backend.mlx.tensor.ops.manipulation import (
-    reshape, transpose, concatenate, stack, split, expand_dims, squeeze, tile, pad
+    reshape, transpose, concatenate, stack, split, expand_dims, squeeze, tile, pad,
+    vstack, hstack
 )
 
 from ember_ml.backend.mlx.tensor.ops.random import (
     random_normal, random_uniform, random_binomial, random_gamma, random_exponential,
-    random_poisson, random_categorical, random_permutation, shuffle, set_seed, get_seed
+    random_poisson, random_categorical, random_permutation, shuffle, random_shuffle, set_seed, get_seed
 )
 
 from ember_ml.backend.mlx.tensor.ops.utility import ( to_numpy, item, shape, dtype, copy, var, sort, argsort, maximum )
@@ -67,8 +68,10 @@ __all__ = [
     'split', 
     'expand_dims', 
     'squeeze', 
-    'tile', 
+    'tile',
     'pad',
+    'vstack',
+    'hstack',
     
     # Random operations
     'random_normal', 
@@ -80,6 +83,7 @@ __all__ = [
     'random_categorical',
     'random_permutation',
     'shuffle',
+    'random_shuffle',
     'set_seed',
     'get_seed',
     

@@ -10,7 +10,7 @@ from typing import Union, List, Tuple, Optional, Dict, Any
 import io
 from PIL import Image
 
-def plot_wave(wave: np.ndarray, sample_rate: int = 44100, title: str = "Wave Plot") -> plt.Figure:
+def plot_wave(wave: TensorLike, sample_rate: int = 44100, title: str = "Wave Plot") -> plt.Figure:
     """
     Plot a wave signal.
     
@@ -31,7 +31,7 @@ def plot_wave(wave: np.ndarray, sample_rate: int = 44100, title: str = "Wave Plo
     ax.grid(True)
     return fig
 
-def plot_spectrogram(wave: np.ndarray, sample_rate: int = 44100, title: str = "Spectrogram") -> plt.Figure:
+def plot_spectrogram(wave: TensorLike, sample_rate: int = 44100, title: str = "Spectrogram") -> plt.Figure:
     """
     Plot a spectrogram of a wave signal.
     
@@ -50,7 +50,7 @@ def plot_spectrogram(wave: np.ndarray, sample_rate: int = 44100, title: str = "S
     ax.set_title(title)
     return fig
 
-def plot_confusion_matrix(cm: np.ndarray, class_names: List[str] = None, title: str = "Confusion Matrix") -> plt.Figure:
+def plot_confusion_matrix(cm: TensorLike, class_names: List[str] = None, title: str = "Confusion Matrix") -> plt.Figure:
     """
     Plot a confusion matrix.
     
@@ -92,7 +92,7 @@ def plot_confusion_matrix(cm: np.ndarray, class_names: List[str] = None, title: 
     fig.tight_layout()
     return fig
 
-def plot_roc_curve(fpr: np.ndarray, tpr: np.ndarray, roc_auc: float, title: str = "ROC Curve") -> plt.Figure:
+def plot_roc_curve(fpr: TensorLike, tpr: TensorLike, roc_auc: float, title: str = "ROC Curve") -> plt.Figure:
     """
     Plot a ROC curve.
     
@@ -116,7 +116,7 @@ def plot_roc_curve(fpr: np.ndarray, tpr: np.ndarray, roc_auc: float, title: str 
     ax.legend(loc="lower right")
     return fig
 
-def plot_precision_recall_curve(precision: np.ndarray, recall: np.ndarray, title: str = "Precision-Recall Curve") -> plt.Figure:
+def plot_precision_recall_curve(precision: TensorLike, recall: TensorLike, title: str = "Precision-Recall Curve") -> plt.Figure:
     """
     Plot a precision-recall curve.
     
@@ -176,7 +176,7 @@ def fig_to_image(fig: plt.Figure) -> Image.Image:
     img = Image.open(buf)
     return img
 
-def plot_to_numpy(fig: plt.Figure) -> np.ndarray:
+def plot_to_numpy(fig: plt.Figure) -> TensorLike:
     """
     Convert a matplotlib figure to a numpy array.
     

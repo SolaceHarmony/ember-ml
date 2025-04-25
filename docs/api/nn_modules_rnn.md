@@ -1,6 +1,6 @@
 # Recurrent Neural Network Modules (nn.modules.rnn)
 
-The `ember_ml.nn.modules.rnn` package provides a comprehensive set of recurrent neural network (RNN) modules for sequential data processing. These modules are backend-agnostic and follow a consistent API across different backends. The implementation has been simplified by removing cell-based architecture and integrating all functionality directly into layer classes.
+The `ember_ml.nn.modules.rnn` package provides a comprehensive set of recurrent neural network (RNN) modules for sequential data processing. These modules are backend-agnostic and follow a consistent API across different backends. The implementation has been simplified by removing cell-based architecture and integrating all functionality directly into layer classes, with some modules capable of utilizing advanced neuron maps, including those with spatial properties.
 
 ## Importing
 
@@ -82,7 +82,7 @@ y = gru_layer(x) # Example without state return
 
 ## Closed-form Continuous-time (CfC) Modules
 
-CfC modules implement closed-form continuous-time recurrent neural networks, which are particularly effective for modeling irregular time series.
+CfC modules implement closed-form continuous-time recurrent neural networks, which are particularly effective for modeling irregular time series. These modules can integrate with various `NeuronMap` implementations to define their internal connectivity.
 
 ### CfC
 
@@ -102,7 +102,8 @@ neuron_map = NCPMap(
     seed=42
 )
 
-# Create a CfC layer
+# Create a CfC layer, passing the NeuronMap instance
+# The neuron_map can be any derivative of NeuronMap, including spatial maps like EnhancedNeuronMap
 cfc_layer = CfC(neuron_map=neuron_map)
 
 # Forward pass (sequence)
@@ -118,7 +119,7 @@ y = cfc_layer(x) # Example without state return
 
 ## Liquid Time-Constant (LTC) Modules
 
-LTC modules implement liquid time-constant recurrent neural networks, which model continuous-time neuronal dynamics.
+LTC modules implement liquid time-constant recurrent neural networks, which model continuous-time neuronal dynamics. These modules can integrate with various `NeuronMap` implementations to define their internal connectivity.
 
 ### LTC
 
@@ -132,7 +133,8 @@ from ember_ml.nn import tensor
 from ember_ml.nn.modules.wiring import FullyConnectedMap
 neuron_map = FullyConnectedMap(units=20, input_dim=10, output_dim=20)
 
-# Create an LTC layer by passing the NeuronMap
+# Create an LTC layer by passing the NeuronMap instance
+# The neuron_map can be any derivative of NeuronMap, including spatial maps like EnhancedNeuronMap
 ltc_layer = LTC(neuron_map=neuron_map)
 
 # Forward pass (sequence)
@@ -146,6 +148,10 @@ y = ltc_layer(x) # Example without state return
 ```
 
 ## Stride-Aware Modules
+
+Stride-aware modules are specialized for processing temporal data with variable strides, which is particularly useful for multi-scale time series analysis. Note that the architecture of these modules, particularly the use of explicit "Cell" and "Wired" classes, may represent an older pattern compared to the current approach of integrating `NeuronMap` directly into layer implementations.
+
+### StrideAware
 
 Stride-aware modules are specialized for processing temporal data with variable strides, which is particularly useful for multi-scale time series analysis.
 
@@ -293,8 +299,8 @@ y, states = deep_lstm(x)
 
 The RNN modules are implemented using a simplified architecture:
 
-1. **Layer Classes**: Implement the recurrent neural network logic directly
-2. **Advanced Modules**: Implement specialized recurrent architectures
+1. **Layer Classes**: Implement the recurrent neural network logic directly, often integrating a `NeuronMap` to define internal connectivity, including spatial patterns.
+2. **Advanced Modules**: Implement specialized recurrent architectures.
 
 This architecture allows Ember ML to provide a consistent API across different backends while still leveraging the unique capabilities of each backend. The cell-based architecture has been removed to simplify the codebase and improve maintainability.
 
@@ -319,6 +325,8 @@ LTC modules are based on the paper "Liquid Time-Constant Networks" by Hasani et 
 
 ### Quantum-Inspired Modules
 
+Quantum-inspired modules combine principles from quantum computing with classical neural networks to enhance temporal processing capabilities. These modules also utilize `NeuronMap` instances to define their connectivity.
+
 Quantum-inspired modules combine principles from quantum computing with classical neural networks to enhance temporal processing capabilities.
 
 #### LQNet (Liquid Quantum Neural Network)
@@ -339,7 +347,8 @@ neuron_map = NCPMap(
     seed=42
 )
 
-# Create LQNet model
+# Create LQNet model, passing the NeuronMap instance
+# The neuron_map can be any derivative of NeuronMap
 lqnet = LQNet(
     neuron_map=neuron_map,
     nu_0=1.0,
@@ -373,7 +382,8 @@ neuron_map = NCPMap(
     seed=42
 )
 
-# Create CTRQNet model
+# Create CTRQNet model, passing the NeuronMap instance
+# The neuron_map can be any derivative of NeuronMap
 ctrqnet = CTRQNet(
     neuron_map=neuron_map,
     nu_0=1.0,

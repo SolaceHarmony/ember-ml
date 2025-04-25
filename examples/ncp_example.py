@@ -5,11 +5,12 @@ This example demonstrates how to use the NCP and AutoNCP classes
 to create and train a neural circuit policy.
 """
 
-import numpy as np
 import matplotlib.pyplot as plt
+# NumPy import might still be needed for evaluation/plotting, keep it for now.
+import numpy as np
 
 from ember_ml import ops
-from ember_ml.nn.modules import NCPWiring # Updated import path
+from ember_ml.nn.modules.wiring import NCPMap # Import NCPMap instead of NCPWiring
 from ember_ml.nn.modules import NCP, AutoNCP
 from ember_ml.nn import tensor
 
@@ -20,7 +21,7 @@ def main():
     
     # Create a simple dataset
     print("\nCreating dataset...")
-    X = tensor.reshape(tensor.linspace(0, 2 * np.pi, 100), (-1, 1))
+    X = tensor.reshape(tensor.linspace(0, ops.multiply(2.0, ops.pi), 100), (-1, 1)) # Use ops.pi
     y = ops.sin(X)
     
     # Convert to numpy for splitting
@@ -33,7 +34,7 @@ def main():
     
     # Create a wiring configuration
     print("\nCreating wiring configuration...")
-    wiring = NCPWiring(
+    wiring = NCPMap( # Use NCPMap
         inter_neurons=10,
         motor_neurons=1,
         sensory_neurons=0,
@@ -44,7 +45,7 @@ def main():
     # Create an NCP model
     print("\nCreating NCP model...")
     model = NCP(
-        wiring=wiring,
+        neuron_map=wiring, # Use neuron_map argument
         activation="tanh",
         use_bias=True,
         kernel_initializer="glorot_uniform",
@@ -63,22 +64,30 @@ def main():
     for epoch in range(epochs):
         epoch_loss = 0.0
         
-        # Shuffle the data
-        indices = np.random.permutation(len(X_train))
-        X_shuffled = X_train[indices]
-        y_shuffled = y_train[indices]
+        # Shuffle the data using tensor functions
+        # Convert train data to tensors first for shuffling
+        X_train_tensor = tensor.convert_to_tensor(X_train)
+        y_train_tensor = tensor.convert_to_tensor(y_train)
+        indices = tensor.random_permutation(tensor.shape(X_train_tensor)[0])
+        X_shuffled = tensor.gather(X_train_tensor, indices)
+        y_shuffled = tensor.gather(y_train_tensor, indices)
         
-        # Train in batches
-        for i in range(0, len(X_train), batch_size):
-            X_batch = X_shuffled[i:i+batch_size]
-            y_batch = y_shuffled[i:i+batch_size]
+        # Train in batches using tensor slicing
+        for i in range(0, tensor.shape(X_train_tensor)[0], batch_size):
+            # Use tensor slicing instead of NumPy slicing
+            end_idx = min(i + batch_size, tensor.shape(X_train_tensor)[0])
+            # Use slice_tensor with start indices and sizes. Assumes 2D input (batch, features).
+            X_batch = tensor.slice_tensor(X_shuffled, [i, 0], [end_idx - i, tensor.shape(X_shuffled)[1]])
+            y_batch = tensor.slice_tensor(y_shuffled, [i, 0], [end_idx - i, tensor.shape(y_shuffled)[1]])
             
             # Forward pass
             model.reset_state()
-            y_pred = model(tensor.convert_to_tensor(X_batch))
+            # X_batch is already a tensor
+            y_pred = model(X_batch)
             
-            # Compute loss
-            loss = ops.mean(ops.square(y_pred - tensor.convert_to_tensor(y_batch)))
+            # Compute loss using ops.subtract
+            # y_batch is already a tensor
+            loss = ops.stats.mean(ops.square(ops.subtract(y_pred, y_batch)))
             
             # Compute gradients
             params = list(model.parameters())
@@ -89,11 +98,17 @@ def main():
                 param.data = ops.subtract(param.data, ops.multiply(tensor.convert_to_tensor(learning_rate), grad))
             
             epoch_loss += tensor.to_numpy(loss)
+
+        # Calculate average loss using ops functions
+        num_batches = ops.floor_divide(tensor.shape(X_train_tensor)[0], batch_size)
+        # Avoid division by zero
+        if tensor.item(num_batches) > 0:
+            avg_loss = ops.divide(epoch_loss, float(tensor.item(num_batches)))
+        else:
+            avg_loss = 0.0 # Or handle as appropriate
+        losses.append(avg_loss)
         
-        epoch_loss /= (len(X_train) // batch_size)
-        losses.append(epoch_loss)
-        
-        print(f"Epoch {epoch}/{epochs}, Loss: {epoch_loss:.6f}")
+        print(f"Epoch {epoch+1}/{epochs}, Loss: {avg_loss:.6f}") # Print avg_loss
     
     # Evaluate the model
     print("\nEvaluating NCP model...")

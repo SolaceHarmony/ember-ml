@@ -120,7 +120,7 @@ def convert_to_tensor(data: TensorLike, dtype: DType = None, device: Device = No
 
 ## 3. Update Operation Files
 
-For each operation file (math_ops.py, solver_ops.py, comparison_ops.py, etc.), we need to update the function signatures to use the standard type aliases.
+For each operation file (math_ops.py, comparison_ops.py, etc.), we need to update the function signatures to use the standard type aliases.
 
 ### Implementation Steps:
 
@@ -305,7 +305,6 @@ Here's the recommended order for implementing these changes:
 1. Create the typing.py file with standard type aliases
 2. Update tensor/ops/utility.py
 3. Update math_ops.py
-4. Update solver_ops.py
 5. Update comparison_ops.py
 6. Update tensor/ops/creation.py
 7. Update tensor/ops/indexing.py

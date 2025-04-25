@@ -319,9 +319,44 @@ class PrecisionReducingVisitor(ast.NodeVisitor):
                     break
             parent = self.parent_map.get(parent)
         
+        # Check if this is a string concatenation or other non-tensor operation
+        is_non_tensor_op = False
+        
+        # For Python 3.8+, string literals are represented as ast.Constant with value of type str
+        # For older Python versions, they are represented as ast.Str
+        if isinstance(node.op, ast.Add):
+            # Check for string literals (using ast.Constant for Python 3.8+)
+            # We only support Python 3.8+ now, which uses ast.Constant for string literals
+            is_string_literal_left = isinstance(node.left, ast.Constant) and isinstance(node.left.value, str)
+            is_string_literal_right = isinstance(node.right, ast.Constant) and isinstance(node.right.value, str)
+            
+            # Check for str() function calls
+            is_str_func_left = isinstance(node.left, ast.Call) and isinstance(node.left.func, ast.Name) and node.left.func.id == 'str'
+            is_str_func_right = isinstance(node.right, ast.Call) and isinstance(node.right.func, ast.Name) and node.right.func.id == 'str'
+            
+            # Check for variables named 'str_' or ending with '_str'
+            is_str_var_left = isinstance(node.left, ast.Name) and (node.left.id.startswith('str_') or node.left.id.endswith('_str'))
+            is_str_var_right = isinstance(node.right, ast.Name) and (node.right.id.startswith('str_') or node.right.id.endswith('_str'))
+            
+            # Check for f-strings (formatted string literals)
+            is_fstring_left = isinstance(node.left, ast.JoinedStr)
+            is_fstring_right = isinstance(node.right, ast.JoinedStr)
+            
+            # If any of these conditions are true, it's likely a string concatenation
+            if (is_string_literal_left or is_string_literal_right or
+                is_str_func_left or is_str_func_right or
+                is_str_var_left or is_str_var_right or
+                is_fstring_left or is_fstring_right):
+                is_non_tensor_op = True
+        
+        # Check for operations in hash functions or other non-tensor contexts
+        if self.current_function and ('hash' in self.current_function.lower() or 'str' in self.current_function.lower()):
+            is_non_tensor_op = True
+        
         # Check if this is a Python operator we want to detect
+        # Only flag operators on tensors, not on strings, array indices, or other non-tensor operations
         op_type = type(node.op)
-        if op_type in op_map and not is_in_subscript:
+        if op_type in op_map and not is_in_subscript and not is_non_tensor_op:
             location = f"{self.current_function}:{node.lineno}" if self.current_function else f"line {node.lineno}"
             self.python_operators.append({
                 'type': op_map[op_type],
@@ -353,7 +388,7 @@ class PrecisionReducingVisitor(ast.NodeVisitor):
                     'line': node.lineno
                 })
             
-            # Check for np.array(tensor), np.asarray(tensor), etc.
+            # Check for tensor.convert_to_tensor(tensor), np.asarray(tensor), etc.
             if isinstance(node.func.value, ast.Name) and node.func.value.id in self.numpy_aliases:
                 if node.func.attr in ('array', 'asarray'):
                     location = f"{self.current_function}:{node.lineno}" if self.current_function else f"line {node.lineno}"

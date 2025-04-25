@@ -27,11 +27,11 @@ from ember_ml.nn.modules.rnn.stride_aware import StrideAware
 # from ember_ml.nn.modules.rnn.stride_aware_cfc_layer import StrideAwareCfC
 # Temporarily comment out imports that might cause circular dependencies
 # from ember_ml.nn.modules.rnn.blocky import BlockyRoadNeuron, BlockyRoadChain
-# from ember_ml.nn.modules.rnn.ctrqnet import CTRQNet
+from ember_ml.nn.modules.rnn.ctrqnet import CTRQNet
 # from ember_ml.nn.modules.rnn.geometric import GeometricNeuron
 # from ember_ml.nn.modules.rnn.hybrid import HybridNeuron, HybridLNNModel
-# from ember_ml.nn.modules.rnn.lqnet import LQNet
-# from ember_ml.nn.modules.rnn.se_cfc import seCfC
+from ember_ml.nn.modules.rnn.lqnet import LQNet
+from ember_ml.nn.modules.rnn.se_cfc import seCfC
 # from ember_ml.nn.modules.rnn.spherical_ltc import SphericalLTCConfig, SphericalLTCNeuron, SphericalLTCChain
 
 __all__ = [
@@ -53,12 +53,12 @@ __all__ = [
     # Temporarily commented out classes
     # 'BlockyRoadNeuron',
     # 'BlockyRoadChain',
-    # 'CTRQNet',
+    'CTRQNet',
     # 'GeometricNeuron',
     # 'HybridNeuron',
     # 'HybridLNNModel',
-    # 'LQNet',
-    # 'seCfC',
+    'LQNet',
+    'seCfC',
     # 'SphericalLTCConfig',
     # 'SphericalLTCNeuron',
     # 'SphericalLTCChain',

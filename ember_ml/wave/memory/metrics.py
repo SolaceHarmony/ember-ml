@@ -6,6 +6,10 @@ from dataclasses import dataclass
 from typing import List, Dict, Optional
 import numpy as np
 import time
+
+from ember_ml import ops
+from ember_ml.nn import tensor
+from ember_ml.nn.tensor.types import TensorLike
 from ..utils.math_helpers import (
     compute_energy_stability,
     compute_interference_strength,
@@ -91,7 +95,7 @@ class MetricsCollector:
             self.computation_time += time.perf_counter() - self.computation_start
             self.computation_start = None
             
-    def record_wave_states(self, states: List[np.ndarray]):
+    def record_wave_states(self, states: List[TensorLike]):
         """
         Record wave states for analysis.
         
@@ -111,11 +115,11 @@ class MetricsCollector:
             raise ValueError("No wave states recorded")
             
         # Convert history to numpy array for efficient computation
-        history = np.array(self.wave_history)
+        history = tensor.convert_to_tensor(self.wave_history)
         
         # Compute energy history
         energies = [
-            [np.sum(state**2) for state in states]
+            [ops.stats.sum(state**2) for state in states]
             for states in self.wave_history
         ]
         total_energy = [sum(e) for e in energies]
@@ -133,11 +137,11 @@ class MetricsCollector:
             total_time=time.perf_counter() - self.start_time
         )
     
-    def get_wave_history(self) -> np.ndarray:
+    def get_wave_history(self) -> TensorLike:
         """
         Get recorded wave history.
         
         Returns:
             Array of shape (time_steps, num_spheres, state_dim)
         """
-        return np.array(self.wave_history)
+        return tensor.convert_to_tensor(self.wave_history)

@@ -11,6 +11,7 @@ TensorLike = Any
 DType = Any
 if TYPE_CHECKING:
     from ember_ml.nn.tensor.types import DType, TensorLike
+from ember_ml.nn.tensor.common.dtypes import EmberDType
 from ember_ml.nn.tensor.interfaces import TensorInterface
 from ember_ml.nn.tensor.common import (
     _convert_to_backend_tensor, to_numpy, item, shape, dtype, zeros, ones, zeros_like, ones_like,
@@ -20,7 +21,7 @@ from ember_ml.nn.tensor.common import (
     random_bernoulli, random_gamma, random_exponential, random_poisson,
     random_categorical, random_permutation, shuffle, set_seed, get_seed, tolist
 )
-
+from ember_ml import ops
 
 class EmberTensor(TensorInterface):
     """
@@ -70,35 +71,35 @@ class EmberTensor(TensorInterface):
             device: Optional device to place the tensor on
             requires_grad: Whether the tensor requires gradients
         """
-        # Handle different dtype formats
-        processed_dtype = None
+        from ember_ml.nn.tensor import dtype as get_dtype, to_dtype_str
+        # Figure out the dtype being inputted
         if dtype is not None:
-            if callable(dtype):
-                # If dtype is a callable (like the lambda functions in dtypes.py),
-                # call it to get the actual dtype
-                processed_dtype = dtype()
+            if isinstance(dtype, EmberDType):
+                # If dtype is an EmberDType, use it directly
+                processed_dtype = dtype
             elif isinstance(dtype, str):
                 # If dtype is a string, use it directly
                 processed_dtype = dtype
             else:
                 # Otherwise, use it as is (assuming it's a DType or compatible)
                 processed_dtype = dtype
-        
-        self._tensor = _convert_to_backend_tensor(data, dtype=processed_dtype)
-        # Use the device_ops to get the default device
+            self._tensor = _convert_to_backend_tensor(data, dtype=processed_dtype)
+        else:
+            # If dtype is None, we need to determine the dtype from the data
+            if data is not None:
+                # Use the backend's dtype function to get the dtype
+                self._tensor = _convert_to_backend_tensor(data)
+                processed_dtype = get_dtype(self._tensor)
+            else:
+                # If no data is provided, initialize an empty tensor
+                self._tensor = _convert_to_backend_tensor(data)
+                backend_dtype = get_dtype(self._tensor) if dtype is None and self._tensor is not None else processed_dtype
+
         # Import get_backend_module directly for reliable access during init
-        from ember_ml.backend import get_backend_module, get_backend
-        # Use the backend's get_device directly instead of relying on ops alias timing
-        self._device = device if device is not None else get_backend_module().get_device()
+        self._device = device if device is not None else ops.get_device()
         self._requires_grad = requires_grad
-        self._backend = get_backend() # get_backend is safe here
+        self._backend = ops.get_backend() # get_backend is safe here
         
-        # Store the dtype explicitly
-        from ember_ml.nn.tensor.common import dtype as get_dtype
-        # Get the backend-specific dtype directly from the tensor
-        backend_dtype = get_dtype(self._tensor)
-        # Store our processed dtype or convert from backend dtype
-        self._dtype = processed_dtype
 
 
     def to_backend_tensor(self) -> Any:
@@ -655,7 +656,7 @@ class EmberTensor(TensorInterface):
                 result = np.argsort(x_np, axis=axis)
             return _convert_to_backend_tensor(result)
     
-    def slice(self, x: Any, starts: Sequence[int], sizes: Sequence[int]) -> Any:
+    def slice_tensor(self, x: Any, starts: Sequence[int], sizes: Sequence[int]) -> Any:
         """
         Extract a slice from a tensor.
         
@@ -669,7 +670,7 @@ class EmberTensor(TensorInterface):
         """
         if isinstance(x, EmberTensor):
             x = x.to_backend_tensor()
-        tensor = slice(x, starts, sizes)
+        tensor = slice_tensor(x, starts, sizes)
         return tensor
     
     def slice_update(self, x: Any, slices: Union[List, Tuple], updates: Any) -> Any:

@@ -14,8 +14,8 @@ import pandas as pd
 
 from ember_ml.nn import tensor
 from ember_ml import ops
-from ember_ml.features.enhanced_type_detector import EnhancedTypeDetector
-from ember_ml.features.animated_feature_processor import AnimatedFeatureProcessor
+from ember_ml.nn.features.enhanced_type_detector import EnhancedTypeDetector
+from ember_ml.nn.features.animated_feature_processor import AnimatedFeatureProcessor
 
 # Set up logging
 logger = logging.getLogger(__name__)

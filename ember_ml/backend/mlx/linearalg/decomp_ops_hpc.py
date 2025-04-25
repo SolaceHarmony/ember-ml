@@ -47,9 +47,15 @@ class HPC16x8:
         self.low = mx.zeros_like(self.high) if low is None else mx.array(low, dtype=mx.float32)
     
     @classmethod
-    def from_array(cls, arr: mx.array) -> 'HPC16x8':
-        """Create HPC object from MLX array, splitting into high/low components."""
-        # Convert to float32 first
+    def from_array(cls, arr: TensorLike) -> 'HPC16x8':
+        """Create HPC object from tensor-like input, splitting into high/low components."""
+        # Create instances for each call to avoid circular imports
+        from ember_ml.backend.mlx.tensor import MLXTensor
+        tensor_ops = MLXTensor()
+        
+        # Convert to MLX tensor first
+        arr = tensor_ops.convert_to_tensor(arr)
+        # Convert to float32
         arr = mx.array(arr, dtype=mx.float32)
         # Split into high and low parts using limb arithmetic
         high = mx.array(arr, dtype=mx.float32)

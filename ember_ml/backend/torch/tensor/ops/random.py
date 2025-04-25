@@ -1,25 +1,35 @@
 """PyTorch tensor random operations."""
 
+from turtle import st
 import torch
 from typing import Union, Optional
 
 from ember_ml.backend.torch.types import TensorLike, DType, Shape
-from ember_ml.backend.torch.tensor.ops.utility import _create_new_tensor # Import helper
+from ember_ml.backend.torch.tensor.ops.utility import _create_new_tensor, _validate_and_get_torch_dtype # Import helper
 
 def random_normal(shape: Shape, mean: float = 0.0, stddev: float = 1.0,
-                  dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
+                   dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
     """
     Create a tensor with random values from a normal distribution.
     Dtype/Device handling deferred to caller via convert_to_tensor.
     Create a tensor with random values from a normal distribution using the helper.
     """
+    from ember_ml.backend.torch.tensor import TorchTensor # Lazy import
+    # Convert to PyTorch tensor first
+    tensor_ops = TorchTensor()
+    # Convert to PyTorch tensor first
+    # Validate and get the torch dtype
+    torch_dtype = _validate_and_get_torch_dtype(dtype)
+    # Convert mean and stddev to tensors
+    mean_tensor = tensor_ops.convert_to_tensor(mean, dtype=torch_dtype, device=device)
+    stddev_tensor = tensor_ops.convert_to_tensor(stddev, dtype=torch_dtype, device=device)
     # torch.normal takes mean, std, size (shape). Use kwargs.
     # Helper handles dtype and device.
     # Note: shape is passed as 'shape' kwarg - the helper will extract it and pass as 'size' positional arg
-    return _create_new_tensor(torch.normal, dtype=dtype, device=device, shape=shape, mean=mean, std=stddev)
+    return _create_new_tensor(torch.normal, dtype=dtype, device=device, shape=shape, mean=mean_tensor, std=stddev_tensor)
 
 def random_uniform(shape: Shape, minval: float = 0.0, maxval: float = 1.0,
-                   dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
+                    dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
     """
     Create a tensor with random values from a uniform distribution.
     
@@ -33,12 +43,45 @@ def random_uniform(shape: Shape, minval: float = 0.0, maxval: float = 1.0,
     Returns:
         PyTorch tensor with random uniform values
     """
-    # Use the helper function directly, passing torch.rand and scaling parameters
-    # This is simpler and more consistent with the MLX implementation
-    return _create_new_tensor(torch.rand, dtype=dtype, device=device, shape=shape) * (maxval - minval) + minval
+    # Validate and get the torch dtype
+    torch_dtype = _validate_and_get_torch_dtype(dtype)
+    from ember_ml.backend.torch.tensor import TorchTensor # Lazy import
+    # Convert to PyTorch tensor first
+    tensor_ops = TorchTensor()
+    # Convert minval and maxval to tensors
+    minval_tensor = tensor_ops.convert_to_tensor(minval, dtype=torch_dtype, device=device)
+    maxval_tensor = tensor_ops.convert_to_tensor(maxval, dtype=torch_dtype, device=device)
+    # Define a list of integer dtypes in PyTorch
+    integer_dtypes = [torch.int8, torch.int16, torch.int32, torch.int64, torch.uint8, torch.bool]
+    
+    # Check if dtype is an integer type
+    is_integer_dtype = torch_dtype in integer_dtypes if torch_dtype is not None else False
+    
+    if is_integer_dtype:
+        # For integer types, use torch.randint
+        # torch.randint is inclusive of low but exclusive of high, so we need to add 1 to high
+        high = torch.add(maxval_tensor, 1) if maxval_tensor == int(maxval_tensor) else torch.add(maxval_tensor, 1)
+        low = minval_tensor
+        
+        # Determine the target device
+        target_device = device
+        if target_device is None:
+            from ember_ml.backend.torch.device_ops import get_device
+            target_device = get_device()
+        
+        # Use torch.randint with the validated dtype and device
+        return torch.randint(low=low, high=high, size=shape if isinstance(shape, tuple) else (shape,), 
+                            dtype=torch_dtype, device=target_device)
+    else:
+        # For float types, use torch.rand and scale
+        # Generate random values in [0, 1)
+        rand_tensor = _create_new_tensor(torch.rand, dtype=torch_dtype, device=device, shape=shape)
+        # Scale to [minval, maxval)
+        val_diff = torch.subtract(maxval_tensor, minval_tensor)
+        return torch.add(torch.mul(rand_tensor, val_diff), minval_tensor)
 
 def random_binomial(shape: Shape, p: float = 0.5,
-                    dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
+                     dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
     """
     Create a tensor with random values from a binomial distribution using the helper.
     """
@@ -51,7 +94,7 @@ def random_binomial(shape: Shape, p: float = 0.5,
     return _create_new_tensor(torch.bernoulli, dtype=dtype, device=device, input=prob_tensor) # Pass prob_tensor via input kwarg
 
 def random_gamma(shape: Shape, alpha: float = 1.0, beta: float = 1.0,
-                 dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
+                  dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
     """
     Generate random values from a gamma distribution using the helper.
     """
@@ -79,7 +122,7 @@ def random_gamma(shape: Shape, alpha: float = 1.0, beta: float = 1.0,
     return result
 
 def random_exponential(shape: Shape, scale: float = 1.0,
-                       dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
+                        dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
     """
     Generate random values from an exponential distribution using the helper.
     """
@@ -91,7 +134,7 @@ def random_exponential(shape: Shape, scale: float = 1.0,
     return empty_tensor.exponential_(lambd=rate)
 
 def random_poisson(shape: Shape, lam: float = 1.0,
-                   dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
+                    dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
     """
     Generate random values from a Poisson distribution using the helper.
     """
@@ -104,7 +147,7 @@ def random_poisson(shape: Shape, lam: float = 1.0,
     return _create_new_tensor(torch.poisson, input=rate_tensor_clamped, dtype=dtype, device=device) # Pass rate tensor as input
 
 def random_categorical(data: TensorLike, num_samples: int,
-                       dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
+                        dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
     """
     Draw samples from a categorical distribution.
     Dtype/Device handling deferred to caller via convert_to_tensor.
@@ -124,7 +167,7 @@ def random_categorical(data: TensorLike, num_samples: int,
     return samples
 
 def random_permutation(data: Union[int, TensorLike],
-                       dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
+                        dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
     """
     Generate a random permutation.
     Dtype/Device handling deferred to caller via convert_to_tensor.
@@ -150,6 +193,32 @@ def random_permutation(data: Union[int, TensorLike],
         indices = torch.randperm(shape[0], device=tensor_data.device)
         # Gather
         return tensor_data[indices]
+
+def random_shuffle(data: TensorLike) -> torch.Tensor:
+    """
+    Randomly shuffle a tensor along the first dimension.
+    Similar to shuffle but specifically for shuffling indices.
+    
+    Args:
+        data: The tensor to shuffle
+        
+    Returns:
+        Shuffled tensor
+    """
+    from ember_ml.backend.torch.tensor.tensor import TorchTensor # Lazy import
+    # Instantiate TorchTensor
+    tensor_ops = TorchTensor()
+    # Convert data to tensor
+    tensor_data = tensor_ops.convert_to_tensor(data)
+    
+    shape = tensor_data.shape
+    if len(shape) == 0 or shape[0] <= 1:
+        return tensor_data
+    
+    # Generate random indices on the same device
+    indices = torch.randperm(shape[0], device=tensor_data.device)
+    # Gather
+    return tensor_data[indices]
 
 def shuffle(data: TensorLike) -> torch.Tensor:
     """
@@ -197,6 +266,7 @@ __all__ = [
     "random_poisson",
     "random_categorical",
     "random_permutation",
+    "random_shuffle",
     "shuffle",
     "set_seed",
     "get_seed",

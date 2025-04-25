@@ -122,19 +122,14 @@ def _convert_to_tensor(data: TensorLike, dtype: Optional[Any] = None, device: Op
     Args:
         data: Input data
         dtype: Optional data type
-        device: Ignored for NumPy backend
+        device: Ignored for NumPy backend (NumPy only supports CPU)
         
     Returns:
         NumPy array
     """
     tensor = _convert_input(data)
 
-    # Determine the target device
-    target_device = device
-    if target_device is None:
-        # Use the backend's get_device
-        from ember_ml.backend.numpy.device_ops import get_device
-        target_device = get_device()
+    # NumPy only supports CPU, so we ignore the device parameter
 
     # Apply dtype if provided
     # Apply dtype if provided or infer default
@@ -157,10 +152,7 @@ def _convert_to_tensor(data: TensorLike, dtype: Optional[Any] = None, device: Op
     # Perform casting only if a valid target_dtype was determined
     if target_dtype is not None and tensor.dtype != target_dtype:
          tensor = tensor.astype(target_dtype) # Use astype()
-    # Move to the target device
-    if target_device:
-        from ember_ml.backend.numpy.device_ops import to_device
-        tensor = to_device(tensor, target_device)
+    # NumPy only supports CPU, so no device movement is needed
 
     return tensor
 
@@ -371,6 +363,8 @@ def _create_new_tensor(creation_func: Callable, dtype: Optional[Any] = None, dev
     Returns:
         A new NumPy ndarray.
     """
+    # Ignore the device parameter - NumPy only supports CPU
+    
     dtype_cls = NumpyDType()
     # Explicitly resolve input dtype to native NumPy type
     numpy_native_dtype = dtype_cls.from_dtype_str(dtype) if dtype else None

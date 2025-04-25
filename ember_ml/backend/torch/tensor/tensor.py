@@ -1,7 +1,6 @@
 """PyTorch tensor class and operations."""
 
 import torch
-import numpy
 from typing import Union, Optional, Sequence, Any, Literal, List, TYPE_CHECKING, Tuple
 from ember_ml.backend.torch.tensor.dtype import TorchDType
 
@@ -125,7 +124,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.utility import _convert_to_tensor as convert_to_tensor_func
         return convert_to_tensor_func(data, dtype, device)
 
-    def slice(self, data: TensorLike, starts: Sequence[int], sizes: Sequence[int]) -> torch.Tensor:
+    def slice_tensor(self, data: TensorLike, starts: Sequence[int], sizes: Sequence[int]) -> torch.Tensor:
         """
         Extract a slice from a tensor.
 
@@ -494,7 +493,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.manipulation import pad as pad_func
         return pad_func(data, paddings, constant_values)
 
-
+    import numpy
     def to_numpy(self, data: Optional[TensorLike] = None) -> Optional[numpy.ndarray]:
         """
         Convert a PyTorch tensor to a NumPy array.

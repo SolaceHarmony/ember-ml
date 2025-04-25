@@ -31,7 +31,7 @@ This guide provides comprehensive documentation on how to use the Ember ML front
 Ember ML supports multiple backends (NumPy, PyTorch, MLX) through a unified interface. You can select the backend using the `set_backend` function:
 
 ```python
-from ember_ml.backend import set_backend, get_backend
+from ember_ml.ops import set_backend, get_backend
 
 # Use MLX (optimized for Apple Silicon)
 set_backend('mlx')
@@ -141,7 +141,7 @@ g = ops.matmul(EmberTensor([[1, 2], [3, 4]]), EmberTensor([[5, 6], [7, 8]]))  # 
 
 # Reduction operations
 sum_a = ops.stats.sum(a)  # 6
-mean_a = ops.mean(a)  # 2.0
+mean_a = ops.stats.mean(a)  # 2.0
 max_a = ops.stats.max(a)  # 3
 min_a = ops.stats.min(a)  # 1
 ```
@@ -574,7 +574,7 @@ for epoch in range(epochs):
 # Evaluate on test set
 test_predictions = model(test_X)
 test_loss = ops.binary_cross_entropy(test_predictions, test_y).item()
-test_accuracy = ops.mean(tensor.cast(ops.round(test_predictions) == test_y, 'float32')).item()
+test_accuracy = ops.stats.mean(tensor.cast(ops.round(test_predictions) == test_y, 'float32')).item()
 print(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.4f}")
 ```
 

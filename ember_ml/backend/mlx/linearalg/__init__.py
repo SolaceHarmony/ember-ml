@@ -9,6 +9,11 @@ from ember_ml.backend.mlx.linearalg.inverses_ops import inv # Assuming function 
 from ember_ml.backend.mlx.linearalg.matrix_ops import det, norm, diag, diagonal # Assuming functions are here
 from ember_ml.backend.mlx.linearalg.solvers_ops import solve, lstsq # Assuming functions are here
 from ember_ml.backend.mlx.linearalg.orthogonal_ops import orthogonal # Import orthogonal function
+
+# Import HPC-specific components
+from ember_ml.backend.mlx.linearalg.decomp_ops_hpc import _add_limb_precision, HPC16x8
+from ember_ml.backend.mlx.linearalg.hpc_nonsquare import orthogonalize_nonsquare
+
 # Note: decomp_ops_hpc.py and qr_128.py might contain specialized versions not directly imported here
 
 __all__ = [
@@ -26,5 +31,9 @@ __all__ = [
     "svd",
     "diag",
     "diagonal",
-    "orthogonal" # Add orthogonal to exports
+    "orthogonal", # Add orthogonal to exports
+    # Add HPC components to exports
+    "orthogonalize_nonsquare",
+    "_add_limb_precision",
+    "HPC16x8"
 ]

@@ -39,10 +39,10 @@ class WaveMultiHeadAttention(nn.Module):
         self.dropout = nn.Dropout(dropout)
         
     def forward(self, 
-                query: torch.Tensor, 
-                key: torch.Tensor, 
-                value: torch.Tensor, 
-                mask: Optional[torch.Tensor] = None) -> torch.Tensor:
+                query: tensor.convert_to_tensor, 
+                key: tensor.convert_to_tensor, 
+                value: tensor.convert_to_tensor, 
+                mask: Optional[tensor.convert_to_tensor] = None) -> tensor.convert_to_tensor:
         """
         Forward pass.
         
@@ -109,7 +109,7 @@ class WaveTransformerEncoderLayer(nn.Module):
         self.norm2 = nn.LayerNorm(d_model)
         self.dropout = nn.Dropout(dropout)
         
-    def forward(self, x: torch.Tensor, mask: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def forward(self, x: tensor.convert_to_tensor, mask: Optional[tensor.convert_to_tensor] = None) -> tensor.convert_to_tensor:
         """
         Forward pass.
         
@@ -153,7 +153,7 @@ class WaveTransformerEncoder(nn.Module):
             for _ in range(num_layers)
         ])
         
-    def forward(self, x: torch.Tensor, mask: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def forward(self, x: tensor.convert_to_tensor, mask: Optional[tensor.convert_to_tensor] = None) -> tensor.convert_to_tensor:
         """
         Forward pass.
         
@@ -211,7 +211,7 @@ class WaveTransformer(nn.Module):
         Initialize positional encoding.
         """
         position = torch.arange(0, self.max_seq_len).unsqueeze(1).float()
-        div_term = torch.exp(torch.arange(0, self.d_model, 2).float() * -(torch.log(torch.tensor(10000.0)) / self.d_model))
+        div_term = torch.exp(torch.arange(0, self.d_model, 2).float() * -(torch.log(tensor.convert_to_tensor(10000.0)) / self.d_model))
         
         pos_encoding = torch.zeros(1, self.max_seq_len, self.d_model)
         pos_encoding[0, :, 0::2] = torch.sin(position * div_term)
@@ -219,7 +219,7 @@ class WaveTransformer(nn.Module):
         
         self.pos_encoding.data = pos_encoding
         
-    def forward(self, x: torch.Tensor, mask: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def forward(self, x: tensor.convert_to_tensor, mask: Optional[tensor.convert_to_tensor] = None) -> tensor.convert_to_tensor:
         """
         Forward pass.
         

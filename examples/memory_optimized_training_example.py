@@ -84,10 +84,10 @@ def generate_time_series_data(n_samples=1000, seq_length=16, n_features=8):
     y = tensor.zeros((n_samples, n_features))
     
     for i in range(n_samples):
-        # Generate components with different frequencies
+        # Generate components with different frequencies using ops
         trend = ops.multiply(0.1, t_values)
         
-        # Random phase shift
+        # Random phase shift using ops
         phase_shift = ops.multiply(ops.pi, tensor.random_uniform(()))
         seasonal1 = ops.multiply(2.0, ops.sin(ops.add(t_values, phase_shift)))
         
@@ -96,7 +96,7 @@ def generate_time_series_data(n_samples=1000, seq_length=16, n_features=8):
         
         noise = ops.multiply(0.2, tensor.random_normal((seq_length,)))
         
-        # Combine components
+        # Combine components using ops
         base_signal = ops.add(
             ops.add(trend, seasonal1),
             ops.add(seasonal2, noise)
@@ -104,8 +104,8 @@ def generate_time_series_data(n_samples=1000, seq_length=16, n_features=8):
         
         # Create multiple features
         for j in range(n_features):
-            phase_shift_j = ops.multiply(j * ops.pi / 4, tensor.ones(()))
-            amplitude = 1.0 + 0.2 * j
+            phase_shift_j = ops.multiply(ops.divide(ops.multiply(float(j), ops.pi), 4.0), tensor.ones(())) # Use ops
+            amplitude = ops.add(1.0, ops.multiply(0.2, float(j))) # Use ops
             
             feature_signal = ops.add(
                 ops.multiply(amplitude, base_signal),
@@ -116,13 +116,13 @@ def generate_time_series_data(n_samples=1000, seq_length=16, n_features=8):
             for k in range(seq_length):
                 X = tensor.with_value(X, i, k, j, feature_signal[k])
         
-        # Generate target (next value)
+        # Generate target (next value) using ops
         t_step = ops.subtract(t_values[1], t_values[0])
         t_next = ops.add(t_values[-1], t_step)
         
         for j in range(n_features):
-            phase_shift_j = ops.multiply(j * ops.pi / 4, tensor.ones(()))
-            amplitude = 1.0 + 0.2 * j
+            phase_shift_j = ops.multiply(ops.divide(ops.multiply(float(j), ops.pi), 4.0), tensor.ones(())) # Use ops
+            amplitude = ops.add(1.0, ops.multiply(0.2, float(j))) # Use ops
             
             trend_next = ops.multiply(0.1, t_next)
             
@@ -151,7 +151,7 @@ def create_model(hidden_size):
     wiring = AutoNCP(units=hidden_size, output_size=8, sparsity_level=0.5)
     
     # Create model
-    return CfC(wiring=wiring)
+    return CfC(neuron_map=wiring) # Use neuron_map argument
 
 def create_optimizer(learning_rate=0.001):
     """Create an optimizer."""
@@ -162,7 +162,9 @@ def create_optimizer(learning_rate=0.001):
         
         def update(self, model, grads):
             for param, grad in zip(model.parameters(), grads):
-                param.data = ops.subtract(param.data, ops.multiply(grad, self.learning_rate))
+                # Use ops functions for update
+                update = ops.multiply(grad, self.learning_rate)
+                param.data = ops.subtract(param.data, update)
     
     return SGDOptimizer(learning_rate)
 

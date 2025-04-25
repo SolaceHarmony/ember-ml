@@ -39,6 +39,8 @@ except ImportError:
 import numpy as np
 import math
 
+from ember_ml.nn import tensor
+
 if HAS_MLX:
     class ConvLSTM2DCell(nn.Module):
         """Custom ConvLSTM2D cell for spatiotemporal feature extraction"""
@@ -127,7 +129,7 @@ if HAS_MLX:
 
     log_entries = {
         "Log_ID": range(1, 101),
-        "Timestamp": np.linspace(1000, 2000, 100),
+        "Timestamp": tensor.linspace(1000, 2000, 100),
         "Location": np.random.choice(["Switch_A", "Switch_B", "Switch_C", "Switch_D", "Switch_E"], 100),
         "Message": np.random.choice([
             "Link down", "Link up", "High latency detected", "Packet loss detected",
@@ -136,11 +138,11 @@ if HAS_MLX:
         "Severity": np.random.choice(["Low", "Medium", "High", "Critical"], 100)
     }
 
-    log_ids = np.array(log_entries["Log_ID"])
-    timestamps = np.array(log_entries["Timestamp"])
-    locations = np.array(log_entries["Location"])
-    messages = np.array(log_entries["Message"])
-    severities = np.array(log_entries["Severity"])
+    log_ids = tensor.convert_to_tensor(log_entries["Log_ID"])
+    timestamps = tensor.convert_to_tensor(log_entries["Timestamp"])
+    locations = tensor.convert_to_tensor(log_entries["Location"])
+    messages = tensor.convert_to_tensor(log_entries["Message"])
+    severities = tensor.convert_to_tensor(log_entries["Severity"])
 
     unique_locations = np.unique(locations)
     location_mapping = {loc: i for i, loc in enumerate(unique_locations)}
@@ -149,15 +151,15 @@ if HAS_MLX:
     unique_severities= np.unique(severities)
     severity_mapping = {sev: i for i, sev in enumerate(unique_severities)}
 
-    locations_encoded = np.array([location_mapping[loc] for loc in locations])
-    messages_encoded = np.array([message_mapping[msg] for msg in messages])
-    severities_encoded = np.array([severity_mapping[sev] for sev in severities])
+    locations_encoded = tensor.convert_to_tensor([location_mapping[loc] for loc in locations])
+    messages_encoded = tensor.convert_to_tensor([message_mapping[msg] for msg in messages])
+    severities_encoded = tensor.convert_to_tensor([severity_mapping[sev] for sev in severities])
 
-    log_ids_mx = mx.array(log_ids)
-    timestamps_mx = mx.array(timestamps)
-    locations_mx = mx.array(locations_encoded)
-    messages_mx = mx.array(messages_encoded)
-    severities_mx = mx.array(severities_encoded)
+    log_ids_mx = tensor.convert_to_tensor(log_ids)
+    timestamps_mx = tensor.convert_to_tensor(timestamps)
+    locations_mx = tensor.convert_to_tensor(locations_encoded)
+    messages_mx = tensor.convert_to_tensor(messages_encoded)
+    severities_mx = tensor.convert_to_tensor(severities_encoded)
 
     embedding_dim_location = 10
     embedding_dim_message = 20
@@ -167,15 +169,15 @@ if HAS_MLX:
     message_embedding = nn.Embedding(len(unique_messages), embedding_dim_message)
     severity_embedding = nn.Embedding(len(unique_severities), embedding_dim_severity)
 
-    test_location_input = mx.array([1, 2])
+    test_location_input = tensor.convert_to_tensor([1, 2])
     embedded_locations = location_embedding(test_location_input)
     print(f"Shape of embedded locations: {embedded_locations.shape}")
 
-    test_message_input = mx.array([1-3])
+    test_message_input = tensor.convert_to_tensor([1-3])
     embedded_messages = message_embedding(test_message_input)
     print(f"Shape of embedded messages: {embedded_messages.shape}")
 
-    test_severity_input = mx.array([1])
+    test_severity_input = tensor.convert_to_tensor([1])
     embedded_severities = severity_embedding(test_severity_input)
     print(f"Shape of embedded severities: {embedded_severities.shape}")
 

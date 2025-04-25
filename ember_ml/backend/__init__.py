@@ -138,7 +138,7 @@ def get_device(tensor=None):
     """
     backend = get_backend()
     
-    if tensor is not None:
+    if tensor is not None and get_backend() != 'mlx':
         # If a tensor is provided, try to get its device
         if hasattr(tensor, 'device'):
             return str(tensor.device)
@@ -147,10 +147,10 @@ def get_device(tensor=None):
         return 'cpu'
     elif backend == 'torch':
         import torch
-        if torch.cuda.is_available():
-            return 'cuda'
-        elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+        if platform.system() == 'Darwin' and hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
             return 'mps'
+        elif torch.cuda.is_available():
+            return 'cuda'
         else:
             return 'cpu'
     elif backend == 'mlx':

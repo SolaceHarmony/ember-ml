@@ -9,16 +9,16 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
-import time
 from datetime import datetime
 
 # Import modules from ember_ml
-from ember_ml.nn.features.generic_feature_extraction import (
-    GenericCSVLoader,
-    GenericTypeDetector,
-    GenericFeatureEngineer,
-    TemporalStrideProcessor
+from ember_ml.nn.features.generic_feature_engineer import (
+
+    GenericFeatureEngineer
 )
+from ember_ml.nn.features.generic_type_detector import GenericTypeDetector
+from ember_ml.nn.features.generic_csv_loader import GenericCSVLoader
+from ember_ml.nn.features.temporal_processor import TemporalStrideProcessor
 from ember_ml.models.rbm_anomaly_detector import RBMBasedAnomalyDetector
 from ember_ml.visualization.rbm_visualizer import RBMVisualizer
 
@@ -36,7 +36,8 @@ def generate_telemetry_data(n_samples=1000, n_features=10, anomaly_fraction=0.05
         DataFrame with telemetry data and anomaly labels
     """
     # Generate normal data
-    normal_data = np.random.normal(0, 1, (n_samples, n_features))
+    from ember_ml.nn import tensor
+    normal_data = tensor.random_normal(0, 1, (n_samples, n_features))
     
     # Add some correlations between features
     for i in range(1, n_features):
@@ -44,7 +45,7 @@ def generate_telemetry_data(n_samples=1000, n_features=10, anomaly_fraction=0.05
     
     # Add some temporal patterns
     for i in range(n_samples):
-        normal_data[i, :] += np.sin(i / 50) * 0.5
+        normal_data[i, :] += ops.sin(i / 50) * 0.5
     
     # Generate anomalies
     n_anomalies = int(n_samples * anomaly_fraction)
@@ -60,7 +61,7 @@ def generate_telemetry_data(n_samples=1000, n_features=10, anomaly_fraction=0.05
             normal_data[idx, feature_idx] += np.random.uniform(3, 5)
         elif anomaly_type == 1:
             # Correlation anomaly
-            normal_data[idx, :] = np.random.normal(0, 1, n_features)
+            normal_data[idx, :] = tensor.random_normal(0, 1, n_features)
         else:
             # Collective anomaly
             normal_data[idx, :] += np.random.uniform(2, 3, n_features)
@@ -205,8 +206,8 @@ def main():
     # Combine validation and anomaly data for testing
     test_features = np.vstack([val_features, anomaly_features])
     test_labels = np.hstack([
-        np.zeros(len(val_features)),
-        np.ones(len(anomaly_features))
+        tensor.zeros(len(val_features)),
+        tensor.ones(len(anomaly_features))
     ])
     
     # Predict anomalies
@@ -214,10 +215,10 @@ def main():
     anomaly_scores = detector.anomaly_score(test_features)
     
     # Compute metrics
-    true_positives = np.sum((predicted_anomalies == 1) & (test_labels == 1))
-    false_positives = np.sum((predicted_anomalies == 1) & (test_labels == 0))
-    true_negatives = np.sum((predicted_anomalies == 0) & (test_labels == 0))
-    false_negatives = np.sum((predicted_anomalies == 0) & (test_labels == 1))
+    true_positives = ops.stats.sum((predicted_anomalies == 1) & (test_labels == 1))
+    false_positives = ops.stats.sum((predicted_anomalies == 1) & (test_labels == 0))
+    true_negatives = ops.stats.sum((predicted_anomalies == 0) & (test_labels == 0))
+    false_negatives = ops.stats.sum((predicted_anomalies == 0) & (test_labels == 1))
     
     precision = true_positives / (true_positives + false_positives) if (true_positives + false_positives) > 0 else 0
     recall = true_positives / (true_positives + false_negatives) if (true_positives + false_negatives) > 0 else 0

@@ -125,7 +125,7 @@ class CTGRU(Module):
         
         # Split into gates
         units = self.neuron_map.units
-        z_chunks = tensor.split(z, 3, axis=-1)
+        z_chunks = tensor.split_tensor(z, 3, axis=-1)
         z_update, z_reset, z_candidate = z_chunks
         
         # Apply activations

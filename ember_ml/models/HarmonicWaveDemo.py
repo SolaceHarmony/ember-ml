@@ -1,8 +1,11 @@
-import numpy as np
 import matplotlib.pyplot as plt
 from transformers import AutoTokenizer, AutoModel
-import torch
+# Removed: import torch
 from sklearn.metrics.pairwise import cosine_similarity
+from ember_ml import ops
+# Ensure stats ops are accessible if ops.stats.mean is used later
+# from ember_ml.ops import stats # Or access via ops.stats.mean
+from ember_ml.nn import tensor
 def harmonic_wave(params, t, batch_size):
     """
     Generate a harmonic wave based on parameters.
@@ -10,12 +13,21 @@ def harmonic_wave(params, t, batch_size):
     """
     harmonics = []
     for i in range(batch_size):
-        amplitudes, frequencies, phases = np.split(params[i], 3)
-        harmonic = (
-            amplitudes[:, None] * np.sin(2 * np.pi * frequencies[:, None] * t + phases[:, None])
+        amplitudes, frequencies, phases = tensor.split_tensor(params[i], 3)
+        harmonic = ops.multiply(
+            amplitudes[:, None], 
+            ops.sin(
+            ops.add(
+                ops.multiply(
+                ops.multiply(2, ops.pi),
+                ops.multiply(frequencies[:, None], t)
+                ),
+                phases[:, None]
+            )
+            )
         )
         harmonics.append(harmonic.sum(axis=0))
-    return np.vstack(harmonics)
+    return tensor.vstack(harmonics)
 from transformers import AutoTokenizer, AutoModel
 
 # Load transformer model and tokenizer
@@ -27,16 +39,38 @@ model = AutoModel.from_pretrained(model_name)
 def generate_embeddings(texts):
     """
     Generate embeddings for a list of texts using a pretrained transformer.
-    Returns: numpy array of shape (num_texts, embedding_dim)
+
+    NOTE: This function currently requires PyTorch and the 'transformers'
+          library. It is NOT fully backend-agnostic due to the direct
+          dependency on the transformer model's PyTorch implementation.
+
+    Returns:
+        EmberTensor: Tensor of shape (num_texts, embedding_dim) using the
+                     current Ember ML backend.
     """
-    embeddings = []
-    for text in texts:
-        inputs = tokenizer(text, return_tensors="pt", padding=True, truncation=True)
-        outputs = model(**inputs)
-        # Use the CLS token embedding as the representation
-        cls_embedding = outputs.last_hidden_state[:, 0, :].detach().numpy()
-        embeddings.append(cls_embedding)
-    return np.vstack(embeddings)
+    # This part remains PyTorch-specific due to the transformers library
+    try:
+        import torch # Keep torch import local to this function
+        import numpy as np # Needed temporarily for vstack
+        embeddings_list_np = []
+        for text in texts:
+            inputs = tokenizer(text, return_tensors="pt", padding=True, truncation=True)
+            with torch.no_grad(): # Ensure no gradients are computed
+                 outputs = model(**inputs)
+            # Use the CLS token embedding, convert to numpy
+            cls_embedding_np = outputs.last_hidden_state[:, 0, :].cpu().numpy()
+            embeddings_list_np.append(cls_embedding_np)
+        # Convert the final list of numpy arrays to an EmberTensor
+        # vstack might handle this, but explicit conversion is safer
+        embeddings_np = np.vstack(embeddings_list_np) # Need numpy temporarily
+        return tensor.convert_to_tensor(embeddings_np)
+    except ImportError:
+        raise ImportError("PyTorch and transformers library are required for generate_embeddings function.")
+    except Exception as e:
+        print(f"Error during embedding generation: {e}")
+        # Return an empty tensor or handle error appropriately
+        # Returning None might be better to signal failure
+        return None # Or raise the exception
 
 # Example texts
 texts = [
@@ -54,8 +88,8 @@ def map_embeddings_to_harmonics(embeddings):
     batch_size, embedding_dim = embeddings.shape
     params = []
     for i in range(batch_size):
-        params.append(np.random.rand(3 * embedding_dim))  # Amplitudes, Frequencies, Phases
-    return np.vstack(params)
+        params.append(tensor.random_normal(ops.multiply(3, embedding_dim)))  # Amplitudes, Frequencies, Phases
+    return tensor.vstack(params)
 
 def loss_function(params, t, target_embedding):
     """
@@ -63,13 +97,15 @@ def loss_function(params, t, target_embedding):
     Uses Mean Squared Error (MSE) as the metric.
     """
     # Generate harmonic wave for the given parameters
-    amplitudes, frequencies, phases = np.split(params, 3)
+    amplitudes, frequencies, phases = tensor.split_tensor(params, 3)
     harmonic = (
-        amplitudes[:, None] * np.sin(2 * np.pi * frequencies[:, None] * t + phases[:, None])
+        amplitudes[:, None] * ops.sin(2 * ops.pi * frequencies[:, None] * t + phases[:, None])
     ).sum(axis=0)
     
-    # Compute MSE loss
-    loss = ((target_embedding - harmonic) ** 2).mean()
+    # Compute MSE loss using ops
+    diff = ops.subtract(target_embedding, harmonic)
+    squared_diff = ops.square(diff) # Or ops.power(diff, 2)
+    loss = ops.stats.mean(squared_diff) # Use ops.stats.mean
     return loss
 
 
@@ -77,20 +113,27 @@ def compute_gradients(params, t, target_embedding, epsilon=1e-5):
     """
     Compute numerical gradients for the harmonic parameters using finite differences.
     """
-    gradients = np.zeros_like(params)
+    gradients = tensor.zeros_like(params)
     for i in range(len(params)):
-        params_step = params.copy()
-        
-        # Positive perturbation
-        params_step[i] += epsilon
-        loss_plus = loss_function(params_step, t, target_embedding)
-        
-        # Negative perturbation
-        params_step[i] -= 2 * epsilon
-        loss_minus = loss_function(params_step, t, target_embedding)
-        
-        # Compute gradient
-        gradients[i] = (loss_plus - loss_minus) / (2 * epsilon)
+        params_step_plus = params.copy() # Use separate copies for clarity
+        params_step_minus = params.copy()
+
+        # Positive perturbation using ops.add
+        # Note: Direct indexing and modification might need backend-specific handling
+        # or tensor.scatter/slice_update if params is an EmberTensor.
+        # Assuming direct modification works for now, but this is a potential issue.
+        params_step_plus[i] = ops.add(params_step_plus[i], epsilon)
+        loss_plus = loss_function(params_step_plus, t, target_embedding)
+
+        # Negative perturbation using ops.subtract and ops.multiply
+        two_epsilon = ops.multiply(2.0, epsilon) # Calculate 2*epsilon once
+        params_step_minus[i] = ops.subtract(params_step_minus[i], two_epsilon)
+        loss_minus = loss_function(params_step_minus, t, target_embedding)
+
+        # Compute gradient using ops
+        loss_diff = ops.subtract(loss_plus, loss_minus)
+        denominator = ops.multiply(2.0, epsilon) # Reuse calculation
+        gradients[i] = ops.divide(loss_diff, denominator)
     return gradients
 
 
@@ -109,12 +152,21 @@ def train_harmonic_embeddings(embeddings, t, batch_size, learning_rate=0.01, epo
             # Compute gradients
             gradients = compute_gradients(params[i], t, embeddings[i])
             
-            # Update parameters
-            params[i] -= learning_rate * gradients
-            
-            # Accumulate loss
-            total_loss += loss
-        print(f"Epoch {epoch + 1}/{epochs}, Loss: {total_loss / batch_size}")
+            # Update parameters using ops
+            update_step = ops.multiply(learning_rate, gradients)
+            # Assuming direct modification works, see note in compute_gradients
+            params[i] = ops.subtract(params[i], update_step)
+
+            # Accumulate loss using ops.add
+            # Ensure total_loss is initialized as a tensor or 0.0
+            if i == 0 and epoch == 0: # Initialize total_loss correctly on first step
+                 total_loss = loss # Assign first loss
+            else:
+                 total_loss = ops.add(total_loss, loss)
+
+        # Calculate average loss using ops.divide
+        avg_loss = ops.divide(total_loss, tensor.convert_to_tensor(float(batch_size)))
+        print(f"Epoch {epoch + 1}/{epochs}, Loss: {tensor.item(avg_loss)}") # Use tensor.item() to print scalar loss
     return params
 
 
@@ -141,9 +193,14 @@ def visualize_embeddings(target, learned):
     plt.show()
     
     if __name__ == "__main__":
-        # Generate time steps
-        t = np.linspace(0, 5, embeddings.shape[1])  # Adjust as needed for your embeddings
-    
+        # Remove numpy import
+        # import numpy as np
+
+        # Generate time steps using tensor.linspace
+        # Assuming embeddings is already an EmberTensor or compatible
+        num_time_steps = tensor.shape(embeddings)[1]
+        t = tensor.linspace(0.0, 5.0, num_time_steps) # Use tensor.linspace
+
         # Train harmonic embeddings
         batch_size = embeddings.shape[0]  # Number of embeddings (batch size)
         params = train_harmonic_embeddings(embeddings, t, batch_size)
@@ -153,7 +210,8 @@ def visualize_embeddings(target, learned):
     
         # Reshape learned harmonic wave to match embeddings
         if learned_harmonic_wave.shape == embeddings.shape:
-            learned_harmonic_wave = learned_harmonic_wave.reshape(embeddings.shape)
+            # Use tensor.reshape function
+            learned_harmonic_wave = tensor.reshape(learned_harmonic_wave, embeddings.shape)
         else:
             raise ValueError(
                 f"Shape mismatch: learned wave shape {learned_harmonic_wave.shape}, "

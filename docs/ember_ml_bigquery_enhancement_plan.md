@@ -84,7 +84,7 @@ class EnhancedTypeDetector:
         }
         
         # Convert sample data to tensor using backend-agnostic ops
-        tensor_data = ops.convert_to_tensor(sample_data)
+        tensor_data = tensor.convert_to_tensor(sample_data)
         
         # Compute statistics based on data type
         if analysis['inferred_type'] == 'numeric':
@@ -292,7 +292,7 @@ class MemoryEfficientProcessor:
                 break
                 
             # Convert to tensor
-            chunk_tensor = ops.convert_to_tensor(chunk_df[column_name].values)
+            chunk_tensor = tensor.convert_to_tensor(chunk_df[column_name].values)
             
             # Apply processing strategy
             processed_chunk = self._apply_strategy(chunk_tensor, processing_strategy, strategy_params)
@@ -482,7 +482,7 @@ class RBMFeatureOptimizer:
         features_min = ops.stats.min(features, axis=0, keepdims=True)
         features_max = ops.stats.max(features, axis=0, keepdims=True)
         features_range = ops.subtract(features_max, features_min)
-        features_range = ops.maximum(features_range, ops.convert_to_tensor(1e-8))
+        features_range = ops.maximum(features_range, tensor.convert_to_tensor(1e-8))
         
         normalized = ops.divide(
             ops.subtract(features, features_min),
@@ -493,7 +493,7 @@ class RBMFeatureOptimizer:
         if settings.get('binary_visible', False):
             # For binary RBMs, we need to ensure all values are binary
             threshold = settings.get('binarization_threshold', 0.5)
-            binary_features = ops.greater(normalized, ops.convert_to_tensor(threshold))
+            binary_features = ops.greater(normalized, tensor.convert_to_tensor(threshold))
             binary_features = tensor.cast(binary_features, 'float32')
             
             return binary_features, {

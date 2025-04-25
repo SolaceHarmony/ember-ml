@@ -6,8 +6,8 @@ from typing import Optional, Union, Dict, Any, Tuple
 from dataclasses import dataclass
 from ember_ml import ops
 from ember_ml.nn import tensor
-from .geometric import GeometricNeuron, normalize_sphere
-from .base import BaseChain
+from ember_ml.nn.modules.rnn.geometric import GeometricNeuron, normalize_sphere
+from ember_ml.nn.modules.rnn.blocky import BaseChain
 
 @dataclass
 class SphericalLTCConfig:
@@ -224,7 +224,7 @@ class SphericalLTCChain(BaseChain):
         all_states = []
         for i in range(batch_size):
             # Extract single batch element using slice
-            input_i = tensor.slice(input_batch, [i, 0], [1, self.dim])
+            input_i = tensor.slice_tensor(input_batch, [i, 0], [1, self.dim])
             # Update chain with this input
             states = self.update(input_i)
             all_states.append(states)
@@ -261,11 +261,11 @@ class SphericalLTCChain(BaseChain):
         num_neurons = shape[2]
         
         # Use first batch element for analysis
-        states_0 = tensor.slice(states, [0, 0, 0, 0], [1, num_steps, num_neurons, self.dim])
+        states_0 = tensor.slice_tensor(states, [0, 0, 0, 0], [1, num_steps, num_neurons, self.dim])
         states_0 = tensor.squeeze(states_0, axis=0)
         
         # Compute x-axis projections (first component)
-        x_proj = tensor.slice(states_0, [0, 0, 0], [num_steps, num_neurons, 1])
+        x_proj = tensor.slice_tensor(states_0, [0, 0, 0], [num_steps, num_neurons, 1])
         x_proj = tensor.squeeze(x_proj, axis=2)
         
         # Find pattern end index (assuming pattern is in first half)
@@ -276,17 +276,17 @@ class SphericalLTCChain(BaseChain):
         
         for i in range(num_neurons):
             # Get neuron trace
-            trace = tensor.slice(x_proj, [0, i], [num_steps, 1])
+            trace = tensor.slice_tensor(x_proj, [0, i], [num_steps, 1])
             trace = tensor.squeeze(trace, axis=1)
             
             # Get pattern end value
-            pattern_value = tensor.slice(trace, [ops.subtract(pattern_end, 1)], [1])
+            pattern_value = tensor.slice_tensor(trace, [ops.subtract(pattern_end, 1)], [1])
             pattern_value = tensor.squeeze(pattern_value)
             
             # Find when trace drops below threshold
             found_forgetting = False
             for t in range(tensor.to_numpy(pattern_end), tensor.to_numpy(num_steps)):
-                trace_t = tensor.slice(trace, [t], [1])
+                trace_t = tensor.slice_tensor(trace, [t], [1])
                 trace_t = tensor.squeeze(trace_t)
                 
                 if ops.greater(ops.abs(ops.subtract(trace_t, pattern_value)), threshold):
@@ -314,14 +314,14 @@ class SphericalLTCChain(BaseChain):
         states = tensor.zeros((self.num_neurons, self.dim))
         
         # Update first neuron with external input
-        states_0 = self.neurons[0].update(tensor.slice(input_signals, [0, 0], [1, self.dim]))
+        states_0 = self.neurons[0].update(tensor.slice_tensor(input_signals, [0, 0], [1, self.dim]))
         states = tensor.tensor_scatter_nd_update(states, [0], [states_0])
         
         # Update subsequent neurons using chain connections
         for i in range(1, self.num_neurons):
             # Each neuron receives state of previous neuron as input
             prev_idx = ops.subtract(i, 1)
-            prev_state = tensor.slice(states, [prev_idx, 0], [1, self.dim])
+            prev_state = tensor.slice_tensor(states, [prev_idx, 0], [1, self.dim])
             states_i = self.neurons[i].update(prev_state)
             states = tensor.tensor_scatter_nd_update(states, [i], [states_i])
             

@@ -11,7 +11,7 @@ from ember_ml.nn import tensor
 from ember_ml.nn.modules import Module
 from ember_ml.nn.modules.wiring import NeuronMap # Use renamed base class
 # Import the cell this layer uses
-from ember_ml.nn.modules.rnn.stride_aware_cfc import StrideAwareWiredCfCCell # Remove lecun_tanh import
+from ember_ml.nn.modules.rnn.stride_aware_cfc import StrideAwareCfC # Remove lecun_tanh import
 # Import specific wirings needed for default behavior
 from ember_ml.nn.modules.wiring import FullyConnectedMap # Use renamed map class
 from ember_ml.nn.modules import activations # Import activations module
@@ -42,7 +42,7 @@ class StrideAwareCfC(Module):
 
     def __init__(
         self,
-        neuron_map_or_cell: Union[NeuronMap, StrideAwareWiredCfCCell], # Remove int option
+        neuron_map_or_cell: Union[NeuronMap, StrideAwareCfC], # Remove int option
         stride_length: int = 1,
         time_scale_factor: float = 1.0,
         mixed_memory: bool = False,
@@ -91,7 +91,7 @@ class StrideAwareCfC(Module):
 
         # Create the cell
         # Check argument type
-        if isinstance(neuron_map_or_cell, StrideAwareWiredCfCCell):
+        if isinstance(neuron_map_or_cell, StrideAwareWiredCfC): # Check for cell
             self.cell = neuron_map_or_cell
         elif isinstance(neuron_map_or_cell, NeuronMap): # Check for NeuronMap
             if any([backbone_units, backbone_layers, backbone_dropout]):
@@ -99,7 +99,7 @@ class StrideAwareCfC(Module):
             # Ensure the wiring is built before passing it to the cell
             # The cell's __init__ expects a built wiring or input_size
             # We might not know input_size here, so let the cell handle build if needed
-            self.cell = StrideAwareWiredCfCCell(
+            self.cell = StrideAwareWiredCfC(
                 neuron_map=neuron_map_or_cell, # Pass map with correct name
                 stride_length=stride_length,
                 time_scale_factor=time_scale_factor,

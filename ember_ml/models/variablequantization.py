@@ -3,7 +3,10 @@ import numpy as np
 from dataclasses import dataclass
 from typing import List, Tuple, Optional
 import time
-
+from ember_ml.nn import tensor
+from ember_ml.ops import set_backend
+from ember_ml.nn.tensor.types import TensorLike
+from ember_ml import ops
 @dataclass
 class BlockHash:
     block_id: int
@@ -14,8 +17,8 @@ class BlockHash:
 @dataclass
 class BlockResult:
     block_id: int
-    quantized_data: np.ndarray
-    original_data: np.ndarray
+    quantized_data: TensorLike
+    original_data: TensorLike
     hash_info: BlockHash
     processing_time_ms: float
     compression_ratio: float
@@ -25,20 +28,20 @@ class HashVerifier:
     def __init__(self, verification_precision: int = 10):
         self.verification_precision = verification_precision
     
-    def compute_original_block_hash(self, block_id: int, data: np.ndarray) -> str:
+    def compute_original_block_hash(self, block_id: int, data: TensorLike) -> str:
         """Compute deterministic hash for original float data"""
         # Round the data to specified precision and create string representation
         rounded_data = [round(float(x), self.verification_precision) for x in data]
         data_str = str(rounded_data)  # Uses Python's list string representation
         return self.sha256(data_str)
     
-    def compute_quantized_block_hash(self, block_id: int, data: np.ndarray) -> str:
+    def compute_quantized_block_hash(self, block_id: int, data: TensorLike) -> str:
         """Compute deterministic hash for quantized data"""
         # Convert quantized data to list and create string representation
         data_list = data.tolist()  # Convert numpy array to list
         return self.sha256(str(data_list))
     
-    def verify_block(self, block_id: int, original: np.ndarray, quantized: np.ndarray) -> BlockHash:
+    def verify_block(self, block_id: int, original: TensorLike, quantized: TensorLike) -> BlockHash:
         """Verify quantization result against original data"""
         original_hash = self.compute_original_block_hash(block_id, original)
         quantized_hash = self.compute_quantized_block_hash(block_id, quantized)
@@ -60,7 +63,7 @@ class VerifiedQuantizer:
         self.block_size = block_size
         self.verifier = HashVerifier(verification_precision)
     
-    def quantize_block(self, block_id: int, data: np.ndarray) -> BlockResult:
+    def quantize_block(self, block_id: int, data: TensorLike) -> BlockResult:
         """Quantize a block of data with verification"""
         start_time = time.time()
         
@@ -68,7 +71,7 @@ class VerifiedQuantizer:
         data = np.asarray(data)
         
         # Compute scale based on absolute maximum
-        abs_max = np.max(np.abs(data)) if len(data) > 0 else 1.0
+        abs_max = ops.stats.max(np.abs(data)) if len(data) > 0 else 1.0
         
         # Perform quantization
         quantized = self.quantize_8bit(data)
@@ -87,13 +90,14 @@ class VerifiedQuantizer:
             mse=mse
         )
     
-    def quantize_all_blocks(self, data: np.ndarray) -> List[BlockResult]:
+    def quantize_all_blocks(self, data: TensorLike) -> List[BlockResult]:
         """Quantize all data in blocks"""
-        data = np.asarray(data)
-        blocks = np.array_split(data, np.ceil(len(data) / self.block_size))
+        from ember_ml import ops
+        data = tensor.convert_to_tensor(data)
+        blocks = tensor.convert_to_tensor(data, ops.stats.ceil(len(data) / self.block_size))
         return [self.quantize_block(i, block) for i, block in enumerate(blocks)]
     
-    def compute_metrics(self, original: np.ndarray, quantized: np.ndarray, abs_max: float) -> Tuple[float, float]:
+    def compute_metrics(self, original: TensorLike, quantized: TensorLike, abs_max: float) -> Tuple[float, float]:
         """Calculate metrics for quantization results"""
         # Compression ratio (32-bit float to 8-bit int)
         compression_ratio = 4.0
@@ -105,19 +109,19 @@ class VerifiedQuantizer:
         
         return compression_ratio, float(mse)
     
-    def quantize_8bit(self, data: np.ndarray) -> np.ndarray:
+    def quantize_8bit(self, data: TensorLike) -> TensorLike:
         """Quantize float data to 8 bits"""
-        abs_max = np.max(np.abs(data)) if len(data) > 0 else 1.0
+        abs_max = ops.stats.max(np.abs(data)) if len(data) > 0 else 1.0
         scale = abs_max / 127.0
         
         # Scale to [-127, 127] range and shift to [0, 255]
-        scaled = np.clip(data / scale, -127, 127)
+        scaled = ops.clip(data / scale, -127, 127)
         return np.round(scaled + 128).astype(np.uint8)
 
 def test_quantization():
     # Generate test data
     np.random.seed(42)  # For reproducibility
-    data = np.random.normal(0, 1, 1000)
+    data = tensor.random_normal(0, 1, 1000)
     
     # Create quantizer
     quantizer = VerifiedQuantizer(block_size=128)

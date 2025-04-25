@@ -8,7 +8,7 @@ from ember_ml.nn.modules import AutoNCP
 from ember_ml.nn.modules.rnn import CfC
 from ember_ml.nn import Module, Sequential
 from sklearn.preprocessing import StandardScaler
-
+from ember_ml.nn import tensor
 def generate_log_data(num_logs=1000):
     """Generate synthetic Splunk-like log data with more pronounced anomaly patterns"""
     log_entries = {
@@ -98,26 +98,26 @@ class LiquidAnomalyDetector:
             wiring_slow,
             return_sequences=False
         )
-
+        from ember_ml.nn.container import Sequential, BatchNormalization
+        from ember_ml.nn.modules import Dense, Dropout
+        from ember_ml.nn import regularizers
         model = Sequential([
-            keras.layers.Input(shape=(self.sequence_length, total_neurons)),
+            tensor.zeros(shape=(self.sequence_length, total_neurons)),
             ltc_fast,
-            keras.layers.BatchNormalization(),
+            BatchNormalization(),
             ltc_med,
-            keras.layers.BatchNormalization(),
+            BatchNormalization(),
             ltc_slow,
-            keras.layers.BatchNormalization(),
-            keras.layers.Dense(32, activation='relu',
-                             kernel_regularizer=keras.regularizers.l2(0.01)),
-            keras.layers.Dropout(0.3),
-            keras.layers.Dense(16, activation='relu',
-                             kernel_regularizer=keras.regularizers.l2(0.01)),
-            keras.layers.Dropout(0.2),
-            keras.layers.Dense(1, activation='sigmoid')  # Anomaly probability
+            BatchNormalization(),
+            Dense(32, activation='relu'),  # Removed non-existent regularizer
+            Dropout(0.3),
+            Dense(16, activation='relu'),
+            Dropout(0.2),
+            Dense(1, activation='sigmoid')  # Anomaly probability
         ])
-
-        optimizer = keras.optimizers.Adam(
-            learning_rate=0.001,
+        from ember_ml.training.optimizer import Adam
+        optimizer = Adam(
+            lr=0.001,
             clipvalue=0.5
         )
 
@@ -141,7 +141,7 @@ class LiquidAnomalyDetector:
         
         # Create feature matrix
         num_features = len(self.location_map) + len(self.message_map) + 1  # +1 for severity
-        features = np.zeros((len(df), num_features))
+        features = tensor.zeros((len(df), num_features))
         
         for i, row in df.iterrows():
             # One-hot encode location
@@ -162,11 +162,11 @@ class LiquidAnomalyDetector:
         for i in range(len(features) - self.sequence_length):
             seq = features[i:i + self.sequence_length]
             # Pad or truncate features to match total_neurons
-            padded_seq = np.zeros((self.sequence_length, self.model.input_shape[-1]))
+            padded_seq = tensor.zeros((self.sequence_length, self.model.input_shape[-1]))
             padded_seq[:, :seq.shape[1]] = seq
             sequences.append(padded_seq)
             
-        return np.array(sequences)
+        return tensor.convert_to_tensor(sequences)
     
     def _detect_anomalies(self, sequences, threshold=0.8):
         """Detect anomalies using the liquid neural network"""
@@ -176,7 +176,7 @@ class LiquidAnomalyDetector:
     
     def _generate_labels(self, df):
         """Generate labels for training data based on known anomaly patterns"""
-        labels = np.zeros(len(df) - self.sequence_length)
+        labels = tensor.zeros(len(df) - self.sequence_length)
         
         # Label sequences as anomalies based on multiple criteria
         for i in range(len(df) - self.sequence_length):
@@ -230,7 +230,7 @@ class LiquidAnomalyDetector:
         
         if len(sequences) == 0:
             print("Not enough data for sequence analysis")
-            return np.array([])
+            return tensor.convert_to_tensor([])
         
         # Train the model if it hasn't been trained
         if not hasattr(self, '_trained'):

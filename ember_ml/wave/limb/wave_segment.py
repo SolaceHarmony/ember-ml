@@ -120,6 +120,6 @@ class WaveSegmentArray:
         reflection = hpc_shr(segment.wave_state, 4)  # wave_state/16
         segment.wave_state = hpc_sub(segment.wave_state, reflection)
         
-    def get_wave_state(self) -> np.ndarray:
+    def get_wave_state(self) -> TensorLike:
         """Get array of normalized wave states."""
-        return np.array([seg.get_normalized_state() for seg in self.segments])
+        return tensor.convert_to_tensor([seg.get_normalized_state() for seg in self.segments])

@@ -40,6 +40,8 @@ from ember_ml.backend.mlx.math_ops import (
     negative,
     mod,
     floor_divide,
+    floor,
+    ceil,
     gradient
 )
 
@@ -165,6 +167,8 @@ __all__ = [
     'clip',
     'mod',
     'floor_divide',
+    'floor',
+    'ceil',
     'gradient',
 
     # Casting operations
@@ -203,6 +207,8 @@ __all__ = [
     'squeeze',
     'tile',
     'pad',
+    'vstack',
+    'hstack',
     
      # Random operations
     'random_normal',
@@ -214,6 +220,7 @@ __all__ = [
     'random_categorical',
     'random_permutation',
     'shuffle',
+    'random_shuffle',
     'set_seed',
     'get_seed',
     

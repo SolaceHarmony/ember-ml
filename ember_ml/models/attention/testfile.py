@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from ncps import wirings
 import keras
 from typing import Union, List, Tuple, Dict, Optional
+from ember_ml.nn import tensor
 # LeCun improved tanh activation
 # http://yann.lecun.com/exdb/publis/pdf/lecun-98b.pdf
 @keras.utils.register_keras_serializable(package="ncps", name="lecun_tanh")
@@ -651,13 +652,14 @@ def visualize_stride_temporal_dynamics(time_steps=100, stride_lengths=[1, 3, 5],
     
     # Generate synthetic input sequence with temporal structure
     # Using sinusoidal patterns with varying frequencies to test multi-scale dynamics
-    t = np.linspace(0, 4*np.pi, time_steps)
+    from ember_ml import ops
+    t = tensor.linspace(0, 4*ops.pi, time_steps)
     frequencies = [1.0, 2.0, 0.5]
     input_signals = []
     for freq in frequencies[:input_dim]:
-        signal = np.sin(freq * t) + 0.1 * np.random.randn(time_steps)
+        signal = ops.sin(freq * t) + 0.1 * np.random.randn(time_steps)
         input_signals.append(signal)
-    input_sequence = np.stack(input_signals, axis=1).astype(np.float32)
+    input_sequence = tensor.stack(input_signals, axis=1).astype(np.float32)
     
     # Create cells for each stride length
     stride_cells = {}
@@ -675,7 +677,7 @@ def visualize_stride_temporal_dynamics(time_steps=100, stride_lengths=[1, 3, 5],
     states = {stride: [tf.zeros((1, units))] for stride in stride_lengths}
     
     # Track state evolution for each stride
-    state_evolution = {stride: np.zeros((time_steps, units)) for stride in stride_lengths}
+    state_evolution = {stride: tensor.zeros((time_steps, units)) for stride in stride_lengths}
     
     # Process sequence through each stride-specific cell
     for t_idx in range(time_steps):
@@ -754,7 +756,7 @@ def visualize_stride_temporal_dynamics(time_steps=100, stride_lengths=[1, 3, 5],
         change_rates[stride] = diffs
     
     for stride, rates in change_rates.items():
-        rate_smoothed = np.convolve(rates, np.ones(5)/5, mode='valid')
+        rate_smoothed = np.convolve(rates, tensor.ones(5)/5, mode='valid')
         ax3.plot(rate_smoothed, label=f"Stride {stride}")
     
     ax3.set_title("State Change Magnitude Over Time", fontsize=14)
@@ -793,7 +795,7 @@ def visualize_stride_temporal_dynamics(time_steps=100, stride_lengths=[1, 3, 5],
             fft = np.abs(np.fft.rfft(states[:, n]))
             fft_magnitudes.append(fft)
         
-        avg_fft = np.mean(np.array(fft_magnitudes), axis=0)
+        avg_fft = np.mean(tensor.convert_to_tensor(fft_magnitudes), axis=0)
         freqs = np.fft.rfftfreq(time_steps)
         
         ax5.plot(freqs, avg_fft, label=f"Stride {stride}")

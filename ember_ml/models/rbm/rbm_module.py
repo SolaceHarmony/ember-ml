@@ -62,7 +62,7 @@ class RBMModule(Module):
         self.hidden_bias = Parameter(tensor.zeros(n_hidden))
         
         # For tracking training progress
-        self.register_buffer('training_errors', tensor.convert_to_tensor([]))
+        self.register_buffer('training_errors', tensor.convert_to_tensor(0, dtype=tensor.float32))
         self.register_buffer('reconstruction_error_threshold', None)
         self.register_buffer('free_energy_threshold', None)
         self.register_buffer('n_epochs_trained', tensor.convert_to_tensor(0, dtype=tensor.int32))
@@ -94,7 +94,8 @@ class RBMModule(Module):
             ops.matmul(visible_states, self.weights.data),
             self.hidden_bias.data
         )
-        return ops.sigmoid(hidden_activations)
+        from ember_ml.nn.modules.activations import sigmoid
+        return sigmoid(hidden_activations)
     
     def sample_hidden_states(self, hidden_probs):
         """
@@ -129,7 +130,8 @@ class RBMModule(Module):
             ops.matmul(hidden_states, tensor.transpose(self.weights.data)),
             self.visible_bias.data
         )
-        return ops.sigmoid(visible_activations)
+        from ember_ml.nn.modules.activations import sigmoid
+        return sigmoid(visible_activations)
     
     def sample_visible_states(self, visible_probs):
         """

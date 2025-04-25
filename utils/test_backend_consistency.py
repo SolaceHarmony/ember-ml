@@ -27,7 +27,6 @@ OPERATION_TYPES = {
     "comparison": "comparison_ops.py",
     "dtype": "dtype_ops.py",
     "device": "device_ops.py",
-    "solver": "solver_ops.py",
     "io": "io_ops.py"
 }
 

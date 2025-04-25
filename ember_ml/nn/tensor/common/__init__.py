@@ -125,9 +125,18 @@ random_poisson = lambda *args, **kwargs: _get_backend_tensor_ops_module().random
 random_categorical = lambda *args, **kwargs: _get_backend_tensor_ops_module().random_categorical(*args, **kwargs)
 random_permutation = lambda *args, **kwargs: _get_backend_tensor_ops_module().random_permutation(*args, **kwargs)
 shuffle = lambda *args, **kwargs: _get_backend_tensor_ops_module().shuffle(*args, **kwargs)
+random_shuffle = lambda *args, **kwargs: _get_backend_tensor_ops_module().random_shuffle(*args, **kwargs)
 set_seed = lambda *args, **kwargs: _get_backend_tensor_ops_module().set_seed(*args, **kwargs)
 get_seed = lambda *args, **kwargs: _get_backend_tensor_ops_module().get_seed(*args, **kwargs)
 meshgrid = lambda *args, **kwargs: _get_backend_tensor_ops_module().meshgrid(*args, **kwargs) # Add meshgrid lambda
+
+# Define a simple Index class that just returns the key when indexed
+class Index:
+    def __getitem__(self, key):
+        return key
+
+# Create a singleton instance of the Index class
+index = Index()
 
 # Import EmberTensor class for use in __all__ but don't import it directly
 # This avoids the unused import warning
@@ -182,9 +191,11 @@ __all__ = [
     'random_categorical',
     'random_permutation',
     'shuffle',
+    'random_shuffle',
     'set_seed',
     'get_seed',
     'meshgrid',
     'nonzero', # Add nonzero export
     # Note: _convert_to_backend_tensor is intentionally not exported
+    'index',
 ]

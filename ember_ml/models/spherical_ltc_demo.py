@@ -14,7 +14,7 @@ def generate_input_signal(
     pattern_time: float = 5.0,
     dt: float = 0.01,
     freq: float = 1.0
-) -> torch.Tensor:
+) -> tensor.convert_to_tensor:
     """Generate sinusoidal input signal.
     
     Args:
@@ -34,7 +34,7 @@ def generate_input_signal(
     
     # Generate signal
     signal = torch.zeros(num_steps)
-    signal[:pattern_steps] = torch.sin(2 * np.pi * freq * t[:pattern_steps])
+    signal[:pattern_steps] = torch.sin(2 * ops.pi * freq * t[:pattern_steps])
     
     # Convert to 3D
     input_3d = torch.zeros(num_steps, 3)
@@ -44,9 +44,9 @@ def generate_input_signal(
 
 def run_simulation(
     chain: SphericalLTCChain,
-    input_signal: torch.Tensor,
+    input_signal: tensor.convert_to_tensor,
     batch_size: int = 1
-) -> torch.Tensor:
+) -> tensor.convert_to_tensor:
     """Run simulation of spherical LTC chain.
     
     Args:
@@ -72,8 +72,8 @@ def run_simulation(
     return torch.stack(states_history, dim=1)
 
 def plot_results(
-    states: torch.Tensor,
-    input_signal: torch.Tensor,
+    states: tensor.convert_to_tensor,
+    input_signal: tensor.convert_to_tensor,
     pattern_time: float,
     dt: float
 ):

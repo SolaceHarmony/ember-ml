@@ -768,7 +768,7 @@ def train_liquid_network(
                 outputs, _ = liquid_network(batch_features)
                 
                 # Compute loss
-                loss = ops.mean(ops.square(outputs - batch_targets))
+                loss = ops.stats.mean(ops.square(outputs - batch_targets))
             
             # Compute gradients
             gradients = tape.gradient(loss, liquid_network.parameters())
@@ -787,7 +787,7 @@ def train_liquid_network(
         if validation_data is not None:
             val_features, val_targets = validation_data
             val_outputs, _ = liquid_network(val_features)
-            val_loss = ops.mean(ops.square(val_outputs - val_targets))
+            val_loss = ops.stats.mean(ops.square(val_outputs - val_targets))
             history["val_loss"].append(val_loss)
             
             # Early stopping

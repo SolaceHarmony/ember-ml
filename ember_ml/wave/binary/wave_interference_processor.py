@@ -3,6 +3,10 @@ from typing import List, Tuple, Optional
 from array import array
 import math
 
+from ember_ml import ops
+from ember_ml.nn import tensor
+from ember_ml.nn.tensor.types import TensorLike
+
 # HPC-limb constants
 CHUNK_BITS = 64
 CHUNK_BASE = 1 << CHUNK_BITS
@@ -174,7 +178,7 @@ class WaveInterferenceNetwork:
             self.output_buffer.pop(0)
         return sum(self.output_buffer) / len(self.output_buffer)
     
-    def process_pcm(self, pcm_data: np.ndarray) -> np.ndarray:
+    def process_pcm(self, pcm_data: TensorLike) -> TensorLike:
         """Process PCM audio through wave interference network"""
         # Convert PCM to wave representation
         pcm_max = 32767
@@ -220,15 +224,15 @@ class WaveInterferenceNetwork:
             
             outputs.append(output_pcm)
         
-        return np.array(outputs, dtype=np.int16)
+        return tensor.convert_to_tensor(outputs, dtype=np.int16)
 
-def create_test_signal(duration_sec: float, sample_rate: int) -> np.ndarray:
+def create_test_signal(duration_sec: float, sample_rate: int) -> TensorLike:
     """Create test signal with multiple frequencies"""
-    t = np.linspace(0, duration_sec, int(duration_sec * sample_rate))
+    t = tensor.linspace(0, duration_sec, int(duration_sec * sample_rate))
     signal = (
-        0.5 * np.sin(2 * np.pi * 440 * t) +  # A4
-        0.3 * np.sin(2 * np.pi * 880 * t) +  # A5
-        0.2 * np.sin(2 * np.pi * 1760 * t)   # A6
+        0.5 * ops.sin(2 * ops.pi * 440 * t) +  # A4
+        0.3 * ops.sin(2 * ops.pi * 880 * t) +  # A5
+        0.2 * ops.sin(2 * ops.pi * 1760 * t)   # A6
     )
     return (signal * 32767).astype(np.int16)
 
@@ -250,7 +254,7 @@ class WaveInterferenceProcessor:
         """
         self.network = WaveInterferenceNetwork(num_neurons, wave_max)
         
-    def process(self, input_data: np.ndarray) -> np.ndarray:
+    def process(self, input_data: TensorLike) -> TensorLike:
         """
         Process input data through the wave interference network.
         
@@ -274,13 +278,13 @@ class WaveInterferenceProcessor:
         """
         # Generate sweep signal
         duration = 1.0
-        t = np.linspace(0, duration, int(duration * sample_rate))
+        t = tensor.linspace(0, duration, int(duration * sample_rate))
         freqs = np.logspace(np.log10(20), np.log10(20000), 10)  # 10 frequencies from 20Hz to 20kHz
         
         responses = {}
         for freq in freqs:
             # Generate sine wave at this frequency
-            sine = np.sin(2 * np.pi * freq * t)
+            sine = ops.sin(2 * ops.pi * freq * t)
             sine_pcm = (sine * 32767).astype(np.int16)
             
             # Process through network
@@ -314,6 +318,6 @@ if __name__ == "__main__":
     # Print stats
     print(f"Input shape: {test_signal.shape}")
     print(f"Output shape: {output.shape}")
-    print(f"Input range: [{np.min(test_signal)}, {np.max(test_signal)}]")
-    print(f"Output range: [{np.min(output)}, {np.max(output)}]")
+    print(f"Input range: [{ops.stats.min(test_signal)}, {ops.stats.max(test_signal)}]")
+    print(f"Output range: [{ops.stats.min(output)}, {ops.stats.max(output)}]")
     print(f"Frequency response: {freq_response}")

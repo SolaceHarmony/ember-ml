@@ -116,7 +116,7 @@ def _get_backend_dtype():
     """Get the dtype class for the current backend."""
     backend = get_backend()
     if backend == 'torch':
-        from ember_ml.backend.torch.tensor import TorchDType
+        from ember_ml.backend.tensor.convert_to_tensor import TorchDType
         return TorchDType()
     elif backend == 'numpy':
         # This will be updated when numpy backend is refactored

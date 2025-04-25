@@ -24,7 +24,7 @@ class EmbeddingGenerator:
             texts (List[str]): List of input texts to generate embeddings for
             
         Returns:
-            np.ndarray: Array of shape (num_texts, embedding_dim) containing the embeddings
+            TensorLike: Array of shape (num_texts, embedding_dim) containing the embeddings
         """
         embeddings = []
         for text in texts:
@@ -55,7 +55,7 @@ class EmbeddingGenerator:
             batch_size (int): Number of texts to process in each batch
             
         Returns:
-            np.ndarray: Array of shape (len(texts), embedding_dim) containing the embeddings
+            TensorLike: Array of shape (len(texts), embedding_dim) containing the embeddings
         """
         embeddings = []
         for i in range(0, len(texts), batch_size):

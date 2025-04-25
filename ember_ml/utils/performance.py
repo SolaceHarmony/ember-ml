@@ -56,8 +56,8 @@ def benchmark(func: Callable, *args, **kwargs) -> Dict[str, Any]:
     return {
         'mean': np.mean(times),
         'std': np.std(times),
-        'min': np.min(times),
-        'max': np.max(times),
+        'min': ops.stats.min(times),
+        'max': ops.stats.max(times),
         'times': times,
         'result': result
     }

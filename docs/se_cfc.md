@@ -130,7 +130,7 @@ for epoch in range(10):
         y_pred = model(x)
         
         # Calculate loss
-        mse_loss = ops.mean(ops.square(y_pred - y))
+        mse_loss = ops.stats.mean(ops.square(y_pred - y))
         reg_loss = model.get_regularization_loss()
         total_loss = mse_loss + reg_loss
     

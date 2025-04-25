@@ -44,9 +44,28 @@ def random_uniform(shape: Shape, minval: float = 0.0, maxval: float = 1.0,
     Returns:
         NumPy array with random uniform values
     """
-    # Use the helper function directly, passing np.random.uniform and its specific args
-    # Note: np.random.uniform expects 'size' instead of 'shape'
-    return _create_new_tensor(np.random.uniform, dtype=dtype, device=device, size=shape, low=minval, high=maxval)
+    # Check if dtype is an integer type
+    is_integer_dtype = False
+    if dtype is not None:
+        # Convert to NumPy dtype if it's not already
+        numpy_dtype = NumpyDType().validate_dtype(dtype)
+        if numpy_dtype is not None:
+            # Check if it's an integer dtype
+            is_integer_dtype = np.issubdtype(numpy_dtype, np.integer)
+    
+    if is_integer_dtype:
+        # For integer types, use np.random.randint
+        # np.random.randint is inclusive of low but exclusive of high, so we need to add 1 to high
+        high = int(maxval) + 1 if maxval == int(maxval) else int(maxval + 1)
+        low = int(minval)
+        
+        # Use np.random.randint with the validated dtype
+        return _create_new_tensor(np.random.randint, dtype=dtype, device=device, 
+                                 low=low, high=high, size=shape)
+    else:
+        # For float types, use np.random.uniform
+        return _create_new_tensor(np.random.uniform, dtype=dtype, device=device, 
+                                 size=shape, low=minval, high=maxval)
 
 def random_binomial(shape: Shape, p: float = 0.5,
                    dtype: Optional[DType] = None, device: Optional[str] = None) -> np.ndarray:
@@ -216,6 +235,35 @@ def random_permutation(data: Union[int, TensorLike], dtype: Optional[DType] = No
         result = result.astype(numpy_dtype)
     
     return result
+
+def random_shuffle(data: TensorLike) -> np.ndarray:
+    """
+    Randomly shuffle a NumPy array along the first dimension.
+    Similar to shuffle but specifically for shuffling indices.
+    
+    Args:
+        data: Input array
+    
+    Returns:
+        Shuffled NumPy array
+    """
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    
+    data_tensor = Tensor.convert_to_tensor(data)
+    
+    # Get the shape of the tensor
+    shape = data_tensor.shape
+    
+    # If the tensor is empty or has only one element, return it as is
+    if shape[0] <= 1:
+        return data_tensor
+    
+    # Generate random indices
+    indices = np.random.permutation(shape[0])
+    
+    # Gather along the first dimension
+    return data_tensor[indices]
 
 def shuffle(data: TensorLike) -> np.ndarray:
     """

@@ -186,7 +186,7 @@ def __setstate__(self, state):
     self._backend = state['backend']
     
     # Recreate the tensor with the correct backend
-    from ember_ml.backend import set_backend, get_backend
+    from ember_ml.ops import set_backend, get_backend
     current_backend = get_backend()
     try:
         # Temporarily switch to the original backend

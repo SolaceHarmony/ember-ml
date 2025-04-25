@@ -32,8 +32,8 @@ def normalize(x, axis=-1):
 def standardize(x, axis=-1):
     """Standardize a tensor to have zero mean and unit variance."""
     x_tensor = tensor.convert_to_tensor(x)
-    mean = ops.mean(x_tensor, axis=axis, keepdims=True)
-    std = ops.sqrt(ops.mean(ops.square(ops.subtract(x_tensor, mean)), axis=axis, keepdims=True))
+    mean = ops.stats.mean(x_tensor, axis=axis, keepdims=True)
+    std = ops.sqrt(ops.stats.mean(ops.square(ops.subtract(x_tensor, mean)), axis=axis, keepdims=True))
     return ops.divide(ops.subtract(x_tensor, mean), ops.add(std, tensor.convert_to_tensor(1e-8)))
 
 def euclidean_distance(x, y):
@@ -112,7 +112,7 @@ def compute_energy_stability(wave, window_size: int = 100) -> float:
     if len(energies) <= 1:
         return 1.0
         
-    energy_mean = ops.mean(energies_tensor)
+    energy_mean = ops.stats.mean(energies_tensor)
     if tensor.item(energy_mean) == 0:
         return 1.0
         
@@ -146,8 +146,8 @@ def compute_interference_strength(wave1, wave2) -> float:
     
     # Compute correlation
     # Since ops doesn't have a direct corrcoef function, we'll compute it manually
-    wave1_mean = ops.mean(wave1_tensor)
-    wave2_mean = ops.mean(wave2_tensor)
+    wave1_mean = ops.stats.mean(wave1_tensor)
+    wave2_mean = ops.stats.mean(wave2_tensor)
     wave1_centered = ops.subtract(wave1_tensor, wave1_mean)
     wave2_centered = ops.subtract(wave2_tensor, wave2_mean)
     
@@ -165,7 +165,7 @@ def compute_interference_strength(wave1, wave2) -> float:
     # when they become available in ops
     
     # For now, we'll use a simplified phase difference calculation
-    phase_diff = ops.mean(ops.abs(ops.subtract(
+    phase_diff = ops.stats.mean(ops.abs(ops.subtract(
         ops.divide(wave1_tensor, ops.add(ops.abs(wave1_tensor), tensor.convert_to_tensor(1e-8))),
         ops.divide(wave2_tensor, ops.add(ops.abs(wave2_tensor), tensor.convert_to_tensor(1e-8)))
     )))
@@ -213,11 +213,11 @@ def compute_phase_coherence(wave1, wave2, freq_range=None) -> float:
     # phase coherence calculation when FFT operations become available in ops
     
     # Normalize the waves
-    wave1_norm = ops.divide(wave1_tensor, ops.add(ops.sqrt(ops.mean(ops.square(wave1_tensor))), tensor.convert_to_tensor(1e-8)))
-    wave2_norm = ops.divide(wave2_tensor, ops.add(ops.sqrt(ops.mean(ops.square(wave2_tensor))), tensor.convert_to_tensor(1e-8)))
+    wave1_norm = ops.divide(wave1_tensor, ops.add(ops.sqrt(ops.stats.mean(ops.square(wave1_tensor))), tensor.convert_to_tensor(1e-8)))
+    wave2_norm = ops.divide(wave2_tensor, ops.add(ops.sqrt(ops.stats.mean(ops.square(wave2_tensor))), tensor.convert_to_tensor(1e-8)))
     
     # Compute dot product as a measure of coherence
-    coherence = ops.abs(ops.mean(ops.multiply(wave1_norm, wave2_norm)))
+    coherence = ops.abs(ops.stats.mean(ops.multiply(wave1_norm, wave2_norm)))
     
     return tensor.item(coherence)
 
@@ -257,8 +257,8 @@ def partial_interference(wave1, wave2, window_size: int = 100):
         window2 = wave2_tensor[i:i+window_size]
         
         # Compute correlation
-        window1_mean = ops.mean(window1)
-        window2_mean = ops.mean(window2)
+        window1_mean = ops.stats.mean(window1)
+        window2_mean = ops.stats.mean(window2)
         window1_centered = ops.subtract(window1, window1_mean)
         window2_centered = ops.subtract(window2, window2_mean)
         
@@ -271,7 +271,7 @@ def partial_interference(wave1, wave2, window_size: int = 100):
         correlation = ops.divide(numerator, ops.add(denominator, tensor.convert_to_tensor(1e-8)))
         
         # Simplified phase difference calculation
-        phase_diff = ops.mean(ops.abs(ops.subtract(
+        phase_diff = ops.stats.mean(ops.abs(ops.subtract(
             ops.divide(window1, ops.add(ops.abs(window1), tensor.convert_to_tensor(1e-8))),
             ops.divide(window2, ops.add(ops.abs(window2), tensor.convert_to_tensor(1e-8)))
         )))

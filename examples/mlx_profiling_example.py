@@ -59,15 +59,15 @@ def create_model(cell_type, hidden_size=100):
     
     # Create model based on cell type
     if cell_type == 'cfc':
-        return CfC(wiring=wiring)
+        return CfC(neuron_map=wiring) # Use neuron_map argument
     elif cell_type == 'ltc':
-        return LTC(wiring=wiring)
+        return LTC(neuron_map=wiring) # Use neuron_map argument
     elif cell_type == 'eltc':
-        return ELTC(wiring=wiring)
+        return ELTC(neuron_map=wiring) # Use neuron_map argument
     elif cell_type == 'ctgru':
-        return CTGRU(wiring=wiring)
+        return CTGRU(neuron_map=wiring) # Use neuron_map argument
     elif cell_type == 'ctrnn':
-        return CTRNN(wiring=wiring)
+        return CTRNN(neuron_map=wiring) # Use neuron_map argument
     else:
         raise ValueError(f"Unsupported cell type: {cell_type}")
 

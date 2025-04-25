@@ -75,13 +75,13 @@ def visualize_stride_temporal_dynamics(time_steps=100, stride_lengths=[1, 3, 5],
 
     # Generate synthetic input sequence with temporal structure
     # Using sinusoidal patterns with varying frequencies to test multi-scale dynamics
-    t = np.linspace(0, 4*np.pi, time_steps)
+    t = tensor.linspace(0, 4*ops.pi, time_steps)
     frequencies = [1.0, 2.0, 0.5]
     input_signals = []
     for freq in frequencies[:input_dim]:
-        signal = np.sin(freq * t) + 0.1 * np.random.randn(time_steps)
+        signal = ops.sin(freq * t) + 0.1 * np.random.randn(time_steps)
         input_signals.append(signal)
-    input_sequence = np.stack(input_signals, axis=1).astype(np.float32)
+    input_sequence = tensor.stack(input_signals, axis=1).astype(np.float32)
 
     # Create cells for each stride length
     stride_cells = {}
@@ -203,7 +203,7 @@ def visualize_stride_temporal_dynamics(time_steps=100, stride_lengths=[1, 3, 5],
         change_rates[stride] = diffs
 
     for stride, rates in change_rates.items():
-        rate_smoothed = np.convolve(rates, np.ones(5)/5, mode='valid') # Smooth rates
+        rate_smoothed = np.convolve(rates, tensor.ones(5)/5, mode='valid') # Smooth rates
         ax3.plot(rate_smoothed, label=f"Stride {stride}")
 
     ax3.set_title("State Change Magnitude Over Time (Smoothed)", fontsize=14)
@@ -221,7 +221,7 @@ def visualize_stride_temporal_dynamics(time_steps=100, stride_lengths=[1, 3, 5],
         ax4.plot(input_sequence[:, i], '--', alpha=0.5, label=f"Input {i}")
 
     # Overlay vertical lines at each stride's sampling points
-    colors = plt.cm.viridis(np.linspace(0, 1, len(stride_lengths))) # Use a colormap
+    colors = plt.cm.viridis(tensor.linspace(0, 1, len(stride_lengths))) # Use a colormap
     for i, stride in enumerate(stride_lengths):
         for idx in range(0, time_steps, stride):
             ax4.axvline(x=idx, color=colors[i], linestyle=':', alpha=0.4)
@@ -242,7 +242,7 @@ def visualize_stride_temporal_dynamics(time_steps=100, stride_lengths=[1, 3, 5],
             fft = np.abs(np.fft.rfft(states_np[:, n]))
             fft_magnitudes.append(fft)
 
-        avg_fft = np.mean(np.array(fft_magnitudes), axis=0)
+        avg_fft = np.mean(tensor.convert_to_tensor(fft_magnitudes), axis=0)
         freqs = np.fft.rfftfreq(time_steps)
 
         ax5.plot(freqs, avg_fft, label=f"Stride {stride}")

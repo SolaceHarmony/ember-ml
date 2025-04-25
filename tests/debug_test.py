@@ -68,7 +68,7 @@ try:
     print(f"Stacked tensor: {stacked_tensor.tolist()}")
     
     # Test split
-    split_tensors = tensor.split(tensor, 3, axis=1)
+    split_tensors = tensor.split_tensor(tensor, 3, axis=1)
     print(f"Split tensors:")
     for i, t in enumerate(split_tensors):
         print(f"  Split {i}: {t.tolist()}")

@@ -164,8 +164,8 @@ class MemoryOptimizedTrainer:
                 start_idx = i * batch_size
                 end_idx = start_idx + batch_size
                 
-                batch_x = tensor.slice(x_shuffled, start_idx, batch_size, axis=0)
-                batch_y = tensor.slice(y_shuffled, start_idx, batch_size, axis=0)
+                batch_x = tensor.slice_tensor(x_shuffled, start_idx, batch_size, axis=0)
+                batch_y = tensor.slice_tensor(y_shuffled, start_idx, batch_size, axis=0)
                 
                 # Compute loss and gradients
                 loss, grads = self.train_step(batch_x, batch_y)
@@ -231,8 +231,8 @@ class MemoryOptimizedTrainer:
             start_idx = i * batch_size
             end_idx = start_idx + batch_size
             
-            batch_x = tensor.slice(x, start_idx, batch_size, axis=0)
-            batch_y = tensor.slice(y, start_idx, batch_size, axis=0)
+            batch_x = tensor.slice_tensor(x, start_idx, batch_size, axis=0)
+            batch_y = tensor.slice_tensor(y, start_idx, batch_size, axis=0)
             
             # Compute loss
             loss = self.loss_fn(self.model, batch_x, batch_y)
@@ -263,7 +263,7 @@ class MemoryOptimizedTrainer:
             start_idx = i * batch_size
             end_idx = start_idx + batch_size
             
-            batch_x = tensor.slice(x, start_idx, batch_size, axis=0)
+            batch_x = tensor.slice_tensor(x, start_idx, batch_size, axis=0)
             
             # Generate predictions
             batch_pred = self.model(batch_x)
@@ -272,7 +272,7 @@ class MemoryOptimizedTrainer:
         # Handle remaining samples
         if data_size % batch_size != 0:
             start_idx = n_batches * batch_size
-            batch_x = tensor.slice(x, start_idx, data_size - start_idx, axis=0)
+            batch_x = tensor.slice_tensor(x, start_idx, data_size - start_idx, axis=0)
             batch_pred = self.model(batch_x)
             predictions.append(batch_pred)
         

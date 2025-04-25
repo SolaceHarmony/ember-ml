@@ -4,6 +4,9 @@ import sys
 import os
 
 # Import from ember_ml.wave.limb
+from ember_ml import ops
+from ember_ml.nn import tensor
+from ember_ml.nn.tensor.types import TensorLike
 from ember_ml.wave.limb.hpc_limb_core import (
     int_to_limbs,
     limbs_to_int,
@@ -59,7 +62,7 @@ class BinaryWaveNetwork:
         self.equilibrium = wave_max // 2
         self.pcm_scale = wave_max // (4 * 32768)  # Scale factor for PCM conversion
         
-    def process_pcm(self, pcm_data: np.ndarray) -> np.ndarray:
+    def process_pcm(self, pcm_data: TensorLike) -> TensorLike:
         """Process PCM audio through the network"""
         output_samples = []
         
@@ -120,14 +123,14 @@ class BinaryWaveNetwork:
             
             output_samples.append(output_pcm)
             
-        return np.array(output_samples, dtype=np.int16)
+        return tensor.convert_to_tensor(output_samples, dtype=np.int16)
 
-def create_test_signal(duration_sec: float, sample_rate: int) -> np.ndarray:
+def create_test_signal(duration_sec: float, sample_rate: int) -> TensorLike:
     """Create test signal with multiple frequencies"""
-    t = np.linspace(0, duration_sec, int(duration_sec * sample_rate))
+    t = tensor.linspace(0, duration_sec, int(duration_sec * sample_rate))
     signal = (
-        0.5 * np.sin(2 * np.pi * 440 * t) +  # A4
-        0.3 * np.sin(2 * np.pi * 880 * t) +  # A5
-        0.2 * np.sin(2 * np.pi * 1760 * t)   # A6
+        0.5 * ops.sin(2 * ops.pi * 440 * t) +  # A4
+        0.3 * ops.sin(2 * ops.pi * 880 * t) +  # A5
+        0.2 * ops.sin(2 * ops.pi * 1760 * t)   # A6
     )
     return (signal * 32767).astype(np.int16)

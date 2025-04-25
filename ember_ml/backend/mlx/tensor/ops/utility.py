@@ -1,15 +1,11 @@
 """MLX tensor utility operations."""
-
-from typing import Any, Optional, Sequence, Tuple, Union
-
 import mlx.core as mx # Ensure mx is imported
-import numpy as np # Use standard alias for clarity, though we avoid direct calls
-# Removed DTypeHandler import
+from typing import Union, Optional, Any, Sequence, Callable, Tuple
+
+from traitlets import default
+
 from ember_ml.backend.mlx.types import TensorLike, DType
 
-# Removed DTypeHandler instance
-
-# --- NEW DTYPE VALIDATION FUNCTION ---
 def _validate_and_get_mlx_dtype(dtype: Optional[Any]) -> Optional[mx.Dtype]:
     """
     Validate and convert input dtype to an MLX Dtype.
@@ -71,9 +67,8 @@ def _validate_and_get_mlx_dtype(dtype: Optional[Any]) -> Optional[mx.Dtype]:
 
     # If it's not a string, EmberDType, or MLX Dtype, it's invalid
     raise ValueError(f"Invalid dtype: {dtype} of type {type(dtype)}")
-# --- END NEW DTYPE VALIDATION FUNCTION ---
 
-def _convert_input(x: TensorLike) -> Any:
+def _convert_input(x: TensorLike, dtype: Optional[Union[None,DType]]=None, device: Optional[Union[None,mx.Device]]=None) -> Any:
     """
     Convert input to MLX array.
 
@@ -106,40 +101,23 @@ def _convert_input(x: TensorLike) -> Any:
         # Create a default zero tensor (scalar)
         from ember_ml.backend.mlx.types import default_float
         return mx.array(0.0, dtype=default_float)
-        
     # Already an MLX array - check by type and module
-    # Using isinstance for potentially more robust check
-    if isinstance(x, mx.array):
-         return x
-    # Fallback check if isinstance fails for some reason
     elif (hasattr(x, '__class__') and
         hasattr(x.__class__, '__module__') and
         x.__class__.__module__ == 'mlx.core' and
         x.__class__.__name__ == 'array'):
         return x
 
-    # Handle MLXTensor objects
-    if (hasattr(x, '__class__') and
-        hasattr(x.__class__, '__name__') and
-        x.__class__.__name__ == 'MLXTensor'):
-        # Assuming MLXTensor._tensor holds an mx.array
-        if hasattr(x, '_tensor') and isinstance(x._tensor, mx.array):
-             return x._tensor
-        else:
-             # Handle case where _tensor might not be set or is wrong type
-             raise ValueError(f"MLXTensor does not have a valid '_tensor' attribute: {x}")
-
-
     # Handle EmberTensor objects
     if (hasattr(x, '__class__') and
         hasattr(x.__class__, '__name__') and
         x.__class__.__name__ == 'EmberTensor'):
         if hasattr(x, '_tensor'):
-             # The tensor within EmberTensor might be from another backend,
-             # so we recursively call _convert_input to handle it properly.
-             return _convert_input(x._tensor)
+            # The tensor within EmberTensor might be from another backend,
+            # so we recursively call _convert_input to handle it properly.
+            return _convert_input(x._tensor)
         else:
-          raise ValueError(f"EmberTensor does not have a '_tensor' attribute: {x}")
+            raise ValueError(f"EmberTensor does not have a '_tensor' attribute: {x}")
 
     # Handle Parameter objects
     # Check by class name to avoid direct import which might cause circular dependencies
@@ -151,23 +129,19 @@ def _convert_input(x: TensorLike) -> Any:
             return _convert_input(x.data)
         else:
             raise ValueError(f"Parameter object does not have a 'data' attribute: {x}")
+    is_numpy_scalar = (hasattr(x, 'item') and hasattr(x, '__class__') and hasattr(x.__class__, '__module__') and x.__class__.__module__ == 'numpy') and x.shape == (1,)
 
     # Check for NumPy arrays by type name rather than direct import
-    if (hasattr(x, '__class__') and
+    if is_numpy_scalar is not True and (hasattr(x, '__class__') and
         x.__class__.__module__ == 'numpy' and
         x.__class__.__name__ == 'ndarray'):
         # Ensure float64 numpy arrays become float32 mlx arrays
-        if x.dtype == np.float64:
-            return mx.array(x, dtype=mx.float32)
-        else:
-            # Let MLX handle other numpy dtype conversions
-            return mx.array(x)
-
+        from ember_ml.backend.mlx.tensor.dtype import MLXDType
+        backend_dtype = _validate_and_get_mlx_dtype(x.dtype) if hasattr(x, 'dtype') else default_float
+        return mx.array(x, dtype=backend_dtype)
+        
     # Handle NumPy scalar types using hasattr
-    if (hasattr(x, 'item') and # Check for item method common to numpy scalars
-        hasattr(x, '__class__') and
-        hasattr(x.__class__, '__module__') and
-        x.__class__.__module__ == 'numpy'):
+    if is_numpy_scalar:
         try:
             # Convert NumPy scalar to its Python equivalent, then to MLX array
             # Use the new validation function to get the appropriate MLX dtype
@@ -183,16 +157,13 @@ def _convert_input(x: TensorLike) -> Any:
 
     # Handle Python scalars (int, float, bool), EXCLUDING NumPy scalars handled above
     is_python_scalar = isinstance(x, (int, float, bool))
-    is_numpy_scalar = (hasattr(x, 'item') and hasattr(x, '__class__') and hasattr(x.__class__, '__module__') and x.__class__.__module__ == 'numpy')
 
-    if is_python_scalar and not is_numpy_scalar:
+    if is_python_scalar:
         try:
             # Import default_float and default_int for type conversion
             from ember_ml.backend.mlx.types import default_float, default_int
-
             # Map Python types to default MLX types
             if isinstance(x, float):
-                # Convert to MLX float32
                 return mx.array(x, dtype=default_float)
             elif isinstance(x, int):
                 return mx.array(x, dtype=default_int)
@@ -201,7 +172,14 @@ def _convert_input(x: TensorLike) -> Any:
         except Exception as e:
             raise ValueError(f"Cannot convert Python scalar {type(x)} to MLX array: {e}")
 
-    # Handle Python sequences (potential 1D or higher tensors) recursively
+    # Handle Python sequences (potential 1D or higher tensors or lists of Parameters)
+    # Handle lists of Parameter objects specifically
+    if isinstance(x, list) and all(hasattr(item, 'data') for item in x):
+        # If it's a list of objects with a 'data' attribute (assuming Parameters),
+        # return a list of their underlying data (MLX arrays)
+        return [item.data for item in x]
+
+    # Handle other Python sequences (potential 1D or higher tensors) recursively
     if isinstance(x, (list, tuple)):
        try:
             # Convert items first before creating the final array
@@ -222,7 +200,7 @@ def _convert_input(x: TensorLike) -> Any:
     # For any other type, reject it with a corrected list of supported types
     raise ValueError(f"Cannot convert {type(x)} to MLX array. Supported types: Python scalars/sequences, NumPy scalars/arrays, MLXTensor, EmberTensor, Parameter.")
 
-def _convert_to_tensor(data: TensorLike, dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
+def _convert_to_tensor(data: TensorLike, dtype: Optional[DType] = None, device=None) -> mx.array:
     """
     Convert input to MLX array with specific dtype handling.
 
@@ -234,7 +212,14 @@ def _convert_to_tensor(data: TensorLike, dtype: Optional[DType] = None, device: 
     Returns:
         MLX array
     """
+    # Determine the target device *before* conversion
+    target_device = device
+    if target_device is None:
+        from ember_ml.backend.mlx.device_ops import get_device # Local import
+        target_device = get_device() # Use framework's default device
     # Initial conversion using the refined _convert_input
+    # _convert_input handles basic type checks and numpy/scalar conversions
+    # It does NOT handle final dtype or device placement yet
     tensor = _convert_input(data)
     current_mlx_dtype = tensor.dtype
 
@@ -242,19 +227,16 @@ def _convert_to_tensor(data: TensorLike, dtype: Optional[DType] = None, device: 
     target_mlx_dtype = _validate_and_get_mlx_dtype(dtype) # Use the new validation function
 
     # Apply dtype conversion if necessary
+    dtype_changed = False
     if target_mlx_dtype is not None and target_mlx_dtype != current_mlx_dtype:
         tensor = tensor.astype(target_mlx_dtype)
-    # If target_mlx_dtype is None (meaning user passed dtype=None),
-    # we keep the dtype determined by _convert_input or MLX's default.
-    # No need for default int/float logic here as _convert_input handles initial conversion.
-
-    # Ensure proper dimensionality for scalars (redundant check removed, handled in _convert_input)
-    # if isinstance(data, (int, float, bool)) and tensor.ndim > 0:
-    #    tensor = mx.reshape(tensor, ())
-
+        dtype_changed = True
+    
     return tensor
 
-def to_numpy(data: TensorLike) -> np.ndarray: # Changed return type hint
+import numpy as np # Import numpy for to_numpy function
+
+def to_numpy(data: TensorLike) -> np.ndarray:
     """
     Convert an MLX array to a NumPy array.
 
@@ -264,13 +246,17 @@ def to_numpy(data: TensorLike) -> np.ndarray: # Changed return type hint
     relies entirely on the selected backend for representation.
 
     Args:
-        data: Input MLX array or compatible type
+        data: The tensor to convert
 
     Returns:
         NumPy array
     """
+    if data is None:
+        return None
+    
     # Convert input to MLX array first
-    tensor_data = _convert_input(data)
+    tensor_data = _convert_to_tensor(data)
+    
     # Use the built-in numpy conversion
     return np.array(tensor_data)
 
@@ -287,6 +273,7 @@ def item(data: TensorLike) -> Union[int, float, bool]:
     """
     tensor_array = _convert_input(data)
 
+    # Check if the tensor has a single element
     if tensor_array.size != 1:
         raise ValueError(f"item() can only be called on tensors with a single element, but got size {tensor_array.size}")
 
@@ -321,15 +308,13 @@ def dtype(data: TensorLike) -> str: # Return type is now string
         String representation of the array's data type (e.g., 'float32', 'int64').
     """
     from ember_ml.backend.mlx.tensor.dtype import MLXDType # For converting native to string
-
-    native_dtype = _convert_input(data).dtype
+    tensor = _convert_to_tensor(data)
 
     # Convert native MLX dtype to string representation
     mlx_dtype_helper = MLXDType()
-    dtype_str = mlx_dtype_helper.to_dtype_str(native_dtype)
+    dtype_str = mlx_dtype_helper.to_dtype_str(tensor.dtype)
 
     return dtype_str
-
 
 def copy(data: TensorLike) -> mx.array:
     """
@@ -347,8 +332,7 @@ def copy(data: TensorLike) -> mx.array:
     tensor_array = _convert_input(data)
     return mx.array(tensor_array) # Use mx.array to ensure it's a standard MLX array copy
 
-
-def var(data: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None, keepdims: bool = False, ddof: int = 0) -> mx.array: # Added ddof
+def var(data: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None, keepdims: bool = False, ddof: int = 0) -> mx.array:
     """
     Compute the variance of a tensor.
 
@@ -445,7 +429,7 @@ def maximum(data1: TensorLike, data2: TensorLike) -> mx.array:
     return mx.maximum(data1_array, data2_array)
 
 
-def _create_new_tensor(creation_func: callable, dtype: Optional[Any] = None, device: Optional[str] = None, **kwargs) -> mx.array:
+def _create_new_tensor(creation_func: Callable, dtype: Optional[Any] = None, device: Optional[str] = None, requires_grad: bool = False, **kwargs) -> mx.array:
     """
     Internal helper to create a new MLX tensor, handling dtype resolution and defaults.
     MLX handles device implicitly based on default device setting.
@@ -454,6 +438,7 @@ def _create_new_tensor(creation_func: callable, dtype: Optional[Any] = None, dev
         creation_func: The underlying MLX creation function (e.g., mx.zeros, mx.random.uniform).
         dtype: Optional desired dtype (EmberDType, string, mx.Dtype, None).
         device: Ignored for MLX backend.
+        requires_grad: Whether to track gradients (requires gradient).
         **kwargs: Function-specific arguments (e.g., shape, low, high, loc, scale).
 
     Returns:
@@ -461,17 +446,12 @@ def _create_new_tensor(creation_func: callable, dtype: Optional[Any] = None, dev
     """
     # Resolve dtype first
     target_mlx_dtype = _validate_and_get_mlx_dtype(dtype)
+    # Resolve device first
+    target_device = device
+    if target_device is None:
+        from ember_ml.backend.mlx.device_ops import get_device
+        target_device = get_device()
 
-    # Apply default dtype if none resolved, considering kwargs context
-    if target_mlx_dtype is None:
-        from ember_ml.backend.mlx.types import default_float, default_int # Import defaults
-        # Heuristic based on typical function return types
-        if creation_func in [mx.random.normal, mx.random.uniform, mx.full] and not isinstance(kwargs.get('fill_value', 0.0), int):
-             target_mlx_dtype = default_float
-        elif creation_func in [mx.zeros, mx.ones, mx.full] and isinstance(kwargs.get('fill_value', 0), int):
-             target_mlx_dtype = default_int
-        else: # Default fallback
-             target_mlx_dtype = default_float
 
 
     # Ensure shape is a tuple if present in kwargs
@@ -487,19 +467,68 @@ def _create_new_tensor(creation_func: callable, dtype: Optional[Any] = None, dev
             kwargs['shape'] = tuple(shape_arg)
 
     # Call the actual MLX creation function
-    try:
-        # Pass resolved dtype and all other kwargs
-        # Remove device kwarg as MLX doesn't explicitly take it in these functions
-        kwargs.pop('device', None)
-        return creation_func(dtype=target_mlx_dtype, **kwargs)
-    except TypeError as e:
-        # Provide more context on failure
-        raise TypeError(
-            f"{creation_func.__name__} failed. "
-            f"Input dtype: {dtype}, Resolved native dtype: {target_mlx_dtype}, "
-            f"Type: {type(target_mlx_dtype)}, Kwargs: {kwargs}. Error: {e}"
-        )
+    
+    # Pass resolved dtype and all other kwargs
+    # Remove device kwarg as MLX doesn't explicitly take it in these functions
+    kwargs.pop('device', None)
 
+    # Separate shape for functions that don't take it in kwargs (like eye, arange, linspace)
+    shape_kwarg = kwargs.pop('shape', None) # Remove shape if it exists
+
+    # Prepare args list dynamically for functions like eye, arange, linspace
+    # This part is tricky as the helper needs to know which args are positional vs keyword
+    # A simpler approach might be to NOT use this helper for eye, arange, linspace in MLX either.
+    # Sticking to kwargs-based approach for now, assuming creation_func handles them.
+
+    # Add device, dtype, requires_grad to kwargs for MLX function
+    kwargs['dtype'] = target_mlx_dtype
+    # Only add requires_grad if the function supports it (many creation ops don't)
+    # This might need function-specific handling or inspection
+    # For simplicity, we'll add it and let MLX error if unsupported for a specific func
+    kwargs.pop('requires_grad',None)
+
+    # Special case for mx.random.normal which expects 'size' as a positional argument
+    if creation_func in [ mx.random.normal,mx.random.uniform]:
+            # Use the shape_kwarg that was extracted earlier
+            if shape_kwarg is not None:
+                return creation_func(shape=shape_kwarg, **kwargs)
+            else:
+                raise ValueError("mx.random.normal requires 'shape' parameter")
+    # Handle functions that take shape as a positional argument
+    elif shape_kwarg is not None and creation_func in [mx.zeros, mx.ones, mx.full]:
+            return creation_func(shape_kwarg, **kwargs)
+    # Special case for mx.arange which expects positional arguments
+    elif creation_func == mx.arange:
+            # Check which arange signature to use
+            if 'start' in kwargs and 'stop' in kwargs:
+                # arange(start, end, step)
+                start = kwargs.pop('start')
+                stop = kwargs.pop('stop')
+                step = kwargs.pop('step', 1)
+                # Extract only the supported kwargs
+                dtype = kwargs.pop('dtype', None)
+                # Call with positional and only supported keyword args
+                return creation_func(start, stop, step, dtype=dtype)
+            elif 'stop' in kwargs:
+                # arange(end)
+                stop = kwargs.pop('stop')
+                # Extract only the supported kwargs
+                dtype = kwargs.pop('dtype', None)
+                # Call with positional and only supported keyword args
+                return creation_func(stop, dtype=dtype)
+            else:
+                # If neither start nor end is in kwargs, we can't proceed
+                raise ValueError(f"mx.arange requires either 'stop' or 'start' and 'stop' parameters")
+    else:
+        # Assume other functions take their primary args via kwargs (e.g., N, M for eye)
+        # This might fail if function expects positional args not covered here.
+            return creation_func(**kwargs)
+
+    raise TypeError(
+        f"{creation_func.__name__} failed. "
+        f"Input dtype: {dtype}, Resolved native dtype: {target_mlx_dtype}, "
+        f"Type: {type(target_mlx_dtype)}, Kwargs: {kwargs}. Error: {e}"
+    )
 
 # Expose necessary functions
 __all__ = [

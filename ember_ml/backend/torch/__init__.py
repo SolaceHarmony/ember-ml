@@ -25,7 +25,7 @@ __all__ = [
     'mean', 'sum', 'max', 'min', 'exp', 'log', 'log10', 'log2',
     'pow', 'sqrt', 'square', 'abs', 'sign', 'sin', 'cos', 'tan',
     'sinh', 'cosh', 'tanh', 'sigmoid', 'relu', 'softmax', 'clip',
-    'var', 'pi', 'power', 'negative', 'mod', 'floor_divide', 'sort', 'gradient', 'cumsum', 'eigh', # Added missing math ops
+    'var', 'pi', 'power', 'negative', 'mod', 'floor_divide', 'floor', 'ceil', 'sort', 'gradient', 'cumsum', 'eigh', # Added missing math ops
     
     # Comparison operations
     'equal', 'not_equal', 'less', 'less_equal', 'greater', 'greater_equal',
@@ -56,6 +56,7 @@ __all__ = [
     # Functional Tensor Ops (from tensor.ops - added)
     'cast', 'zeros', 'ones', 'eye', 'zeros_like', 'ones_like', 'full', 'full_like', 'arange', 'linspace',
     'reshape', 'transpose', 'concatenate', 'stack', 'split', 'expand_dims', 'squeeze', 'tile', 'pad',
+    'vstack', 'hstack',
     'slice_tensor', 'slice_update', 'gather', 'tensor_scatter_nd_update', 'scatter',
     'convert_to_torch_tensor', 'to_numpy', 'item', 'shape', 'dtype', 'copy', 'argsort', 'maximum',
     'random_normal', 'random_uniform', 'random_binomial', 'random_gamma', 'random_exponential',
@@ -114,7 +115,9 @@ from ember_ml.backend.torch.math_ops import (
    sort,     # Added import
    gradient, # Added import
    cumsum,   # Added import
-   eigh      # Added import
+   eigh,     # Added import
+   floor,    # Added import
+   ceil      # Added import
 )
 
 # Import specific functions from comparison_ops
@@ -177,14 +180,6 @@ from ember_ml.backend.torch.loss_ops import (
    sparse_categorical_crossentropy, huber_loss, log_cosh_loss
 )
 
-# Import specific functions from feature_ops
-from ember_ml.backend.torch.feature_ops import (
-    pca,
-    transform,
-    inverse_transform,
-    standardize,
-    normalize
-)
 
 # Import specific functions from vector_ops
 from ember_ml.backend.torch.vector_ops import (
@@ -218,6 +213,7 @@ from ember_ml.backend.torch.stats.descriptive import gaussian # Corrected import
 from ember_ml.backend.torch.tensor.ops import (
    cast, zeros, ones, eye, zeros_like, ones_like, full, full_like, arange, linspace,
    reshape, transpose, concatenate, stack, split, expand_dims, squeeze, tile, pad,
+   vstack, hstack,
    slice_tensor, slice_update, gather, tensor_scatter_nd_update, scatter,
    to_numpy, item, shape, dtype, copy, var as tensor_var, sort as tensor_sort, argsort, maximum, # aliased var/sort to avoid name clash
    random_normal, random_uniform, random_binomial, random_gamma, random_exponential,

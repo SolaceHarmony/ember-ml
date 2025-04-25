@@ -230,10 +230,10 @@ def diag(x: TensorLike, k: int = 0) -> mx.array:
         for i in range(n):
             if k >= 0:
                 # Diagonal above main
-                result = scatter(result, mx.array([i, i + k]), x_array[i])
+                result = scatter(mx.array([i, i + k]), x_array[i], (m, m))
             else:
                 # Diagonal below main
-                result = scatter(result, mx.array([i - k, i]), x_array[i])
+                result = scatter(mx.array([i - k, i]), x_array[i], (m, m))
                 
         return result
     

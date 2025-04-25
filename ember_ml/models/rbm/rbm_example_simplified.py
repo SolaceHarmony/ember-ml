@@ -79,19 +79,19 @@ def generate_image_data(n_samples=500, width=10, height=10, n_patterns=3):
     patterns = []
     
     # Pattern 1: Horizontal line
-    pattern1 = np.zeros((height, width))
+    pattern1 = tensor.zeros((height, width))
     mid_row = height // 2
     pattern1[mid_row, :] = 1
     patterns.append(pattern1.flatten())
     
     # Pattern 2: Vertical line
-    pattern2 = np.zeros((height, width))
+    pattern2 = tensor.zeros((height, width))
     mid_col = width // 2
     pattern2[:, mid_col] = 1
     patterns.append(pattern2.flatten())
     
     # Pattern 3: Cross
-    pattern3 = np.zeros((height, width))
+    pattern3 = tensor.zeros((height, width))
     pattern3[mid_row, :] = 1
     pattern3[:, mid_col] = 1
     patterns.append(pattern3.flatten())
@@ -109,8 +109,8 @@ def generate_image_data(n_samples=500, width=10, height=10, n_patterns=3):
         pattern = patterns[pattern_idx]
         
         # Add some noise to the pattern
-        noisy_pattern = pattern + np.random.normal(0, 0.05, n_pixels)
-        noisy_pattern = np.clip(noisy_pattern, 0, 1)
+        noisy_pattern = pattern + tensor.random_normal(0, 0.05, n_pixels)
+        noisy_pattern = ops.clip(noisy_pattern, 0, 1)
         
         # Embed the pattern with some random background
         data[i] = data[i] * 0.2 + noisy_pattern * 0.8

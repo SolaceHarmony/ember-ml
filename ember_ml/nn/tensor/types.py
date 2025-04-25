@@ -17,12 +17,12 @@ if TYPE_CHECKING:
     import torch
     import mlx.core
     from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
-    from ember_ml.backend.torch.tensor.tensor import TorchTensor
+    from ember_ml.backend.tensor.convert_to_tensor.tensor import TorchTensor
     from ember_ml.backend.mlx.tensor.tensor import MLXTensor
     from ember_ml.nn.tensor.common.ember_tensor import EmberTensor
 
     type TensorTypes = Union[
-        np.ndarray,
+        TensorLike,
         'mlx.core.array',
         MLXTensor,
         EmberTensor,
@@ -41,12 +41,12 @@ type TensorLike = Optional[Union[
     List[Any],
     Tuple[Any, ...],
     EmberTensor,
-    'np.ndarray',
+    'TensorLike',
     'mlx.core.array',
     'NumpyTensor',
     'TorchTensor',
     'MLXTensor',
-    'torch.Tensor'
+    'tensor.convert_to_tensor'
 ]]
 
 # Dimension-specific tensor types

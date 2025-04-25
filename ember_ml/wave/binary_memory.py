@@ -12,7 +12,7 @@ from .binary_wave import WaveConfig, BinaryWave
 class MemoryPattern:
     """Container for stored wave patterns."""
     
-    pattern: torch.Tensor
+    pattern: tensor.convert_to_tensor
     timestamp: float
     metadata: Dict[str, Any]
     
@@ -42,7 +42,7 @@ class WaveStorage:
         self.patterns: List[MemoryPattern] = []
         
     def store(self,
-              pattern: torch.Tensor,
+              pattern: tensor.convert_to_tensor,
               timestamp: float,
               metadata: Optional[Dict[str, Any]] = None):
         """
@@ -69,7 +69,7 @@ class WaveStorage:
             self.patterns.pop(0)
             
     def retrieve(self,
-                query_pattern: torch.Tensor,
+                query_pattern: tensor.convert_to_tensor,
                 threshold: float = 0.8) -> List[MemoryPattern]:
         """
         Retrieve similar patterns.
@@ -128,7 +128,7 @@ class BinaryMemory(nn.Module):
         )
         
     def store_pattern(self,
-                     pattern: torch.Tensor,
+                     pattern: tensor.convert_to_tensor,
                      metadata: Optional[Dict[str, Any]] = None):
         """
         Store a pattern in memory.
@@ -150,13 +150,13 @@ class BinaryMemory(nn.Module):
             gated,
             timestamp=torch.cuda.current_stream().elapsed_time(None)
             if torch.cuda.is_available()
-            else torch.tensor(0.0),
+            else tensor.convert_to_tensor(0.0),
             metadata=metadata
         )
         
     def retrieve_pattern(self,
-                        query: torch.Tensor,
-                        threshold: float = 0.8) -> Tuple[List[torch.Tensor], List[Dict[str, Any]]]:
+                        query: tensor.convert_to_tensor,
+                        threshold: float = 0.8) -> Tuple[List[tensor.convert_to_tensor], List[Dict[str, Any]]]:
         """
         Retrieve patterns from memory.
 
@@ -253,7 +253,7 @@ class BinaryMemory(nn.Module):
         
         self.storage.patterns = [
             MemoryPattern(
-                pattern=torch.tensor(p['pattern']),
+                pattern=tensor.convert_to_tensor(p['pattern']),
                 timestamp=p['timestamp'],
                 metadata=p['metadata']
             )

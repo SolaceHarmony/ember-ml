@@ -64,7 +64,7 @@ backend = get_backend()
 print(f"Using backend: {backend}")
 
 # Manually set a backend
-from ember_ml.backend import set_backend
+from ember_ml.ops import set_backend
 
 # Set to NumPy backend
 set_backend('numpy')

@@ -12,9 +12,11 @@ from ember_ml.models.rbm.training import (
     save_rbm,
     load_rbm
 )
+from ember_ml.models.rbm.rbm import RestrictedBoltzmannMachine
 
 
-__all__ = [ 
+__all__ = [
+    'RestrictedBoltzmannMachine',
     'contrastive_divergence_step',
     'train_rbm',
     'transform_in_chunks',

@@ -3,6 +3,10 @@ from typing import List, Tuple, Optional
 from dataclasses import dataclass
 import struct
 
+from ember_ml import ops
+from ember_ml.nn import tensor
+from ember_ml.nn.tensor.types import TensorLike
+
 @dataclass
 class WaveConfig:
     sample_rate: int
@@ -36,7 +40,7 @@ class BinaryWaveProcessor:
             high = min(nyquist, freq + width)
             self.band_filters.append((low, high))
     
-    def pcm_to_binary(self, pcm_data: np.ndarray) -> np.ndarray:
+    def pcm_to_binary(self, pcm_data: TensorLike) -> TensorLike:
         """Convert PCM audio data to binary representation using improved delta-sigma"""
         # Normalize PCM data to [-1, 1]
         if pcm_data.dtype == np.int16:
@@ -47,7 +51,7 @@ class BinaryWaveProcessor:
             normalized = pcm_data.astype(np.float32)
         
         # Second-order delta-sigma modulation
-        binary = np.zeros(len(normalized), dtype=np.uint8)
+        binary = tensor.zeros(len(normalized), dtype=np.uint8)
         error1 = 0  # First integrator
         error2 = 0  # Second integrator
         
@@ -69,7 +73,7 @@ class BinaryWaveProcessor:
                 
         return binary
     
-    def extract_frequency_bands(self, binary_data: np.ndarray) -> List[np.ndarray]:
+    def extract_frequency_bands(self, binary_data: TensorLike) -> List[TensorLike]:
         """Extract frequency band information with improved filtering"""
         # Convert binary to float for FFT
         float_data = binary_data.astype(np.float32) * 2 - 1
@@ -97,7 +101,7 @@ class BinaryWaveProcessor:
             # Convert back to binary with hysteresis
             threshold = 0.0
             hysteresis = 0.1
-            binary = np.zeros_like(band_signal, dtype=np.uint8)
+            binary = tensor.zeros_like(band_signal, dtype=np.uint8)
             state = 0
             
             for i in range(len(band_signal)):
@@ -111,23 +115,23 @@ class BinaryWaveProcessor:
             
         return band_data
     
-    def encode_phase(self, binary_data: np.ndarray) -> Tuple[np.ndarray, float]:
+    def encode_phase(self, binary_data: TensorLike) -> Tuple[TensorLike, float]:
         """Encode phase information with improved stability"""
         # Use Hilbert transform for phase calculation
         analytic_signal = self._hilbert_transform(binary_data)
         phase = np.angle(analytic_signal)
         
         # Calculate average phase
-        mean_phase = np.mean(phase) % (2 * np.pi)
+        mean_phase = np.mean(phase) % (2 * ops.pi)
         
         return binary_data, mean_phase
     
-    def _hilbert_transform(self, binary_data: np.ndarray) -> np.ndarray:
+    def _hilbert_transform(self, binary_data: TensorLike) -> TensorLike:
         """Compute Hilbert transform of binary signal"""
         float_data = binary_data.astype(np.float32) * 2 - 1
         spectrum = np.fft.fft(float_data)
         n = len(spectrum)
-        h = np.zeros(n)
+        h = tensor.zeros(n)
         
         if n % 2 == 0:
             h[0] = h[n//2] = 1
@@ -138,7 +142,7 @@ class BinaryWaveProcessor:
             
         return np.fft.ifft(spectrum * h)
     
-    def process_frame(self, pcm_data: np.ndarray) -> Tuple[List[np.ndarray], List[float]]:
+    def process_frame(self, pcm_data: TensorLike) -> Tuple[List[TensorLike], List[float]]:
         """Process a frame of PCM data into binary waves with phase information"""
         # Convert to binary
         binary_data = self.pcm_to_binary(pcm_data)
@@ -156,7 +160,7 @@ class BinaryWaveProcessor:
             
         return encoded_bands, phases
     
-    def binary_to_pcm(self, binary_data: np.ndarray) -> np.ndarray:
+    def binary_to_pcm(self, binary_data: TensorLike) -> TensorLike:
         """Convert binary representation back to PCM audio with improved filtering"""
         # Convert to float
         float_data = binary_data.astype(np.float32) * 2 - 1
@@ -167,13 +171,13 @@ class BinaryWaveProcessor:
         sinc = np.sinc(t/2)  # Nyquist frequency
         window = np.hamming(len(sinc))
         filter_kernel = sinc * window
-        filter_kernel = filter_kernel / np.sum(filter_kernel)
+        filter_kernel = filter_kernel / ops.stats.sum(filter_kernel)
         
         # Apply filter
         filtered = np.convolve(float_data, filter_kernel, mode='same')
         
         # Convert to 16-bit PCM
-        pcm_int16 = np.clip(filtered * 32767, -32768, 32767).astype(np.int16)
+        pcm_int16 = ops.clip(filtered * 32767, -32768, 32767).astype(np.int16)
         return pcm_int16
 
 class BinaryWaveNeuron:
@@ -182,8 +186,8 @@ class BinaryWaveNeuron:
     def __init__(self, num_freq_bands: int, phase_sensitivity: float = 0.5):
         self.num_freq_bands = num_freq_bands
         self.phase_sensitivity = phase_sensitivity
-        self.state = np.zeros(num_freq_bands, dtype=np.uint8)
-        self.phase = np.zeros(num_freq_bands)
+        self.state = tensor.zeros(num_freq_bands, dtype=np.uint8)
+        self.phase = tensor.zeros(num_freq_bands)
         self.threshold = 0.3  # Lower threshold for more activation
         self.weights = np.random.random(num_freq_bands) * 0.5 + 0.25  # Better initialization
         
@@ -193,24 +197,24 @@ class BinaryWaveNeuron:
         self.state_history = []
         self.phase_history = []
     
-    def compute_interference(self, input_waves: List[np.ndarray], input_phases: List[float]) -> np.ndarray:
+    def compute_interference(self, input_waves: List[TensorLike], input_phases: List[float]) -> TensorLike:
         """Compute wave interference patterns with improved phase sensitivity"""
-        interference = np.zeros_like(self.state, dtype=np.float32)
+        interference = tensor.zeros_like(self.state, dtype=np.float32)
         
         for i, (wave, phase) in enumerate(zip(input_waves, input_phases)):
             # Compute phase difference with wrapping
-            phase_diff = np.abs(((self.phase[i] - phase + np.pi) % (2 * np.pi)) - np.pi)
+            phase_diff = np.abs(((self.phase[i] - phase + ops.pi) % (2 * ops.pi)) - ops.pi)
             
             # Gaussian phase sensitivity
             phase_factor = np.exp(-phase_diff**2 / (2 * self.phase_sensitivity**2))
             
             # Compute weighted contribution with temporal integration
-            wave_energy = np.sum(wave) / len(wave)  # Energy in the wave
+            wave_energy = ops.stats.sum(wave) / len(wave)  # Energy in the wave
             interference[i] = wave_energy * self.weights[i] * phase_factor
             
         return interference
     
-    def update_phase(self, interference: np.ndarray, input_phases: List[float]):
+    def update_phase(self, interference: TensorLike, input_phases: List[float]):
         """Update neuron phase state with momentum"""
         phase_momentum = 0.8
         learn_rate = 0.2
@@ -218,12 +222,12 @@ class BinaryWaveNeuron:
         for i, phase in enumerate(input_phases):
             if interference[i] > self.threshold:
                 # Update phase with momentum
-                phase_diff = ((phase - self.phase[i] + np.pi) % (2 * np.pi)) - np.pi
+                phase_diff = ((phase - self.phase[i] + ops.pi) % (2 * ops.pi)) - ops.pi
                 self.phase[i] = (self.phase[i] + 
                                phase_momentum * self.phase[i] +
-                               learn_rate * phase_diff) % (2 * np.pi)
+                               learn_rate * phase_diff) % (2 * ops.pi)
     
-    def apply_stdp(self, input_waves: List[np.ndarray], output: np.ndarray):
+    def apply_stdp(self, input_waves: List[TensorLike], output: TensorLike):
         """Apply STDP learning rule"""
         # Store state history
         self.state_history.append(output)
@@ -249,11 +253,11 @@ class BinaryWaveNeuron:
                 delta_w = -self.learning_rate * input_energy * self.weights[i]
             
             # Apply weight update with bounds
-            self.weights[i] = np.clip(self.weights[i] + delta_w, 0.1, 0.9)
+            self.weights[i] = ops.clip(self.weights[i] + delta_w, 0.1, 0.9)
     
-    def generate_output(self, interference: np.ndarray) -> np.ndarray:
+    def generate_output(self, interference: TensorLike) -> TensorLike:
         """Generate binary output with hysteresis"""
-        output = np.zeros_like(interference, dtype=np.uint8)
+        output = tensor.zeros_like(interference, dtype=np.uint8)
         
         # Add hysteresis to prevent rapid switching
         hysteresis = 0.05
@@ -267,7 +271,7 @@ class BinaryWaveNeuron:
         
         return output
     
-    def process(self, input_waves: List[np.ndarray], input_phases: List[float]) -> np.ndarray:
+    def process(self, input_waves: List[TensorLike], input_phases: List[float]) -> TensorLike:
         """Process input waves and generate output"""
         # Compute interference pattern
         interference = self.compute_interference(input_waves, input_phases)
@@ -286,23 +290,23 @@ class BinaryWaveNeuron:
         
         return output
 
-def create_test_signal(duration: float, sample_rate: int) -> np.ndarray:
+def create_test_signal(duration: float, sample_rate: int) -> TensorLike:
     """Create a test signal with improved harmonics"""
-    t = np.linspace(0, duration, int(duration * sample_rate))
+    t = tensor.linspace(0, duration, int(duration * sample_rate))
     
     # Create a signal with multiple frequencies and amplitude modulation
-    am = 0.5 * (1 + 0.3 * np.sin(2 * np.pi * 5 * t))  # 5 Hz amplitude modulation
+    am = 0.5 * (1 + 0.3 * ops.sin(2 * ops.pi * 5 * t))  # 5 Hz amplitude modulation
     
     signal = am * (
-        0.5 * np.sin(2 * np.pi * 440 * t) +  # A4 note
-        0.3 * np.sin(2 * np.pi * 880 * t) +  # A5 note
-        0.2 * np.sin(2 * np.pi * 1760 * t)   # A6 note
+        0.5 * ops.sin(2 * ops.pi * 440 * t) +  # A4 note
+        0.3 * ops.sin(2 * ops.pi * 880 * t) +  # A5 note
+        0.2 * ops.sin(2 * ops.pi * 1760 * t)   # A6 note
     )
     
     # Add some noise
-    noise = np.random.normal(0, 0.05, len(t))
+    noise = tensor.random_normal(0, 0.05, len(t))
     signal = signal + noise
     
     # Normalize and convert to int16
-    signal = signal / np.max(np.abs(signal))
+    signal = signal / ops.stats.max(np.abs(signal))
     return (signal * 32767).astype(np.int16)

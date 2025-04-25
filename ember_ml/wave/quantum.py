@@ -12,7 +12,7 @@ from typing import List, Dict, Optional, Tuple, Union
 class WaveFunction:
     """Quantum wave function representation."""
     
-    def __init__(self, amplitudes: torch.Tensor, phases: torch.Tensor):
+    def __init__(self, amplitudes: tensor.convert_to_tensor, phases: tensor.convert_to_tensor):
         """
         Initialize wave function.
 
@@ -23,7 +23,7 @@ class WaveFunction:
         self.amplitudes = amplitudes
         self.phases = phases
         
-    def to_complex(self) -> torch.Tensor:
+    def to_complex(self) -> tensor.convert_to_tensor:
         """
         Convert to complex representation.
 
@@ -32,7 +32,7 @@ class WaveFunction:
         """
         return self.amplitudes * torch.exp(1j * self.phases)
         
-    def probability_density(self) -> torch.Tensor:
+    def probability_density(self) -> tensor.convert_to_tensor:
         """
         Compute probability density.
 
@@ -51,7 +51,7 @@ class WaveFunction:
         norm = torch.sqrt(torch.sum(self.probability_density()))
         return WaveFunction(self.amplitudes / norm, self.phases)
         
-    def evolve(self, hamiltonian: torch.Tensor, dt: float) -> 'WaveFunction':
+    def evolve(self, hamiltonian: tensor.convert_to_tensor, dt: float) -> 'WaveFunction':
         """
         Time evolution under Hamiltonian.
 
@@ -90,7 +90,7 @@ class QuantumState:
         self.amplitudes = torch.zeros(self.dim, dtype=torch.complex64, device=device)
         self.amplitudes[0] = 1.0
         
-    def apply_gate(self, gate: torch.Tensor, qubits: List[int]):
+    def apply_gate(self, gate: tensor.convert_to_tensor, qubits: List[int]):
         """
         Apply quantum gate.
 
@@ -140,7 +140,7 @@ class QuantumState:
         
         return result, probs[result].item()
         
-    def get_probabilities(self) -> torch.Tensor:
+    def get_probabilities(self) -> tensor.convert_to_tensor:
         """
         Get state probabilities.
 
@@ -176,7 +176,7 @@ class QuantumWave(nn.Module):
         self.pre_quantum = nn.Linear(hidden_size, num_qubits * 2)
         self.post_quantum = nn.Linear(2 ** num_qubits, hidden_size)
         
-    def _make_unitary(self, matrix: torch.Tensor) -> torch.Tensor:
+    def _make_unitary(self, matrix: tensor.convert_to_tensor) -> tensor.convert_to_tensor:
         """Make matrix unitary using QR decomposition."""
         Q, R = torch.linalg.qr(matrix)
         phases = torch.diag(R).div(torch.abs(torch.diag(R)))
@@ -204,7 +204,7 @@ class QuantumWave(nn.Module):
             
         return state
         
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: tensor.convert_to_tensor) -> tensor.convert_to_tensor:
         """
         Process input through quantum circuit.
 
@@ -237,7 +237,7 @@ class QuantumWave(nn.Module):
         output = torch.stack(outputs)
         return self.post_quantum(output)
         
-    def get_quantum_state(self, params: torch.Tensor) -> QuantumState:
+    def get_quantum_state(self, params: tensor.convert_to_tensor) -> QuantumState:
         """
         Create quantum state from parameters.
 
@@ -255,7 +255,7 @@ class QuantumWave(nn.Module):
             phi = params[2*i + 1]
             
             # Create rotation gate
-            gate = torch.tensor([
+            gate = tensor.convert_to_tensor([
                 [torch.cos(theta/2), -torch.exp(-1j*phi)*torch.sin(theta/2)],
                 [torch.exp(1j*phi)*torch.sin(theta/2), torch.cos(theta/2)]
             ], dtype=torch.complex64, device=params.device)

@@ -50,7 +50,7 @@ class WaveEncoder(nn.Module):
         
         self.encoder = nn.Sequential(*layers)
         
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: tensor.convert_to_tensor) -> tensor.convert_to_tensor:
         """
         Forward pass.
         
@@ -103,7 +103,7 @@ class WaveDecoder(nn.Module):
         
         self.decoder = nn.Sequential(*layers)
         
-    def forward(self, z: torch.Tensor) -> torch.Tensor:
+    def forward(self, z: tensor.convert_to_tensor) -> tensor.convert_to_tensor:
         """
         Forward pass.
         
@@ -156,7 +156,7 @@ class WaveVariationalEncoder(nn.Module):
         self.mean = nn.Linear(prev_size, latent_size)
         self.log_var = nn.Linear(prev_size, latent_size)
         
-    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def forward(self, x: tensor.convert_to_tensor) -> Tuple[tensor.convert_to_tensor, tensor.convert_to_tensor, tensor.convert_to_tensor]:
         """
         Forward pass.
         
@@ -217,7 +217,7 @@ class WaveAutoencoder(nn.Module):
         # Decoder
         self.decoder = WaveDecoder(latent_size, hidden_sizes[::-1], input_size, activation, dropout)
         
-    def forward(self, x: torch.Tensor) -> Dict[str, torch.Tensor]:
+    def forward(self, x: tensor.convert_to_tensor) -> Dict[str, tensor.convert_to_tensor]:
         """
         Forward pass.
         
@@ -250,7 +250,7 @@ class WaveAutoencoder(nn.Module):
                 'latent': z
             }
     
-    def encode(self, x: torch.Tensor) -> torch.Tensor:
+    def encode(self, x: tensor.convert_to_tensor) -> tensor.convert_to_tensor:
         """
         Encode input to latent representation.
         
@@ -266,7 +266,7 @@ class WaveAutoencoder(nn.Module):
         else:
             return self.encoder(x)
     
-    def decode(self, z: torch.Tensor) -> torch.Tensor:
+    def decode(self, z: tensor.convert_to_tensor) -> tensor.convert_to_tensor:
         """
         Decode latent representation to output.
         
@@ -395,7 +395,7 @@ class WaveConvolutionalAutoencoder(nn.Module):
         
         return nn.Sequential(*layers)
     
-    def encode(self, x: torch.Tensor) -> torch.Tensor:
+    def encode(self, x: tensor.convert_to_tensor) -> tensor.convert_to_tensor:
         """
         Encode input to latent representation.
         
@@ -425,7 +425,7 @@ class WaveConvolutionalAutoencoder(nn.Module):
         else:
             return self.encoder_fc(x)
     
-    def decode(self, z: torch.Tensor) -> torch.Tensor:
+    def decode(self, z: tensor.convert_to_tensor) -> tensor.convert_to_tensor:
         """
         Decode latent representation to output.
         
@@ -448,7 +448,7 @@ class WaveConvolutionalAutoencoder(nn.Module):
         
         return x
     
-    def forward(self, x: torch.Tensor) -> Dict[str, torch.Tensor]:
+    def forward(self, x: tensor.convert_to_tensor) -> Dict[str, tensor.convert_to_tensor]:
         """
         Forward pass.
         

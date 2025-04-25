@@ -70,7 +70,7 @@ from ember_ml import training
 from ember_ml import visualization
 from ember_ml import wave
 from ember_ml import utils
-
+from ember_ml import asyncml
 # Version of the Ember ML package
 __version__ = '0.2.0'
 
@@ -86,5 +86,6 @@ __all__ = [
     'visualization',
     'wave',
     'utils',
+    'asyncml',
     '__version__'
 ]

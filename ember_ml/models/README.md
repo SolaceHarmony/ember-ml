@@ -119,7 +119,7 @@ samples = rbm.generate(num_samples=10)
 reconstructed = rbm.reconstruct(data[:10])
 
 # Compute reconstruction error
-error = ops.mean(ops.square(data[:10] - reconstructed))
+error = ops.stats.mean(ops.square(data[:10] - reconstructed))
 print(f"Reconstruction error: {error}")
 ```
 
@@ -151,8 +151,8 @@ detector.train(normal_data, epochs=10, batch_size=32)
 normal_scores = detector.score(normal_data)
 anomalous_scores = detector.score(anomalous_data)
 
-print(f"Normal data scores: mean={ops.mean(normal_scores)}, std={ops.std(normal_scores)}")
-print(f"Anomalous data scores: mean={ops.mean(anomalous_scores)}, std={ops.std(anomalous_scores)}")
+print(f"Normal data scores: mean={ops.stats.mean(normal_scores)}, std={ops.std(normal_scores)}")
+print(f"Anomalous data scores: mean={ops.stats.mean(anomalous_scores)}, std={ops.std(anomalous_scores)}")
 
 # Detect anomalies
 normal_anomalies = detector.detect(normal_data)

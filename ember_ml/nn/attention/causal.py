@@ -6,12 +6,14 @@ from dataclasses import dataclass
 from typing import Optional, Dict, List, Tuple, Any
 
 from ember_ml import ops
+from ember_ml.ops import stats
+from ember_ml.ops import linearalg
 from ember_ml.nn.tensor import EmberTensor, convert_to_tensor, float32, EmberDType, cast, zeros_like
-from ember_ml.nn.tensor import full_like, copy, ones_like, reshape, shape, zeros, transpose, expand_dims
-from ember_ml.nn.tensor import item, int32, concatenate
-from ember_ml.nn.linear import Linear
-from ember_ml.nn.container import Sequential, Dropout
+from ember_ml.nn.tensor import full_like, copy, reshape, shape, zeros, transpose, expand_dims
+from ember_ml.nn.tensor import item, int32, concatenate, slice_tensor
+from ember_ml.nn.container import Linear, Sequential, Dropout
 from ember_ml.nn.modules import Tanh # Updated import path
+from ember_ml.nn.modules.activations import sigmoid
 from ember_ml.nn.attention.base import BaseAttention
 
 # Type aliases
@@ -277,7 +279,7 @@ class PredictionAttention(BaseAttention):
         
         # Make predictions
         predicted_values = self.predictor(key)
-        prediction_error = ops.norm(
+        prediction_error = linearalg.norm(
             ops.subtract(predicted_values, value),
             axis=-1,
             keepdims=True
@@ -315,15 +317,15 @@ class PredictionAttention(BaseAttention):
         for i in range(batch_size):
             key_len_minus_one = ops.subtract(key_len, convert_to_tensor(1))
             for j in range(cast(key_len_minus_one,int32)):
-                # Use slice instead of direct indexing
-                cause = slice(key, [i, j, 0], [1, 1, -1])
+                # Use slice_tensor instead of slice
+                cause = slice_tensor(key, [i, j, 0], [1, 1, -1])
                 cause = reshape(cause, shape(cause)[2:])  # Remove batch and seq dims
                 
                 j_plus_one = ops.add(j, convert_to_tensor(1))
-                effect = slice(value, [i, j_plus_one, 0], [1, 1, -1])
+                effect = slice_tensor(value, [i, j_plus_one, 0], [1, 1, -1])
                 effect = reshape(effect, shape(effect)[2:])  # Remove batch and seq dims
                 
-                error_val = slice(prediction_error, [i, j], [1, 1])
+                error_val = slice_tensor(prediction_error, [i, j], [1, 1])
                 one = convert_to_tensor(1.0)
                 accuracy = ops.subtract(one, cast(item(error_val, float32)))
                 self.memory.add(cause, effect, accuracy)
@@ -395,11 +397,11 @@ class CausalAttention(BaseAttention):
         # Process each item in batch
         attention_weights = []
         for i in range(batch_size):
-            # Use slice instead of direct indexing
-            query_i = slice(query, [i, 0], [1, -1])
+            # Use slice_tensor instead of slice
+            query_i = slice_tensor(query, [i, 0], [1, -1])
             query_i = reshape(query_i, shape(query_i)[1:])  # Remove batch dim
             
-            key_i = slice(key, [i, 0], [1, -1])
+            key_i = slice_tensor(key, [i, 0], [1, -1])
             key_i = reshape(key_i, shape(key_i)[1:])  # Remove batch dim
             
             state = self.update(
@@ -411,7 +413,7 @@ class CausalAttention(BaseAttention):
             attention_weights.append(state.compute_total())
             
         # Convert to tensor and apply sigmoid for normalization
-        self._attention_weights = ops.sigmoid(convert_to_tensor(
+        self._attention_weights = sigmoid(convert_to_tensor(
             attention_weights
         ))
         self._attention_weights = reshape(self._attention_weights, (batch_size, 1, 1))
@@ -447,18 +449,18 @@ class CausalAttention(BaseAttention):
         neg_decay_rate = ops.multiply(convert_to_tensor(-self.decay_rate), len(self.history))
         temporal_decay = ops.exp(neg_decay_rate)
         temporal_features = self.temporal_proj(current_state)
-        state.temporal_weight = ops.multiply(ops.mean(temporal_features), temporal_decay)
+        state.temporal_weight = ops.multiply(stats.mean(temporal_features), temporal_decay)
         
         # Update causal weight
         prediction_error = ops.subtract(target_state, current_state)
         causal_input = concatenate([current_state, prediction_error])
         causal_features = self.causal_proj(causal_input)
         one = convert_to_tensor(1.0)
-        prediction_accuracy = ops.subtract(one, ops.stats.min(
-            ops.norm(prediction_error),
+        prediction_accuracy = ops.subtract(one, stats.min(
+            linearalg.norm(prediction_error),
             one
         ))
-        state.causal_weight = ops.multiply(prediction_accuracy, ops.mean(
+        state.causal_weight = ops.multiply(prediction_accuracy, stats.mean(
             causal_features
         ))
         

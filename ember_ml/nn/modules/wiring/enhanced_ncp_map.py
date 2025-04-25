@@ -36,7 +36,7 @@ class EnhancedNCPMap(EnhancedNeuronMap):
         recurrent_activation: str = "sigmoid",
         mode: str = "default",
         # Spatial properties
-        coordinates_list: Optional[List[np.ndarray]] = None,
+        coordinates_list: Optional[List[TensorLike]] = None,
         network_structure: Tuple[int, int, int] = (5, 5, 4),
         distance_metric: str = "euclidean",
         distance_power: float = 1.0,
@@ -81,7 +81,7 @@ class EnhancedNCPMap(EnhancedNeuronMap):
             motor_to_inter_sparsity: Sparsity level for motor to inter connections
         """
         # Calculate total units
-        units = inter_neurons + command_neurons + motor_neurons
+        units = sensory_neurons + inter_neurons + command_neurons + motor_neurons
         
         # Create neuron-specific parameters
         neuron_params = {
@@ -199,7 +199,7 @@ class EnhancedNCPMap(EnhancedNeuronMap):
             distances_tensor = tensor.convert_to_tensor(distances)
             
             # Normalize distances to [0, 1] range
-            max_dist = tensor.max(distances_tensor)
+            max_dist = ops.stats.max(distances_tensor)
             if tensor.to_numpy(max_dist) > 0:
                 distances_tensor = ops.divide(distances_tensor, max_dist)
             
@@ -207,7 +207,7 @@ class EnhancedNCPMap(EnhancedNeuronMap):
             adjusted_sparsity = sparsity + ops.multiply((1 - sparsity), distances_tensor)
             
             # Create connection mask
-            connection_mask = tensor.greater_equal(random_mask, adjusted_sparsity)
+            connection_mask = ops.greater_equal(random_mask, adjusted_sparsity)
             
             # Create indices for the connections
             from_indices = tensor.reshape(tensor.arange(from_start, from_end), (-1, 1, 1))
@@ -289,7 +289,7 @@ class EnhancedNCPMap(EnhancedNeuronMap):
         from scipy.linalg import expm
         
         # Normalize by degree using tensor operations
-        row_sums = ops.sum(recurrent_mask, axis=1)
+        row_sums = ops.stats.sum(recurrent_mask, axis=1)
         
         # Add small epsilon to avoid division by zero
         row_sums_eps = ops.add(row_sums, tensor.convert_to_tensor(1e-8))

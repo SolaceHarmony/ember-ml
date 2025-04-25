@@ -68,6 +68,59 @@ def concatenate(data: List[TensorLike], axis: int = 0) -> torch.Tensor:
     torch_tensors = [tensor_ops.convert_to_tensor(t) for t in data]
     return torch.cat(torch_tensors, dim=axis)
 
+def vstack(data: List[TensorLike]) -> torch.Tensor:
+    """
+    Stack arrays vertically (row wise).
+    
+    This is equivalent to concatenation along the first axis after 1-D arrays
+    of shape (N,) have been reshaped to (1,N). Rebuilds arrays divided by vsplit.
+    
+    Args:
+        data: The tensors to stack
+        
+    Returns:
+        Stacked tensor
+    """
+    # Convert to PyTorch tensors
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    torch_tensors = []
+    
+    for t in data:
+        tensor = tensor_ops.convert_to_tensor(t)
+        # If 1D tensor, reshape to (1, N)
+        if tensor.dim() == 1:
+            tensor = tensor.reshape(1, -1)
+        torch_tensors.append(tensor)
+    
+    return torch.cat(torch_tensors, dim=0)
+
+def hstack(data: List[TensorLike]) -> torch.Tensor:
+    """
+    Stack arrays horizontally (column wise).
+    
+    This is equivalent to concatenation along the second axis, except for 1-D
+    arrays where it concatenates along the first axis. Rebuilds arrays divided by hsplit.
+    
+    Args:
+        data: The tensors to stack
+        
+    Returns:
+        Stacked tensor
+    """
+    # Convert to PyTorch tensors
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+    torch_tensors = [tensor_ops.convert_to_tensor(t) for t in data]
+    
+    # Check if tensors are 1D
+    if all(t.dim() == 1 for t in torch_tensors):
+        # For 1D tensors, concatenate along axis 0
+        return torch.cat(torch_tensors, dim=0)
+    else:
+        # For nD tensors, concatenate along axis 1
+        return torch.cat(torch_tensors, dim=1)
+
 def stack(data: List[TensorLike], axis: int = 0) -> torch.Tensor:
     """
     Stack tensors along a new axis.
@@ -217,7 +270,7 @@ def pad(data: TensorLike, paddings: List[List[int]], mode: str = 'constant', con
         paddings: List of lists of integers specifying the padding for each dimension
                 Each inner list should contain two integers: [pad_before, pad_after]
         mode: Padding mode. PyTorch supports 'constant', 'reflect', 'replicate', and 'circular'.
-              Default is 'constant'.
+               Default is 'constant'.
         constant_values: Value to pad with when mode is 'constant'
         
     Returns:
@@ -237,3 +290,17 @@ def pad(data: TensorLike, paddings: List[List[int]], mode: str = 'constant', con
     
     # Pad the tensor
     return F.pad(tensor, pad_list, mode=mode, value=constant_values)
+
+__all__ = [
+    "reshape",
+    "transpose",
+    "concatenate",
+    "vstack",
+    "hstack",
+    "stack",
+    "split",
+    "expand_dims",
+    "squeeze",
+    "tile",
+    "pad",
+]

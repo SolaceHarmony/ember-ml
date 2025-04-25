@@ -25,12 +25,13 @@ These networks use stochastic-quantum mapping to emulate quantum effects and b-s
 ### Basic Usage
 
 ```python
-from ember_ml.nn.modules.wiring import NCPMap
+from ember_ml.nn.modules.wiring import NCPMap, EnhancedNCPMap # Import relevant map types
 from ember_ml.nn.modules.rnn import LQNet
 from ember_ml.nn import tensor
 
-# Create a neuron map for connectivity
-neuron_map = NCPMap(
+# Create a neuron map for connectivity (can be any NeuronMap derivative)
+# Example using NCPMap:
+neuron_map_ncp = NCPMap(
     inter_neurons=32,
     command_neurons=16,
     motor_neurons=8,
@@ -38,9 +39,20 @@ neuron_map = NCPMap(
     seed=42
 )
 
-# Create LQNet model
+# Example using EnhancedNCPMap with spatial properties:
+neuron_map_enhanced = EnhancedNCPMap(
+    sensory_neurons=10,
+    inter_neurons=32,
+    command_neurons=16,
+    motor_neurons=8,
+    network_structure=(4, 8, 2), # Example spatial structure
+    seed=42
+)
+
+
+# Create LQNet model using a neuron map
 lqnet = LQNet(
-    neuron_map=neuron_map,
+    neuron_map=neuron_map_ncp, # Pass the chosen neuron map instance
     nu_0=1.0,
     beta=0.1,
     noise_scale=0.05,
@@ -56,10 +68,10 @@ outputs = lqnet(inputs)
 
 ### Parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `neuron_map` | `NeuronMap` | NeuronMap instance defining connectivity |
-| `nu_0` | `float` | Base viscosity parameter (default: 1.0) |
+| Parameter    | Type        | Description                                                                                                |
+|--------------|-------------|------------------------------------------------------------------------------------------------------------|
+| `neuron_map` | `NeuronMap` | Instance of a `NeuronMap` derivative defining the connectivity pattern. See [Neuron Maps Documentation](../nn_modules_wiring.md) for available options. |
+| `nu_0`       | `float`     | Base viscosity parameter (default: 1.0)                                                                    |
 | `beta` | `float` | Energy scaling parameter (default: 0.1) |
 | `noise_scale` | `float` | Scale of the stochastic noise (default: 0.1) |
 | `return_sequences` | `bool` | Whether to return the full sequence or just the last output (default: True) |
@@ -94,12 +106,13 @@ The viscosity of the system is modulated by a Boltzmann factor based on the ener
 ### Basic Usage
 
 ```python
-from ember_ml.nn.modules.wiring import NCPMap
+from ember_ml.nn.modules.wiring import NCPMap, EnhancedNCPMap # Import relevant map types
 from ember_ml.nn.modules.rnn import CTRQNet
 from ember_ml.nn import tensor
 
-# Create a neuron map for connectivity
-neuron_map = NCPMap(
+# Create a neuron map for connectivity (can be any NeuronMap derivative)
+# Example using NCPMap:
+neuron_map_ncp = NCPMap(
     inter_neurons=32,
     command_neurons=16,
     motor_neurons=8,
@@ -107,9 +120,19 @@ neuron_map = NCPMap(
     seed=42
 )
 
-# Create CTRQNet model
+# Example using EnhancedNCPMap with spatial properties:
+neuron_map_enhanced = EnhancedNCPMap(
+    sensory_neurons=10,
+    inter_neurons=32,
+    command_neurons=16,
+    motor_neurons=8,
+    network_structure=(4, 8, 2), # Example spatial structure
+    seed=42
+)
+
+# Create CTRQNet model using a neuron map
 ctrqnet = CTRQNet(
-    neuron_map=neuron_map,
+    neuron_map=neuron_map_ncp, # Pass the chosen neuron map instance
     nu_0=1.0,
     beta=0.1,
     noise_scale=0.05,
@@ -127,10 +150,10 @@ outputs = ctrqnet(inputs)
 
 ### Parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `neuron_map` | `NeuronMap` | NeuronMap instance defining connectivity |
-| `nu_0` | `float` | Base viscosity parameter (default: 1.0) |
+| Parameter          | Type        | Description                                                                                                |
+|--------------------|-------------|------------------------------------------------------------------------------------------------------------|
+| `neuron_map`       | `NeuronMap` | Instance of a `NeuronMap` derivative defining the connectivity pattern. See [Neuron Maps Documentation](../nn_modules_wiring.md) for available options. |
+| `nu_0`             | `float`     | Base viscosity parameter (default: 1.0)                                                                    |
 | `beta` | `float` | Energy scaling parameter (default: 0.1) |
 | `noise_scale` | `float` | Scale of the stochastic noise (default: 0.1) |
 | `time_scale_factor` | `float` | Factor to scale the time constant (default: 1.0) |
@@ -158,13 +181,15 @@ The time-scale parameter modulates the decay rate of the hidden state, allowing 
 
 ## Integration with NeuronMap
 
-Both LQNet and CTRQNet use NeuronMap for defining connectivity patterns. This allows for flexible and customizable network architectures.
+Both LQNet and CTRQNet utilize a `NeuronMap` instance to define their internal connectivity patterns. This allows for flexible and customizable network architectures, including those with structured, random, enhanced, or spatial wiring.
+
+The `neuron_map` parameter in the constructor of these modules accepts any derivative of the `NeuronMap` base class. For detailed documentation on the various available neuron map implementations, including those with spatial properties, please refer to the [Neuron Maps (Wiring) Documentation](../nn_modules_wiring.md).
 
 ```python
-from ember_ml.nn.modules.wiring import NCPMap, RandomMap, FullyConnectedMap
+from ember_ml.nn.modules.wiring import NCPMap, RandomMap, FullyConnectedMap, EnhancedNeuronMap, EnhancedNCPMap
 from ember_ml.nn.modules.rnn import LQNet
 
-# Using NCPMap
+# Example using NCPMap
 ncp_map = NCPMap(
     inter_neurons=32,
     command_neurons=16,
@@ -174,23 +199,19 @@ ncp_map = NCPMap(
 )
 lqnet_ncp = LQNet(neuron_map=ncp_map)
 
-# Using RandomMap
-random_map = RandomMap(
-    units=56,  # 32 + 16 + 8
-    output_size=8,
-    input_size=10,
-    sparsity_level=0.5,
+# Example using EnhancedNCPMap with spatial properties
+enhanced_ncp_map = EnhancedNCPMap(
+    sensory_neurons=10,
+    inter_neurons=32,
+    command_neurons=16,
+    motor_neurons=8,
+    network_structure=(4, 8, 2), # Example spatial structure
     seed=42
 )
-lqnet_random = LQNet(neuron_map=random_map)
+lqnet_enhanced = LQNet(neuron_map=enhanced_ncp_map)
 
-# Using FullyConnectedMap
-fc_map = FullyConnectedMap(
-    units=56,
-    output_size=8,
-    input_size=10
-)
-lqnet_fc = LQNet(neuron_map=fc_map)
+# Other NeuronMap derivatives can be used similarly.
+```
 ```
 
 ## Example: Time Series Prediction

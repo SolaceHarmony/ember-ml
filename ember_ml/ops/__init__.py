@@ -8,7 +8,6 @@ It handles backend switching by updating these aliases.
 
 import importlib
 import sys
-import os
 from typing import Optional, Any, Union, TypeVar
 
 # Import types for type annotations
@@ -34,7 +33,7 @@ _MASTER_OPS_LIST = [
     # Math (Core arithmetic, trig, exponential, etc.)
     'add', 'subtract', 'multiply', 'divide', 'matmul', 'dot',
     'exp', 'log', 'log10', 'log2', 'pow', 'sqrt', 'square', 'abs', 'sign', 'sin', 'cos', 'tan',
-    'sinh', 'cosh', 'clip', 'negative', 'mod', 'floor_divide', 'gradient', 
+    'sinh', 'cosh', 'clip', 'negative', 'mod', 'floor_divide', 'floor', 'ceil', 'gradient',
     # 'pi', # Removed, handled by direct import above
     'power', # Note: 'power' is alias for 'pow'
     # Comparison
@@ -52,7 +51,11 @@ _MASTER_OPS_LIST = [
     'normalize_vector', 'compute_energy_stability', 'compute_interference_strength', 'compute_phase_coherence',
     'partial_interference', 'euclidean_distance', 'cosine_similarity', 'exponential_decay', 'fft', 'ifft',
     'fft2', 'ifft2', 'fftn', 'ifftn', 'rfft', 'irfft', 'rfft2', 'irfft2', 'rfftn', 'irfftn',
-
+    # Array manipulation
+    'vstack', 'hstack',
+    # Sub folders
+    # Linear algebra
+    'stats', 'linearalg', 'bitwise',
 ]
 
 # Placeholder for functions that will be dynamically loaded
@@ -132,6 +135,12 @@ def set_backend(backend: str):
         _update_linearalg_aliases()
     except ImportError:
         print("Warning: Could not import or update linearalg aliases.")
+    try:
+        # Explicitly trigger update in bitwise module
+        from ember_ml.ops.bitwise import _update_bitwise_aliases
+        _update_bitwise_aliases()
+    except ImportError:
+        print("Warning: Could not import or update bitwise aliases.")
     try:
         # Explicitly trigger update in features module's aliasing mechanism
         from ember_ml.nn.features import _update_features_aliases

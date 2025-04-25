@@ -47,7 +47,7 @@ class TensorInterface(ABC):
         Convert to the native backend tensor type.
 
         Returns:
-            The native backend tensor (NumPy array, torch.Tensor, mlx.array)
+            The native backend tensor (NumPy array, tensor.convert_to_tensor, mlx.array)
         """
         pass
 
@@ -446,7 +446,7 @@ class TensorInterface(ABC):
     
     
     @abstractmethod
-    def slice(self, x: Any, starts: Sequence[int], sizes: Sequence[int]) -> Any:
+    def slice_tensor(self, x: Any, starts: Sequence[int], sizes: Sequence[int]) -> Any:
         """
         Extract a slice from a tensor.
         

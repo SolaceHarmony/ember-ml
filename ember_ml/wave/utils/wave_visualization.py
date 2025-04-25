@@ -18,7 +18,7 @@ try:
 except ImportError:
     LIBROSA_AVAILABLE = False
 
-def plot_waveform(wave: np.ndarray, sample_rate: int = 44100, title: str = "Waveform") -> Figure:
+def plot_waveform(wave: TensorLike, sample_rate: int = 44100, title: str = "Waveform") -> Figure:
     """
     Plot a waveform.
     
@@ -40,7 +40,7 @@ def plot_waveform(wave: np.ndarray, sample_rate: int = 44100, title: str = "Wave
     fig.tight_layout()
     return fig
 
-def plot_spectrum(wave: np.ndarray, sample_rate: int = 44100, title: str = "Spectrum") -> Figure:
+def plot_spectrum(wave: TensorLike, sample_rate: int = 44100, title: str = "Spectrum") -> Figure:
     """
     Plot a spectrum.
     
@@ -68,7 +68,7 @@ def plot_spectrum(wave: np.ndarray, sample_rate: int = 44100, title: str = "Spec
     fig.tight_layout()
     return fig
 
-def plot_spectrogram(wave: np.ndarray, sample_rate: int = 44100, 
+def plot_spectrogram(wave: TensorLike, sample_rate: int = 44100, 
                      window_size: int = 2048, hop_length: int = 512,
                      title: str = "Spectrogram") -> Figure:
     """
@@ -100,7 +100,7 @@ def plot_spectrogram(wave: np.ndarray, sample_rate: int = 44100,
     fig.tight_layout()
     return fig
 
-def plot_mel_spectrogram(wave: np.ndarray, sample_rate: int = 44100,
+def plot_mel_spectrogram(wave: TensorLike, sample_rate: int = 44100,
                          n_fft: int = 2048, hop_length: int = 512,
                          n_mels: int = 128, title: str = "Mel Spectrogram") -> Figure:
     """
@@ -122,7 +122,7 @@ def plot_mel_spectrogram(wave: np.ndarray, sample_rate: int = 44100,
         
     mel_spec = librosa.feature.melspectrogram(y=wave, sr=sample_rate, n_fft=n_fft,
                                              hop_length=hop_length, n_mels=n_mels)
-    mel_spec_db = librosa.power_to_db(mel_spec, ref=np.max)
+    mel_spec_db = librosa.power_to_db(mel_spec, ref=ops.stats.max)
     
     fig, ax = plt.subplots(figsize=(10, 4))
     img = librosa.display.specshow(mel_spec_db, x_axis='time', y_axis='mel',
@@ -133,7 +133,7 @@ def plot_mel_spectrogram(wave: np.ndarray, sample_rate: int = 44100,
     fig.tight_layout()
     return fig
 
-def plot_chromagram(wave: np.ndarray, sample_rate: int = 44100,
+def plot_chromagram(wave: TensorLike, sample_rate: int = 44100,
                    n_fft: int = 2048, hop_length: int = 512,
                    title: str = "Chromagram") -> Figure:
     """
@@ -163,7 +163,7 @@ def plot_chromagram(wave: np.ndarray, sample_rate: int = 44100,
     fig.tight_layout()
     return fig
 
-def plot_mfcc(wave: np.ndarray, sample_rate: int = 44100,
+def plot_mfcc(wave: TensorLike, sample_rate: int = 44100,
              n_mfcc: int = 13, title: str = "MFCC") -> Figure:
     """
     Plot MFCCs.
@@ -190,7 +190,7 @@ def plot_mfcc(wave: np.ndarray, sample_rate: int = 44100,
     fig.tight_layout()
     return fig
 
-def plot_wave_features(wave: np.ndarray, sample_rate: int = 44100) -> Dict[str, Figure]:
+def plot_wave_features(wave: TensorLike, sample_rate: int = 44100) -> Dict[str, Figure]:
     """
     Plot various features of a wave signal.
     
@@ -220,7 +220,7 @@ def plot_wave_features(wave: np.ndarray, sample_rate: int = 44100) -> Dict[str, 
     
     return features
 
-def plot_wave_comparison(waves: List[np.ndarray], labels: List[str], 
+def plot_wave_comparison(waves: List[TensorLike], labels: List[str], 
                         sample_rate: int = 44100, title: str = "Wave Comparison") -> Figure:
     """
     Plot a comparison of multiple wave signals.

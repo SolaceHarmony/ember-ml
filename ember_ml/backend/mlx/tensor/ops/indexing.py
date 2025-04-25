@@ -243,47 +243,60 @@ def scatter(indices: TensorLike, updates: TensorLike, shape: Union[ShapeLike, in
     result = mx.zeros(output_shape, dtype=updates_array.dtype)
     
     # Scatter the updates into the result tensor
+    # Determine the number of updates to process
+    num_updates = updates_array.size if updates_array.ndim == 0 else updates_array.shape[0]
+
     if indices_array.ndim == 2:
         # Handle multi-dimensional indices
-        for i in range(len(updates_array)):
+        for i in range(num_updates):
             # Convert indices safely using tolist() and ensure list format
             current_indices = indices_int[i].tolist()
             if not isinstance(current_indices, list):
                 current_indices = [current_indices]
-            
-            # Update the tensor at the specified indices using MLX operations
+
+            # Prepare the update value (ensure it's an MLX array)
+            update_value = mx.array(updates_array.flatten()[i]) # Use flatten() to get element
+
+            # Use slice_update to update the element at the multi-dimensional index
+            # slice_update expects start_indices and axes
+            # For a single element update at a multi-dimensional index,
+            # start_indices are the indices themselves, and axes are the dimensions being indexed.
+            axes = list(range(len(current_indices)))
+            start_indices = mx.array(current_indices, dtype=mx.int32)
+
             if aggr == "add":
-                current = result[tuple(current_indices)]
-                update_indices = mx.array(current_indices)
-                result = mx.slice_update(result, mx.add(current, updates_array[i]),
-                    update_indices, list(range(len(current_indices))))
+                # Read the current value at the index, add the update, and write back
+                current_value = result[tuple(current_indices)]
+                new_value = mx.add(current_value, update_value)
+                result = mx.slice_update(result, new_value, start_indices, axes)
             elif aggr == "max":
-                current = result[tuple(current_indices)]
-                update_indices = mx.array(current_indices)
-                result = mx.slice_update(result, mx.maximum(current, updates_array[i]),
-                    update_indices, list(range(len(current_indices))))
+                 current_value = result[tuple(current_indices)]
+                 new_value = mx.maximum(current_value, update_value)
+                 result = mx.slice_update(result, new_value, start_indices, axes)
             elif aggr == "min":
-                current = result[tuple(current_indices)]
-                update_indices = mx.array(current_indices)
-                result = mx.slice_update(result, mx.minimum(current, updates_array[i]),
-                    update_indices, list(range(len(current_indices))))
+                 current_value = result[tuple(current_indices)]
+                 new_value = mx.minimum(current_value, update_value)
+                 result = mx.slice_update(result, new_value, start_indices, axes)
     else:
         # Handle 1D indices
-        for i in range(len(updates_array)):
+        for i in range(num_updates):
             # Convert index safely using tolist() which handles scalar arrays correctly
             current_idx = indices_int[i].tolist()
             idx_array = mx.array([current_idx], dtype=mx.int32)
-            
+
+            # Prepare the update value (ensure it's an MLX array)
+            update_value = mx.array(updates_array.flatten()[i]) # Use flatten() to get element
+
             if aggr == "add":
                 current = result[current_idx]
-                result = mx.slice_update(result, mx.add(current, updates_array[i]), idx_array, [0])
+                result = mx.slice_update(result, mx.add(current, update_value), idx_array, [0])
             elif aggr == "max":
                 current = result[current_idx]
-                result = mx.slice_update(result, mx.maximum(current, updates_array[i]), idx_array, [0])
+                result = mx.slice_update(result, mx.maximum(current, update_value), idx_array, [0])
             elif aggr == "min":
                 current = result[current_idx]
-                result = mx.slice_update(result, mx.minimum(current, updates_array[i]), idx_array, [0])
-    
+                result = mx.slice_update(result, mx.minimum(current, update_value), idx_array, [0])
+
     return result
 
 def scatter_op(src: mx.array, index: mx.array, dim_size: int,
@@ -488,7 +501,6 @@ def scatter_softmax(values: TensorLike, index: TensorLike, dim_size: int, axis: 
     # Zero out invalid indices
     return mx.where(valid_mask, softmax_result, mx.zeros_like(softmax_result))
 # No compatibility wrapper for slice_tensor to avoid conflicts with built-in slice
-    return slice_tensor(tensor, actual_starts, actual_sizes)
 
 def nonzero(tensor: TensorLike) -> mx.array:
     """

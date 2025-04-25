@@ -11,7 +11,6 @@ From examining the architecture_summary.md:
 1. **Type Definitions**: Currently in `typing.py` files across the backend
 2. **Tensor Operations**: The `tensor/ops/utility.py` file implements type validation and conversion
 3. **Math Operations**: The `math_ops.py` file implements mathematical operations with type annotations
-4. **Solver Operations**: The `solver_ops.py` file implements solver operations with type annotations
 
 ## Proposed Changes
 
@@ -135,7 +134,6 @@ def convert_to_tensor(data: TensorLike,
 5. `ember_ml/backend/mlx/tensor/ops/random.py`
 6. `ember_ml/backend/mlx/tensor/ops/manipulation.py`
 7. `ember_ml/backend/mlx/math_ops.py`
-8. `ember_ml/backend/mlx/solver_ops.py`
 9. `ember_ml/backend/mlx/comparison_ops.py`
 10. `ember_ml/backend/mlx/device_ops.py`
 11. `ember_ml/backend/mlx/feature_ops.py`

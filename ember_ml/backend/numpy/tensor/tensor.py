@@ -63,7 +63,7 @@ class NumpyTensor:
         from ember_ml.backend.numpy.tensor.ops.utility import _convert_to_tensor as convert_to_tensor_func
         return convert_to_tensor_func(data, dtype, device)
 
-    def slice(self, data: TensorLike, starts: Sequence[int], sizes: Sequence[int]) -> np.ndarray:
+    def slice_tensor(self, data: TensorLike, starts: Sequence[int], sizes: Sequence[int]) -> np.ndarray:
         """
         Extract a slice from a tensor.
 

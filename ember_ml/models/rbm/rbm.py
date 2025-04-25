@@ -6,14 +6,14 @@ This module provides a Restricted Boltzmann Machine (RBM) implementation for the
 
 import numpy as np
 import ember_ml.ops as ops
-import ember_ml.nn as nn
+from ember_ml.nn.modules import Module, Parameter
 from ember_ml.nn.tensor import random_uniform
 from ember_ml.nn import tensor
 from ember_ml.nn.container import Linear
 from ember_ml.nn.modules import Sigmoid # Updated import path
 from typing import Optional, Tuple, List, Dict, Any, Union, Callable
 
-class RestrictedBoltzmannMachine(nn.Module):
+class RestrictedBoltzmannMachine(Module):
     """
     Restricted Boltzmann Machine (RBM) implementation.
     
@@ -46,9 +46,9 @@ class RestrictedBoltzmannMachine(nn.Module):
         self.device = device
         
         # Initialize weights and biases
-        self.weights = nn.Parameter(tensor.random_uniform(visible_size, hidden_size, device=self.device) * 0.1)
-        self.visible_bias = nn.Parameter(tensor.zeros(visible_size, device=self.device))
-        self.hidden_bias = nn.Parameter(tensor.zeros(hidden_size, device=self.device))
+        self.weights = Parameter(tensor.random_uniform(visible_size, hidden_size, device=self.device) * 0.1)
+        self.visible_bias = Parameter(tensor.zeros(visible_size, device=self.device))
+        self.hidden_bias = Parameter(tensor.zeros(hidden_size, device=self.device))
         
         # Move to device
         self.to(self.device)
@@ -192,6 +192,125 @@ class RestrictedBoltzmannMachine(nn.Module):
             visible_probs, visible_states = self.hidden_to_visible(hidden_states)
         
         return visible_probs
+        
+    def compute_hidden_probabilities(self, visible):
+        """
+        Compute hidden probabilities given visible units.
+        
+        Args:
+            visible: Visible units tensor of shape (batch_size, visible_size)
+            
+        Returns:
+            Hidden probabilities tensor of shape (batch_size, hidden_size)
+        """
+        hidden_probs, _ = self.visible_to_hidden(visible)
+        return hidden_probs
+        
+    def sample_hidden_states(self, hidden_probs):
+        """
+        Sample hidden states given hidden probabilities.
+        
+        Args:
+            hidden_probs: Hidden probabilities tensor of shape (batch_size, hidden_size)
+            
+        Returns:
+            Hidden states tensor of shape (batch_size, hidden_size)
+        """
+        if self.hidden_type == 'binary':
+            return tensor.random_bernoulli(hidden_probs)
+        else:  # gaussian
+            return hidden_probs + tensor.random_normal(tensor.shape(hidden_probs), device=self.device)
+            
+    def compute_visible_probabilities(self, hidden):
+        """
+        Compute visible probabilities given hidden units.
+        
+        Args:
+            hidden: Hidden units tensor of shape (batch_size, hidden_size)
+            
+        Returns:
+            Visible probabilities tensor of shape (batch_size, visible_size)
+        """
+        visible_probs, _ = self.hidden_to_visible(hidden)
+        return visible_probs
+        
+    def sample_visible_states(self, visible_probs):
+        """
+        Sample visible states given visible probabilities.
+        
+        Args:
+            visible_probs: Visible probabilities tensor of shape (batch_size, visible_size)
+            
+        Returns:
+            Visible states tensor of shape (batch_size, visible_size)
+        """
+        if self.visible_type == 'binary':
+            return tensor.random_bernoulli(visible_probs)
+        else:  # gaussian
+            return visible_probs + tensor.random_normal(tensor.shape(visible_probs), device=self.device)
+            
+    def reconstruction_error(self, data, per_sample=False):
+        """
+        Compute reconstruction error for data.
+        
+        Args:
+            data: Data tensor of shape (batch_size, visible_size)
+            per_sample: Whether to return error per sample or mean error
+            
+        Returns:
+            Reconstruction error (scalar or per-sample)
+        """
+        # Get reconstructed data
+        reconstructed = self.reconstruct(data)
+        
+        # Compute squared error
+        squared_error = ops.square(ops.subtract(data, reconstructed))
+        
+        # Sum across features
+        error = ops.stats.sum(squared_error, axis=1)
+        
+        if per_sample:
+            return error
+        else:
+            return ops.stats.mean(error)
+            
+    def anomaly_score(self, data):
+        """
+        Compute anomaly score for data.
+        
+        Args:
+            data: Data tensor of shape (batch_size, visible_size)
+            
+        Returns:
+            Anomaly score tensor of shape (batch_size,)
+        """
+        # Use reconstruction error as anomaly score
+        return self.reconstruction_error(data, per_sample=True)
+        
+    def is_anomaly(self, data, threshold=None):
+        """
+        Determine if data points are anomalies.
+        
+        Args:
+            data: Data tensor of shape (batch_size, visible_size)
+            threshold: Optional threshold value (if None, use self.reconstruction_error_threshold)
+            
+        Returns:
+            Boolean tensor of shape (batch_size,) indicating anomalies
+        """
+        # Compute anomaly scores
+        scores = self.anomaly_score(data)
+        
+        # Use provided threshold or default
+        if threshold is None:
+            try:
+                threshold = self.reconstruction_error_threshold
+            except AttributeError:
+                # If no threshold is available, use a default
+                threshold = tensor.convert_to_tensor(1.0, dtype=tensor.float32)
+        
+        # Return boolean tensor indicating anomalies
+        return ops.greater_equal(scores, threshold)
 
 def train_rbm(rbm: RestrictedBoltzmannMachine,
               data: tensor.EmberTensor,

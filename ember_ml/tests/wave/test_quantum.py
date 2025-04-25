@@ -31,8 +31,8 @@ def hidden_size():
 @pytest.fixture
 def wave_function():
     """Fixture providing test wave function."""
-    amplitudes = torch.tensor([0.8, 0.6])
-    phases = torch.tensor([0.0, math.pi/2])
+    amplitudes = tensor.convert_to_tensor([0.8, 0.6])
+    phases = tensor.convert_to_tensor([0.0, math.pi/2])
     return WaveFunction(amplitudes, phases)
 
 @pytest.fixture
@@ -73,7 +73,7 @@ class TestWaveFunction:
         
         # Check properties
         assert torch.all(density >= 0)
-        assert torch.allclose(torch.sum(density), torch.tensor(1.0), atol=1e-6)
+        assert torch.allclose(torch.sum(density), tensor.convert_to_tensor(1.0), atol=1e-6)
 
     def test_normalization(self, wave_function):
         """Test wave function normalization."""
@@ -81,12 +81,12 @@ class TestWaveFunction:
         
         # Check normalization
         prob_sum = torch.sum(normalized.probability_density())
-        assert torch.allclose(prob_sum, torch.tensor(1.0), atol=1e-6)
+        assert torch.allclose(prob_sum, tensor.convert_to_tensor(1.0), atol=1e-6)
 
     def test_evolution(self, wave_function):
         """Test time evolution."""
         # Create test Hamiltonian
-        hamiltonian = torch.tensor([[1.0, 0.0], [0.0, -1.0]], dtype=torch.complex64)
+        hamiltonian = tensor.convert_to_tensor([[1.0, 0.0], [0.0, -1.0]], dtype=torch.complex64)
         dt = 0.1
         
         evolved = wave_function.evolve(hamiltonian, dt)
@@ -102,13 +102,13 @@ class TestQuantumState:
     def test_initialization(self, quantum_state):
         """Test quantum state initialization."""
         # Check initial state |0...0⟩
-        assert torch.allclose(torch.abs(quantum_state.amplitudes[0]), torch.tensor(1.0))
+        assert torch.allclose(torch.abs(quantum_state.amplitudes[0]), tensor.convert_to_tensor(1.0))
         assert torch.sum(torch.abs(quantum_state.amplitudes[1:])) < 1e-6
 
     def test_gate_application(self, quantum_state):
         """Test quantum gate application."""
         # Apply Hadamard-like gate
-        gate = torch.tensor([[1.0, 1.0], [1.0, -1.0]], dtype=torch.complex64) / math.sqrt(2)
+        gate = tensor.convert_to_tensor([[1.0, 1.0], [1.0, -1.0]], dtype=torch.complex64) / math.sqrt(2)
         quantum_state.apply_gate(gate, [0])
         
         # Check superposition
@@ -119,7 +119,7 @@ class TestQuantumState:
     def test_measurement(self, quantum_state):
         """Test qubit measurement."""
         # Prepare superposition state
-        gate = torch.tensor([[1.0, 1.0], [1.0, -1.0]], dtype=torch.complex64) / math.sqrt(2)
+        gate = tensor.convert_to_tensor([[1.0, 1.0], [1.0, -1.0]], dtype=torch.complex64) / math.sqrt(2)
         quantum_state.apply_gate(gate, [0])
         
         # Measure
@@ -135,7 +135,7 @@ class TestQuantumState:
         
         # Check probability properties
         assert torch.all(probs >= 0)
-        assert torch.allclose(torch.sum(probs), torch.tensor(1.0))
+        assert torch.allclose(torch.sum(probs), tensor.convert_to_tensor(1.0))
 
 class TestQuantumWave:
     """Test suite for QuantumWave."""
@@ -165,7 +165,7 @@ class TestQuantumWave:
         # Check state properties
         assert isinstance(processed_state, QuantumState)
         probs = processed_state.get_probabilities()
-        assert torch.allclose(torch.sum(probs), torch.tensor(1.0))
+        assert torch.allclose(torch.sum(probs), tensor.convert_to_tensor(1.0))
 
     def test_forward_pass(self, quantum_wave):
         """Test forward processing."""
@@ -188,7 +188,7 @@ class TestQuantumWave:
         
         # Verify normalization
         probs = state.get_probabilities()
-        assert torch.allclose(torch.sum(probs), torch.tensor(1.0))
+        assert torch.allclose(torch.sum(probs), tensor.convert_to_tensor(1.0))
 
 if __name__ == '__main__':
     pytest.main([__file__])

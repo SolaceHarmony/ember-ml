@@ -39,7 +39,6 @@ FRONTEND_PATHS = {
     "comparison": "ember_ml/ops/interfaces/comparison_ops.py",
     "dtype": "ember_ml/ops/interfaces/dtype_ops.py",
     "device": "ember_ml/ops/interfaces/device_ops.py",
-    "solver": "ember_ml/ops/interfaces/solver_ops.py",
     "feature": "ember_ml/ops/interfaces/feature_ops.py",
     "io": "ember_ml/ops/interfaces/io_ops.py"
 }
@@ -289,8 +288,7 @@ def generate_migration_plan(operations_to_migrate: Dict[str, Set[str]],
                             target_file = os.path.join(target_dir, "dtype_ops.py")
                         elif operation_type == "device":
                             target_file = os.path.join(target_dir, "device_ops.py")
-                        elif operation_type == "solver":
-                            target_file = os.path.join(target_dir, "solver_ops.py")
+
                         else:
                             target_file = os.path.join(target_dir, "other_ops.py")
                     

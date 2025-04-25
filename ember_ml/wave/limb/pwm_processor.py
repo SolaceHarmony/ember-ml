@@ -5,6 +5,10 @@ Handles conversion between PCM and PWM representations.
 
 import numpy as np
 from typing import Tuple, Optional
+
+from ember_ml import ops
+from ember_ml.nn import tensor
+from ember_ml.nn.tensor.types import TensorLike
 from .hpc_limb import HPCLimb
 
 class PWMProcessor:
@@ -35,7 +39,7 @@ class PWMProcessor:
         # Number of possible PWM levels
         self.levels = 2 ** bits_per_block
         
-    def pcm_to_pwm(self, pcm_data: np.ndarray) -> np.ndarray:
+    def pcm_to_pwm(self, pcm_data: TensorLike) -> TensorLike:
         """
         Convert PCM samples to PWM representation.
         
@@ -46,7 +50,7 @@ class PWMProcessor:
             PWM signal as binary values
         """
         # Create output array
-        pwm_signal = np.zeros_like(pcm_data)
+        pwm_signal = tensor.zeros_like(pcm_data)
         
         # Process each block
         for i in range(0, len(pcm_data), self.samples_per_period):
@@ -71,7 +75,7 @@ class PWMProcessor:
             
         return pwm_signal
         
-    def pwm_to_pcm(self, pwm_signal: np.ndarray) -> np.ndarray:
+    def pwm_to_pcm(self, pwm_signal: TensorLike) -> TensorLike:
         """
         Convert PWM signal back to PCM samples.
         
@@ -82,7 +86,7 @@ class PWMProcessor:
             Reconstructed PCM samples
         """
         # Create output array
-        pcm_out = np.zeros_like(pwm_signal)
+        pcm_out = tensor.zeros_like(pwm_signal)
         
         # Process each block
         for i in range(0, len(pwm_signal), self.samples_per_period):
@@ -91,7 +95,7 @@ class PWMProcessor:
                 break
                 
             # Count high samples to determine duty cycle
-            high_count = np.sum(block > 0)
+            high_count = ops.stats.sum(block > 0)
             duty_cycle = high_count / self.samples_per_period
             
             # Convert duty cycle back to PCM value
@@ -100,7 +104,7 @@ class PWMProcessor:
             
         return pcm_out
         
-    def analyze_pwm_signal(self, pwm_signal: np.ndarray) -> dict:
+    def analyze_pwm_signal(self, pwm_signal: TensorLike) -> dict:
         """
         Analyze PWM signal characteristics.
         
@@ -116,14 +120,14 @@ class PWMProcessor:
             block = pwm_signal[i:i + self.samples_per_period]
             if len(block) < self.samples_per_period:
                 break
-            duty_cycles.append(np.sum(block > 0) / self.samples_per_period)
+            duty_cycles.append(ops.stats.sum(block > 0) / self.samples_per_period)
             
-        duty_cycles = np.array(duty_cycles)
+        duty_cycles = tensor.convert_to_tensor(duty_cycles)
         
         return {
             'mean_duty_cycle': np.mean(duty_cycles),
-            'min_duty_cycle': np.min(duty_cycles),
-            'max_duty_cycle': np.max(duty_cycles),
+            'min_duty_cycle': ops.stats.min(duty_cycles),
+            'max_duty_cycle': ops.stats.max(duty_cycles),
             'unique_levels': len(np.unique(duty_cycles)),
             'theoretical_levels': self.levels
         }

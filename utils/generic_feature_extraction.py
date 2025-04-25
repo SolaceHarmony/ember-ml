@@ -13,6 +13,9 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
 from sklearn.decomposition import PCA
 
+from ember_ml import ops
+from ember_ml.nn.tensor.types import TensorLike
+
 
 class GenericCSVLoader:
     """
@@ -310,20 +313,20 @@ class GenericFeatureEngineer:
         
         # Create cyclical features using sine and cosine transformations
         # Hour of day (0-23)
-        df[f'{col}_sin_hour'] = np.sin(2 * np.pi * df[col].dt.hour / 23.0)
-        df[f'{col}_cos_hour'] = np.cos(2 * np.pi * df[col].dt.hour / 23.0)
+        df[f'{col}_sin_hour'] = ops.sin(2 * ops.pi * df[col].dt.hour / 23.0)
+        df[f'{col}_cos_hour'] = np.cos(2 * ops.pi * df[col].dt.hour / 23.0)
         
         # Day of week (0-6)
-        df[f'{col}_sin_dayofweek'] = np.sin(2 * np.pi * df[col].dt.dayofweek / 6.0)
-        df[f'{col}_cos_dayofweek'] = np.cos(2 * np.pi * df[col].dt.dayofweek / 6.0)
+        df[f'{col}_sin_dayofweek'] = ops.sin(2 * ops.pi * df[col].dt.dayofweek / 6.0)
+        df[f'{col}_cos_dayofweek'] = np.cos(2 * ops.pi * df[col].dt.dayofweek / 6.0)
         
         # Day of month (1-31)
-        df[f'{col}_sin_day'] = np.sin(2 * np.pi * (df[col].dt.day - 1) / 30.0)
-        df[f'{col}_cos_day'] = np.cos(2 * np.pi * (df[col].dt.day - 1) / 30.0)
+        df[f'{col}_sin_day'] = ops.sin(2 * ops.pi * (df[col].dt.day - 1) / 30.0)
+        df[f'{col}_cos_day'] = np.cos(2 * ops.pi * (df[col].dt.day - 1) / 30.0)
         
         # Month (1-12)
-        df[f'{col}_sin_month'] = np.sin(2 * np.pi * (df[col].dt.month - 1) / 11.0)
-        df[f'{col}_cos_month'] = np.cos(2 * np.pi * (df[col].dt.month - 1) / 11.0)
+        df[f'{col}_sin_month'] = ops.sin(2 * ops.pi * (df[col].dt.month - 1) / 11.0)
+        df[f'{col}_cos_month'] = np.cos(2 * ops.pi * (df[col].dt.month - 1) / 11.0)
         
         print(f"Created cyclical features for datetime column '{col}'")
         return df
@@ -435,7 +438,7 @@ class TemporalStrideProcessor:
         self.pca_components = pca_components
         self.pca_models = {}  # Store PCA models for each stride
         
-    def process_batch(self, data: np.ndarray) -> Dict[int, np.ndarray]:
+    def process_batch(self, data: TensorLike) -> Dict[int, TensorLike]:
         """
         Process data into multi-stride temporal representations.
         
@@ -456,7 +459,7 @@ class TemporalStrideProcessor:
                 continue
                 
             # Convert to array and apply PCA blending
-            windows_array = np.array(windows)
+            windows_array = tensor.convert_to_tensor(windows)
             results[stride] = self._apply_pca_blend(windows_array, stride)
             
             print(f"Created {len(windows)} windows with stride {stride}, "
@@ -464,7 +467,7 @@ class TemporalStrideProcessor:
             
         return results
     
-    def _create_strided_sequences(self, data: np.ndarray, stride: int) -> List[np.ndarray]:
+    def _create_strided_sequences(self, data: TensorLike, stride: int) -> List[TensorLike]:
         """
         Create sequences with the given stride.
         
@@ -488,7 +491,7 @@ class TemporalStrideProcessor:
             
         return windows
     
-    def _apply_pca_blend(self, window_batch: np.ndarray, stride: int) -> np.ndarray:
+    def _apply_pca_blend(self, window_batch: TensorLike, stride: int) -> TensorLike:
         """
         Apply PCA-based temporal blending.
         
@@ -536,7 +539,7 @@ class TemporalStrideProcessor:
             return sum(self.pca_models[stride].explained_variance_ratio_)
         return None
     
-    def get_feature_importance(self, stride: int) -> Optional[np.ndarray]:
+    def get_feature_importance(self, stride: int) -> Optional[TensorLike]:
         """
         Get feature importance for a specific stride.
         

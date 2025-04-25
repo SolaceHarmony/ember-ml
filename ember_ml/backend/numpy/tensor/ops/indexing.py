@@ -6,8 +6,6 @@ import numpy as np
 
 from typing import Any, List, Literal, Optional, Sequence, Union
 
-from builtins import slice as py_slice
-
 from ember_ml.backend.numpy.types import (
     TensorLike, Shape
 )
@@ -36,22 +34,21 @@ def slice_tensor(tensor: TensorLike, starts: Shape, sizes: Shape) -> np.ndarray:
         start_tensor = np.array(start, dtype=np.int32)
         if size == -1:
             # -1 means "all remaining elements in this dimension"
-            # Use Python's built-in slice function, not our slice_tensor function
-            slice_obj = py_slice(start_tensor.item(), None)
-            slice_objects.append(py_slice(slice_obj, None))
+            # Calculate the remaining size for this dimension
+            remaining_size = tensor_array.shape[i] - start_tensor.item()
+            # Create a slice from start to start + remaining_size
+            slice_obj = slice(start_tensor.item(), None)
+            slice_objects.append(slice_obj)
         else:
             # Convert size to tensor to avoid precision-reducing casts
             size_tensor = np.array(size, dtype=np.int32)
             end_tensor = np.add(start_tensor, size_tensor)
             # Use Python's built-in slice function, not our slice_tensor function
-            slice_obj = py_slice(start_tensor.item(), end_tensor.item())
+            slice_obj = slice(start_tensor.item(), end_tensor.item())
             slice_objects.append(slice_obj)
     
     # Extract the slice
     return tensor_array[tuple(slice_objects)]
-
-# Alias for slice_tensor to match MLX naming
-slice = slice_tensor
 
 
 def gather(tensor: TensorLike, indices: TensorLike, axis: int = 0) -> np.ndarray:
@@ -123,47 +120,28 @@ def slice_update(tensor: TensorLike, slices: TensorLike, updates: Optional[Tenso
     tensor_array = Tensor.convert_to_tensor(tensor)
 
     # Handle different types for slices
-    if isinstance(slices, py_slice): # Use imported py_slice
-        # If it's a standard Python slice object, use it directly
-        indices_tuple = slices
-    elif isinstance(slices, (int, np.integer)):
-        # Handle single integer index
-        indices_tuple = (int(slices),)
-    elif isinstance(slices, np.ndarray) and slices.dtype == bool:
-        # Handle boolean mask directly
-        indices_tuple = slices # NumPy supports boolean array indexing
-    elif isinstance(slices, tuple):
-        # Handle tuples directly - convert elements to integers
-        try:
-            indices_tuple = tuple(int(i) for i in slices)
-        except (ValueError, TypeError):
-            raise TypeError(f"Tuple indices must contain values convertible to integers, got {slices}")
+    # If slices is already a type that NumPy indexing understands, use it directly
+    if isinstance(slices, (slice, int, np.integer, tuple)) or (isinstance(slices, np.ndarray) and slices.dtype == bool):
+        indices_to_use = slices
     else:
         # Attempt conversion for list/array-like integer indices
         try:
             slices_array = Tensor.convert_to_tensor(slices)
-            # Ensure integer type for indexing
-            if not np.issubdtype(slices_array.dtype, np.integer):
-                 raise TypeError(f"Index array must be integer type, got {slices_array.dtype}")
-            indices_list = slices_array.tolist()
-            # Handle nested lists for multi-dimensional indexing if necessary
-            if isinstance(indices_list, list) and indices_list and isinstance(indices_list[0], list):
-                 indices_tuple = tuple(map(tuple, indices_list))
-            elif isinstance(indices_list, list): # Handle flat list of indices
-                 indices_tuple = tuple(indices_list)
-            else: # Handle scalar index case after conversion? Seems redundant
-                 indices_tuple = (indices_list,) # Convert scalar to tuple index
-        except (ValueError, TypeError) as e: # Catch TypeError too
+            # Ensure integer or boolean type for indexing
+            if not np.issubdtype(slices_array.dtype, np.integer) and slices_array.dtype != bool:
+                 raise TypeError(f"Index array must be integer or boolean type, got {slices_array.dtype}")
+            indices_to_use = slices_array
+        except (ValueError, TypeError) as e:
             raise TypeError(f"Unsupported slice/index type for NumPy backend: {type(slices)} - {e}")
 
     if updates is None:
         # Perform slicing
-        return tensor_array[indices_tuple]
+        return tensor_array[indices_to_use]
 
     # Perform update
     updates_array = Tensor.convert_to_tensor(updates)
     result = tensor_array.copy()
-    result[indices_tuple] = updates_array
+    result[indices_to_use] = updates_array
     return result
 
 def scatter_nd(self: np.ndarray, dim: int, index: np.ndarray, src: Union[np.ndarray, float, int]) -> np.ndarray:
@@ -206,7 +184,7 @@ def scatter_nd(self: np.ndarray, dim: int, index: np.ndarray, src: Union[np.ndar
 
     # Helper function to create slices
     def make_slice(arr, dim, i):
-        slc = [py_slice(None)] * arr.ndim
+        slc = [slice(None)] * arr.ndim
         slc[dim] = i
         return tuple(slc)
 
@@ -318,11 +296,11 @@ def scatter(data: TensorLike, indices: TensorLike, dim_size: Optional[Union[int,
                 if axis == 0:
                     src_value = data_array[i]
                 else:
-                    idx_tuple = tuple(py_slice(None) if j != axis else i for j in range(data_array.ndim))
+                    idx_tuple = tuple(slice(None) if j != axis else i for j in range(data_array.ndim))
                     src_value = data_array[idx_tuple]
                 
                 # Create index for scatter operation
-                scatter_idx = [py_slice(None)] * output.ndim
+                scatter_idx = [slice(None)] * output.ndim
                 scatter_idx[axis] = idx
                 scatter_idx = tuple(scatter_idx)
                 
@@ -345,11 +323,11 @@ def scatter(data: TensorLike, indices: TensorLike, dim_size: Optional[Union[int,
             if axis == 0:
                 src_value = data_array[i]
             else:
-                idx_tuple = tuple(py_slice(None) if j != axis else i for j in range(data_array.ndim))
+                idx_tuple = tuple(slice(None) if j != axis else i for j in range(data_array.ndim))
                 src_value = data_array[idx_tuple]
             
             # Create index for scatter operation
-            scatter_idx = [py_slice(None)] * output.ndim
+            scatter_idx = [slice(None)] * output.ndim
             scatter_idx[axis] = idx
             scatter_idx = tuple(scatter_idx)
             
@@ -451,11 +429,11 @@ def scatter_mean(values: TensorLike, index: TensorLike, dim_size: Optional[int] 
             if axis == 0:
                 src_value = values_array[i]
             else:
-                idx_tuple = tuple(py_slice(None) if j != axis else i for j in range(values_array.ndim))
+                idx_tuple = tuple(slice(None) if j != axis else i for j in range(values_array.ndim))
                 src_value = values_array[idx_tuple]
             
             # Create index for scatter operation
-            scatter_idx = [py_slice(None)] * sum_result.ndim
+            scatter_idx = [slice(None)] * sum_result.ndim
             scatter_idx[axis] = idx
             scatter_idx = tuple(scatter_idx)
             
@@ -497,8 +475,8 @@ def scatter_softmax(values: TensorLike, index: TensorLike, dim_size: Optional[in
         if axis == 0:
             gathered_max[i] = max_vals[idx]
         else:
-            src_idx = tuple(py_slice(None) if j != axis else i for j in range(values_array.ndim))
-            dst_idx = tuple(py_slice(None) if j != axis else idx for j in range(values_array.ndim))
+            src_idx = tuple(slice(None) if j != axis else i for j in range(values_array.ndim))
+            dst_idx = tuple(slice(None) if j != axis else idx for j in range(values_array.ndim))
             gathered_max[src_idx] = max_vals[dst_idx]
     
     # Compute exp(x - max) for numerical stability
@@ -513,8 +491,8 @@ def scatter_softmax(values: TensorLike, index: TensorLike, dim_size: Optional[in
         if axis == 0:
             gathered_sum[i] = sum_exp[idx]
         else:
-            src_idx = tuple(py_slice(None) if j != axis else i for j in range(exp_vals.ndim))
-            dst_idx = tuple(py_slice(None) if j != axis else idx for j in range(exp_vals.ndim))
+            src_idx = tuple(slice(None) if j != axis else i for j in range(exp_vals.ndim))
+            dst_idx = tuple(slice(None) if j != axis else idx for j in range(exp_vals.ndim))
             gathered_sum[src_idx] = sum_exp[dst_idx]
     
     # Compute softmax
@@ -538,5 +516,45 @@ def nonzero(tensor: TensorLike) -> np.ndarray:
     # Get indices of non-zero elements
     return np.array(np.nonzero(tensor_array)).T
 
-# Alias for backward compatibility
-slice = slice_tensor
+# No longer need the alias since we're using the built-in slice directly
+
+def index_update(tensor: TensorLike, *indices, value: TensorLike) -> np.ndarray:
+    """
+    Update the tensor at the specified indices with the given value.
+    
+    Args:
+        tensor: The tensor to update
+        *indices: The indices to update (can be integers, slices, or arrays)
+        value: The value to set at the specified indices
+        
+    Returns:
+        Updated tensor
+    """
+    # Convert inputs to NumPy arrays
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    tensor_array = Tensor.convert_to_tensor(tensor)
+    value_array = Tensor.convert_to_tensor(value)
+    
+    # Create a copy of the tensor to avoid in-place modification
+    result = tensor_array.copy()
+    
+    # Handle different indexing patterns
+    if len(indices) == 1:
+        # Single index
+        idx = indices[0]
+        result[idx] = value_array
+    elif len(indices) == 2:
+        # Two indices (common case for 2D tensors)
+        i, j = indices
+        result[i, j] = value_array
+    elif len(indices) == 3:
+        # Three indices
+        i, j, k = indices
+        result[i, j, k] = value_array
+    else:
+        # General case
+        idx_tuple = tuple(indices)
+        result[idx_tuple] = value_array
+    
+    return result

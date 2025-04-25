@@ -33,7 +33,7 @@ class BinaryWave(nn.Module):
         self.phase_shift = nn.Parameter(torch.zeros(config.num_phases))
         self.amplitude_scale = nn.Parameter(torch.ones(config.num_phases))
         
-    def encode(self, x: torch.Tensor) -> torch.Tensor:
+    def encode(self, x: tensor.convert_to_tensor) -> tensor.convert_to_tensor:
         """
         Encode input into wave pattern.
 
@@ -65,7 +65,7 @@ class BinaryWave(nn.Module):
         
         return wave
     
-    def decode(self, wave: torch.Tensor) -> torch.Tensor:
+    def decode(self, wave: tensor.convert_to_tensor) -> tensor.convert_to_tensor:
         """
         Decode wave pattern to output.
 
@@ -98,7 +98,7 @@ class BinaryWave(nn.Module):
         
         return output
     
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: tensor.convert_to_tensor) -> tensor.convert_to_tensor:
         """
         Process input through wave transform.
 
@@ -125,9 +125,9 @@ class BinaryWaveProcessor(nn.Module):
         self.config = config
         
     def wave_interference(self,
-                         wave1: torch.Tensor,
-                         wave2: torch.Tensor,
-                         mode: str = 'XOR') -> torch.Tensor:
+                         wave1: tensor.convert_to_tensor,
+                         wave2: tensor.convert_to_tensor,
+                         mode: str = 'XOR') -> tensor.convert_to_tensor:
         """
         Apply wave interference between two patterns.
         
@@ -152,9 +152,9 @@ class BinaryWaveProcessor(nn.Module):
         return result.float()
     
     def phase_similarity(self,
-                        wave1: torch.Tensor,
-                        wave2: torch.Tensor,
-                        max_shift: Optional[int] = None) -> Dict[str, torch.Tensor]:
+                        wave1: tensor.convert_to_tensor,
+                        wave2: tensor.convert_to_tensor,
+                        max_shift: Optional[int] = None) -> Dict[str, tensor.convert_to_tensor]:
         """
         Calculate similarity allowing for phase shifts.
         
@@ -168,8 +168,8 @@ class BinaryWaveProcessor(nn.Module):
         if max_shift is None:
             max_shift = self.config.num_phases // 4
             
-        best_similarity = torch.tensor(0.0, device=wave1.device)
-        best_shift = torch.tensor(0, device=wave1.device)
+        best_similarity = tensor.convert_to_tensor(0.0, device=wave1.device)
+        best_shift = tensor.convert_to_tensor(0, device=wave1.device)
         
         for shift in range(max_shift):
             shifted = torch.roll(wave2, shifts=shift, dims=0)
@@ -177,7 +177,7 @@ class BinaryWaveProcessor(nn.Module):
             
             if similarity > best_similarity:
                 best_similarity = similarity
-                best_shift = torch.tensor(shift, device=wave1.device)
+                best_shift = tensor.convert_to_tensor(shift, device=wave1.device)
                 
         return {
             'similarity': best_similarity,
@@ -185,7 +185,7 @@ class BinaryWaveProcessor(nn.Module):
         }
     
     def extract_features(self,
-                        wave: torch.Tensor) -> Dict[str, torch.Tensor]:
+                        wave: tensor.convert_to_tensor) -> Dict[str, tensor.convert_to_tensor]:
         """
         Extract characteristic features from wave pattern.
         
@@ -229,7 +229,7 @@ class BinaryWaveEncoder(nn.Module):
         super().__init__()
         self.config = config
         
-    def encode_char(self, char: str) -> torch.Tensor:
+    def encode_char(self, char: str) -> tensor.convert_to_tensor:
         """
         Encode a character into a binary wave pattern.
         
@@ -245,7 +245,7 @@ class BinaryWaveEncoder(nn.Module):
         bin_repr = f"{code_point:016b}"
         
         # Create 2D grid
-        bit_matrix = torch.tensor([int(b) for b in bin_repr], dtype=torch.float32)
+        bit_matrix = tensor.convert_to_tensor([int(b) for b in bin_repr], dtype=torch.float32)
         bit_matrix = bit_matrix.reshape(self.config.grid_size, self.config.grid_size)
         
         # Generate phase shifts
@@ -262,7 +262,7 @@ class BinaryWaveEncoder(nn.Module):
         wave_pattern = torch.stack(time_slices)
         return wave_pattern.unsqueeze(-1)
     
-    def encode_sequence(self, sequence: str) -> torch.Tensor:
+    def encode_sequence(self, sequence: str) -> tensor.convert_to_tensor:
         """
         Encode a sequence of characters into wave patterns.
         
@@ -318,8 +318,8 @@ class BinaryWaveNetwork(nn.Module):
         )
         
     def forward(self,
-                x: torch.Tensor,
-                memory: Optional[torch.Tensor] = None) -> Tuple[torch.Tensor, torch.Tensor]:
+                x: tensor.convert_to_tensor,
+                memory: Optional[tensor.convert_to_tensor] = None) -> Tuple[tensor.convert_to_tensor, tensor.convert_to_tensor]:
         """
         Process input through binary wave network.
         

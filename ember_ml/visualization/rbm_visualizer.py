@@ -16,10 +16,11 @@ from typing import List, Optional, Tuple, Dict, Union
 import time
 import pandas as pd
 # Import the RBM class and tensor module
-from ember_ml.models.rbm.rbm_module import RBMModule
+from ember_ml import ops
 from ember_ml.nn import tensor
 from ember_ml.models.rbm.rbm_module import RBMModule
 # Import stats module directly
+from ember_ml.nn.tensor.types import TensorLike
 from ember_ml.ops import stats
 
 
@@ -226,7 +227,7 @@ class RBMVisualizer:
         ax1.plot(train_errors, 'b-', linewidth=2, label='Training Error')
         if val_errors is not None:
             # Validation errors might be recorded at different intervals
-            val_indices = np.linspace(0, len(train_errors)-1, len(val_errors), dtype=int)
+            val_indices = tensor.linspace(0, len(train_errors)-1, len(val_errors), dtype=int)
             ax1.plot(val_indices, val_errors, 'r-', linewidth=2, label='Validation Error')
         
         ax1.set_title('Training and Validation Errors', fontsize=12)
@@ -265,15 +266,15 @@ class RBMVisualizer:
         ax4 = axes[1, 1]
         weight_means = [np.mean(state['weights']) for state in rbm.training_states]
         weight_stds = [np.std(state['weights']) for state in rbm.training_states]
-        weight_mins = [np.min(state['weights']) for state in rbm.training_states]
-        weight_maxs = [np.max(state['weights']) for state in rbm.training_states]
+        weight_mins = [ops.stats.min(state['weights']) for state in rbm.training_states]
+        weight_maxs = [ops.stats.max(state['weights']) for state in rbm.training_states]
         
         epochs = range(len(rbm.training_states))
         ax4.plot(epochs, weight_means, 'b-', linewidth=2, label='Mean')
         ax4.plot(epochs, weight_mins, 'g-', linewidth=1, label='Min')
         ax4.plot(epochs, weight_maxs, 'r-', linewidth=1, label='Max')
-        ax4.fill_between(epochs, np.array(weight_means) - np.array(weight_stds),
-                        np.array(weight_means) + np.array(weight_stds),
+        ax4.fill_between(epochs, tensor.convert_to_tensor(weight_means) - tensor.convert_to_tensor(weight_stds),
+                        tensor.convert_to_tensor(weight_means) + tensor.convert_to_tensor(weight_stds),
                         alpha=0.2, color='b', label='Std Dev')
         
         ax4.set_title('Weight Statistics Over Time', fontsize=12)
@@ -430,7 +431,9 @@ class RBMVisualizer:
             if hasattr(rbm.weights, 'numpy'):
                 weights = rbm.weights.numpy()
             elif hasattr(rbm.weights, 'data') and hasattr(rbm.weights.data, 'numpy'):
-                weights = rbm.weights.data.numpy()
+                from ember_ml.nn import tensor
+                weights = tensor.convert_to_tensor(rbm.weights)
+                weights = tensor.to_numpy(weights)
             else:
                 # Try to convert using tensor.to_numpy
                 from ember_ml.nn import tensor
@@ -481,7 +484,7 @@ class RBMVisualizer:
     def plot_reconstructions(
         self,
         rbm: RBMModule,
-        data: np.ndarray,
+        data: TensorLike,
         n_samples: int = 5,
         reshape: Optional[Tuple[int, int]] = None,
         title: str = 'RBM Reconstructions',
@@ -524,7 +527,7 @@ class RBMVisualizer:
         
         # Handle case with only one sample
         if n_samples == 1:
-            axes = np.array([axes])
+            axes = tensor.convert_to_tensor([axes])
         
         # Plot original and reconstructed samples
         for i in range(n_samples):
@@ -579,7 +582,7 @@ class RBMVisualizer:
     def plot_hidden_activations(
         self,
         rbm: RBMModule,
-        data: np.ndarray,
+        data: TensorLike,
         n_samples: int = 5,
         n_hidden_units: int = 20,
         title: str = 'RBM Hidden Unit Activations',
@@ -668,8 +671,8 @@ class RBMVisualizer:
     def plot_anomaly_scores(
         self,
         rbm: RBMModule,
-        normal_data: np.ndarray,
-        anomaly_data: Optional[np.ndarray] = None,
+        normal_data: TensorLike,
+        anomaly_data: Optional[TensorLike] = None,
         method: str = 'reconstruction',
         title: str = 'RBM Anomaly Scores',
         save: bool = True,
@@ -830,8 +833,8 @@ class RBMVisualizer:
                 blend_ratio = i / (n_states - 1)
                 
                 # Start with random weights with proper scaling
-                std_dev = 0.01 / np.sqrt(rbm.n_visible)
-                random_weights = np.random.normal(0, std_dev, current_weights.shape)
+                std_dev = 0.01 / ops.sqrt(rbm.n_visible)
+                random_weights = tensor.random_normal(0, std_dev, current_weights.shape)
                 
                 # Blend random and final weights
                 blended_weights = (1 - blend_ratio) * random_weights + blend_ratio * current_weights
@@ -982,7 +985,7 @@ class RBMVisualizer:
         self,
         rbm: RBMModule,
         n_steps: int = 100,
-        start_data: Optional[np.ndarray] = None,
+        start_data: Optional[TensorLike] = None,
         reshape: Optional[Tuple[int, int]] = None,
         title: str = 'RBM Dreaming',
         interval: int = 200,
@@ -1141,7 +1144,7 @@ class RBMVisualizer:
     def animate_reconstruction(
         self,
         rbm: RBMModule,
-        data: np.ndarray,
+        data: TensorLike,
         n_samples: int = 5,
         n_steps: int = 10,
         reshape: Optional[Tuple[int, int]] = None,
@@ -1181,7 +1184,7 @@ class RBMVisualizer:
         
         # Handle case with only one sample
         if n_samples == 1:
-            axes = np.array([axes])
+            axes = tensor.convert_to_tensor([axes])
         
         # Initialize plots
         images_orig = []
@@ -1341,8 +1344,8 @@ class RBMVisualizer:
         self,
         rbm: RBMModule,
         n_steps: int = 100,
-        start_data: Optional[np.ndarray] = None
-    ) -> List[np.ndarray]:
+        start_data: Optional[TensorLike] = None
+    ) -> List[TensorLike]:
         """
         Generate dream states by running Gibbs sampling with gradual evolution.
         
@@ -1368,7 +1371,7 @@ class RBMVisualizer:
             active_indices = np.random.choice(rbm.n_visible, n_active, replace=False)
             
             # Create a mask with 1s at active indices
-            mask = np.zeros(rbm.n_visible)
+            mask = tensor.zeros(rbm.n_visible)
             mask[active_indices] = 1.0
             
             # Apply mask to visible states
@@ -1436,9 +1439,9 @@ class RBMVisualizer:
     
     def generate_category_statistics_tables(
         self,
-        data: Union[np.ndarray, tensor.EmberTensor],
-        normal_data: Union[np.ndarray, tensor.EmberTensor],
-        category_labels: Union[np.ndarray, tensor.EmberTensor],
+        data: Union[TensorLike, tensor.EmberTensor],
+        normal_data: Union[TensorLike, tensor.EmberTensor],
+        category_labels: Union[TensorLike, tensor.EmberTensor],
         cluster_info: Dict,
         feature_names: Optional[List[str]] = None,
         save_dir: str = 'outputs/tables',
@@ -1621,9 +1624,9 @@ class RBMVisualizer:
     
     def plot_anomaly_category_statistics(
         self,
-        data: Union[np.ndarray, tensor.EmberTensor],
-        normal_data: Union[np.ndarray, tensor.EmberTensor],
-        category_labels: Union[np.ndarray, tensor.EmberTensor],
+        data: Union[TensorLike, tensor.EmberTensor],
+        normal_data: Union[TensorLike, tensor.EmberTensor],
+        category_labels: Union[TensorLike, tensor.EmberTensor],
         cluster_info: Dict,
         feature_names: Optional[List[str]] = None,
         title: str = 'Anomaly Category Statistics',
@@ -1861,8 +1864,8 @@ class RBMVisualizer:
     def plot_anomaly_categories(
         self,
         rbm: RBMModule,
-        data: np.ndarray,
-        category_labels: np.ndarray,
+        data: TensorLike,
+        category_labels: TensorLike,
         cluster_info: Dict,
         feature_names: Optional[List[str]] = None,
         title: str = 'RBM Anomaly Categories',
@@ -1984,7 +1987,7 @@ class RBMVisualizer:
     def plot_feature_hidden_correlations(
         self,
         rbm: RBMModule,
-        data: np.ndarray,
+        data: TensorLike,
         feature_names: Optional[List[str]] = None,
         title: str = 'Feature-Hidden Unit Correlations',
         save: bool = True,
@@ -2023,7 +2026,7 @@ class RBMVisualizer:
             feature_names = [f"Feature {i+1}" for i in range(data.shape[1])]
         
         # Calculate correlation matrix between features and hidden units
-        correlation_matrix = np.zeros((data.shape[1], rbm.n_hidden))
+        correlation_matrix = tensor.zeros((data.shape[1], rbm.n_hidden))
         
         for i in range(data.shape[1]):
             for j in range(rbm.n_hidden):

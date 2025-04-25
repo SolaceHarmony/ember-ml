@@ -19,7 +19,7 @@ from sklearn.metrics import silhouette_score
 from ember_ml import ops
 from ember_ml.nn import tensor
 from ember_ml.models.rbm.rbm_module import RBMModule
-
+from ember_ml.nn.tensor.types import TensorLike
 
 class RBMBasedAnomalyDetector:
     """
@@ -89,10 +89,10 @@ class RBMBasedAnomalyDetector:
     
     def preprocess(
         self,
-        X: np.ndarray,
+        X: TensorLike,
         fit: bool = False,
         scaling_method: str = 'standard'
-    ) -> np.ndarray:
+    ) -> TensorLike:
         """
         Preprocess data for RBM training or anomaly detection.
         
@@ -115,23 +115,23 @@ class RBMBasedAnomalyDetector:
                 self.feature_stds[self.feature_stds == 0] = 1.0  # Avoid division by zero
             else:
                 # Compute min and max for min-max scaling
-                self.feature_mins = np.min(X, axis=0)
-                self.feature_maxs = np.max(X, axis=0)
+                self.feature_mins = ops.stats.min(X, axis=0)
+                self.feature_maxs = ops.stats.max(X, axis=0)
                 # Avoid division by zero
                 self.feature_maxs[self.feature_maxs == self.feature_mins] += 1e-8
         
         # Apply scaling
         if self.scaling_method == 'standard':
-            X_scaled = (X - self.feature_means) / self.feature_stds
+            X_scaled = ops.divide(ops.subtract(X,self.feature_means), self.feature_stds)
         else:
-            X_scaled = (X - self.feature_mins) / (self.feature_maxs - self.feature_mins)
+            X_scaled = ops.divide(ops.subtract(X, self.feature_mins), ops.subtract(self.feature_maxs, self.feature_mins))
         
         return X_scaled
     
     def fit(
         self,
-        X: np.ndarray,
-        validation_data: Optional[np.ndarray] = None,
+        X: TensorLike,
+        validation_data: Optional[TensorLike] = None,
         epochs: int = 50,
         k: int = 1,
         early_stopping_patience: int = 5,
@@ -215,7 +215,7 @@ class RBMBasedAnomalyDetector:
             
             # Convert to numpy to get min/max
             pos_hidden_probs_np = tensor.to_numpy(pos_hidden_probs)
-            print(f"[DEBUG] Hidden probabilities shape: {tensor.shape(pos_hidden_probs)}, min: {pos_hidden_probs_np.min()}, max: {pos_hidden_probs_np.max()}")
+            print(f"[DEBUG] Hidden probabilities shape: {tensor.shape(pos_hidden_probs)}, min: {pos_hidden_probs.min()}, max: {pos_hidden_probs.max()}")
             print(f"[DEBUG] Hidden states shape: {tensor.shape(pos_hidden_states)}")
             
             # Compute positive associations (positive phase statistics)
@@ -308,7 +308,8 @@ class RBMBasedAnomalyDetector:
             if hasattr(self.rbm.weights, 'numpy'):
                 weights = self.rbm.weights.numpy().copy()
             elif hasattr(self.rbm.weights, 'data') and hasattr(self.rbm.weights.data, 'numpy'):
-                weights = self.rbm.weights.data.numpy().copy()
+                weights = self.rbm.weights.data
+                print(f"[DEBUG] Weights data type: {type(weights)}")
             else:
                 # Try to convert using tensor.to_numpy
                 weights = tensor.to_numpy(self.rbm.weights).copy()
@@ -344,7 +345,7 @@ class RBMBasedAnomalyDetector:
         
         # Store training states and errors on the RBM for visualization
         self.rbm.training_states = training_states
-        self.rbm.training_errors = tensor.convert_to_tensor(training_errors)
+        self.rbm.training_errors = tensor.convert_to_tensor(training_errors,dtype=tensor.float32)
         
         # Store validation errors if available
         if validation_data_scaled is not None:
@@ -384,7 +385,7 @@ class RBMBasedAnomalyDetector:
         
         return self
     
-    def predict(self, X: np.ndarray) -> np.ndarray:
+    def predict(self, X: TensorLike) -> TensorLike:
         """
         Predict whether samples are anomalies.
         
@@ -415,11 +416,11 @@ class RBMBasedAnomalyDetector:
         # Determine anomalies
         print(f"[DEBUG] Predict - Using threshold: {self.anomaly_threshold}")
         anomalies = anomaly_scores > self.anomaly_threshold
-        print(f"[DEBUG] Predict - Found {np.sum(anomalies)} anomalies out of {len(anomalies)} samples ({np.sum(anomalies)/len(anomalies)*100:.2f}%)")
+        print(f"[DEBUG] Predict - Found {ops.stats.sum(anomalies)} anomalies out of {len(anomalies)} samples ({ops.stats.sum(anomalies)/len(anomalies)*100:.2f}%)")
         
         return anomalies
     
-    def anomaly_score(self, X: np.ndarray) -> np.ndarray:
+    def anomaly_score(self, X: TensorLike) -> TensorLike:
         """
         Compute anomaly scores for input data.
         
@@ -444,7 +445,7 @@ class RBMBasedAnomalyDetector:
         # Convert back to numpy
         return tensor.to_numpy(scores_tensor)
     
-    def anomaly_probability(self, X: np.ndarray) -> np.ndarray:
+    def anomaly_probability(self, X: TensorLike) -> TensorLike:
         """
         Compute probability of being an anomaly.
         
@@ -468,7 +469,7 @@ class RBMBasedAnomalyDetector:
         # Map to [0, 1] using sigmoid
         return 1.0 / (1.0 + np.exp(-normalized_scores))
     
-    def reconstruct(self, X: np.ndarray) -> np.ndarray:
+    def reconstruct(self, X: TensorLike) -> TensorLike:
         """
         Reconstruct input data using the RBM.
         
@@ -633,11 +634,11 @@ class RBMBasedAnomalyDetector:
     
     def categorize_anomalies(
         self,
-        X: np.ndarray,
-        anomaly_flags: Optional[np.ndarray] = None,
+        X: TensorLike,
+        anomaly_flags: Optional[TensorLike] = None,
         max_clusters: int = 10,
         min_samples_per_cluster: int = 2
-    ) -> Tuple[np.ndarray, Dict]:
+    ) -> Tuple[TensorLike, Dict]:
         """
         Categorize anomalies based on hidden unit activation patterns.
         
@@ -677,11 +678,11 @@ class RBMBasedAnomalyDetector:
         
         # If no anomalies found, return empty results
         if len(anomaly_indices) == 0:
-            return np.zeros(len(X), dtype=int) - 1, {}
+            return tensor.zeros(len(X), dtype=int) - 1, {}
         
         # If too few anomalies for clustering, assign all to the same category
         if len(anomaly_indices) < min_samples_per_cluster:
-            category_labels = np.zeros(len(X), dtype=int) - 1  # -1 for normal samples
+            category_labels = tensor.zeros(len(X), dtype=int) - 1  # -1 for normal samples
             category_labels[anomaly_indices] = 0  # 0 for the single anomaly category
             return category_labels, {0: {"count": len(anomaly_indices), "indices": anomaly_indices}}
         
@@ -721,7 +722,7 @@ class RBMBasedAnomalyDetector:
         anomaly_cluster_labels = kmeans.fit_predict(hidden_activations)
         
         # Create final category labels for all samples
-        category_labels = np.zeros(len(X), dtype=int) - 1  # -1 for normal samples
+        category_labels = tensor.zeros(len(X), dtype=int) - 1  # -1 for normal samples
         category_labels[anomaly_indices] = anomaly_cluster_labels
         
         # Prepare cluster information
@@ -761,7 +762,7 @@ def detect_anomalies_from_features(
     training_fraction: float = 0.8,
     epochs: int = 50,
     verbose: bool = True
-) -> Tuple[RBMBasedAnomalyDetector, np.ndarray, np.ndarray]:
+) -> Tuple[RBMBasedAnomalyDetector, TensorLike, TensorLike]:
     """
     Detect anomalies from features extracted by the generic feature extraction library.
     
@@ -808,7 +809,7 @@ def detect_anomalies_from_features(
     anomaly_scores = detector.anomaly_score(test_features)
     
     if verbose:
-        n_anomalies = np.sum(anomaly_flags)
+        n_anomalies = ops.stats.sum(anomaly_flags)
         print(f"Detected {n_anomalies} anomalies out of {len(test_features)} samples "
               f"({n_anomalies/len(test_features)*100:.2f}%)")
     

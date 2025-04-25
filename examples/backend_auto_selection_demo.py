@@ -12,8 +12,8 @@ import os
 # Add the parent directory to the path so we can import ember_ml
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-import ember_ml as nl
 from ember_ml.backend import auto_select_backend, get_backend, get_device, set_backend, set_device
+from ember_ml.nn.tensor import zeros # Import zeros directly
 
 def print_system_info():
     """Print information about the system."""
@@ -78,7 +78,7 @@ def demonstrate_auto_selection():
     print("Current Backend Configuration:")
     print(f"  Current backend: {get_backend()}")
     # Create a dummy tensor to get the device
-    dummy = nl.zeros((1, 1))
+    dummy = zeros((1, 1)) # Use imported zeros
     print(f"  Current device: {get_device(dummy)}")
     print()
 
@@ -88,9 +88,9 @@ def demonstrate_backend_switching():
     from ember_ml import ops
     # Save the original backend and device
     original_backend = get_backend()
-    ops.set_backend(original_backend)
+    set_backend(original_backend) # Correct call to set_backend
     # Create a dummy tensor to get the device
-    dummy = nl.zeros((1, 1))
+    dummy = zeros((1, 1)) # Use imported zeros
     original_device = get_device(dummy)
     
     # Try each available backend
@@ -109,7 +109,7 @@ def demonstrate_backend_switching():
                         print(f"  Setting device to cuda...")
                         set_device('cuda')
                         # Create a dummy tensor to get the device
-                        dummy = nl.zeros((1, 1))
+                        dummy = zeros((1, 1)) # Use imported zeros
                         print(f"  Current device: {get_device(dummy)}")
                     
                     # Check for MPS on macOS
@@ -119,7 +119,7 @@ def demonstrate_backend_switching():
                                 print(f"  Setting device to mps...")
                                 set_device('mps')
                                 # Create a dummy tensor to get the device
-                                dummy = nl.zeros((1, 1))
+                                dummy = zeros((1, 1)) # Use imported zeros
                                 print(f"  Current device: {get_device(dummy)}")
                         except:
                             pass
@@ -127,7 +127,7 @@ def demonstrate_backend_switching():
                     print(f"  Setting device to cpu...")
                     set_device('cpu')
                     # Create a dummy tensor to get the device
-                    dummy = nl.zeros((1, 1))
+                    dummy = zeros((1, 1)) # Use imported zeros
                     print(f"  Current device: {get_device(dummy)}")
                 except ImportError:
                     print("  PyTorch not installed, skipping device tests")
@@ -137,11 +137,11 @@ def demonstrate_backend_switching():
     # Restore the original backend and device
     print(f"  Restoring original backend: {original_backend}")
     set_backend(original_backend)
-    if original_device:
+    if original_device and original_backend != 'mlx':
         set_device(original_device)
     print(f"  Current backend: {get_backend()}")
     # Create a dummy tensor to get the device
-    dummy = nl.zeros((1, 1))
+    dummy = zeros((1, 1)) # Use imported zeros
     print(f"  Current device: {get_device(dummy)}")
     print()
 

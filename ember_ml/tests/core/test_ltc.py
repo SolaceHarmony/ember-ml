@@ -99,7 +99,7 @@ class TestLTCChain:
 
     def test_chain_update(self, basic_chain):
         """Test chain update with input signals."""
-        input_signals = np.array([1.0, 0.0, 0.0])
+        input_signals = tensor.convert_to_tensor([1.0, 0.0, 0.0])
         states = basic_chain.update(input_signals)
         
         assert len(states) == 3
@@ -116,7 +116,7 @@ class TestLTCChain:
     def test_chain_save_load(self, basic_chain):
         """Test chain state saving and loading."""
         # Update chain
-        input_signals = np.array([1.0, 0.0, 0.0])
+        input_signals = tensor.convert_to_tensor([1.0, 0.0, 0.0])
         basic_chain.update(input_signals)
         
         # Save state
@@ -127,7 +127,7 @@ class TestLTCChain:
         new_chain.load_state(state_dict)
         
         # Verify state was properly loaded
-        assert np.array_equal(new_chain.weights, basic_chain.weights)
+        assert tensor.convert_to_tensor_equal(new_chain.weights, basic_chain.weights)
         assert len(new_chain.neurons) == len(basic_chain.neurons)
         
         for new_neuron, old_neuron in zip(new_chain.neurons, basic_chain.neurons):

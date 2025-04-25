@@ -101,7 +101,7 @@ class NCP(Module):
         
         self.neuron_map = neuron_map
         self.activation_name = activation
-        self.activation = ops.get_activation(activation)
+        self.activation = nn.modules.activation.get_activation(activation)
         self.use_bias = use_bias
         # ... other initialization
         

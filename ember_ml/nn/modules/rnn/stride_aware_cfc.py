@@ -11,7 +11,7 @@ from ember_ml import ops
 from ember_ml.nn import tensor
 from ember_ml.nn.modules import Parameter # Module removed, inheriting from ModuleWiredCell instead
 from ember_ml.nn.modules.wiring import NeuronMap # Use renamed base class
-from ember_ml.nn.modules.module_wired_cell import ModuleWiredCell # Import parent class
+from ember_ml.nn.modules import Module # Import parent class
 from ember_ml.nn.initializers import glorot_uniform, orthogonal, BinomialInitializer
 from ember_ml.nn.modules import activations # Import activations module
 from ember_ml.nn.modules.activations import get_activation # Import the new helper
@@ -19,7 +19,7 @@ from ember_ml.nn.modules.activations import get_activation # Import the new help
 # Local lecun_tanh function removed, use activations.lecun_tanh instead
 
 
-class StrideAwareWiredCfCCell(ModuleWiredCell): # Inherit from ModuleWiredCell
+class StrideAwareCfC(Module): # Inherit from ModuleWiredCell
     """
     Stride-Aware Wired CfC Cell.
     

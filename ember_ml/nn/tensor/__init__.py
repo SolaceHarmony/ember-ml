@@ -33,8 +33,8 @@ from ember_ml.nn.tensor.common import (  # noqa
     to_numpy, item, shape,
     random_uniform, random_normal, maximum,
     random_bernoulli, random_gamma, random_exponential, random_poisson,
-    random_categorical, random_permutation, shuffle, set_seed, get_seed,
-    meshgrid, nonzero # Add nonzero here
+    random_categorical, random_permutation, shuffle, random_shuffle, set_seed, get_seed,
+    meshgrid, nonzero, index # Add nonzero here
 )
 
 # Define array function as an alias for EmberTensor constructor
@@ -66,7 +66,7 @@ def convert_to_tensor(data: Any, dtype=None, device=None, requires_grad=False):
         requires_grad: Whether the tensor requires gradients
         
     Returns:
-        Backend tensor (e.g., mx.array, torch.Tensor, np.ndarray)
+        Backend tensor (e.g., TensorLike, tensor.convert_to_tensor, TensorLike)
     """
     # If already an EmberTensor, check if dtype/device/requires_grad match
     if isinstance(data, EmberTensor):
@@ -103,10 +103,10 @@ __all__ = [
     'reshape', 'transpose', 'concatenate', 'stack', 'split',
     'expand_dims', 'squeeze', 'tile', 'gather', 'scatter', 'tensor_scatter_nd_update',
     'slice_tensor', 'slice_update', 'index_update', 'cast', 'copy', 'pad',
-    'to_numpy', 'item', 'shape',
+    'to_numpy', 'item', 'index','shape',
     'random_uniform', 'random_normal', 'maximum',
     'random_bernoulli', 'random_gamma', 'random_exponential', 'random_poisson',
-    'random_categorical', 'random_permutation', 'shuffle', 'set_seed', 'get_seed', 'meshgrid', 'nonzero', # Add nonzero here
+    'random_categorical', 'random_permutation', 'shuffle', 'random_shuffle', 'set_seed', 'get_seed', 'meshgrid', 'nonzero', # Add nonzero here
     
     # Data types
     'float32', 'float64', 'int32', 'int64', 'bool_',

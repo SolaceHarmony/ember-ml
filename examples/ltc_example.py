@@ -28,7 +28,7 @@ def generate_sine_wave_data(num_samples=1000, seq_length=100, num_features=1):
         phase_shift = tensor.random_uniform(0, 2 * ops.pi)
         
         # Generate sine wave with phase shift
-        signal = ops.sin(t + phase_shift)
+        signal = ops.sin(ops.add(t, phase_shift)) # Use ops.add
         
         # Add some noise
         noise = tensor.random_normal(0, 0.1, seq_length)
@@ -38,7 +38,7 @@ def generate_sine_wave_data(num_samples=1000, seq_length=100, num_features=1):
         X = tensor.tensor_scatter_nd_update(
             X,
             tensor.stack([
-                tensor.ones((seq_length,), dtype=tensor.int32) * i,
+                ops.multiply(tensor.ones((seq_length,), dtype=tensor.int32), i), # Use ops.multiply
                 tensor.arange(seq_length),
                 tensor.zeros((seq_length,), dtype=tensor.int32)
             ], axis=1),
@@ -48,7 +48,7 @@ def generate_sine_wave_data(num_samples=1000, seq_length=100, num_features=1):
         y = tensor.tensor_scatter_nd_update(
             y,
             tensor.stack([
-                tensor.ones((seq_length,), dtype=tensor.int32) * i,
+                ops.multiply(tensor.ones((seq_length,), dtype=tensor.int32), i), # Use ops.multiply
                 tensor.arange(seq_length),
                 tensor.zeros((seq_length,), dtype=tensor.int32)
             ], axis=1),
@@ -98,7 +98,8 @@ def train_ltc_model(model, X_train, y_train, epochs=50, batch_size=32, learning_
             epoch_loss += tensor.to_numpy(loss)
         
         # Print progress
-        avg_loss = epoch_loss / (tensor.shape(X_train)[0] // batch_size)
+        batches_per_epoch = ops.floor_divide(tensor.shape(X_train)[0], batch_size) # Use ops.floor_divide
+        avg_loss = ops.divide(epoch_loss, batches_per_epoch) # Use ops.divide
         losses.append(avg_loss)
         print(f"Epoch {epoch+1}/{epochs}, Loss: {avg_loss:.6f}")
     
@@ -132,7 +133,7 @@ def main():
     X, y = generate_sine_wave_data(num_samples=1000, seq_length=100, num_features=1)
     
     # Split data into train and test sets
-    train_size = int(0.8 * tensor.shape(X)[0])
+    train_size = tensor.cast(ops.multiply(0.8, tensor.shape(X)[0]), tensor.int32) # Use ops.multiply and tensor.cast
     X_train, X_test = X[:train_size], X[train_size:]
     y_train, y_test = y[:train_size], y[train_size:]
     

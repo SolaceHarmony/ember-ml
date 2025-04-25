@@ -9,8 +9,8 @@ from typing import Dict, List, Optional, Tuple, Any, Union
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
-from ember_ml.nn.features.common.pca_features import PCA
-from ember_ml.nn.features import one_hot
+from ember_ml.nn.features.pca_features import PCA
+from ember_ml.nn.features.tensor_features import one_hot
 # Import ember_ml ops for backend-agnostic operations
 from ember_ml import ops
 from ember_ml.nn import tensor
@@ -789,7 +789,7 @@ class TemporalColumnFeatureExtractor(ColumnFeatureExtractor):
         result = {}
         
         # Basic statistics
-        means = ops.mean(windows_array, axis=1)
+        means = ops.stats.mean(windows_array, axis=1)
         result[f"{column}_window_mean"] = means
         
         # Calculate standard deviation manually: std = sqrt(mean((x - mean(x))^2))
@@ -798,7 +798,7 @@ class TemporalColumnFeatureExtractor(ColumnFeatureExtractor):
         # Calculate squared differences
         squared_diffs = ops.square(ops.subtract(windows_array, expanded_means))
         # Calculate variance
-        variances = ops.mean(squared_diffs, axis=1)
+        variances = ops.stats.mean(squared_diffs, axis=1)
         # Calculate standard deviation
         result[f"{column}_window_std"] = ops.sqrt(variances)
         
@@ -814,8 +814,8 @@ class TemporalColumnFeatureExtractor(ColumnFeatureExtractor):
         for i in range(windows_array.shape[0]):
             window = windows_array[i]
             # Calculate mean of x and y
-            x_mean = ops.mean(x_values)
-            y_mean = ops.mean(window)
+            x_mean = ops.stats.mean(x_values)
+            y_mean = ops.stats.mean(window)
             
             # Calculate numerator: sum((x - x_mean) * (y - y_mean))
             x_diff = ops.subtract(x_values, x_mean)

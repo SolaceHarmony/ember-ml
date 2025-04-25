@@ -13,6 +13,7 @@ from ember_ml.nn.modules import Module
 from ember_ml.nn.container import Linear
 from ember_ml.nn.container import Dropout
 from ember_ml.nn import tensor
+from ember_ml.nn.modules.activations import tanh, softmax
 # Removed problematic global assignment
 
 # Constants
@@ -189,7 +190,7 @@ class AttentionScore:
         if bias is not None:
             scores = ops.add(scores, bias)
             
-        return ops.tanh(scores)
+        return tanh(scores)
 
 class AttentionLayer(BaseAttention):
     """Basic attention layer implementation."""
@@ -245,7 +246,7 @@ class AttentionLayer(BaseAttention):
             scores = ops.where(ops.equal(mask, 0), full_like(scores, NINF), scores)
         
         # Apply attention weights
-        self._attention_weights = ops.softmax(scores, axis=-1)
+        self._attention_weights = softmax(scores, axis=-1)
         output = ops.matmul(self._attention_weights, V)
         
         return output
@@ -337,7 +338,7 @@ class MultiHeadAttention(BaseAttention):
             scores = ops.where(ops.equal(mask_expanded, 0), full_like(scores, NINF), scores)
         
         # Apply attention weights
-        self._attention_weights = ops.softmax(scores, axis=-1)
+        self._attention_weights = softmax(scores, axis=-1)
         self._attention_weights = self.dropout_layer(self._attention_weights)
         
         # Compute output

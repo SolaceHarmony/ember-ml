@@ -35,8 +35,8 @@ class InterferenceDetector:
         self.threshold = threshold
         
     def detect_interference(self,
-                          wave1: torch.Tensor,
-                          wave2: torch.Tensor) -> Dict[str, torch.Tensor]:
+                          wave1: tensor.convert_to_tensor,
+                          wave2: tensor.convert_to_tensor) -> Dict[str, tensor.convert_to_tensor]:
         """
         Detect interference patterns between waves.
 
@@ -68,7 +68,7 @@ class InterferenceDetector:
         }
     
     def find_resonance(self,
-                      wave: torch.Tensor,
+                      wave: tensor.convert_to_tensor,
                       num_shifts: int = 8) -> Dict[str, Any]:
         """
         Find resonance patterns in wave.
@@ -115,8 +115,8 @@ class PatternMatcher:
         self.max_shifts = max_shifts
         
     def match_pattern(self,
-                     template: torch.Tensor,
-                     target: torch.Tensor,
+                     template: tensor.convert_to_tensor,
+                     target: tensor.convert_to_tensor,
                      threshold: float = 0.8) -> List[PatternMatch]:
         """
         Find pattern matches in target.
@@ -198,7 +198,7 @@ class BinaryPattern(nn.Module):
             nn.Conv2d(32, 1, kernel_size=1)
         )
         
-    def extract_pattern(self, wave: torch.Tensor) -> torch.Tensor:
+    def extract_pattern(self, wave: tensor.convert_to_tensor) -> tensor.convert_to_tensor:
         """
         Extract pattern features from wave.
 
@@ -218,8 +218,8 @@ class BinaryPattern(nn.Module):
         return features.squeeze(1)
     
     def match_pattern(self,
-                     template: torch.Tensor,
-                     target: torch.Tensor,
+                     template: tensor.convert_to_tensor,
+                     target: tensor.convert_to_tensor,
                      threshold: float = 0.8) -> List[PatternMatch]:
         """
         Find pattern matches.
@@ -248,8 +248,8 @@ class BinaryPattern(nn.Module):
         )
     
     def analyze_interference(self,
-                           wave1: torch.Tensor,
-                           wave2: torch.Tensor) -> Dict[str, Any]:
+                           wave1: tensor.convert_to_tensor,
+                           wave2: tensor.convert_to_tensor) -> Dict[str, Any]:
         """
         Analyze interference between patterns.
 
@@ -278,8 +278,8 @@ class BinaryPattern(nn.Module):
         }
     
     def forward(self,
-                input_wave: torch.Tensor,
-                template: Optional[torch.Tensor] = None) -> Dict[str, Any]:
+                input_wave: tensor.convert_to_tensor,
+                template: Optional[tensor.convert_to_tensor] = None) -> Dict[str, Any]:
         """
         Process input through pattern recognizer.
 

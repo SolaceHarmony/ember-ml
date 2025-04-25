@@ -52,7 +52,7 @@ class Standardize:
         
         # Compute mean
         if with_mean:
-            self.mean_ = ops.mean(X_tensor, axis=axis, keepdims=True)
+            self.mean_ = ops.stats.mean(X_tensor, axis=axis, keepdims=True)
         else:
             self.mean_ = None
         
@@ -60,9 +60,9 @@ class Standardize:
         if with_std:
             if with_mean:
                 X_centered = X_tensor - self.mean_
-                var = ops.mean(ops.square(X_centered), axis=axis, keepdims=True)
+                var = ops.stats.mean(ops.square(X_centered), axis=axis, keepdims=True)
             else:
-                var = ops.mean(ops.square(X_tensor), axis=axis, keepdims=True)
+                var = ops.stats.mean(ops.square(X_tensor), axis=axis, keepdims=True)
             
             # Avoid division by zero
             eps = 1e-8  # Small constant to avoid division by zero

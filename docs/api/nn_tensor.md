@@ -182,7 +182,7 @@ shuffled = tensor.shuffle(x)
 
 ```python
 from ember_ml.nn import tensor
-from ember_ml.backend import set_backend
+from ember_ml.ops import set_backend
 
 # Create a tensor with NumPy backend
 set_backend('numpy')
@@ -203,7 +203,7 @@ The tensor module maintains backend purity by ensuring that all tensor operation
 
 ```python
 from ember_ml.nn import tensor
-from ember_ml.backend import set_backend
+from ember_ml.ops import set_backend
 
 # Function that works with any backend
 def process_tensor(x):

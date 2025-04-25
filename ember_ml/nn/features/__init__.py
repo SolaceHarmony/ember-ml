@@ -9,7 +9,7 @@ from the active backend or common implementations.
 import importlib
 import sys
 import os
-from typing import List, Optional, Callable, Any
+from typing import List, Optional, Callable, Any, Dict
 
 # Import backend control functions
 from ember_ml.backend import get_backend, get_backend_module
@@ -31,7 +31,8 @@ from ember_ml.nn.features.bigquery_feature_extractor import BigQueryFeatureExtra
 from ember_ml.nn.features.animated_feature_processor import AnimatedFeatureProcessor
 from ember_ml.nn.features.speedtest_event_processor import SpeedtestEventProcessor
 from ember_ml.nn.features.enhanced_type_detector import EnhancedTypeDetector
-# The one_hot implementation lives in tensor_features.py
+# Import one_hot directly from tensor_features to avoid circular imports
+from ember_ml.nn.features.tensor_features import one_hot
 
 # Define Factory Functions locally
 def pca():
@@ -66,8 +67,8 @@ def normalize():
 # --- Dynamic Aliasing for Stateless Operations ---
 
 # List of stateless feature operations to alias
-_FEATURES_STATELESS_OPS_LIST = [
-    'one_hot',
+_FEATURES_STATELESS_OPS_LIST: List[str] = [
+    # 'one_hot' is now directly imported above
 ]
 
 # Placeholder initialization

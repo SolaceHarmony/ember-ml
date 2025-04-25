@@ -303,10 +303,10 @@ def main():
     labels_tensor = tensor.convert_to_tensor(test_labels)
     
     # Compute metrics using tensor operations
-    true_positives = ops.sum(ops.logical_and(ops.equal(pred_tensor, 1), ops.equal(labels_tensor, 1)))
-    false_positives = ops.sum(ops.logical_and(ops.equal(pred_tensor, 1), ops.equal(labels_tensor, 0)))
-    true_negatives = ops.sum(ops.logical_and(ops.equal(pred_tensor, 0), ops.equal(labels_tensor, 0)))
-    false_negatives = ops.sum(ops.logical_and(ops.equal(pred_tensor, 0), ops.equal(labels_tensor, 1)))
+    true_positives = ops.stats.sum(ops.logical_and(ops.equal(pred_tensor, 1), ops.equal(labels_tensor, 1)))
+    false_positives = ops.stats.sum(ops.logical_and(ops.equal(pred_tensor, 1), ops.equal(labels_tensor, 0)))
+    true_negatives = ops.stats.sum(ops.logical_and(ops.equal(pred_tensor, 0), ops.equal(labels_tensor, 0)))
+    false_negatives = ops.stats.sum(ops.logical_and(ops.equal(pred_tensor, 0), ops.equal(labels_tensor, 1)))
     
     # Calculate metrics using ops
     precision_denom = ops.add(true_positives, false_positives)

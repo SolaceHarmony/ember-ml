@@ -44,9 +44,19 @@ def get_stats_module():
     # This function is not used in this module but can be used for testing purposes
     # or to ensure that the backend module is imported correctly.
     # Reload the backend module to ensure the latest version is use
-    module_name = get_backend_module().__name__ + '.stats'
-    module = importlib.import_module(module_name)
-    return module
+    backend_base_module_name = get_backend_module().__name__
+    print(f"DEBUG: get_stats_module - Backend base module name: {backend_base_module_name}")
+    module_name = backend_base_module_name + '.stats'
+    print(f"DEBUG: get_stats_module - Constructed module name: {module_name}")
+    try:
+        module = importlib.import_module(module_name)
+        print(f"DEBUG: get_stats_module - Successfully imported module: {module.__name__}")
+        return module
+    except ImportError as e:
+        print(f"DEBUG: get_stats_module - Failed to import module {module_name}: {e}")
+        # Return None or raise an error, depending on desired behavior
+        # For now, let's return None to see if that's what's happening
+        return None
 
 # Keep track of the currently aliased backend for stats
 _aliased_backend_stats: Optional[str] = None

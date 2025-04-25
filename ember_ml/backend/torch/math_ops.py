@@ -573,6 +573,44 @@ def floor_divide(x: TensorLike, y: TensorLike) -> torch.Tensor:
     return torch.floor_divide(x_tensor, y_tensor)
 
 
+def floor(x: TensorLike) -> torch.Tensor:
+    """
+    Return the floor of the input, element-wise.
+    
+    The floor of the scalar x is the largest integer i, such that i <= x.
+    
+    Args:
+        x: Input tensor
+        
+    Returns:
+        Element-wise floor of the input
+    """
+    from ember_ml.backend.torch.tensor import TorchTensor
+    x_tensor = TorchTensor().convert_to_tensor(x)
+    
+    # Use floor from PyTorch
+    return torch.floor(x_tensor)
+
+
+def ceil(x: TensorLike) -> torch.Tensor:
+    """
+    Return the ceiling of the input, element-wise.
+    
+    The ceiling of the scalar x is the smallest integer i, such that i >= x.
+    
+    Args:
+        x: Input tensor
+        
+    Returns:
+        Element-wise ceiling of the input
+    """
+    from ember_ml.backend.torch.tensor import TorchTensor
+    x_tensor = TorchTensor().convert_to_tensor(x)
+    
+    # Use ceil from PyTorch
+    return torch.ceil(x_tensor)
+
+
 def min(x: TensorLike, axis: Optional[int] = None, keepdims: bool = False) -> torch.Tensor:
     """
     Compute minimum of tensor elements along the specified axis.

@@ -39,9 +39,9 @@ class TestChain(BaseChain):
             dt=dt
         )
         
-    def update(self, input_signals: np.ndarray) -> np.ndarray:
+    def update(self, input_signals: TensorLike) -> TensorLike:
         """Update chain state."""
-        states = np.zeros(self.num_neurons)
+        states = tensor.zeros(self.num_neurons)
         
         # Update first neuron with external input
         states[0] = self.neurons[0].update(input_signals[0])
@@ -137,7 +137,7 @@ class TestBaseChain:
     def test_reset_chain(self):
         """Test chain reset."""
         chain = TestChain(3)
-        chain.update(np.array([1.0, 0.0, 0.0]))
+        chain.update(tensor.convert_to_tensor([1.0, 0.0, 0.0]))
         chain.reset()
         
         assert len(chain.state_history) == 0
@@ -148,7 +148,7 @@ class TestBaseChain:
     def test_save_load_chain_state(self):
         """Test chain state saving and loading."""
         chain = TestChain(3)
-        chain.update(np.array([1.0, 0.0, 0.0]))
+        chain.update(tensor.convert_to_tensor([1.0, 0.0, 0.0]))
         
         state_dict = chain.save_state()
         assert 'num_neurons' in state_dict

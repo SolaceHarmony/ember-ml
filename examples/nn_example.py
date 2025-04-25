@@ -6,8 +6,10 @@ with different backends (NumPy, PyTorch, MLX).
 """
 
 import numpy as np
-import neural_lib as nl
-import neural_lib.nn as nn
+import ember_ml as nl # Correct library name (though alias 'nl' is kept for minimal changes)
+import ember_ml.nn as nn # Correct library name
+from ember_ml import ops # Add ops import
+from ember_ml.nn import tensor # Add tensor import
 
 def create_model():
     """
@@ -50,15 +52,17 @@ def train_step(model, x, y, learning_rate=0.01):
     
     # Update parameters (not implemented yet)
     # for param in model.parameters():
-    #     param.data = param.data - learning_rate * param.grad
+    #     # Use ops functions for update
+    #     update = ops.multiply(tensor.convert_to_tensor(learning_rate), param.grad)
+    #     param.data = ops.subtract(param.data, update)
     
     return loss
 
 def main():
     """Main function to demonstrate neural network components."""
-    # Create random data
-    x = nl.random_normal((32, 10))  # 32 samples, 10 features
-    y = nl.random_normal((32, 1))   # 32 samples, 1 target
+    # Create random data using tensor module
+    x = tensor.random_normal((32, 10))  # 32 samples, 10 features
+    y = tensor.random_normal((32, 1))   # 32 samples, 1 target
     
     # Try with different backends
     backends = ['numpy', 'torch', 'mlx']
@@ -88,8 +92,8 @@ def main():
     for backend in available_backends:
         print(f"\n--- Using {backend} backend ---")
         
-        # Set the backend
-        nl.set_backend(backend)
+        # Set the backend using ops module
+        ops.set_backend(backend)
         
         # Create model
         model = create_model()
@@ -97,7 +101,7 @@ def main():
         
         # Forward pass
         y_pred = model(x)
-        print(f"Output shape: {nl.shape(y_pred)}")
+        print(f"Output shape: {tensor.shape(y_pred)}") # Use tensor.shape
         
         # Compute loss
         loss_fn = nn.MSELoss()

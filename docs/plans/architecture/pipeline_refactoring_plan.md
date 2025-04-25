@@ -317,12 +317,12 @@ def train_rbm(rbm_module, data_generator, epochs=10, batch_size=100, **kwargs):
                 # Compute gradients
                 batch_size = len(batch_data)
                 weights_gradient = (pos_associations - neg_associations) / batch_size
-                visible_bias_gradient = ops.mean(batch_data - neg_visible_states, axis=0)
-                hidden_bias_gradient = ops.mean(pos_hidden_probs - neg_hidden_probs, axis=0)
+                visible_bias_gradient = ops.stats.mean(batch_data - neg_visible_states, axis=0)
+                hidden_bias_gradient = ops.stats.mean(pos_hidden_probs - neg_hidden_probs, axis=0)
                 
                 # Compute reconstruction error
                 from ember_ml.ops import stats
-                reconstruction_error = ops.mean(ops.stats.sum((batch_data - neg_visible_probs) ** 2, axis=1))
+                reconstruction_error = ops.stats.mean(ops.stats.sum((batch_data - neg_visible_probs) ** 2, axis=1))
                 
             # Apply gradients
             gradients = [weights_gradient, visible_bias_gradient, hidden_bias_gradient]
@@ -380,7 +380,7 @@ def train_liquid_network(liquid_network, features, targets, validation_data=None
                 outputs, _ = liquid_network(batch_features)
                 
                 # Compute loss
-                loss = ops.mean(ops.square(outputs - batch_targets))
+                loss = ops.stats.mean(ops.square(outputs - batch_targets))
                 
             # Compute gradients
             gradients = tape.gradient(loss, liquid_network.parameters())
@@ -399,7 +399,7 @@ def train_liquid_network(liquid_network, features, targets, validation_data=None
         if validation_data is not None:
             val_features, val_targets = validation_data
             val_outputs, _ = liquid_network(val_features)
-            val_loss = ops.mean(ops.square(val_outputs - val_targets))
+            val_loss = ops.stats.mean(ops.square(val_outputs - val_targets))
             history["val_loss"].append(val_loss)
             
             # Early stopping

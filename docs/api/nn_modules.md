@@ -1,6 +1,6 @@
 # Neural Network Modules (nn.modules)
 
-The `ember_ml.nn.modules` package provides a comprehensive set of backend-agnostic neural network modules for building machine learning models. These modules follow a consistent API across different backends and are designed to be composable and extensible.
+The `ember_ml.nn.modules` package provides a comprehensive set of backend-agnostic neural network modules for building machine learning models. These modules follow a consistent API across different backends and are designed to be composable and extensible, supporting various connectivity patterns including advanced and spatial wiring configurations through the `NeuronMap` hierarchy.
 
 ## Importing
 
@@ -110,6 +110,8 @@ x = tensor.random_normal((32, 8))  # Batch of 32 samples with 8 features each
 y = ncp(x)  # Shape: (32, 3)
 ```
 
+Note: The `neuron_map` parameter can accept any derivative of `NeuronMap`, allowing for various connectivity patterns, including those defined by spatial maps like `EnhancedNeuronMap` and `EnhancedNCPMap`. Refer to the [Neuron Maps (Wiring) Documentation](nn_modules_wiring.md) for more details.
+
 ### Sequential
 
 `Sequential` is a container module that chains multiple modules together, applying them sequentially to the input.
@@ -178,6 +180,9 @@ x = tensor.random_normal((32, 16))  # Batch of 32 samples with 16 features each
 y = auto_ncp(x)  # Shape: (32, 10)
 ```
 
+Note: `AutoNCP` automatically configures an `NCPMap`. For more advanced or spatial wiring, you can create an instance of the desired `NeuronMap` derivative (e.g., `EnhancedNCPMap`) and pass it directly to the `NCP` class instead of using `AutoNCP`. Refer to the [Neuron Maps (Wiring) Documentation](nn_modules_wiring.md) for more details.
+
+
 ## Activation Functions
 
 The following activation functions are available:
@@ -210,7 +215,9 @@ y = dropout(y, training=True)
 
 ## Neuron Maps (Wiring)
 
-Neuron maps (formerly called wirings) define the connectivity patterns between neurons in a neural network.
+Neuron maps (formerly called wirings) define the connectivity patterns between neurons in a neural network, including advanced configurations with spatial properties. For detailed documentation on all available neuron map implementations, please refer to the [Neuron Maps (Wiring) Documentation](nn_modules_wiring.md).
+
+Here is a brief overview of some key neuron map implementations:
 
 ### NeuronMap
 
@@ -453,7 +460,7 @@ All modules are backend-agnostic and work with any backend (NumPy, PyTorch, MLX)
 
 ```python
 from ember_ml.nn.modules import Dense
-from ember_ml.backend import set_backend
+from ember_ml.ops import set_backend
 
 # Use NumPy backend
 set_backend('numpy')
@@ -472,9 +479,9 @@ dense_mlx = Dense(in_features=10, out_features=5)
 
 The neural network modules are implemented using a layered architecture:
 
-1. **Base Classes**: Provide common functionality for all modules
-2. **Core Modules**: Implement basic neural network components
-3. **Advanced Modules**: Implement specialized neural network architectures
+1. **Base Classes**: Provide common functionality for all modules.
+2. **Core Modules**: Implement basic neural network components, often integrating with the `NeuronMap` hierarchy to define internal structure and connectivity, including spatial aspects.
+3. **Advanced Modules**: Implement specialized neural network architectures.
 
 This architecture allows Ember ML to provide a consistent API across different backends while still leveraging the unique capabilities of each backend.
 

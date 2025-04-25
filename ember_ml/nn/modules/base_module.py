@@ -33,7 +33,7 @@ class Parameter:
         # Convert data to EmberTensor first
         ember_tensor = tensor.convert_to_tensor(data)
         
-        # Get the underlying backend tensor (mx.array, torch.Tensor, np.ndarray)
+        # Get the underlying backend tensor (TensorLike, tensor.convert_to_tensor, TensorLike)
         # This ensures .data is the native backend tensor, which is what the tests expect
         self.data = ember_tensor._tensor
         
@@ -213,18 +213,20 @@ class BaseModule:
                 for name, param in module.named_parameters(submodule_prefix, recurse):
                     yield name, param
     
-    def parameters(self, recurse: bool = True) -> Iterator[Parameter]:
+    def parameters(self, recurse: bool = True) -> List[Parameter]:
         """
-        Return an iterator over module parameters.
+        Return a list of module parameters.
         
         Args:
-            recurse: If True, yield parameters of submodules
+            recurse: If True, include parameters of submodules
             
-        Yields:
-            Module parameters
+        Returns:
+            A list of module parameters
         """
+        params_list = []
         for _, param in self.named_parameters(recurse=recurse):
-            yield param
+            params_list.append(param)
+        return params_list
     
     def named_buffers(self, prefix: str = '', recurse: bool = True) -> Iterator[Tuple[str, Any]]:
         """

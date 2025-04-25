@@ -73,7 +73,7 @@ def one_hot(
     except Exception:
          # Fallback or alternative stacking method if tensor.stack fails/differs
          np_coords = [tensor.to_numpy(c) for c in final_coords_list]
-         final_coords_tensor = tensor.convert_to_tensor(np.stack(np_coords, axis=-1))
+         final_coords_tensor = tensor.convert_to_tensor(tensor.stack(np_coords, axis=-1))
 
 
     # Create the updates tensor (all ones)

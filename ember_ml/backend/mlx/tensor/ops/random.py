@@ -3,9 +3,8 @@
 import mlx.core as mx
 from typing import Union, Optional, Sequence, Any, List, Tuple
 
-from ember_ml.backend.mlx.types import Shape, TensorLike, DType
+from ember_ml.backend.mlx.types import Shape, TensorLike, DType,default_int, default_float
 from ember_ml.backend.mlx.tensor.ops.utility import _create_new_tensor # Import helper
-
 # Create single instances to reuse throughout the module
 # DTypeHandler instance removed, logic moved to helper/local
 
@@ -42,9 +41,28 @@ def random_uniform(shape: Shape, minval: float = 0.0, maxval: float = 1.0,
     Returns:
         MLX array with random uniform values
     """
-    # Use the helper function, passing mx.random.uniform and its specific args
-    # Note: MLX uniform takes low, high, shape.
-    return _create_new_tensor(mx.random.uniform, dtype=dtype, device=device, shape=shape, low=minval, high=maxval)
+    from ember_ml.backend.mlx.tensor.dtype import MLXDType
+    
+    # Automatically work with int types or floats 
+    if 'float' in MLXDType.to_dtype_str(dtype) if dtype is not None else False:
+        # For float types, use mx.random.uniform directly
+        return _create_new_tensor(mx.random.uniform, dtype=dtype, device=device, 
+                                shape=shape, low=minval, high=maxval)
+    elif 'int' in MLXDType.to_dtype_str(dtype) if dtype is not None else False:
+        # For integer types, generate uniform floats and then cast to int
+        # MLX doesn't have a direct randint function, so we need to use uniform and then cast
+        # Generate uniform values in [minval, maxval+1) to include maxval
+        high = maxval + 1 if maxval == int(maxval) else int(maxval) + 1
+        low = int(minval)
+        
+        # Generate uniform floats in [low, high)
+        floats = mx.random.uniform(shape=shape, low=low, high=high, dtype=default_int if dtype is None else MLXDType.get_dtype(dtype))
+        
+        # Cast to integer type
+        return mx.array(floats, dtype=dtype)
+    else:
+        # For float types, use mx.random.uniform directly
+        return _create_new_tensor(mx.random.uniform,low=minval, high=maxval,shape=shape, dtype=default_float) 
 
 def random_binomial(shape: Shape, p: float = 0.5,
                    dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
@@ -186,6 +204,35 @@ def random_permutation(x: Union[int, TensorLike], dtype: Optional[DType] = None,
         arr = MLXTensor().convert_to_tensor(x)
         indices = mx.random.permutation(arr.shape[0])
         return arr[indices]
+
+def random_shuffle(data: TensorLike) -> mx.array:
+    """
+    Randomly shuffle an MLX array along the first dimension.
+    Similar to shuffle but specifically for shuffling indices.
+    
+    Args:
+        data: Input array
+    
+    Returns:
+        Shuffled MLX array
+    """
+    # Import here to avoid circular imports
+    from ember_ml.backend.mlx.tensor import MLXTensor
+
+    data_tensor = MLXTensor().convert_to_tensor(data)
+    
+    # Get the shape of the tensor
+    shape = data_tensor.shape
+    
+    # If the tensor is empty or has only one element, return it as is
+    if shape[0] <= 1:
+        return data_tensor
+    
+    # Generate random indices
+    indices = mx.random.permutation(shape[0])
+    
+    # Gather along the first dimension
+    return mx.take(data_tensor, indices, axis=0)
 
 def shuffle(x: TensorLike) -> mx.array:
     """

@@ -34,7 +34,7 @@ class EnhancedNeuronMap:
         neuron_type: str = "cfc",
         neuron_params: Optional[Dict[str, Any]] = None,
         # Spatial properties
-        coordinates_list: Optional[List[np.ndarray]] = None,
+        coordinates_list: Optional[List[TensorLike]] = None,
         network_structure: Tuple[int, int, int] = (5, 5, 4),
         distance_metric: str = "euclidean",
         distance_power: float = 1.0,
@@ -93,8 +93,8 @@ class EnhancedNeuronMap:
             ny = tensor.arange(network_structure[1])
             nz = tensor.arange(network_structure[2])
             
-            # Use ops.meshgrid for coordinate grid
-            [x, y, z] = ops.meshgrid(nx, ny, nz)
+            # Use tensor.meshgrid for coordinate grid
+            [x, y, z] = tensor.meshgrid(nx, ny, nz)
             
             # Flatten and slice to get coordinates
             x_flat = tensor.reshape(x, [-1])[:self.units]
@@ -274,15 +274,10 @@ class EnhancedNeuronMap:
         if not hasattr(self, 'coordinates') or self.coordinates is None:
             return (5, 5, 4)  # Default
         
-        # Convert coordinates to tensors
-        x_coords = tensor.convert_to_tensor(self.coordinates[0])
-        y_coords = tensor.convert_to_tensor(self.coordinates[1])
-        z_coords = tensor.convert_to_tensor(self.coordinates[2])
-        
-        # Use tensor operations to find max values
-        x_dim = int(tensor.max(x_coords).numpy()) + 1
-        y_dim = int(tensor.max(y_coords).numpy()) + 1
-        z_dim = int(tensor.max(z_coords).numpy()) + 1
+        # Use Python's built-in max function directly on the coordinates
+        x_dim = max(self.coordinates[0]) + 1
+        y_dim = max(self.coordinates[1]) + 1
+        z_dim = max(self.coordinates[2]) + 1
         
         return (x_dim, y_dim, z_dim)
     

@@ -132,7 +132,7 @@ class LiquidAnomalyDetector:
         
         # Create feature matrix
         num_features = len(self.location_map) + len(self.message_map) + 1  # +1 for severity
-        features = np.zeros((len(df), num_features))
+        features = tensor.zeros((len(df), num_features))
         
         for i, row in df.iterrows():
             # One-hot encode location
@@ -153,11 +153,11 @@ class LiquidAnomalyDetector:
         for i in range(len(features) - self.sequence_length):
             seq = features[i:i + self.sequence_length]
             # Pad or truncate features to match total_neurons
-            padded_seq = np.zeros((self.sequence_length, self.model.input_shape[-1]))
+            padded_seq = tensor.zeros((self.sequence_length, self.model.input_shape[-1]))
             padded_seq[:, :seq.shape[1]] = seq
             sequences.append(padded_seq)
             
-        return np.array(sequences)
+        return tensor.convert_to_tensor(sequences)
     
     def _detect_anomalies(self, sequences, threshold=0.8):
         """Detect anomalies using the liquid neural network"""
@@ -173,7 +173,7 @@ class LiquidAnomalyDetector:
     
     def _generate_labels(self, df):
         """Generate labels for training data based on known anomaly patterns"""
-        labels = np.zeros(len(df) - self.sequence_length)
+        labels = tensor.zeros(len(df) - self.sequence_length)
         
         # Label sequences as anomalies based on multiple criteria
         for i in range(len(df) - self.sequence_length):
@@ -256,7 +256,7 @@ class LiquidAnomalyDetector:
                 
                 # Compute metrics
                 train_loss += tensor.to_numpy(loss)
-                train_acc += tensor.to_numpy(ops.mean(tensor.cast(
+                train_acc += tensor.to_numpy(ops.stats.mean(tensor.cast(
                     ops.equal(
                         tensor.cast(y_batch > 0.5, tensor.int32),
                         tensor.cast(y_pred > 0.5, tensor.int32)
@@ -280,7 +280,7 @@ class LiquidAnomalyDetector:
                 
                 # Compute metrics
                 val_loss += tensor.to_numpy(loss)
-                val_acc += tensor.to_numpy(ops.mean(tensor.cast(
+                val_acc += tensor.to_numpy(ops.stats.mean(tensor.cast(
                     ops.equal(
                         tensor.cast(y_batch > 0.5, tensor.int32),
                         tensor.cast(y_pred > 0.5, tensor.int32)
@@ -311,7 +311,7 @@ class LiquidAnomalyDetector:
         
         if len(sequences) == 0:
             print("Not enough data for sequence analysis")
-            return np.array([])
+            return tensor.convert_to_tensor([])
         
         # Train the model if it hasn't been trained
         if not hasattr(self, '_trained'):

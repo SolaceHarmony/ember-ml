@@ -170,21 +170,22 @@ def pendulum_dynamics(state, action, dt=0.01, g=9.8, m=1.0, l=1.0, b=0.1):
     # Extract state
     theta, theta_dot = state
     
-    # Compute acceleration
-    theta_ddot = (action - b * theta_dot - m * g * l * ops.sin(theta)) / (m * l**2)
+    # Compute acceleration using ops functions
+    term1 = ops.subtract(action, ops.multiply(b, theta_dot))
+    term2 = ops.multiply(ops.multiply(ops.multiply(m, g), l), ops.sin(theta))
+    numerator = ops.subtract(term1, term2)
+    denominator = ops.multiply(m, ops.power(l, 2))
+    theta_ddot = ops.divide(numerator, denominator)
     
-    # Update state
-    new_theta = theta + theta_dot * dt
-    new_theta_dot = theta_dot + theta_ddot * dt
+    # Update state using ops functions
+    new_theta = ops.add(theta, ops.multiply(theta_dot, dt))
+    new_theta_dot = ops.add(theta_dot, ops.multiply(theta_ddot, dt))
     
-    # Normalize angle to [-pi, pi]
-    new_theta = ops.subtract(
-        new_theta,
-        ops.multiply(
-            2 * ops.pi[0],  # Extract the scalar value from ops.pi
-            ops.floor(ops.add(ops.divide(new_theta, 2 * ops.pi[0]), 0.5))
-        )
-    )
+    # Normalize angle to [-pi, pi] using ops functions
+    two_pi = ops.multiply(2.0, ops.pi) # Use ops.pi directly
+    normalized_angle = ops.add(ops.divide(new_theta, two_pi), 0.5)
+    floor_val = ops.floor(normalized_angle)
+    new_theta = ops.subtract(new_theta, ops.multiply(two_pi, floor_val))
     
     # Create a new state tensor
     new_state = tensor.zeros((2,))
@@ -251,7 +252,7 @@ def learning_example():
     
     # Generate training data: circular trajectory
     num_samples = 1000
-    t = tensor.linspace(0, 2 * ops.pi[0], num_samples)  # Extract the scalar value from ops.pi
+    t = tensor.linspace(0, ops.multiply(2.0, ops.pi), num_samples) # Use ops.pi directly
     
     # Input: position on circle
     X = tensor.zeros((num_samples, 2))
@@ -305,8 +306,9 @@ def learning_example():
         for i in range(0, num_samples, batch_size):
             # Get batch
             end_idx = min(i + batch_size, num_samples)
-            X_batch = tensor.slice(X_shuffled, i, end_idx - i, axis=0)
-            Y_batch = tensor.slice(Y_shuffled, i, end_idx - i, axis=0)
+            # Use slice_tensor with start indices and sizes. Assumes 3D/2D input.
+            X_batch = tensor.slice_tensor(X_shuffled, [i, 0, 0], [end_idx - i, tensor.shape(X_shuffled)[1], tensor.shape(X_shuffled)[2]])
+            Y_batch = tensor.slice_tensor(Y_shuffled, [i, 0], [end_idx - i, tensor.shape(Y_shuffled)[1]])
             
             batch_loss = 0.0
             
@@ -319,12 +321,17 @@ def learning_example():
                 loss = mse_loss(Y_batch[j], output[0])
                 batch_loss += tensor.item(loss)
             
-            # Average batch loss
-            batch_loss /= (end_idx - i)
+            # Average batch loss using ops.divide
+            batch_loss = ops.divide(batch_loss, float(end_idx - i))
             epoch_loss += batch_loss
         
-        # Average epoch loss
-        epoch_loss /= (num_samples // batch_size)
+        # Average epoch loss using ops.divide and ops.floor_divide
+        batches_per_epoch = ops.floor_divide(num_samples, batch_size)
+        # Avoid division by zero if batches_per_epoch is 0
+        if tensor.item(batches_per_epoch) > 0:
+             epoch_loss = ops.divide(epoch_loss, float(tensor.item(batches_per_epoch)))
+        else:
+             epoch_loss = 0.0 # Or handle as appropriate
         losses.append(epoch_loss)
         
         # Print progress
@@ -335,10 +342,10 @@ def learning_example():
     
     # Generate test data: spiral trajectory
     test_samples = 200
-    test_t = tensor.linspace(0, 4 * ops.pi[0], test_samples)  # Extract the scalar value from ops.pi
+    test_t = tensor.linspace(0, ops.multiply(4.0, ops.pi), test_samples) # Use ops.pi directly
     
     # Input: position on spiral
-    radius = ops.add(1.0, ops.divide(test_t, 4 * ops.pi[0]))  # Extract the scalar value from ops.pi
+    radius = ops.add(1.0, ops.divide(test_t, ops.multiply(4.0, ops.pi))) # Use ops.pi directly
     test_X = tensor.zeros((test_samples, 2))
     for i in range(test_samples):
         test_X = tensor.with_value(test_X, i, 0, ops.multiply(radius[i], ops.cos(test_t[i])))

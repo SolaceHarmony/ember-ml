@@ -10,8 +10,8 @@ class HarmonicVisualizer:
         Visualize target embeddings and learned harmonic embeddings side by side.
         
         Args:
-            target_embeddings (np.ndarray): Original embeddings
-            learned_waves (np.ndarray): Generated harmonic waves
+            target_embeddings (TensorLike): Original embeddings
+            learned_waves (TensorLike): Generated harmonic waves
             figsize (tuple): Figure size (width, height)
         """
         plt.figure(figsize=figsize)
@@ -54,8 +54,8 @@ class HarmonicVisualizer:
         Visualize individual harmonic components for a single embedding.
         
         Args:
-            params (np.ndarray): Wave parameters for a single embedding
-            t (np.ndarray): Time points
+            params (TensorLike): Wave parameters for a single embedding
+            t (TensorLike): Time points
             n_components (int): Number of components to plot
             figsize (tuple): Figure size (width, height)
         """
@@ -65,11 +65,11 @@ class HarmonicVisualizer:
         
         # Plot individual components
         for i in range(min(n_components, len(amplitudes))):
-            wave = amplitudes[i] * np.sin(2 * np.pi * frequencies[i] * t + phases[i])
+            wave = amplitudes[i] * ops.sin(2 * ops.pi * frequencies[i] * t + phases[i])
             plt.plot(t, wave, label=f'Component {i+1}')
         
         # Plot combined wave
-        combined = sum(amplitudes[i] * np.sin(2 * np.pi * frequencies[i] * t + phases[i])
+        combined = sum(amplitudes[i] * ops.sin(2 * ops.pi * frequencies[i] * t + phases[i])
                       for i in range(len(amplitudes)))
         plt.plot(t, combined, 'k--', linewidth=2, label='Combined Wave')
         
@@ -86,8 +86,8 @@ class HarmonicVisualizer:
         Plot similarity matrix between target embeddings and learned waves.
         
         Args:
-            target_embeddings (np.ndarray): Original embeddings
-            learned_waves (np.ndarray): Generated harmonic waves
+            target_embeddings (TensorLike): Original embeddings
+            learned_waves (TensorLike): Generated harmonic waves
             figsize (tuple): Figure size (width, height)
         """
         # Compute cosine similarity

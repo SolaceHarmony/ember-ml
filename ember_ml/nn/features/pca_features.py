@@ -122,7 +122,7 @@ def _infer_dimensions(explained_variance, n_samples):
     
     for i in range(n_components):
         if i < n_components - 1:
-            sigma2 = ops.mean(explained_variance[i+1:])
+            sigma2 = ops.stats.mean(explained_variance[i+1:])
             if sigma2 > 0:
                 ll = tensor.tensor_scatter_nd_update(
                     ll,

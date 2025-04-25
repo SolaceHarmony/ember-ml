@@ -1,21 +1,22 @@
 # Neuron Maps (nn.modules.wiring)
 
-The `ember_ml.nn.modules.wiring` package provides a comprehensive set of neuron map implementations for defining custom connectivity patterns in neural networks. These were formerly called "wirings" and have been refactored and enhanced as "neuron maps" to better reflect their role in defining the connectivity structure of neural networks.
+The `ember_ml.nn.modules.wiring` package provides a comprehensive set of neuron map implementations for defining custom connectivity patterns in neural networks, including those with spatial properties. These were formerly called "wirings" and have been refactored and enhanced as "neuron maps" to better reflect their role in defining the connectivity structure of neural networks.
 
 ## Importing
 
 ```python
-from ember_ml.nn.modules.wiring import NeuronMap, NCPMap, FullyConnectedMap, RandomMap
+from ember_ml.nn.modules.wiring import NeuronMap, NCPMap, FullyConnectedMap, RandomMap, EnhancedNeuronMap, EnhancedNCPMap
 ```
 
 ## Core Concepts
 
 Neuron maps define how neurons in a neural network are connected to each other. They specify:
 
-1. **Connectivity Patterns**: Which neurons are connected to which other neurons
-2. **Connection Weights**: The initial weights of connections between neurons
-3. **Neuron Types**: Different functional roles for neurons (sensory, motor, inter, command)
-4. **Input/Output Mapping**: How external inputs map to internal neurons and how internal neurons map to outputs
+1. **Connectivity Patterns**: Which neurons are connected to which other neurons, potentially influenced by spatial relationships.
+2. **Connection Weights**: The initial weights of connections between neurons.
+3. **Neuron Types**: Different functional roles for neurons (sensory, motor, inter, command), and potentially neuron-specific dynamics.
+4. **Input/Output Mapping**: How external inputs map to internal neurons and how internal neurons map to outputs.
+5. **Spatial Properties**: Optional spatial coordinates and metrics that can influence connectivity and dynamics.
 
 ## Base Class
 
@@ -132,6 +133,96 @@ print(f"Output size: {neuron_map.output_size}")    # 5
 print(f"Input size: {neuron_map.input_size}")      # 8
 print(f"Sparsity level: {neuron_map.sparsity_level}")  # 0.5
 ```
+
+### EnhancedNeuronMap
+
+`EnhancedNeuronMap` extends `NeuronMap` to incorporate neuron-type specific parameters, dynamic properties, and spatial embedding.
+
+```python
+from ember_ml.nn.modules.wiring import EnhancedNeuronMap
+import numpy as np
+
+# Create an enhanced neuron map with spatial properties
+neuron_map = EnhancedNeuronMap(
+    units=20,
+    output_dim=5,
+    input_dim=10,
+    neuron_type="cfc", # Specify neuron type
+    neuron_params={"time_scale_factor": 0.5}, # Neuron-specific parameters
+    network_structure=(4, 5, 1), # 3D structure for spatial embedding
+    distance_metric="euclidean",
+    distance_power=1.0,
+    seed=42
+)
+
+# Access properties
+print(f"Units: {neuron_map.units}")                # 20
+print(f"Output size: {neuron_map.output_dim}")    # 5
+print(f"Input size: {neuron_map.input_dim}")      # 10
+print(f"Neuron type: {neuron_map.neuron_type}")    # cfc
+print(f"Distance matrix shape: {neuron_map.distance_matrix.shape}") # (20, 20)
+```
+
+#### Spatial Properties
+
+`EnhancedNeuronMap` allows defining neurons in a spatial arrangement, which can influence connectivity.
+
+-   **Coordinates**: Neurons can be assigned spatial coordinates, either explicitly via `coordinates_list` or generated from a `network_structure`.
+-   **Distance Matrix**: A distance matrix is computed based on the neuron coordinates and a specified `distance_metric` and `distance_power`.
+-   **Communicability Matrix**: A communicability matrix is calculated during the `build` process, reflecting the ease of information flow between neurons based on connectivity and potentially spatial distance.
+
+#### Dynamic Properties
+
+This map can also store parameters specific to the type of neuron being used (e.g., time constants for CfC neurons), allowing the map to define both the structure and some aspects of the neuron dynamics.
+
+```python
+# Access dynamic properties
+dynamic_props = neuron_map.get_dynamic_properties()
+print(f"Dynamic properties: {dynamic_props}")
+```
+
+#### Spatial Properties Access
+
+```python
+# Access spatial properties
+spatial_props = neuron_map.get_spatial_properties()
+print(f"Spatial properties keys: {spatial_props.keys()}")
+```
+
+### EnhancedNCPMap
+
+`EnhancedNCPMap` extends `EnhancedNeuronMap` to implement the Neural Circuit Policy (NCP) connectivity pattern with support for spatial properties and neuron-type specific dynamics. It combines the structured grouping of NCPMap with the spatial and dynamic features of EnhancedNeuronMap.
+
+```python
+from ember_ml.nn.modules.wiring import EnhancedNCPMap
+
+# Create an enhanced NCP map with spatial properties
+neuron_map = EnhancedNCPMap(
+    sensory_neurons=8,
+    inter_neurons=10,
+    command_neurons=5,
+    motor_neurons=3,
+    neuron_type="ltc", # Specify neuron type
+    time_scale_factor=0.8, # Neuron-specific parameter
+    network_structure=(4, 5, 1), # 3D structure for spatial embedding
+    seed=42
+)
+
+# Access properties
+print(f"Units: {neuron_map.units}")                # 26 (8 + 10 + 5 + 3)
+print(f"Output size: {neuron_map.output_dim}")    # 3
+print(f"Input size: {neuron_map.input_dim}")      # 8
+print(f"Neuron type: {neuron_map.neuron_type}")    # ltc
+print(f"Distance matrix shape: {neuron_map.distance_matrix.shape}") # (26, 26)
+```
+
+#### Integration of Spatial and NCP Properties
+
+`EnhancedNCPMap` allows defining the classic NCP neuron groups (sensory, inter, command, motor) while also embedding these neurons in a spatial layout. Connectivity can then be influenced by both the NCP group structure and the spatial distances between neurons.
+
+#### Dynamic Properties
+
+Similar to `EnhancedNeuronMap`, this class supports defining neuron-type specific parameters, which are then used by layers that utilize this map.
 
 ## Key Properties and Methods
 

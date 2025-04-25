@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 from ember_ml import ops
 from ember_ml.nn.modules.rnn import RNN
 from ember_ml.nn import Sequential, tensor
-from ember_ml.training import Optimizer, Loss, MSELoss # Added MSELoss import
-from ember_ml.training.optimizer import Adam
+from ember_ml.training import Optimizer, Adam # Import Adam directly
+from ember_ml.training.loss import Loss, MSELoss # Import Loss and MSELoss from correct module
 ops.set_backend("mlx")
 def generate_sine_wave_data(num_samples=1000, seq_length=100, num_features=1):
     """Generate sine wave data for sequence prediction."""
@@ -30,7 +30,7 @@ def generate_sine_wave_data(num_samples=1000, seq_length=100, num_features=1):
         signal = ops.sin(ops.add(t, phase_shift))
         
         # Add some noise
-        noise = tensor.random_normal(shape=seq_length, mean=0.0, stddev=0.1)
+        noise = tensor.random_normal((seq_length,), mean=0.0, stddev=0.1) # Ensure shape is a tuple
         noisy_signal = ops.add(signal, noise)
         
         # Store input and target
@@ -63,7 +63,7 @@ def train_rnn_model(model, X_train, y_train, epochs=50, batch_size=32, learning_
     y_train_tensor = tensor.convert_to_tensor(y_train, dtype=tensor.float32)
     
     # Define optimizer and loss function
-    optimizer = Adam(model.parameters(), lr=learning_rate) # Use direct Adam constructor with 'lr'
+    optimizer = Adam(model.parameters(), learning_rate=learning_rate) # Use learning_rate argument
     loss_fn = MSELoss() # Instantiate MSELoss class directly
     
     # Training loop
@@ -96,8 +96,13 @@ def train_rnn_model(model, X_train, y_train, epochs=50, batch_size=32, learning_
             
             epoch_loss += tensor.to_numpy(loss)
         
-        # Print progress
-        avg_loss = epoch_loss / (tensor.shape(X_train)[0] // batch_size)
+        # Print progress using ops functions
+        batches_per_epoch = ops.floor_divide(tensor.shape(X_train)[0], batch_size)
+        # Avoid division by zero
+        if tensor.item(batches_per_epoch) > 0:
+            avg_loss = ops.divide(epoch_loss, float(tensor.item(batches_per_epoch)))
+        else:
+            avg_loss = 0.0 # Or handle as appropriate
         losses.append(avg_loss)
         print(f"Epoch {epoch+1}/{epochs}, Loss: {avg_loss:.6f}")
     
@@ -113,7 +118,7 @@ def evaluate_model(model, X_test, y_test):
     y_pred = model(X_test_tensor)
     
     # Compute loss
-    loss_fn = Loss.mse()
+    loss_fn = MSELoss() # Instantiate MSELoss correctly
     loss = loss_fn(y_pred, y_test_tensor)
     
     # Convert predictions to numpy
@@ -130,8 +135,9 @@ def main():
     print("\nGenerating data...")
     X, y = generate_sine_wave_data(num_samples=1000, seq_length=100, num_features=1)
     
-    # Split data into train and test sets
-    train_size = int(tensor.to_numpy(tensor.cast(ops.multiply(tensor.convert_to_tensor(0.8), tensor.convert_to_tensor(tensor.shape(X)[0])), dtype=tensor.int32)))
+    # Split data into train and test sets using ops and tensor functions
+    train_size = tensor.cast(ops.multiply(0.8, tensor.shape(X)[0]), dtype=tensor.int32)
+    # Slicing works directly on tensors
     X_train, X_test = X[:train_size], X[train_size:]
     y_train, y_test = y[:train_size], y[train_size:]
     

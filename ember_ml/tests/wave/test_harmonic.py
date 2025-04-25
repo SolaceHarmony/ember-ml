@@ -58,7 +58,7 @@ class TestFrequencyAnalyzer:
         # Check spectrum properties
         assert isinstance(tensor(spectrum),mlx.core.array)
         assert len(spectrum.shape) == 1
-        assert tensor.all(spectrum >= 0)
+        assert ops.all(spectrum >= 0)
 
     def test_peak_frequencies(self, analyzer, synthesizer, frequency, duration):
         """Test peak frequency detection."""
@@ -97,8 +97,8 @@ class TestWaveSynthesizer:
         # Check wave properties
         n_samples = int(duration * synthesizer.sampling_rate)
         assert wave.shape == (n_samples,)
-        assert tensor.all(wave >= -1.0)
-        assert tensor.all(wave <= 1.0)
+        assert ops.all(wave >= -1.0)
+        assert ops.all(wave <= 1.0)
 
     def test_harmonic_synthesis(self, synthesizer, frequency, duration):
         """Test harmonic wave synthesis."""
@@ -108,9 +108,9 @@ class TestWaveSynthesizer:
         wave = synthesizer.harmonic_wave(frequencies, amplitudes, duration)
         
         # Check wave properties
-        assert tensor.all(wave >= -1.0)
-        assert tensor.all(wave <= 1.0)
-        assert tensor.all(wave <= 1.0)
+        assert ops.all(wave >= -1.0)
+        assert ops.all(wave <= 1.0)
+        assert ops.all(wave <= 1.0)
 
     def test_envelope_application(self, synthesizer, frequency, duration):
         """Test envelope application."""
@@ -120,8 +120,8 @@ class TestWaveSynthesizer:
         modulated = synthesizer.apply_envelope(wave, envelope)
         import ember_ml.ops as ops
         # Check modulation
-        assert tensor.all(ops.less_equal(modulated, wave))
-        assert tensor.all(ops.greater_equal(modulated, ops.multiply((-1, tensor.abs(wave)))))
+        assert ops.all(ops.less_equal(modulated, wave))
+        assert ops.all(ops.greater_equal(modulated, ops.multiply((-1, tensor.abs(wave)))))
 
 class TestHarmonicProcessor:
     """Test suite for HarmonicProcessor."""
@@ -158,7 +158,7 @@ class TestHarmonicProcessor:
         )
         
         # Check reconstruction quality
-        assert tensor.allclose(original, reconstructed, atol=1e-1)
+        assert ops.allclose(original, reconstructed, atol=1e-1)
 
     def test_harmonic_filtering(self, processor, frequency, duration):
         """Test harmonic filtering."""
@@ -170,5 +170,5 @@ class TestHarmonicProcessor:
         filtered = processor.filter_harmonics(signal, [frequency])
         
         # Check filtering
-        assert not tensor.allclose(signal, filtered)
-        assert tensor.allclose(filtered, fundamental, atol=1e-1)
+        assert not ops.allclose(signal, filtered)
+        assert ops.allclose(filtered, fundamental, atol=1e-1)

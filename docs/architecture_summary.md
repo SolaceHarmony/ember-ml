@@ -862,7 +862,7 @@ class ModuleCell(BaseModule):
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.activation_name = activation
-        self.activation = ops.get_activation(activation)
+        self.activation = nn.modules.activation.get_activation(activation)
         self.use_bias = use_bias
     
     @property
@@ -1004,7 +1004,7 @@ This pattern will enable efficient parallel processing of tasks, with each task 
 Ember ML allows for dynamic backend selection and switching:
 
 ```python
-from ember_ml.backend import set_backend, get_backend
+from ember_ml.ops import set_backend, get_backend
 
 # Set the backend to PyTorch
 set_backend('torch')

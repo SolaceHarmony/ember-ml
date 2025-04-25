@@ -123,7 +123,7 @@ class seCfC(Module):
 
         # Initialize learnable time_scale parameter
         ones = tensor.ones((units,))  # shape: (units,)
-        scale_val = tensor.convert_to_tensor(self.time_scale_factor, dtype=ones.dtype, device=ones.device)
+        scale_val = tensor.convert_to_tensor(self.time_scale_factor, dtype=ones.dtype)
         self.time_scale = Parameter(ops.multiply(ones, scale_val))
 
         # Convert spatial matrices to tensors
@@ -180,9 +180,10 @@ class seCfC(Module):
         output_mask = self.neuron_map.get_output_mask()
         
         # Convert masks to tensors
-        input_mask = tensor.convert_to_tensor(input_mask)
-        recurrent_mask = tensor.convert_to_tensor(recurrent_mask)
-        output_mask = tensor.convert_to_tensor(output_mask)
+        # Convert masks to tensors with float32 dtype to ensure compatibility with matmul
+        input_mask = tensor.convert_to_tensor(input_mask, dtype=tensor.float32)
+        recurrent_mask = tensor.convert_to_tensor(recurrent_mask, dtype=tensor.float32)
+        output_mask = tensor.convert_to_tensor(output_mask, dtype=tensor.float32)
         
         # Process sequence in reverse if go_backwards is True
         time_indices = range(time_steps - 1, -1, -1) if self.go_backwards else range(time_steps)
@@ -214,7 +215,7 @@ class seCfC(Module):
                 z = ops.add(z, self.bias)
             
             # Split into gates
-            z_chunks = tensor.split(z, 4, axis=-1)
+            z_chunks = tensor.split_tensor(z, 4, axis=-1)
             z_i, z_f, z_o, z_c = z_chunks
             
             # Apply activations
@@ -239,8 +240,12 @@ class seCfC(Module):
             # Apply output mask
             masked_output = ops.multiply(h_next, output_mask)
             
+            # Get only the output neurons (the last output_dim neurons)
+            output_dim = self.neuron_map.output_dim
+            output_neurons = masked_output[:, -output_dim:]
+            
             # Store output and update state
-            outputs.append(masked_output)
+            outputs.append(output_neurons)
             states = [h_next, t_next]
         
         # If processing backwards, reverse the outputs sequence
@@ -290,16 +295,30 @@ class seCfC(Module):
         # L1 regularization weighted by distance and communicability
         abs_weights = ops.abs(weight_matrix)
         
-        # Convert distance and communicability matrices to tensors
-        distance_tensor = self.distance_tensor
-        communicability_tensor = self.communicability_tensor
+        # Get the shape of the weight matrix
+        weight_shape = tensor.shape(abs_weights)
+        units = weight_shape[0]
+        units_times_4 = weight_shape[1]
+        
+        # Since we can't reshape directly, we'll use a different approach
+        # We'll slice the weight matrix into 4 parts and sum them
+        slice_size = units
+        weights_1 = abs_weights[:, :slice_size]
+        weights_2 = abs_weights[:, slice_size:slice_size*2]
+        weights_3 = abs_weights[:, slice_size*2:slice_size*3]
+        weights_4 = abs_weights[:, slice_size*3:slice_size*4]
+        
+        # Sum the 4 parts to get a (units, units) matrix
+        summed_weights = ops.add(weights_1, weights_2)
+        summed_weights = ops.add(summed_weights, weights_3)
+        summed_weights = ops.add(summed_weights, weights_4)
         
         # Apply distance and communicability weighting
-        weighted_weights = ops.multiply(abs_weights, distance_tensor)
-        weighted_weights = ops.multiply(weighted_weights, communicability_tensor)
+        weighted_weights = ops.multiply(summed_weights, self.distance_tensor)
+        weighted_weights = ops.multiply(weighted_weights, self.communicability_tensor)
         
         # Sum the weighted weights
-        reg_loss = ops.sum(weighted_weights)
+        reg_loss = ops.stats.sum(weighted_weights)
         
         # Scale by regularization strength
         reg_loss = ops.multiply(reg_loss, self.regularization_strength)

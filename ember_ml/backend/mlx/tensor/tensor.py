@@ -11,8 +11,6 @@ import mlx.core
 # Basic type aliases
 type Numeric = Union[int, float]
 
-
-
 # Type definitions for MLX dtypes
 type DTypeStr = str
 type DTypeClass = Union[mlx.core.Dtype, str, None]
@@ -73,7 +71,6 @@ type IndexType = Union[int, Sequence[int], MLXArray]
 type Indices = Union[Sequence[int], MLXArray]
 
 
-
 class MLXTensor:
     """MLX tensor operations."""
 
@@ -126,7 +123,7 @@ class MLXTensor:
         from ember_ml.backend.mlx.tensor.ops.utility import _convert_to_tensor as convert_to_tensor_func
         return convert_to_tensor_func(data, dtype, device)
 
-    def slice(self, data: TensorLike, starts: Sequence[int], sizes: Sequence[int]) -> mx.array:
+    def slice_tensor(self, data: TensorLike, starts: Sequence[int], sizes: Sequence[int]) -> mx.array:
         """
         Extract a slice from a tensor.
 
@@ -138,7 +135,7 @@ class MLXTensor:
         Returns:
             Sliced tensor
         """
-        from ember_ml.backend.mlx.tensor.ops.indexing import slice as slice_func
+        from ember_ml.backend.mlx.tensor.ops.indexing import slice_tensor as slice_func
         return slice_func(data, starts, sizes)
 
     def slice_update(self, data: TensorLike, slices: Any, updates: Any) -> mx.array:

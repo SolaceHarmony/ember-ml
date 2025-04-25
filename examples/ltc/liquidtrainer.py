@@ -45,7 +45,7 @@ class TelemetryProcessor:
         sequences = []
         for i in range(0, len(data) - self.seq_len + 1, self.stride):
             sequences.append(data[i:i+self.seq_len])
-        return np.stack(sequences)
+        return tensor.stack(sequences)
 
 # --------------------------
 # 🔥 Multi-Scale Liquid Neural Network

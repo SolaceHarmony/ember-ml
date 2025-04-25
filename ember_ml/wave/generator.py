@@ -26,7 +26,7 @@ class SignalSynthesizer:
                  frequency: float,
                  duration: float,
                  amplitude: float = 1.0,
-                 phase: float = 0.0) -> torch.Tensor:
+                 phase: float = 0.0) -> tensor.convert_to_tensor:
         """
         Generate sine wave.
 
@@ -46,7 +46,7 @@ class SignalSynthesizer:
                    frequency: float,
                    duration: float,
                    amplitude: float = 1.0,
-                   duty_cycle: float = 0.5) -> torch.Tensor:
+                   duty_cycle: float = 0.5) -> tensor.convert_to_tensor:
         """
         Generate square wave.
 
@@ -66,7 +66,7 @@ class SignalSynthesizer:
     def sawtooth_wave(self,
                      frequency: float,
                      duration: float,
-                     amplitude: float = 1.0) -> torch.Tensor:
+                     amplitude: float = 1.0) -> tensor.convert_to_tensor:
         """
         Generate sawtooth wave.
 
@@ -85,7 +85,7 @@ class SignalSynthesizer:
     def triangle_wave(self,
                      frequency: float,
                      duration: float,
-                     amplitude: float = 1.0) -> torch.Tensor:
+                     amplitude: float = 1.0) -> tensor.convert_to_tensor:
         """
         Generate triangle wave.
 
@@ -104,7 +104,7 @@ class SignalSynthesizer:
     def noise(self,
              duration: float,
              amplitude: float = 1.0,
-             distribution: str = 'uniform') -> torch.Tensor:
+             distribution: str = 'uniform') -> tensor.convert_to_tensor:
         """
         Generate noise signal.
 
@@ -136,7 +136,7 @@ class PatternGenerator:
         """
         self.config = config
         
-    def binary_pattern(self, density: float) -> torch.Tensor:
+    def binary_pattern(self, density: float) -> tensor.convert_to_tensor:
         """
         Generate binary pattern.
 
@@ -151,7 +151,7 @@ class PatternGenerator:
         
     def wave_pattern(self,
                     frequency: float,
-                    duration: float) -> torch.Tensor:
+                    duration: float) -> tensor.convert_to_tensor:
         """
         Generate wave-based pattern.
 
@@ -173,7 +173,7 @@ class PatternGenerator:
     def interference_pattern(self,
                            frequencies: List[float],
                            amplitudes: List[float],
-                           duration: float) -> torch.Tensor:
+                           duration: float) -> tensor.convert_to_tensor:
         """
         Generate interference pattern from multiple waves.
 
@@ -229,8 +229,8 @@ class WaveGenerator(nn.Module):
         )
         
     def forward(self,
-                z: torch.Tensor,
-                return_phases: bool = False) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
+                z: tensor.convert_to_tensor,
+                return_phases: bool = False) -> Union[tensor.convert_to_tensor, Tuple[tensor.convert_to_tensor, tensor.convert_to_tensor]]:
         """
         Generate wave pattern.
 
@@ -252,9 +252,9 @@ class WaveGenerator(nn.Module):
         return pattern
         
     def interpolate(self,
-                   z1: torch.Tensor,
-                   z2: torch.Tensor,
-                   steps: int) -> torch.Tensor:
+                   z1: tensor.convert_to_tensor,
+                   z2: tensor.convert_to_tensor,
+                   steps: int) -> tensor.convert_to_tensor:
         """
         Interpolate between two latent vectors.
 
@@ -279,7 +279,7 @@ class WaveGenerator(nn.Module):
         
     def random_sample(self,
                      num_samples: int,
-                     seed: Optional[int] = None) -> torch.Tensor:
+                     seed: Optional[int] = None) -> tensor.convert_to_tensor:
         """
         Generate random patterns.
 

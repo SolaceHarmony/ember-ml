@@ -457,6 +457,40 @@ def floor_divide(x: TensorLike, y: TensorLike) -> np.ndarray:
     return np.floor_divide(tensor_ops.convert_to_tensor(x), tensor_ops.convert_to_tensor(y))
 
 
+def floor(x: TensorLike) -> np.ndarray:
+    """
+    Return the floor of the input, element-wise.
+    
+    The floor of the scalar x is the largest integer i, such that i <= x.
+    
+    Args:
+        x: Input array
+        
+    Returns:
+        Element-wise floor of the input
+    """
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.floor(tensor_ops.convert_to_tensor(x))
+
+
+def ceil(x: TensorLike) -> np.ndarray:
+    """
+    Return the ceiling of the input, element-wise.
+    
+    The ceiling of the scalar x is the smallest integer i, such that i >= x.
+    
+    Args:
+        x: Input array
+        
+    Returns:
+        Element-wise ceiling of the input
+    """
+    from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
+    tensor_ops = NumpyTensor()
+    return np.ceil(tensor_ops.convert_to_tensor(x))
+
+
 def gradient(f: TensorLike, *varargs, axis: Optional[ShapeLike] = None,
             edge_order: Literal[1, 2] = 1) -> Union[np.ndarray, List[np.ndarray]]:
     """

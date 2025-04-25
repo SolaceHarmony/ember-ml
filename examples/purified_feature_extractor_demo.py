@@ -141,7 +141,7 @@ def run_demo():
                     train_tensor = backend_utils.convert_to_tensor_safe(train_df[train_features].values)
                     
                     # Perform operations using ops abstraction layer
-                    mean = backend_utils.tensor_to_numpy_safe(ops.mean(train_tensor, axis=0))
+                    mean = backend_utils.tensor_to_numpy_safe(ops.stats.mean(train_tensor, axis=0))
                     std = backend_utils.tensor_to_numpy_safe(ops.std(train_tensor, axis=0))
                     
                     logger.info(f"Mean of first 5 features: {mean[:5]}")

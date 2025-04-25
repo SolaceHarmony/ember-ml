@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from typing import Tuple
 
-def normalize_sphere(vec: torch.Tensor, eps: float = 1e-12) -> torch.Tensor:
+def normalize_sphere(vec: tensor.convert_to_tensor, eps: float = 1e-12) -> tensor.convert_to_tensor:
     """Normalize vectors to the unit sphere.
     
     Args:
@@ -20,10 +20,10 @@ def normalize_sphere(vec: torch.Tensor, eps: float = 1e-12) -> torch.Tensor:
     return torch.where(mask, vec / norm, vec)
 
 def log_map_sphere(
-    p: torch.Tensor,
-    q: torch.Tensor,
+    p: tensor.convert_to_tensor,
+    q: tensor.convert_to_tensor,
     eps: float = 1e-12
-) -> torch.Tensor:
+) -> tensor.convert_to_tensor:
     """Logarithmic map on unit sphere (Log_p(q)).
     
     Maps point q to the tangent space at p.
@@ -60,10 +60,10 @@ def log_map_sphere(
     return dir_vec * theta
 
 def exp_map_sphere(
-    p: torch.Tensor,
-    v: torch.Tensor,
+    p: tensor.convert_to_tensor,
+    v: tensor.convert_to_tensor,
     eps: float = 1e-12
-) -> torch.Tensor:
+) -> tensor.convert_to_tensor:
     """Exponential map on unit sphere (Exp_p(v)).
     
     Maps tangent vector v at p to the sphere.
@@ -97,11 +97,11 @@ def exp_map_sphere(
     return normalize_sphere(new_point, eps)
 
 def parallel_transport_sphere(
-    p: torch.Tensor,
-    q: torch.Tensor,
-    v: torch.Tensor,
+    p: tensor.convert_to_tensor,
+    q: tensor.convert_to_tensor,
+    v: tensor.convert_to_tensor,
     eps: float = 1e-12
-) -> torch.Tensor:
+) -> tensor.convert_to_tensor:
     """Parallel transport tangent vector v from p to q on sphere.
     
     Args:
@@ -154,9 +154,9 @@ class SphericalLinear(nn.Module):
         
     def forward(
         self,
-        x: torch.Tensor,
-        base_point: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        x: tensor.convert_to_tensor,
+        base_point: tensor.convert_to_tensor
+    ) -> Tuple[tensor.convert_to_tensor, tensor.convert_to_tensor]:
         """Apply spherical linear transformation.
         
         Args:

@@ -12,6 +12,7 @@ import pandas as pd
 
 from ember_ml.nn import tensor
 from ember_ml import ops
+from ember_ml.ops import stats
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -225,225 +226,6 @@ class AnimatedFeatureProcessor:
         else:
             return tensor.zeros((len(df), 0), device=self.device)
     
-    def process_datetime_features(
-        self,
-        df: Any,
-        columns: List[str],
-        cyclical_encoding: bool = True,
-        include_time: bool = True,
-        include_date_parts: bool = True
-    ) -> Any:
-        """
-        Process datetime features with animation and sample tables.
-        
-        This method extracts meaningful features from datetime columns, including:
-        - Cyclical encoding of hour, day, month components
-        - Numerical representations of date/time parts
-        - Derived features like day of week, quarter, etc.
-        
-        Args:
-            df: Input DataFrame
-            columns: Datetime columns to process
-            cyclical_encoding: Whether to use cyclical encoding for cyclic features
-            include_time: Whether to extract time components (hour, minute, second)
-            include_date_parts: Whether to extract date parts (year, month, day)
-            
-        Returns:
-            Processed features tensor
-        """
-        if not columns:
-            logger.warning("No datetime columns to process")
-            return tensor.zeros((len(df), 0), device=self.device)
-        
-        # Initialize processing frames for animation
-        self.processing_frames = []
-        
-        # Create a sample data table for original values
-        if self.sample_tables_enabled:
-            self._create_sample_table(df, columns, 'original_datetime', 
-                                      'Original Datetime Data')
-        
-        # Process each datetime column
-        all_features = []
-        all_feature_names = []
-        
-        for col in columns:
-            # Extract date/time components
-            try:
-                # For pandas-like DataFrames
-                components = self._extract_datetime_components(
-                    df[col], include_time, include_date_parts
-                )
-                
-                # Process each component
-                processed_components = []
-                component_names = []
-                
-                for comp_name, comp_data in components.items():
-                    # Convert to tensor
-                    comp_tensor = tensor.convert_to_tensor(comp_data, device=self.device)
-                    
-                    # Apply cyclical encoding for cyclic features if requested
-                    if cyclical_encoding and comp_name in ['hour', 'day', 'month', 'day_of_week']:
-                        # Get the maximum value for this cycle
-                        if comp_name == 'hour':
-                            max_val = 24
-                        elif comp_name == 'day':
-                            max_val = 31
-                        elif comp_name == 'month':
-                            max_val = 12
-                        elif comp_name == 'day_of_week':
-                            # Use tensor for consistency, ensure float for later division
-                            max_val_tensor = tensor.convert_to_tensor(7.0, dtype=tensor.float32, device=self.device)
-                        else:
-                            # Add 1 using ops.add and ensure float
-                            comp_max = ops.stats.max(comp_tensor)
-                            max_val_tensor = ops.add(
-                                comp_max,
-                                tensor.ones((), dtype=tensor.dtype(comp_max), device=self.device)
-                            )
-                            max_val_tensor = tensor.cast(max_val_tensor, dtype=tensor.float32) # Ensure float
-
-                        # Apply sin/cos encoding
-                        sin_comp, cos_comp = self._cyclical_encode(comp_tensor, max_val_tensor) # Pass float tensor
-                        
-                        # Add to processed components
-                        processed_components.append(sin_comp)
-                        processed_components.append(cos_comp)
-                        component_names.append(f"{col}_{comp_name}_sin")
-                        component_names.append(f"{col}_{comp_name}_cos")
-                    else:
-                        # For non-cyclic features, normalize to [0,1]
-                        normalized_comp = self._normalize_component(comp_tensor)
-                        processed_components.append(normalized_comp)
-                        component_names.append(f"{col}_{comp_name}")
-                
-                # Combine all components for this column
-                if processed_components:
-                    # Reshape components to 2D
-                    reshaped_components = []
-                    for comp in processed_components:
-                        reshaped_comp = tensor.reshape(comp, (tensor.shape(comp)[0], 1))
-                        reshaped_components.append(reshaped_comp)
-                    
-                    # Concatenate along columns
-                    column_features = tensor.concatenate(reshaped_components, axis=1)
-                    
-                    # Add to all features
-                    all_features.append(column_features)
-                    all_feature_names.extend(component_names)
-                    
-                    # Create sample data table for this column's components
-                    if self.sample_tables_enabled:
-                        self._create_sample_table_from_tensor(
-                            column_features, component_names, 
-                            f'datetime_{col}_components',
-                            f'Datetime Components for {col}'
-                        )
-                    
-                    # Capture animation frame
-                    if self.visualization_enabled:
-                        self._capture_frame(
-                            column_features, 
-                            f"Datetime Processing for {col}", 
-                            "Datetime Features"
-                        )
-            except Exception as e:
-                logger.warning(f"Error processing datetime column {col}: {e}")
-                continue
-        
-        # Combine all datetime features
-        if all_features:
-            combined_features = tensor.concatenate(all_features, axis=1)
-            
-            # Create a sample data table for all processed datetime features
-            if self.sample_tables_enabled:
-                self._create_sample_table_from_tensor(
-                    combined_features, all_feature_names, 
-                    'processed_datetime',
-                    'Processed Datetime Features'
-                )
-            
-            # Generate animation if enabled
-            if self.visualization_enabled:
-                self._generate_processing_animation()
-            
-            return combined_features
-        else:
-            logger.warning("Failed to extract any datetime features")
-            return tensor.zeros((len(df), 0), device=self.device)
-    
-    def process_identifier_features(
-        self,
-        df: Any,
-        columns: List[str],
-        n_components: int = 16,
-        seed: int = 42
-    ) -> Any:
-        """
-        Process identifier features with animation and sample tables.
-        
-        Args:
-            df: Input DataFrame
-            columns: Identifier columns to process
-            n_components: Number of hash components
-            seed: Random seed
-            
-        Returns:
-            Processed features tensor
-        """
-        if not columns:
-            logger.warning("No identifier columns to process")
-            return tensor.zeros((len(df), 0), device=self.device)
-        
-        # Initialize processing frames for animation
-        self.processing_frames = []
-        
-        # Create a sample data table for original values
-        if self.sample_tables_enabled:
-            self._create_sample_table(df, columns, 'original_identifier', 
-                                      'Original Identifier Data')
-        
-        # Process each column using hash encoding
-        encoded_features_list = []
-        encoded_feature_names = []
-        
-        for col in columns:
-            # Apply hash encoding
-            encoded_features, feature_names = self._hash_encode(
-                df, col, n_components=n_components, seed=seed
-            )
-            
-            encoded_features_list.append(encoded_features)
-            encoded_feature_names.extend(feature_names)
-            
-            # Capture animation frame
-            if self.visualization_enabled:
-                self._capture_frame(
-                    encoded_features, 
-                    f"Hash Encoding for {col}", 
-                    "Identifier Features"
-                )
-        
-        # Combine all encoded features
-        if encoded_features_list:
-            encoded_data = tensor.concatenate(encoded_features_list, axis=1)
-            
-            # Create a sample data table for encoded values
-            if self.sample_tables_enabled:
-                self._create_sample_table_from_tensor(
-                    encoded_data, encoded_feature_names, 'encoded_identifier',
-                    'Hash-Encoded Identifier Features'
-                )
-                
-            # Generate animation if enabled
-            if self.visualization_enabled:
-                self._generate_processing_animation()
-                
-            return encoded_data
-        else:
-            return tensor.zeros((len(df), 0), device=self.device)
-    
     def _dataframe_to_tensor(self, df: Any) -> Any:
         """
         Convert a DataFrame to a tensor.
@@ -478,7 +260,7 @@ class AnimatedFeatureProcessor:
         nan_mask = ops.isnan(data)
         
         # If no NaNs, return the original data
-        if not tensor.any(nan_mask): # Use tensor.any
+        if ops.all(ops.logical_not(nan_mask)):
             return data
         
         # Calculate median for each feature
@@ -490,7 +272,7 @@ class AnimatedFeatureProcessor:
         for i in range(tensor.shape(data)[1]):
             col_data = data_no_nan[:, i]
             # Sort the data
-            sorted_data = tensor.sort(col_data)
+            sorted_data = stats.sort(col_data)
             # Get median
             n_scalar = tensor.shape(sorted_data)[0] # Assuming scalar int
             n_tensor = tensor.convert_to_tensor(n_scalar, device=self.device) # Use tensor for ops
@@ -522,7 +304,10 @@ class AnimatedFeatureProcessor:
         medians_tensor = tensor.reshape(medians_tensor, (1, -1))
         
         # Replace NaNs with medians
-        return ops.where(nan_mask, tensor.broadcast_to(medians_tensor, tensor.shape(data)), data) # Use tensor.broadcast_to
+        # Create a broadcasted version of medians_tensor
+        broadcasted_medians = tensor.tile(medians_tensor, [tensor.shape(data)[0], 1])
+        
+        return ops.where(nan_mask, broadcasted_medians, data)
     
     def _handle_outliers(self, data: Any) -> Any:
         """
@@ -541,7 +326,7 @@ class AnimatedFeatureProcessor:
         for i in range(tensor.shape(data)[1]):
             col_data = data[:, i]
             # Sort the data
-            sorted_data = tensor.sort(col_data)
+            sorted_data = stats.sort(col_data)
             n_scalar = tensor.shape(sorted_data)[0] # Assuming scalar int
             n_tensor = tensor.convert_to_tensor(n_scalar, device=self.device) # Use tensor for ops
             four_tensor = tensor.convert_to_tensor(4, dtype=tensor.dtype(n_tensor), device=self.device)
@@ -598,7 +383,7 @@ class AnimatedFeatureProcessor:
         for i in range(tensor.shape(data)[1]):
             col_data = data[:, i]
             # Sort the data
-            sorted_data = tensor.sort(col_data)
+            sorted_data = stats.sort(col_data)
             n_scalar = tensor.shape(sorted_data)[0] # Assuming this returns a scalar (int or 0-d tensor)
             n_tensor = tensor.convert_to_tensor(n_scalar, dtype=tensor.float32, device=self.device) # Ensure float for multiplication
             
@@ -606,9 +391,9 @@ class AnimatedFeatureProcessor:
             idx_05_float = ops.multiply(tensor.convert_to_tensor(0.05, device=self.device), n_tensor)
             idx_95_float = ops.multiply(tensor.convert_to_tensor(0.95, device=self.device), n_tensor)
             
-            # Floor and cast to integer type suitable for indexing
-            idx_05_int = tensor.cast(ops.floor(idx_05_float), dtype=tensor.int64) # Use int64 for safety
-            idx_95_int = tensor.cast(ops.floor(idx_95_float), dtype=tensor.int64)
+            # Cast to integer type suitable for indexing
+            idx_05_int = tensor.cast(idx_05_float, dtype=tensor.int64) # Use int64 for safety
+            idx_95_int = tensor.cast(idx_95_float, dtype=tensor.int64)
             
             # Ensure indices are within bounds [0, n-1] using tensor ops
             zero_tensor = tensor.zeros((), dtype=tensor.int64, device=self.device)
@@ -616,9 +401,10 @@ class AnimatedFeatureProcessor:
             n_int64_tensor = tensor.cast(n_tensor, dtype=tensor.int64)
             n_minus_1_tensor = ops.subtract(n_int64_tensor, tensor.ones((), dtype=tensor.int64, device=self.device))
 
-            p05_idx = tensor.maximum(zero_tensor, idx_05_int)
+            # Use ops.where for element-wise max/min
+            p05_idx = ops.where(ops.less(idx_05_int, zero_tensor), zero_tensor, idx_05_int)
             # Ensure p95_idx doesn't exceed n-1
-            p95_idx = tensor.minimum(n_minus_1_tensor, idx_95_int)
+            p95_idx = ops.where(ops.greater(idx_95_int, n_minus_1_tensor), n_minus_1_tensor, idx_95_int)
             
             # Get percentile values (indexing expects scalar int or 0-d int tensor)
             # Convert tensor indices back to scalar integers if necessary for indexing
@@ -751,14 +537,21 @@ class AnimatedFeatureProcessor:
             # Convert value to string
             str_value = str(value)
             
-            # Generate hash value
-            hash_val = hash(str_value + str(seed))
+            # Generate hash value using string concatenation
+            # We need to use Python's + operator for string concatenation
+            # This is acceptable since we're not operating on tensors
+            str_seed = str(seed)
+            hash_val = hash(str_value + str_seed)
             
             # Use hash to generate pseudo-random values for each component
             for j in range(n_components):
-                component_hash = hash(str_value + str(seed + j))
-                # Scale to [0, 1]
-                component_value = (component_hash % 10000) / 10000.0
+                # Convert j to string and concatenate
+                seed_plus_j = str(seed + j)  # This is acceptable for string operations
+                component_hash = hash(str_value + seed_plus_j)
+                # Scale to [0, 1] using ops functions
+                component_hash_tensor = tensor.convert_to_tensor(component_hash, device=self.device)
+                modulo = ops.mod(component_hash_tensor, tensor.convert_to_tensor(10000, device=self.device))
+                component_value = ops.divide(modulo, tensor.convert_to_tensor(10000.0, device=self.device))
                 
                 # Update the tensor at position [i, j]
                 encoded_data = tensor.tensor_scatter_nd_update(
@@ -772,112 +565,6 @@ class AnimatedFeatureProcessor:
         
         return encoded_data, feature_names
     
-    def _extract_datetime_components(
-        self,
-        datetime_col: Any,
-        include_time: bool = True,
-        include_date_parts: bool = True
-    ) -> Dict[str, List[Any]]:
-        """
-        Extract components from a datetime column.
-        
-        Args:
-            datetime_col: Datetime column
-            include_time: Whether to include time components
-            include_date_parts: Whether to include date parts
-            
-        Returns:
-            Dictionary of component name to values
-        """
-        components = {}
-        
-        # Extract date parts
-        if include_date_parts:
-            components['year'] = datetime_col.dt.year.tolist()
-            components['month'] = datetime_col.dt.month.tolist()
-            components['day'] = datetime_col.dt.day.tolist()
-            components['day_of_week'] = datetime_col.dt.dayofweek.tolist()
-            components['day_of_year'] = datetime_col.dt.dayofyear.tolist()
-            components['quarter'] = datetime_col.dt.quarter.tolist()
-            components['is_month_end'] = datetime_col.dt.is_month_end.astype(int).tolist()
-            components['is_month_start'] = datetime_col.dt.is_month_start.astype(int).tolist()
-            components['is_quarter_end'] = datetime_col.dt.is_quarter_end.astype(int).tolist()
-            components['is_quarter_start'] = datetime_col.dt.is_quarter_start.astype(int).tolist()
-            components['is_year_end'] = datetime_col.dt.is_year_end.astype(int).tolist()
-            components['is_year_start'] = datetime_col.dt.is_year_start.astype(int).tolist()
-        
-        # Extract time parts
-        if include_time:
-            components['hour'] = datetime_col.dt.hour.tolist()
-            components['minute'] = datetime_col.dt.minute.tolist()
-            components['second'] = datetime_col.dt.second.tolist()
-            
-            # Add derived time features
-            hour_of_day = datetime_col.dt.hour
-            components['is_morning'] = (hour_of_day >= 6) & (hour_of_day < 12)
-            components['is_afternoon'] = (hour_of_day >= 12) & (hour_of_day < 18)
-            components['is_evening'] = (hour_of_day >= 18) & (hour_of_day < 22)
-            components['is_night'] = (hour_of_day >= 22) | (hour_of_day < 6)
-            
-            # Convert boolean to int
-            for comp in ['is_morning', 'is_afternoon', 'is_evening', 'is_night']:
-                components[comp] = components[comp].astype(int).tolist()
-        
-        return components
-    
-    def _cyclical_encode(self, data: Any, period: float) -> Tuple[Any, Any]:
-        """
-        Apply cyclical encoding using sine and cosine transformations.
-        
-        Args:
-            data: Input tensor
-            period: Period of the cycle
-            
-        Returns:
-            Tuple of (sin_component, cos_component)
-        """
-        # Scale to [0, 2π]
-        two_pi = ops.multiply(
-            tensor.convert_to_tensor(2.0, device=self.device),
-            tensor.convert_to_tensor(3.14159, device=self.device)
-        )
-        scaled_data = ops.multiply(
-            ops.divide(data, tensor.convert_to_tensor(period, dtype=tensor.float32, device=self.device)), # Ensure period is float tensor
-            tensor.cast(two_pi, dtype=tensor.dtype(data)) # Ensure two_pi matches data dtype
-        )
-        
-        # Apply sin and cos transformations
-        sin_component = ops.sin(scaled_data)
-        cos_component = ops.cos(scaled_data)
-        
-        return sin_component, cos_component
-    
-    def _normalize_component(self, data: Any) -> Any:
-        """
-        Normalize a datetime component to [0,1] range.
-        
-        Args:
-            data: Input tensor
-            
-        Returns:
-            Normalized tensor
-        """
-        # Get min and max values
-        min_val = ops.stats.min(data)
-        max_val = ops.stats.max(data)
-        
-        # Calculate range
-        data_range = ops.subtract(max_val, min_val)
-        
-        # Avoid division by zero
-        epsilon = tensor.convert_to_tensor(1e-8, device=self.device)
-        data_range = tensor.maximum(data_range, epsilon)
-        
-        # Normalize
-        return ops.divide(
-            ops.subtract(data, min_val),
-            data_range
-        )
     def _create_sample_table(
         self,
         df: Any,
@@ -907,9 +594,9 @@ class AnimatedFeatureProcessor:
             for col in columns:
                 try:
                     first_element = sample_df[col].iloc[0]
-                    if isinstance(first_element, tensor.EmberTensor):
+                    if hasattr(first_element, '__class__') and first_element.__class__.__name__ == 'EmberTensor':
                         try:
-                            sample_df[col] = sample_df[col].apply(lambda x: tensor.to_numpy(x) if isinstance(x, tensor.EmberTensor) else x)
+                            sample_df[col] = sample_df[col].apply(lambda x: tensor.to_numpy(x) if hasattr(x, '__class__') and x.__class__.__name__ == 'EmberTensor' else x)
                         except Exception as e_inner:
                             logger.debug(f"Could not convert column {col} to numpy for sample table: {e_inner}")
                 except IndexError:
@@ -1037,5 +724,3 @@ class AnimatedFeatureProcessor:
         self.processing_frames = []
         self.sample_tables = {}
         logger.debug("Cleared animation frames and sample tables.")
-
-    # [Deleted Method Block]

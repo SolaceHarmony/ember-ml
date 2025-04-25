@@ -36,8 +36,8 @@ class MultiSphereWaveModel:
         # Create sphere states
         self.spheres = [
             SphereState(
-                fast_state=np.array([1.0, 0.0, 0.0, 0.0]),
-                slow_state=np.array([1.0, 0.0, 0.0, 0.0]),
+                fast_state=tensor.convert_to_tensor([1.0, 0.0, 0.0, 0.0]),
+                slow_state=tensor.convert_to_tensor([1.0, 0.0, 0.0, 0.0]),
                 noise_std=noise_std
             )
             for _ in range(M)
@@ -67,15 +67,15 @@ class MultiSphereWaveModel:
         if not 0 <= idx < self.M:
             raise ValueError(f"Invalid sphere index: {idx}")
             
-        self.spheres[idx].fast_state = normalize_vector(np.array(fast_vec))
+        self.spheres[idx].fast_state = normalize_vector(tensor.convert_to_tensor(fast_vec))
         
         if slow_vec is not None:
-            self.spheres[idx].slow_state = normalize_vector(np.array(slow_vec))
+            self.spheres[idx].slow_state = normalize_vector(tensor.convert_to_tensor(slow_vec))
             
     def run(self, 
             steps: int,
-            input_waves_seq: List[List[Optional[np.ndarray]]],
-            gating_seq: List[List[bool]]) -> np.ndarray:
+            input_waves_seq: List[List[Optional[TensorLike]]],
+            gating_seq: List[List[bool]]) -> TensorLike:
         """
         Run simulation for specified number of steps.
         
@@ -118,9 +118,9 @@ class MultiSphereWaveModel:
             # Process overlaps
             self._process_overlaps()
             
-        return np.array(history)
+        return tensor.convert_to_tensor(history)
     
-    def _update_sphere_state(self, idx: int, input_wave: np.ndarray):
+    def _update_sphere_state(self, idx: int, input_wave: TensorLike):
         """
         Update state of a single sphere based on input.
         
@@ -142,7 +142,7 @@ class MultiSphereWaveModel:
         
         # Add noise if specified
         if sphere.noise_std > 0:
-            noise = np.random.normal(0, sphere.noise_std, 4)
+            noise = tensor.random_normal(0, sphere.noise_std, 4)
             sphere.fast_state = normalize_vector(sphere.fast_state + noise)
             sphere.slow_state = normalize_vector(sphere.slow_state + noise)
     
@@ -175,7 +175,7 @@ class MultiSphereWaveModel:
             sphere_A.slow_state = trans_B
             sphere_B.slow_state = trans_A
             
-    def get_sphere_states(self) -> List[Tuple[np.ndarray, np.ndarray]]:
+    def get_sphere_states(self) -> List[Tuple[TensorLike, TensorLike]]:
         """
         Get current states of all spheres.
         

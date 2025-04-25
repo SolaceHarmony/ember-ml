@@ -11,8 +11,9 @@ from datetime import datetime
 import os
 from typing import Dict, List, Optional, Tuple, Union, Any
 import torch
-
-
+from ember_ml import ops
+from ember_ml.nn import tensor
+from ember_ml.nn.tensor import TensorLike
 class RestrictedBoltzmannMachine:
     """
     CPU-friendly implementation of a Restricted Boltzmann Machine.
@@ -66,14 +67,14 @@ class RestrictedBoltzmannMachine:
         # Initialize weights and biases
         # Use small random values for weights to break symmetry
         # Scale by 1/sqrt(n_visible) for better initial convergence
-        self.weights = np.random.normal(0, 0.01 / np.sqrt(n_visible), (n_visible, n_hidden))
-        self.visible_bias = np.zeros(n_visible)
-        self.hidden_bias = np.zeros(n_hidden)
+        self.weights = tensor.random_normal(0, 0.01 / ops.sqrt(n_visible), (n_visible, n_hidden))
+        self.visible_bias = tensor.zeros(n_visible)
+        self.hidden_bias = tensor.zeros(n_hidden)
         
         # Initialize momentum terms
-        self.weights_momentum = np.zeros((n_visible, n_hidden))
-        self.visible_bias_momentum = np.zeros(n_visible)
-        self.hidden_bias_momentum = np.zeros(n_hidden)
+        self.weights_momentum = tensor.zeros((n_visible, n_hidden))
+        self.visible_bias_momentum = tensor.zeros(n_visible)
+        self.hidden_bias_momentum = tensor.zeros(n_hidden)
         
         # For tracking training progress
         self.training_errors = []
@@ -89,7 +90,7 @@ class RestrictedBoltzmannMachine:
         self.n_epochs_trained = 0
         self.last_batch_error = float('inf')
     
-    def sigmoid(self, x: np.ndarray) -> np.ndarray:
+    def sigmoid(self, x: TensorLike) -> TensorLike:
         """
         Compute sigmoid function with numerical stability improvements.
         
@@ -100,10 +101,10 @@ class RestrictedBoltzmannMachine:
             Sigmoid of input array
         """
         # Clip values to avoid overflow/underflow
-        x = np.clip(x, -15, 15)
+        x = ops.clip(x, -15, 15)
         return 1.0 / (1.0 + np.exp(-x))
     
-    def compute_hidden_probabilities(self, visible_states: np.ndarray) -> np.ndarray:
+    def compute_hidden_probabilities(self, visible_states: TensorLike) -> TensorLike:
         """
         Compute probabilities of hidden units given visible states.
         
@@ -117,7 +118,7 @@ class RestrictedBoltzmannMachine:
         hidden_activations = np.dot(visible_states, self.weights) + self.hidden_bias
         return self.sigmoid(hidden_activations)
     
-    def sample_hidden_states(self, hidden_probs: np.ndarray) -> np.ndarray:
+    def sample_hidden_states(self, hidden_probs: TensorLike) -> TensorLike:
         """
         Sample binary hidden states from their probabilities.
         
@@ -132,7 +133,7 @@ class RestrictedBoltzmannMachine:
         
         return (hidden_probs > np.random.random(hidden_probs.shape)).astype(np.float32)
     
-    def compute_visible_probabilities(self, hidden_states: np.ndarray) -> np.ndarray:
+    def compute_visible_probabilities(self, hidden_states: TensorLike) -> TensorLike:
         """
         Compute probabilities of visible units given hidden states.
         
@@ -146,7 +147,7 @@ class RestrictedBoltzmannMachine:
         visible_activations = np.dot(hidden_states, self.weights.T) + self.visible_bias
         return self.sigmoid(visible_activations)
     
-    def sample_visible_states(self, visible_probs: np.ndarray) -> np.ndarray:
+    def sample_visible_states(self, visible_probs: TensorLike) -> TensorLike:
         """
         Sample binary visible states from their probabilities.
         
@@ -161,7 +162,7 @@ class RestrictedBoltzmannMachine:
         
         return (visible_probs > np.random.random(visible_probs.shape)).astype(np.float32)
     
-    def contrastive_divergence(self, batch_data: np.ndarray, k: int = 1) -> float:
+    def contrastive_divergence(self, batch_data: TensorLike, k: int = 1) -> float:
         """
         Perform contrastive divergence algorithm for a single batch.
         
@@ -218,7 +219,7 @@ class RestrictedBoltzmannMachine:
         self.hidden_bias += self.learning_rate * self.hidden_bias_momentum
         
         # Compute reconstruction error
-        reconstruction_error = np.mean(np.sum((batch_data - neg_visible_probs) ** 2, axis=1))
+        reconstruction_error = np.mean(ops.stats.sum((batch_data - neg_visible_probs) ** 2, axis=1))
         
         # Track state if enabled
         if self.track_states and len(self.training_states) < self.max_tracked_states:
@@ -235,10 +236,10 @@ class RestrictedBoltzmannMachine:
     
     def train(
         self,
-        data: np.ndarray,
+        data: TensorLike,
         epochs: int = 10,
         k: int = 1,
-        validation_data: Optional[np.ndarray] = None,
+        validation_data: Optional[TensorLike] = None,
         early_stopping_patience: int = 5,
         verbose: bool = True
     ) -> List[float]:
@@ -322,7 +323,7 @@ class RestrictedBoltzmannMachine:
         
         return self.training_errors
     
-    def transform(self, data: np.ndarray) -> np.ndarray:
+    def transform(self, data: TensorLike) -> TensorLike:
         """
         Transform data to hidden representation.
         
@@ -334,7 +335,7 @@ class RestrictedBoltzmannMachine:
         """
         return self.compute_hidden_probabilities(data)
     
-    def reconstruct(self, data: np.ndarray) -> np.ndarray:
+    def reconstruct(self, data: TensorLike) -> TensorLike:
         """
         Reconstruct input data.
         
@@ -349,7 +350,7 @@ class RestrictedBoltzmannMachine:
         visible_probs = self.compute_visible_probabilities(hidden_states)
         return visible_probs
     
-    def reconstruction_error(self, data: np.ndarray, per_sample: bool = False) -> Union[float, np.ndarray]:
+    def reconstruction_error(self, data: TensorLike, per_sample: bool = False) -> Union[float, TensorLike]:
         """
         Compute reconstruction error for input data.
         
@@ -361,14 +362,14 @@ class RestrictedBoltzmannMachine:
             Reconstruction error (mean or per sample)
         """
         reconstructed = self.reconstruct(data)
-        squared_error = np.sum((data - reconstructed) ** 2, axis=1)
+        squared_error = ops.stats.sum((data - reconstructed) ** 2, axis=1)
         
         if per_sample:
             return squared_error
         
         return np.mean(squared_error)
     
-    def free_energy(self, data: np.ndarray) -> np.ndarray:
+    def free_energy(self, data: TensorLike) -> TensorLike:
         """
         Compute free energy for input data.
         
@@ -382,14 +383,14 @@ class RestrictedBoltzmannMachine:
             Free energy for each sample [n_samples]
         """
         visible_bias_term = np.dot(data, self.visible_bias)
-        hidden_term = np.sum(
+        hidden_term = ops.stats.sum(
             np.log(1 + np.exp(np.dot(data, self.weights) + self.hidden_bias)),
             axis=1
         )
         
         return -hidden_term - visible_bias_term
     
-    def anomaly_score(self, data: np.ndarray, method: str = 'reconstruction') -> np.ndarray:
+    def anomaly_score(self, data: TensorLike, method: str = 'reconstruction') -> TensorLike:
         """
         Compute anomaly score for input data.
         
@@ -408,7 +409,7 @@ class RestrictedBoltzmannMachine:
         else:
             raise ValueError(f"Unknown method: {method}")
     
-    def is_anomaly(self, data: np.ndarray, method: str = 'reconstruction') -> np.ndarray:
+    def is_anomaly(self, data: TensorLike, method: str = 'reconstruction') -> TensorLike:
         """
         Determine if input data is anomalous.
         
@@ -428,7 +429,7 @@ class RestrictedBoltzmannMachine:
         else:
             raise ValueError(f"Unknown method: {method}")
     
-    def dream(self, n_steps: int = 100, start_data: Optional[np.ndarray] = None) -> List[np.ndarray]:
+    def dream(self, n_steps: int = 100, start_data: Optional[TensorLike] = None) -> List[TensorLike]:
         """
         Generate a sequence of "dream" states by Gibbs sampling.
         
@@ -691,7 +692,7 @@ class RBM:
         Returns:
             List of reconstruction errors
         """
-        data = torch.tensor(data, device=self.device)
+        data = tensor.convert_to_tensor(data, device=self.device)
         n_samples = data.size(0)
         n_batches = n_samples // batch_size
         

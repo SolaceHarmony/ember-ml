@@ -3,9 +3,8 @@ Backend-agnostic example of using Ember ML.
 This example demonstrates how to create and use neural network components
 in a backend-agnostic way using the ops abstraction layer.
 """
-from typing import Tuple
+from typing import Tuple, Any # Add Any for type hint
 
-import ember_ml as eh
 from ember_ml import ops
 from ember_ml.nn.tensor import EmberTensor
 from ember_ml.nn import tensor # Importing the Ember ML neural network module
@@ -24,7 +23,7 @@ def create_model() -> nn.Sequential:
         nn.Linear(20, 1)
     )
 
-def train_step(model: nn.Sequential, x: EmberTensor, y: EmberTensor, learning_rate: float = 0.01) -> EmberTensor:
+def train_step(model: nn.Sequential, x: EmberTensor, y: EmberTensor, learning_rate: float = 0.01) -> Any: # Change return type hint
     """
     Perform a single training step.
     
@@ -59,12 +58,12 @@ def train_step(model: nn.Sequential, x: EmberTensor, y: EmberTensor, learning_ra
 def main() -> None:
     """Main function to demonstrate neural network components."""
     # Let Ember ML choose the best available backend
-    eh.auto_select_backend()
-    print(f"Using {eh.get_backend()} backend")
+    ops.auto_select_backend() # Use ops re-export
+    print(f"Using {ops.get_backend()} backend") # Use ops re-export
     
     # Create random data
-    x = EmberTensor(tensor.random_normal((32, 10)))  # 32 samples, 10 features
-    y = EmberTensor(tensor.random_normal((32, 1)))   # 32 samples, 1 target
+    x = tensor.random_normal((32, 10))  # 32 samples, 10 features (Remove EmberTensor wrapper)
+    y = tensor.random_normal((32, 1))   # 32 samples, 1 target (Remove EmberTensor wrapper)
     
     # Create model
     model = create_model()

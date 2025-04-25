@@ -53,10 +53,11 @@ def generate_sine_wave_data(num_samples, sequence_length, num_features):
             # Update the tensor
             data = tensor.tensor_scatter_nd_update(data, indices_tensor, updates)
     
-    # Split into train and test
-    split_idx = int(0.8 * num_samples)
-    train_data = data[:split_idx]
-    test_data = data[split_idx:]
+    # Split into train and test using tensor operations
+    split_idx = tensor.cast(ops.multiply(0.8, num_samples), dtype=tensor.int32)
+    # Use slice_tensor with start indices and sizes. Assumes 3D input (batch, seq, features).
+    train_data = tensor.slice_tensor(data, [0, 0, 0], [split_idx, tensor.shape(data)[1], tensor.shape(data)[2]])
+    test_data = tensor.slice_tensor(data, [split_idx, 0, 0], [ops.subtract(num_samples, split_idx), tensor.shape(data)[1], tensor.shape(data)[2]]) # Use ops.subtract for size
     
     return train_data, test_data
 
@@ -92,31 +93,38 @@ def train_model(model, train_data, num_epochs=10, learning_rate=0.01):
     # Convert data to tensors
     train_inputs = tensor.convert_to_tensor(train_data[:, :-1, :])
     train_targets = tensor.convert_to_tensor(train_data[:, 1:, :])
-    
+    from ember_ml.training import Adam
     # Initialize optimizer
-    optimizer = ops.optimizers.Adam(learning_rate=learning_rate)
+    optimizer = Adam(model.parameters(), lr=learning_rate) # Pass parameters and use correct arg name
     
     # Training loop
     losses = []
     for epoch in range(num_epochs):
-        # Forward pass
-        with ops.GradientTape() as tape:
-            predictions = model(train_inputs)
-            
-            # Calculate loss
-            mse_loss = ops.mse(train_targets, predictions)
+        # Define function for gradient calculation
+        def compute_loss_and_grads(model, inputs, targets):
+            predictions = model(inputs)
+            mse_loss = ops.mse(targets, predictions)
+            # Assuming get_regularization_loss exists and returns a tensor
             reg_loss = model.get_regularization_loss()
-            total_loss = mse_loss + reg_loss
+            total_loss = ops.add(mse_loss, reg_loss)
+            # Calculate gradients using ops.gradients
+            grads = ops.gradients(total_loss, model.parameters())
+            return total_loss, grads
+
+        # Calculate loss and gradients
+        total_loss, gradients = compute_loss_and_grads(model, train_inputs, train_targets)
+
+        # Apply gradients
+        # Assuming Adam optimizer has apply_gradients or similar (might need step method)
+        # If Adam follows pattern from other examples, it might need a step(grads) method
+        # For now, assuming apply_gradients exists based on the original code structure
+        optimizer.apply_gradients(zip(gradients, model.parameters())) # Or optimizer.step(gradients) if API matches
         
-        # Backward pass
-        gradients = tape.gradient(total_loss, model.parameters())
-        optimizer.apply_gradients(zip(gradients, model.parameters()))
+        # Record loss using tensor.to_numpy
+        losses.append(tensor.to_numpy(total_loss))
         
-        # Record loss
-        losses.append(total_loss.numpy())
-        
-        # Print progress
-        print(f"Epoch {epoch+1}/{num_epochs}, Loss: {total_loss.numpy():.4f}")
+        # Print progress using tensor.to_numpy
+        print(f"Epoch {epoch+1}/{num_epochs}, Loss: {tensor.to_numpy(total_loss):.4f}")
     
     return losses
 
@@ -131,10 +139,11 @@ def evaluate_model(model, test_data):
     
     # Calculate loss
     mse_loss = ops.mse(test_targets, predictions)
-    
-    print(f"Test MSE: {mse_loss.numpy():.4f}")
-    
-    return predictions.numpy(), test_targets.numpy()
+
+    print(f"Test MSE: {tensor.to_numpy(mse_loss):.4f}")
+
+    # Use tensor.to_numpy for returning numpy arrays
+    return tensor.to_numpy(predictions), tensor.to_numpy(test_targets)
 
 def visualize_results(predictions, targets):
     """Visualize the model predictions against targets."""

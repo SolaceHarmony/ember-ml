@@ -7,6 +7,10 @@ import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 import matplotlib.animation as animation
 from typing import List, Tuple, Optional
+
+from ember_ml import ops
+from ember_ml.nn import tensor
+from ember_ml.nn.tensor.types import TensorLike
 from ..models.multi_sphere import MultiSphereWaveModel
 from .metrics import AnalysisMetrics, MetricsCollector
 
@@ -24,7 +28,7 @@ class WaveMemoryAnalyzer:
         
     def analyze_model(self, 
                      model: MultiSphereWaveModel, 
-                     steps: int = 10) -> Tuple[plt.Figure, np.ndarray, AnalysisMetrics]:
+                     steps: int = 10) -> Tuple[plt.Figure, TensorLike, AnalysisMetrics]:
         """
         Run comprehensive analysis on wave memory model.
         
@@ -48,7 +52,7 @@ class WaveMemoryAnalyzer:
         gating_seq = []
         for t in range(steps):
             if t < 5:  # Input phase
-                wave_0 = np.array([0.0, 0.5, 0.5, 0.0])
+                wave_0 = tensor.convert_to_tensor([0.0, 0.5, 0.5, 0.0])
                 input_waves_seq.append([wave_0, None, None])
                 gating_seq.append([True, False, False])
             else:  # Free evolution phase
@@ -70,7 +74,7 @@ class WaveMemoryAnalyzer:
         
         return fig, history, metrics
     
-    def create_visualization(self, history: np.ndarray) -> plt.Figure:
+    def create_visualization(self, history: TensorLike) -> plt.Figure:
         """
         Create comprehensive visualization of wave dynamics.
         
@@ -96,7 +100,7 @@ class WaveMemoryAnalyzer:
         plt.subplots_adjust(top=0.95, bottom=0.05, left=0.1, right=0.9)
         return fig
     
-    def _plot_component_evolution(self, ax: plt.Axes, history: np.ndarray):
+    def _plot_component_evolution(self, ax: plt.Axes, history: TensorLike):
         """Plot evolution of wave components over time."""
         steps = len(history)
         colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728']
@@ -113,14 +117,14 @@ class WaveMemoryAnalyzer:
         ax.set_ylabel('Component Value')
         ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
         
-    def _plot_phase_space(self, ax: plt.Axes, history: np.ndarray):
+    def _plot_phase_space(self, ax: plt.Axes, history: TensorLike):
         """Plot phase space trajectories."""
         for sphere_id in range(history.shape[1]):
             phase_angles = np.arctan2(
                 np.linalg.norm(history[:, sphere_id, 1:], axis=1),
                 history[:, sphere_id, 0]
             )
-            energies = np.sum(history[:, sphere_id]**2, axis=1)
+            energies = ops.stats.sum(history[:, sphere_id]**2, axis=1)
             sc = ax.scatter(phase_angles, energies, 
                           c=range(len(phase_angles)),
                           cmap='viridis', 
@@ -132,11 +136,11 @@ class WaveMemoryAnalyzer:
         ax.set_ylabel('Energy')
         ax.legend()
         
-    def _plot_energy_distribution(self, ax: plt.Axes, history: np.ndarray):
+    def _plot_energy_distribution(self, ax: plt.Axes, history: TensorLike):
         """Plot energy distribution over time."""
         steps = len(history)
         for sphere_id in range(history.shape[1]):
-            energies = [np.sum(state**2) for state in history[:, sphere_id]]
+            energies = [ops.stats.sum(state**2) for state in history[:, sphere_id]]
             ax.plot(range(steps), energies, label=f'Sphere {sphere_id}')
             
         ax.set_title('Energy Distribution')
@@ -144,7 +148,7 @@ class WaveMemoryAnalyzer:
         ax.set_ylabel('Energy')
         ax.legend()
         
-    def _plot_phase_correlations(self, ax: plt.Axes, history: np.ndarray):
+    def _plot_phase_correlations(self, ax: plt.Axes, history: TensorLike):
         """Plot phase correlations between adjacent spheres."""
         steps = len(history)
         for i in range(history.shape[1]-1):
@@ -162,7 +166,7 @@ class WaveMemoryAnalyzer:
         ax.set_ylabel('Phase Difference')
         ax.legend()
         
-    def _plot_state_space(self, ax: plt.Axes, history: np.ndarray):
+    def _plot_state_space(self, ax: plt.Axes, history: TensorLike):
         """Plot state space projection."""
         markers = ['o', 's', '^']
         for sphere_id in range(history.shape[1]):
@@ -180,10 +184,10 @@ class WaveMemoryAnalyzer:
         ax.set_ylabel('Y Component')
         ax.legend()
         
-    def _plot_interference_patterns(self, ax: plt.Axes, history: np.ndarray):
+    def _plot_interference_patterns(self, ax: plt.Axes, history: TensorLike):
         """Plot interference pattern heatmap."""
         steps = len(history)
-        interference = np.zeros((steps, history.shape[1]))
+        interference = tensor.zeros((steps, history.shape[1]))
         
         for t in range(steps):
             for i in range(history.shape[1]):
@@ -200,12 +204,12 @@ class WaveMemoryAnalyzer:
         ax.set_yticks(range(history.shape[1]))
         ax.set_yticklabels([f'Sphere {i}' for i in range(history.shape[1])])
         
-    def _plot_energy_transfer(self, ax: plt.Axes, history: np.ndarray):
+    def _plot_energy_transfer(self, ax: plt.Axes, history: TensorLike):
         """Plot energy transfer between time steps."""
         steps = len(history)
         for sphere_id in range(history.shape[1]):
             energy_transfer = np.diff(
-                [np.sum(state**2) for state in history[:, sphere_id]]
+                [ops.stats.sum(state**2) for state in history[:, sphere_id]]
             )
             ax.plot(range(1, steps), energy_transfer, 
                    label=f'Sphere {sphere_id}')
@@ -215,13 +219,13 @@ class WaveMemoryAnalyzer:
         ax.set_ylabel('Energy Transfer')
         ax.legend()
         
-    def _plot_combined_analysis(self, ax: plt.Axes, history: np.ndarray):
+    def _plot_combined_analysis(self, ax: plt.Axes, history: TensorLike):
         """Plot combined system analysis metrics."""
         steps = len(history)
         
         # Calculate total energy and phase coherence
         total_energy = [
-            np.sum([np.sum(state**2) for state in timestep]) / history.shape[1]
+            ops.stats.sum([ops.stats.sum(state**2) for state in timestep]) / history.shape[1]
             for timestep in history
         ]
         
@@ -247,7 +251,7 @@ class WaveMemoryAnalyzer:
         ax.set_ylabel('Normalized Value')
         ax.legend()
         
-    def animate_model(self, history: np.ndarray) -> animation.FuncAnimation:
+    def animate_model(self, history: TensorLike) -> animation.FuncAnimation:
         """
         Create animation of wave evolution.
         

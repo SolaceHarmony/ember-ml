@@ -7,7 +7,7 @@ This module provides utilities for converting between different wave representat
 import numpy as np
 from typing import Union, List, Tuple, Optional
 
-def pcm_to_float(pcm_data: np.ndarray, dtype: np.dtype = np.float32) -> np.ndarray:
+def pcm_to_float(pcm_data: TensorLike, dtype: np.dtype = np.float32) -> TensorLike:
     """
     Convert PCM data to floating point representation.
     
@@ -32,7 +32,7 @@ def pcm_to_float(pcm_data: np.ndarray, dtype: np.dtype = np.float32) -> np.ndarr
     
     return (pcm_data.astype(dtype) - offset) / abs_max
 
-def float_to_pcm(float_data: np.ndarray, dtype: np.dtype = np.int16) -> np.ndarray:
+def float_to_pcm(float_data: TensorLike, dtype: np.dtype = np.int16) -> TensorLike:
     """
     Convert floating point data to PCM representation.
     
@@ -57,7 +57,7 @@ def float_to_pcm(float_data: np.ndarray, dtype: np.dtype = np.int16) -> np.ndarr
     
     return (float_data * abs_max + offset).clip(i.min, i.max).astype(dtype)
 
-def pcm_to_db(pcm_data: np.ndarray, ref: float = 1.0, min_db: float = -80.0) -> np.ndarray:
+def pcm_to_db(pcm_data: TensorLike, ref: float = 1.0, min_db: float = -80.0) -> TensorLike:
     """
     Convert PCM data to decibels.
     
@@ -71,10 +71,10 @@ def pcm_to_db(pcm_data: np.ndarray, ref: float = 1.0, min_db: float = -80.0) -> 
     """
     float_data = pcm_to_float(pcm_data)
     power = np.abs(float_data) ** 2
-    db = 10 * np.log10(np.maximum(power, 1e-10) / ref)
-    return np.maximum(db, min_db)
+    db = 10 * np.log10(ops.stats.maximum(power, 1e-10) / ref)
+    return ops.stats.maximum(db, min_db)
 
-def db_to_amplitude(db: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+def db_to_amplitude(db: Union[float, TensorLike]) -> Union[float, TensorLike]:
     """
     Convert decibels to amplitude.
     
@@ -86,7 +86,7 @@ def db_to_amplitude(db: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
     """
     return 10 ** (db / 20)
 
-def amplitude_to_db(amplitude: Union[float, np.ndarray], min_db: float = -80.0) -> Union[float, np.ndarray]:
+def amplitude_to_db(amplitude: Union[float, TensorLike], min_db: float = -80.0) -> Union[float, TensorLike]:
     """
     Convert amplitude to decibels.
     
@@ -97,10 +97,10 @@ def amplitude_to_db(amplitude: Union[float, np.ndarray], min_db: float = -80.0) 
     Returns:
         Decibel value
     """
-    db = 20 * np.log10(np.maximum(np.abs(amplitude), 1e-10))
-    return np.maximum(db, min_db)
+    db = 20 * np.log10(ops.stats.maximum(np.abs(amplitude), 1e-10))
+    return ops.stats.maximum(db, min_db)
 
-def pcm_to_binary(pcm_data: np.ndarray, threshold: float = 0.0) -> np.ndarray:
+def pcm_to_binary(pcm_data: TensorLike, threshold: float = 0.0) -> TensorLike:
     """
     Convert PCM data to binary representation.
     
@@ -114,7 +114,7 @@ def pcm_to_binary(pcm_data: np.ndarray, threshold: float = 0.0) -> np.ndarray:
     float_data = pcm_to_float(pcm_data)
     return (float_data > threshold).astype(np.int8)
 
-def binary_to_pcm(binary_data: np.ndarray, amplitude: float = 1.0, dtype: np.dtype = np.int16) -> np.ndarray:
+def binary_to_pcm(binary_data: TensorLike, amplitude: float = 1.0, dtype: np.dtype = np.int16) -> TensorLike:
     """
     Convert binary data to PCM representation.
     
@@ -130,7 +130,7 @@ def binary_to_pcm(binary_data: np.ndarray, amplitude: float = 1.0, dtype: np.dty
     float_data *= amplitude
     return float_to_pcm(float_data, dtype)
 
-def pcm_to_phase(pcm_data: np.ndarray) -> np.ndarray:
+def pcm_to_phase(pcm_data: TensorLike) -> TensorLike:
     """
     Convert PCM data to phase representation.
     
@@ -143,7 +143,7 @@ def pcm_to_phase(pcm_data: np.ndarray) -> np.ndarray:
     float_data = pcm_to_float(pcm_data)
     return np.angle(np.fft.fft(float_data))
 
-def phase_to_pcm(phase_data: np.ndarray, magnitude: Optional[np.ndarray] = None, dtype: np.dtype = np.int16) -> np.ndarray:
+def phase_to_pcm(phase_data: TensorLike, magnitude: Optional[TensorLike] = None, dtype: np.dtype = np.int16) -> TensorLike:
     """
     Convert phase data to PCM representation.
     
@@ -156,7 +156,7 @@ def phase_to_pcm(phase_data: np.ndarray, magnitude: Optional[np.ndarray] = None,
         PCM representation
     """
     if magnitude is None:
-        magnitude = np.ones_like(phase_data)
+        magnitude = tensor.ones_like(phase_data)
     
     complex_data = magnitude * np.exp(1j * phase_data)
     float_data = np.real(np.fft.ifft(complex_data))

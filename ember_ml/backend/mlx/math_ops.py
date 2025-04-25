@@ -10,8 +10,6 @@ from typing import Union, Optional, List, Tuple, Literal
 from ember_ml.backend.mlx.tensor.ops import cast
 from ember_ml.backend.mlx.tensor import MLXDType
 from ember_ml.backend.mlx.types import TensorLike, ShapeLike
-# We avoid creating global instances to prevent circular imports
-# Each function will create its own instances when needed
 
 def gather(x: TensorLike, indices: TensorLike, axis: int = 0) -> mx.array:
     """
@@ -525,6 +523,44 @@ def floor_divide(x: TensorLike, y: TensorLike) -> mx.array:
     return mx.floor_divide(x_tensor, y_tensor)
 
 
+def floor(x: TensorLike) -> mx.array:
+    """
+    Return the floor of the input, element-wise.
+    
+    The floor of the scalar x is the largest integer i, such that i <= x.
+    
+    Args:
+        x: Input array
+        
+    Returns:
+        Element-wise floor of the input
+    """
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    x_tensor = MLXTensor().convert_to_tensor(x)
+    
+    # Use floor from MLX
+    return mx.floor(x_tensor)
+
+
+def ceil(x: TensorLike) -> mx.array:
+    """
+    Return the ceiling of the input, element-wise.
+    
+    The ceiling of the scalar x is the smallest integer i, such that i >= x.
+    
+    Args:
+        x: Input array
+        
+    Returns:
+        Element-wise ceiling of the input
+    """
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    x_tensor = MLXTensor().convert_to_tensor(x)
+    
+    # Use ceil from MLX
+    return mx.ceil(x_tensor)
+
+
 def min(x: TensorLike, axis: Optional[ShapeLike] = None, keepdims: bool = False) -> mx.array:
     """
     Compute the minimum value of an MLX array along specified axes.
@@ -817,21 +853,20 @@ def _calculate_pi_value(precision_digits=15):
     pi_approx = mx.divide(numerator, T)
     eval_pi = np.ndarray(pi_approx.astype(pi_approx.dtype).shape, dtype=np.float32)
     # Return as MLX array with shape (1,)
-    return mx.reshape(pi_approx, (1,))
+    return pi_approx
 
 # Calculate pi with appropriate precision for MLX (float32)
 # Ensure it's a scalar with shape (1,) as per MLX conventions
 PI_CONSTANT = _calculate_pi_value(15)  # Increased precision to match reference value
 
-pi : mx.array = mx.array(PI_CONSTANT, dtype=mx.float32)
-
+pi = PI_CONSTANT
 
 
 def binary_split(a: TensorLike, b: TensorLike) -> Tuple[mx.array, mx.array]:
     """
     Recursive binary split for the Chudnovsky algorithm.
     
-    This is used in the implementation of PI calculation for the PyTorch backend.
+    This is used in the implementation of PI calculation for the MLX backend.
     
     Args:
         a: Start value

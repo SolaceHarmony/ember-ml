@@ -177,20 +177,22 @@ def pendulum_dynamics(state, action, dt=0.01, g=9.8, m=1.0, l=1.0, b=0.1):
     theta, theta_dot = state
     
     # Compute acceleration
-    theta_ddot = (action - b * theta_dot - m * g * l * ops.sin(theta)) / (m * l**2)
+    # theta_ddot = (action - b * theta_dot - m * g * l * ops.sin(theta)) / (m * l**2)
+    term1 = ops.subtract(action, ops.multiply(b, theta_dot))
+    term2 = ops.multiply(ops.multiply(ops.multiply(m, g), l), ops.sin(theta))
+    numerator = ops.subtract(term1, term2)
+    denominator = ops.multiply(m, ops.power(l, 2))
+    theta_ddot = ops.divide(numerator, denominator)
     
     # Update state
-    new_theta = theta + theta_dot * dt
-    new_theta_dot = theta_dot + theta_ddot * dt
+    new_theta = ops.add(theta, ops.multiply(theta_dot, dt)) # Use ops.add, ops.multiply
+    new_theta_dot = ops.add(theta_dot, ops.multiply(theta_ddot, dt)) # Use ops.add, ops.multiply
     
-    # Normalize angle to [-pi, pi]
-    new_theta = ops.subtract(
-        new_theta,
-        ops.multiply(
-            2 * ops.pi,
-            ops.floor(ops.add(ops.divide(new_theta, 2 * ops.pi), 0.5))
-        )
-    )
+    # Normalize angle to [-pi, pi] using ops functions
+    two_pi = ops.multiply(2.0, ops.pi)
+    normalized_angle = ops.add(ops.divide(new_theta, two_pi), 0.5)
+    floor_val = ops.floor(normalized_angle)
+    new_theta = ops.subtract(new_theta, ops.multiply(two_pi, floor_val))
     
     return tensor.stack([new_theta, new_theta_dot])
 

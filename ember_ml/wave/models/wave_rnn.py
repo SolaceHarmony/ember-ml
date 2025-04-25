@@ -30,22 +30,22 @@ class WaveGRUCell(nn.Module):
         self.bias = bias
         
         # Reset gate
-        self.weight_ir = nn.Parameter(torch.Tensor(input_size, hidden_size))
-        self.weight_hr = nn.Parameter(torch.Tensor(hidden_size, hidden_size))
-        self.bias_ir = nn.Parameter(torch.Tensor(hidden_size)) if bias else None
-        self.bias_hr = nn.Parameter(torch.Tensor(hidden_size)) if bias else None
+        self.weight_ir = nn.Parameter(tensor.convert_to_tensor(input_size, hidden_size))
+        self.weight_hr = nn.Parameter(tensor.convert_to_tensor(hidden_size, hidden_size))
+        self.bias_ir = nn.Parameter(tensor.convert_to_tensor(hidden_size)) if bias else None
+        self.bias_hr = nn.Parameter(tensor.convert_to_tensor(hidden_size)) if bias else None
         
         # Update gate
-        self.weight_iz = nn.Parameter(torch.Tensor(input_size, hidden_size))
-        self.weight_hz = nn.Parameter(torch.Tensor(hidden_size, hidden_size))
-        self.bias_iz = nn.Parameter(torch.Tensor(hidden_size)) if bias else None
-        self.bias_hz = nn.Parameter(torch.Tensor(hidden_size)) if bias else None
+        self.weight_iz = nn.Parameter(tensor.convert_to_tensor(input_size, hidden_size))
+        self.weight_hz = nn.Parameter(tensor.convert_to_tensor(hidden_size, hidden_size))
+        self.bias_iz = nn.Parameter(tensor.convert_to_tensor(hidden_size)) if bias else None
+        self.bias_hz = nn.Parameter(tensor.convert_to_tensor(hidden_size)) if bias else None
         
         # Candidate hidden state
-        self.weight_in = nn.Parameter(torch.Tensor(input_size, hidden_size))
-        self.weight_hn = nn.Parameter(torch.Tensor(hidden_size, hidden_size))
-        self.bias_in = nn.Parameter(torch.Tensor(hidden_size)) if bias else None
-        self.bias_hn = nn.Parameter(torch.Tensor(hidden_size)) if bias else None
+        self.weight_in = nn.Parameter(tensor.convert_to_tensor(input_size, hidden_size))
+        self.weight_hn = nn.Parameter(tensor.convert_to_tensor(hidden_size, hidden_size))
+        self.bias_in = nn.Parameter(tensor.convert_to_tensor(hidden_size)) if bias else None
+        self.bias_hn = nn.Parameter(tensor.convert_to_tensor(hidden_size)) if bias else None
         
         self.reset_parameters()
         
@@ -68,7 +68,7 @@ class WaveGRUCell(nn.Module):
             nn.init.zeros_(self.bias_in)
             nn.init.zeros_(self.bias_hn)
         
-    def forward(self, x: torch.Tensor, h: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: tensor.convert_to_tensor, h: tensor.convert_to_tensor) -> tensor.convert_to_tensor:
         """
         Forward pass.
         
@@ -143,7 +143,7 @@ class WaveGRU(nn.Module):
         
         self.dropout_layer = nn.Dropout(dropout) if dropout > 0.0 else None
         
-    def forward(self, x: torch.Tensor, h: Optional[torch.Tensor] = None) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: tensor.convert_to_tensor, h: Optional[tensor.convert_to_tensor] = None) -> Tuple[tensor.convert_to_tensor, tensor.convert_to_tensor]:
         """
         Forward pass.
         
@@ -272,7 +272,7 @@ class WaveRNN(nn.Module):
         # Output layer
         self.output_layer = nn.Linear(hidden_size * (2 if bidirectional else 1), output_size)
         
-    def forward(self, x: torch.Tensor, h: Optional[torch.Tensor] = None) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: tensor.convert_to_tensor, h: Optional[tensor.convert_to_tensor] = None) -> Tuple[tensor.convert_to_tensor, tensor.convert_to_tensor]:
         """
         Forward pass.
         

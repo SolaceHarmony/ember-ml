@@ -34,7 +34,7 @@ class SphereProjection(nn.Module):
         # Projection layer
         self.projection = nn.Linear(input_dim, sphere_dim)
         
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: tensor.convert_to_tensor) -> tensor.convert_to_tensor:
         """
         Forward pass.
         
@@ -86,7 +86,7 @@ class MultiSphereProjection(nn.Module):
             for sphere_dim, radius in zip(sphere_dims, radii)
         ])
         
-    def forward(self, x: torch.Tensor) -> List[torch.Tensor]:
+    def forward(self, x: tensor.convert_to_tensor) -> List[tensor.convert_to_tensor]:
         """
         Forward pass.
         
@@ -146,7 +146,7 @@ class MultiSphereEncoder(nn.Module):
         # Multi-sphere projection
         self.projection = MultiSphereProjection(prev_dim, sphere_dims, radii)
         
-    def forward(self, x: torch.Tensor) -> List[torch.Tensor]:
+    def forward(self, x: tensor.convert_to_tensor) -> List[tensor.convert_to_tensor]:
         """
         Forward pass.
         
@@ -206,7 +206,7 @@ class MultiSphereDecoder(nn.Module):
         
         self.decoder = nn.Sequential(*layers)
         
-    def forward(self, spheres: List[torch.Tensor]) -> torch.Tensor:
+    def forward(self, spheres: List[tensor.convert_to_tensor]) -> tensor.convert_to_tensor:
         """
         Forward pass.
         
@@ -260,7 +260,7 @@ class MultiSphereModel(nn.Module):
         # Decoder
         self.decoder = MultiSphereDecoder(sphere_dims, hidden_dims[::-1], output_dim, activation, dropout)
         
-    def forward(self, x: torch.Tensor) -> Dict[str, Any]:
+    def forward(self, x: tensor.convert_to_tensor) -> Dict[str, Any]:
         """
         Forward pass.
         
@@ -283,7 +283,7 @@ class MultiSphereModel(nn.Module):
             'spheres': spheres
         }
     
-    def encode(self, x: torch.Tensor) -> List[torch.Tensor]:
+    def encode(self, x: tensor.convert_to_tensor) -> List[tensor.convert_to_tensor]:
         """
         Encode input to multiple spheres.
         
@@ -295,7 +295,7 @@ class MultiSphereModel(nn.Module):
         """
         return self.encoder(x)
     
-    def decode(self, spheres: List[torch.Tensor]) -> torch.Tensor:
+    def decode(self, spheres: List[tensor.convert_to_tensor]) -> tensor.convert_to_tensor:
         """
         Decode from multiple spheres.
         
@@ -329,7 +329,7 @@ class SphericalHarmonics(nn.Module):
         self.num_harmonics = self._calculate_num_harmonics()
         
         # Weights for harmonics
-        self.weights = nn.Parameter(torch.Tensor(self.num_harmonics))
+        self.weights = nn.Parameter(tensor.convert_to_tensor(self.num_harmonics))
         self.reset_parameters()
         
     def _calculate_num_harmonics(self) -> int:
@@ -356,7 +356,7 @@ class SphericalHarmonics(nn.Module):
         """
         nn.init.normal_(self.weights, mean=0.0, std=0.1)
     
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: tensor.convert_to_tensor) -> tensor.convert_to_tensor:
         """
         Forward pass.
         
@@ -463,7 +463,7 @@ class MultiSphereHarmonicModel(nn.Module):
         
         self.decoder = nn.Sequential(*decoder_layers)
         
-    def forward(self, x: torch.Tensor) -> Dict[str, Any]:
+    def forward(self, x: tensor.convert_to_tensor) -> Dict[str, Any]:
         """
         Forward pass.
         
@@ -559,7 +559,7 @@ class MultiSphereWaveModel(nn.Module):
             nn.Linear(hidden_dims[0], input_dim * sequence_length)
         )
         
-    def forward(self, x: torch.Tensor) -> Dict[str, Any]:
+    def forward(self, x: tensor.convert_to_tensor) -> Dict[str, Any]:
         """
         Forward pass.
         
@@ -603,7 +603,7 @@ class MultiSphereWaveModel(nn.Module):
             'reconstructed_sequence': reconstructed_sequence
         }
     
-    def encode(self, x: torch.Tensor) -> List[torch.Tensor]:
+    def encode(self, x: tensor.convert_to_tensor) -> List[tensor.convert_to_tensor]:
         """
         Encode input to multiple spheres.
         
@@ -625,7 +625,7 @@ class MultiSphereWaveModel(nn.Module):
         # Encode to multiple spheres
         return self.sphere_encoder(pooled)
     
-    def process_spheres(self, spheres: List[torch.Tensor]) -> List[torch.Tensor]:
+    def process_spheres(self, spheres: List[tensor.convert_to_tensor]) -> List[tensor.convert_to_tensor]:
         """
         Apply wave-specific processing on spheres.
         
@@ -637,7 +637,7 @@ class MultiSphereWaveModel(nn.Module):
         """
         return [processor(sphere) for processor, sphere in zip(self.sphere_processors, spheres)]
     
-    def decode(self, spheres: List[torch.Tensor]) -> torch.Tensor:
+    def decode(self, spheres: List[tensor.convert_to_tensor]) -> tensor.convert_to_tensor:
         """
         Decode from multiple spheres.
         
@@ -649,7 +649,7 @@ class MultiSphereWaveModel(nn.Module):
         """
         return self.decoder(spheres)
     
-    def reconstruct_sequence(self, output: torch.Tensor, batch_size: int) -> torch.Tensor:
+    def reconstruct_sequence(self, output: tensor.convert_to_tensor, batch_size: int) -> tensor.convert_to_tensor:
         """
         Reconstruct sequence from output.
         

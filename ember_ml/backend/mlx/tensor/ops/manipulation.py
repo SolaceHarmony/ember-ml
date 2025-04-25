@@ -1,7 +1,7 @@
 """MLX tensor manipulation operations."""
 
 import mlx.core as mx
-from typing import Optional,Union
+from typing import Optional,Union, List
 
 from ember_ml.backend.mlx.types import TensorLike,ShapeLike,Shape
 
@@ -66,6 +66,61 @@ def concatenate(tensors: list[TensorLike], axis: Optional[int]=0):
     Tensor = MLXTensor()
 
     return mx.concatenate([Tensor.convert_to_tensor(arr) for arr in tensors], axis=axis)
+
+def vstack(tensors: List[TensorLike]) -> mx.array:
+    """
+    Stack arrays vertically (row wise).
+    
+    This is equivalent to concatenation along the first axis after 1-D arrays
+    of shape (N,) have been reshaped to (1,N). Rebuilds arrays divided by vsplit.
+    
+    Args:
+        tensors: Sequence of arrays
+        
+    Returns:
+        Stacked MLX array
+    """
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    Tensor = MLXTensor()
+    
+    # Convert to MLX arrays
+    mlx_tensors = []
+    for t in tensors:
+        tensor = Tensor.convert_to_tensor(t)
+        # If 1D tensor, reshape to (1, N)
+        if len(tensor.shape) == 1:
+            tensor = mx.reshape(tensor, (1, -1))
+        mlx_tensors.append(tensor)
+    
+    # Concatenate along the first axis
+    return mx.concatenate(mlx_tensors, axis=0)
+
+def hstack(tensors: List[TensorLike]) -> mx.array:
+    """
+    Stack arrays horizontally (column wise).
+    
+    This is equivalent to concatenation along the second axis, except for 1-D
+    arrays where it concatenates along the first axis. Rebuilds arrays divided by hsplit.
+    
+    Args:
+        tensors: Sequence of arrays
+        
+    Returns:
+        Stacked MLX array
+    """
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    Tensor = MLXTensor()
+    
+    # Convert to MLX arrays
+    mlx_tensors = [Tensor.convert_to_tensor(t) for t in tensors]
+    
+    # Check if tensors are 1D
+    if all(len(t.shape) == 1 for t in mlx_tensors):
+        # For 1D tensors, concatenate along axis 0
+        return mx.concatenate(mlx_tensors, axis=0)
+    else:
+        # For nD tensors, concatenate along axis 1
+        return mx.concatenate(mlx_tensors, axis=1)
 
 def stack(tensors : list[TensorLike], axis: Optional[int]=0):
     """

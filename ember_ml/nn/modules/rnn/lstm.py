@@ -233,7 +233,7 @@ class LSTM(Module):
                     z = ops.add(z, bias)
                 
                 # Split into gates
-                z_chunks = tensor.split(z, 4, axis=-1)
+                z_chunks = tensor.split_tensor(z, 4, axis=-1)
                 z_i, z_f, z_o, z_c = z_chunks
                 
                 # Apply activations
@@ -276,7 +276,7 @@ class LSTM(Module):
                         z = ops.add(z, backward_bias)
                     
                     # Split into gates
-                    z_chunks = tensor.split(z, 4, axis=-1)
+                    z_chunks = tensor.split_tensor(z, 4, axis=-1)
                     z_i, z_f, z_o, z_c = z_chunks
                     
                     # Apply activations

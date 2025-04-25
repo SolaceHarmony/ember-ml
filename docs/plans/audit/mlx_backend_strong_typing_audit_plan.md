@@ -11,7 +11,6 @@ From examining the files:
 1. **Type Definitions**: The `typing.py` file defines standard type aliases like `TensorLike`, `Scalar`, `Vector`, etc.
 2. **Tensor Operations**: The `tensor/ops/utility.py` file implements type validation and conversion
 3. **Math Operations**: The `math_ops.py` file implements mathematical operations with type annotations
-4. **Solver Operations**: The `solver_ops.py` file implements solver operations with type annotations
 
 ## Key Components to Audit
 
@@ -62,13 +61,6 @@ From examining the files:
 - [x] Verify all math functions validate input types using `Tensor.convert_to_tensor`
 - [x] Verify all math functions return `mx.array`
 - [x] Verify the `MLXMathOps` class implements all required methods
-
-### 4. Solver Operations (`solver_ops.py`)
-
-- [x] Verify all solver functions have proper type annotations
-- [x] Verify all solver functions validate input types using `Tensor.convert_to_tensor`
-- [x] Verify all solver functions return `mx.array` or appropriate tuple
-- [x] Verify the `MLXSolverOps` class implements all required methods
 
 ## Implementation Plan
 
@@ -130,7 +122,7 @@ For each file, we'll perform the following steps:
 
 ## Implementation Pattern
 
-Based on the audit of `math_ops.py` and `solver_ops.py`, we can identify the following pattern for implementing strong typing:
+Based on the audit of `math_ops.py`, we can identify the following pattern for implementing strong typing:
 
 ```python
 def function_name(x: Optional[Union[int, float, list, tuple, np.ndarray, mx.array, MLXTensor]], 
@@ -162,6 +154,6 @@ This pattern ensures that:
 
 ## Conclusion
 
-The MLX backend strong typing implementation is critical for ensuring type safety while maintaining GPU acceleration. By consistently applying the patterns seen in `math_ops.py` and `solver_ops.py` to all other MLX backend files, we can ensure a consistent and type-safe API.
+The MLX backend strong typing implementation is critical for ensuring type safety while maintaining GPU acceleration. By consistently applying the patterns seen in `math_ops.py`  to all other MLX backend files, we can ensure a consistent and type-safe API.
 
 The key insight is that we need to preserve native backend tensor types (mx.array) throughout the computation pipeline to maintain performance, while still providing a consistent API through proper type validation and conversion.

@@ -8,7 +8,7 @@ from ember_ml.nn import tensor
 from ember_ml.nn.tensor import EmberTensor, zeros, ones, reshape, concatenate, to_numpy, convert_to_tensor
 from ember_ml.nn.tensor import float32, shape, cast, arange, stack, pad, full
 from ember_ml.nn.modules import AutoNCP # Updated import path
-from ember_ml.nn.modules.rnn.stride_aware_cell import StrideAwareCell
+from ember_ml.nn.modules.rnn.stride_aware import StrideAwareCell
 from ember_ml.nn.modules.rnn.rnn import RNN
 from ember_ml.nn.initializers import glorot_uniform
 from ember_ml.nn.tensor import EmberTensor
@@ -282,7 +282,7 @@ def visualize_multiscale_dynamics(model, test_inputs, test_y, stride_perspective
     ax2 = fig.add_subplot(2, 2, 2)
     for stride, output in intermediate_outputs:
         # Take the mean activation across samples
-        mean_activation = ops.mean(output, axis=0)
+        mean_activation = ops.stats.mean(output, axis=0)
         ax2.plot(to_numpy(mean_activation), label=f"Stride {stride}")
     ax2.set_title("Mean Activation Patterns Across Strides")
     ax2.set_xlabel("Neuron Index")
@@ -441,9 +441,9 @@ def integrate_liquid_neurons_with_visualization(
         val_size = shape(val_one_hot.data)[0]
         
         # Use slice instead of direct indexing
-        train_y_pca = slice(all_transformed, [0, 0], [train_size, -1])
-        val_y_pca = slice(all_transformed, [train_size, 0], [val_size, -1])
-        test_y_pca = slice(all_transformed, [train_size + val_size, 0], [-1, -1])
+        train_y_pca = tensor.slice_tensor(all_transformed, [0, 0], [train_size, -1])
+        val_y_pca = tensor.slice_tensor(all_transformed, [train_size, 0], [val_size, -1])
+        test_y_pca = tensor.slice_tensor(all_transformed, [train_size + val_size, 0], [-1, -1])
         
         # Convert to float32
         train_y = cast(train_y_pca, 'float32')
@@ -516,8 +516,8 @@ def integrate_liquid_neurons_with_visualization(
             end_idx = min((batch + 1) * batch_size, shape(train_X)[0])
             
             # Get batch inputs
-            batch_inputs = {s: slice(train_inputs[s], [start_idx, 0], [end_idx - start_idx, -1]) for s in train_inputs}
-            batch_y = slice(train_y, [start_idx, 0], [end_idx - start_idx, -1])
+            batch_inputs = {s: tensor.slice_tensor(train_inputs[s], [start_idx, 0], [end_idx - start_idx, -1]) for s in train_inputs}
+            batch_y = tensor.slice_tensor(train_y, [start_idx, 0], [end_idx - start_idx, -1])
             
             # Forward pass
             outputs = model['outputs']['main']
@@ -549,8 +549,8 @@ def integrate_liquid_neurons_with_visualization(
             end_idx = min((batch + 1) * batch_size, shape(val_X)[0])
             
             # Get batch inputs
-            batch_inputs = {s: slice(val_inputs[s], [start_idx, 0], [end_idx - start_idx, -1]) for s in val_inputs}
-            batch_y = slice(val_y, [start_idx, 0], [end_idx - start_idx, -1])
+            batch_inputs = {s: tensor.slice_tensor(val_inputs[s], [start_idx, 0], [end_idx - start_idx, -1]) for s in val_inputs}
+            batch_y = tensor.slice_tensor(val_y, [start_idx, 0], [end_idx - start_idx, -1])
             
             # Forward pass
             outputs = model['outputs']['main']
@@ -591,8 +591,8 @@ def integrate_liquid_neurons_with_visualization(
         end_idx = min((batch + 1) * batch_size, shape(test_X)[0])
         
         # Get batch inputs
-        batch_inputs = {s: slice(test_inputs[s], [start_idx, 0], [end_idx - start_idx, -1]) for s in test_inputs}
-        batch_y = slice(test_y, [start_idx, 0], [end_idx - start_idx, -1])
+        batch_inputs = {s: tensor.slice_tensor(test_inputs[s], [start_idx, 0], [end_idx - start_idx, -1]) for s in test_inputs}
+        batch_y = tensor.slice_tensor(test_y, [start_idx, 0], [end_idx - start_idx, -1])
         
         # Forward pass
         outputs = model['outputs']['main']

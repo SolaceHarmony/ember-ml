@@ -217,8 +217,8 @@ class RBM:
         
         # Compute gradients
         weights_gradient = ops.divide(ops.subtract(pos_associations, neg_associations), batch_size)
-        visible_bias_gradient = ops.mean(ops.subtract(batch_data, neg_visible_states), axis=0)
-        hidden_bias_gradient = ops.mean(ops.subtract(pos_hidden_probs, neg_hidden_probs), axis=0)
+        visible_bias_gradient = ops.stats.mean(ops.subtract(batch_data, neg_visible_states), axis=0)
+        hidden_bias_gradient = ops.stats.mean(ops.subtract(pos_hidden_probs, neg_hidden_probs), axis=0)
         
         # Update with momentum and weight decay
         self.weights_momentum = ops.add(
@@ -252,7 +252,7 @@ class RBM:
         )
         
         # Compute reconstruction error
-        reconstruction_error = ops.mean(
+        reconstruction_error = ops.stats.mean(
             ops.stats.sum(ops.pow(ops.subtract(batch_data, neg_visible_probs), 2), axis=1)
         )
         
@@ -415,7 +415,7 @@ class RBM:
         if per_sample:
             return squared_error
         
-        return ops.mean(squared_error)
+        return ops.stats.mean(squared_error)
     
     def free_energy(self, data):
         """

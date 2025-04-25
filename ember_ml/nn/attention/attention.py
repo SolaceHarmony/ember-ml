@@ -6,11 +6,9 @@ LTC dynamics with an attention mechanism for adaptive behavior.
 """
 
 from typing import Optional
-import numpy as np
 
-# Corrected import path for CausalAttention
-# Import from within the nn.attention package now
-from .mechanisms.mechanism import CausalAttention
+# Use absolute import instead of relative import
+from ember_ml.nn.attention.mechanisms.mechanism import CausalAttention
 
 
 class LTCNeuronWithAttention:
@@ -69,8 +67,14 @@ class LTCNeuronWithAttention:
             3. Modulate time constant based on attention
             4. Update state using attention-weighted input
         """
+        # Import ops and tensor here to avoid circular imports
+        from ember_ml import ops
+        from ember_ml.nn import tensor
+        
         # Calculate prediction error
-        prediction_error = input_signal - self.last_prediction
+        input_tensor = tensor.convert_to_tensor(input_signal, tensor.float32)
+        last_pred_tensor = tensor.convert_to_tensor(self.last_prediction, tensor.float32)
+        prediction_error = ops.subtract(input_tensor, last_pred_tensor)
         
         # Update attention
         attention_value = self.attention.update(
@@ -82,13 +86,18 @@ class LTCNeuronWithAttention:
         
         # Modulate time constant based on attention
         # Higher attention -> faster response (smaller effective tau)
-        effective_tau = self.tau * (1.0 - 0.3 * attention_value)
+        attention_factor = ops.multiply(tensor.convert_to_tensor(0.3), attention_value)
+        one_minus_factor = ops.subtract(tensor.convert_to_tensor(1.0), attention_factor)
+        effective_tau = ops.multiply(self.tau, one_minus_factor)
         
         # Update LTC dynamics with attention-modulated input
-        d_state = (1.0/effective_tau) * (
-            # Attention increases input influence
-            input_signal * (1.0 + attention_value) - self.state
-        ) * dt
+        inv_tau = ops.divide(tensor.convert_to_tensor(1.0), effective_tau)
+        attention_plus_one = ops.add(tensor.convert_to_tensor(1.0), attention_value)
+        weighted_input = ops.multiply(input_signal, attention_plus_one)
+        state_tensor = tensor.convert_to_tensor(self.state, tensor.float32)
+        input_minus_state = ops.subtract(weighted_input, state_tensor)
+        d_state_factor = ops.multiply(inv_tau, input_minus_state)
+        d_state = ops.multiply(d_state_factor, dt)
         
         # Update state
         self.state += d_state
@@ -110,10 +119,11 @@ class LTCNeuronWithAttention:
         Returns:
             float: Current attention value
         """
-        return self.attention.states.get(
-            self.id,
-            self.attention.states.get(self.id)
-        ).compute_total()
+        # Get the attention state for this neuron, or return 0.0 if not found
+        attention_state = self.attention.states.get(self.id)
+        if attention_state is None:
+            return 0.0
+        return attention_state.compute_total()
     
     def __repr__(self) -> str:
         """

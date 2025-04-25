@@ -10,7 +10,8 @@ from ember_ml.backend.torch.tensor.ops.creation import (
     zeros, ones, eye, zeros_like, ones_like, full, full_like, arange, linspace, meshgrid # Add meshgrid
 )
 from ember_ml.backend.torch.tensor.ops.manipulation import (
-    reshape, transpose, concatenate, stack, split, expand_dims, squeeze, tile, pad
+    reshape, transpose, concatenate, stack, split, expand_dims, squeeze, tile, pad,
+    vstack, hstack
 )
 from ember_ml.backend.torch.tensor.ops.indexing import (
     slice_tensor, slice_update, gather, tensor_scatter_nd_update, scatter, nonzero, index_update
@@ -21,7 +22,7 @@ from ember_ml.backend.torch.tensor.ops.utility import (
 )
 from ember_ml.backend.torch.tensor.ops.random import (
     random_normal, random_uniform, random_binomial, random_gamma, random_exponential,
-    random_poisson, random_categorical, random_permutation, shuffle, set_seed, get_seed
+    random_poisson, random_categorical, random_permutation, shuffle, random_shuffle, set_seed, get_seed
 )
 
 # Define the list of symbols to export
@@ -52,6 +53,8 @@ __all__ = [
     'squeeze',
     'tile',
     'pad',
+    'vstack',
+    'hstack',
 
     # Indexing operations
     'slice_tensor',
@@ -84,6 +87,7 @@ __all__ = [
     'random_categorical',
     'random_permutation',
     'shuffle',
+    'random_shuffle',
     'set_seed',
     'get_seed',
 ]

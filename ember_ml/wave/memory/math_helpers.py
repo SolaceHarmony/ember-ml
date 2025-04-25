@@ -6,7 +6,11 @@ Provides core operations for vector manipulation and wave calculations.
 import numpy as np
 from typing import List, Tuple, Union, Optional
 
-def normalize_vector(vec: np.ndarray, epsilon: float = 1e-12) -> np.ndarray:
+from ember_ml import ops
+from ember_ml.nn import tensor
+from ember_ml.nn.tensor.types import TensorLike
+
+def normalize_vector(vec: TensorLike, epsilon: float = 1e-12) -> TensorLike:
     """
     Normalize a vector to unit length.
     
@@ -20,9 +24,9 @@ def normalize_vector(vec: np.ndarray, epsilon: float = 1e-12) -> np.ndarray:
     norm = np.linalg.norm(vec)
     if norm > epsilon:
         return vec / norm
-    return np.array([1.0, 0.0, 0.0, 0.0])  # Default 4D unit vector
+    return tensor.convert_to_tensor([1.0, 0.0, 0.0, 0.0])  # Default 4D unit vector
 
-def compute_phase_angle(vec: np.ndarray) -> float:
+def compute_phase_angle(vec: TensorLike) -> float:
     """
     Compute phase angle between first component and remaining components.
     
@@ -34,7 +38,7 @@ def compute_phase_angle(vec: np.ndarray) -> float:
     """
     return np.arctan2(np.linalg.norm(vec[1:]), vec[0])
 
-def compute_energy(vec: np.ndarray) -> float:
+def compute_energy(vec: TensorLike) -> float:
     """
     Compute energy (squared L2 norm) of a vector.
     
@@ -44,12 +48,12 @@ def compute_energy(vec: np.ndarray) -> float:
     Returns:
         Energy value
     """
-    return np.sum(vec**2)
+    return ops.stats.sum(vec**2)
 
-def partial_interference(base: np.ndarray, 
-                       new: np.ndarray, 
+def partial_interference(base: TensorLike, 
+                       new: TensorLike, 
                        alpha: float,
-                       epsilon: float = 1e-12) -> np.ndarray:
+                       epsilon: float = 1e-12) -> TensorLike:
     """
     Compute partial interference between two vectors.
     
@@ -66,7 +70,7 @@ def partial_interference(base: np.ndarray,
     new = normalize_vector(new)
     
     # Compute dot product and angle
-    dot_prod = np.clip(np.dot(base, new), -1.0, 1.0)
+    dot_prod = ops.clip(np.dot(base, new), -1.0, 1.0)
     angle = np.arccos(dot_prod)
     
     if angle < epsilon:
@@ -85,10 +89,10 @@ def partial_interference(base: np.ndarray,
     
     # Return interpolated vector
     return normalize_vector(
-        base * np.cos(angle) + direction * np.sin(angle)
+        base * np.cos(angle) + direction * ops.sin(angle)
     )
 
-def compute_phase_coherence(vectors: List[np.ndarray]) -> float:
+def compute_phase_coherence(vectors: List[TensorLike]) -> float:
     """
     Compute phase coherence between multiple vectors.
     
@@ -107,7 +111,7 @@ def compute_phase_coherence(vectors: List[np.ndarray]) -> float:
              
     return float(np.mean(np.cos(diffs)))
 
-def compute_interference_strength(vectors: List[np.ndarray]) -> float:
+def compute_interference_strength(vectors: List[TensorLike]) -> float:
     """
     Compute average interference strength between vectors.
     
@@ -121,7 +125,7 @@ def compute_interference_strength(vectors: List[np.ndarray]) -> float:
         return 0.0
         
     # Compute all pairwise dot products
-    dot_products = np.array([
+    dot_products = tensor.convert_to_tensor([
         [np.abs(np.dot(v1, v2)) for v2 in vectors]
         for v1 in vectors
     ])
@@ -148,7 +152,7 @@ def compute_energy_stability(energy_history: List[float]) -> float:
     # Use inverse of energy standard deviation as stability metric
     return 1.0 / (1.0 + np.std(energy_history))
 
-def create_rotation_matrix(angle: float, axis: int = 0) -> np.ndarray:
+def create_rotation_matrix(angle: float, axis: int = 0) -> TensorLike:
     """
     Create 4D rotation matrix for given angle and axis.
     
@@ -159,7 +163,7 @@ def create_rotation_matrix(angle: float, axis: int = 0) -> np.ndarray:
     Returns:
         4x4 rotation matrix
     """
-    c, s = np.cos(angle), np.sin(angle)
+    c, s = np.cos(angle), ops.sin(angle)
     matrix = np.eye(4)
     
     if axis == 0:  # xy rotation

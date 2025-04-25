@@ -3,7 +3,6 @@
 import torch
 
 from typing import Sequence, Optional, Literal, Union
-from builtins import slice as py_slice
 from ember_ml.backend.torch.types import (
     TensorLike, Shape
 )
@@ -50,14 +49,14 @@ def slice_tensor(tensor: TensorLike, starts: Shape, sizes: Shape) -> torch.Tenso
         if size == -1:
             # -1 means "all remaining elements in this dimension"
             # Use Python's built-in slice function, not our slice_tensor function
-            slice_obj = py_slice(start_tensor.item(), None)
+            slice_obj = slice(start_tensor.item(), None)
             slice_objects.append(slice_obj)
         else:
             # Convert size to tensor to avoid precision-reducing casts
             size_tensor = torch.tensor(size, dtype=torch.long)
             end_tensor = torch.add(start_tensor, size_tensor)
             # Use Python's built-in slice function, not our slice_tensor function
-            slice_obj = py_slice(start_tensor.item(), end_tensor.item())
+            slice_obj = slice(start_tensor.item(), end_tensor.item())
             slice_objects.append(slice_obj)
     
     # Extract the slice
@@ -82,6 +81,17 @@ def slice_update(data: TensorLike, slices: TensorLike, updates: Optional[TensorL
     tensor = TorchTensor().convert_to_tensor(data)
     # If updates is None, return a slice of the tensor
     if updates is None:
+        # Handle the case where slices is a tuple containing numpy.float32 values
+        if isinstance(slices, tuple):
+            # Convert each element in the tuple to the appropriate type
+            converted_slices = []
+            for s in slices:
+                if hasattr(s, 'dtype') and hasattr(s, 'item') and 'float' in str(s.dtype):
+                    # Convert numpy.float32 to int
+                    converted_slices.append(int(s.item()))
+                else:
+                    converted_slices.append(s)
+            slices = tuple(converted_slices)
         return tensor[slices].clone()
     
     # Convert updates to tensor
@@ -123,7 +133,7 @@ def gather(tensor: TensorLike, indices: TensorLike, axis: int = 0) -> torch.Tens
         for idx in indices_array:
             # Create slice objects for the specific index along the axis
             # Use Python's built-in slice, not our slice_tensor function
-            slice_indices = [py_slice(None)] * len(tensor_array.shape)
+            slice_indices = [slice(None)] * len(tensor_array.shape)
             slice_indices[axis] = idx.item()
             
             # Gather the slice
@@ -265,7 +275,7 @@ def scatter_add(data: TensorLike, indices: TensorLike, dim_size: Optional[int] =
             idx = indices_torch[i].item()
             
             # Create slice for the specific index
-            slice_indices = [py_slice(None)] * len(output_shape)
+            slice_indices = [slice(None)] * len(output_shape)
             slice_indices[axis] = idx
             
             # Get current slice of output tensor
@@ -318,7 +328,7 @@ def scatter_max(data: TensorLike, indices: TensorLike, dim_size: Optional[int] =
         value = tensor_torch[i]
         
         # Create slice for the specific index using Python's built-in slice
-        slice_indices = [py_slice(None)] * len(output_shape)
+        slice_indices = [slice(None)] * len(output_shape)
         slice_indices[axis] = idx
         
         # Get current value
@@ -368,7 +378,7 @@ def scatter_min(data: TensorLike, indices: TensorLike, dim_size: Optional[int] =
         value = tensor_torch[i]
         
         # Create slice for the specific index using Python's built-in slice
-        slice_indices = [py_slice(None)] * len(output_shape)
+        slice_indices = [slice(None)] * len(output_shape)
         slice_indices[axis] = idx
         
         # Get current value
@@ -458,7 +468,7 @@ def scatter_softmax(data: TensorLike, indices: TensorLike, dim_size: Optional[in
         value = tensor_torch[i]
         
         # Create slice for the specific index using Python's built-in slice
-        slice_indices = [py_slice(None)] * len(output_shape)
+        slice_indices = [slice(None)] * len(output_shape)
         slice_indices[axis] = idx
         
         # Get current value

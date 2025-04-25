@@ -160,7 +160,7 @@ def arange(start: Union[int, float], stop: Optional[Union[int, float]] = None, s
     # Pass start, end (stop in torch), step via kwargs
     if stop is None:
         # If only one positional arg provided, it's end
-        return _create_new_tensor(torch.arange, dtype=dtype, device=device, end=start, step=step)
+        return _create_new_tensor(torch.arange, dtype=dtype, device=device, start=start, step=step)
     else:
         return _create_new_tensor(torch.arange, dtype=dtype, device=device, start=start, end=stop, step=step)
 

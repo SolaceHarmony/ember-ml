@@ -20,8 +20,10 @@ def random_seed():
 @pytest.fixture
 def sample_time_series():
     """Fixture providing sample time series data for testing."""
-    t = np.linspace(0, 10, 1000)
-    signal = np.sin(t) + 0.1 * np.random.randn(len(t))
+    from ember_ml.nn import tensor
+    from ember_ml import ops
+    t = tensor.linspace(0, 10, 1000)
+    signal = ops.sin(t) + 0.1 * np.random.randn(len(t))
     return t, signal
 
 @pytest.fixture

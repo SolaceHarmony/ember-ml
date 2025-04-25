@@ -297,7 +297,7 @@ This approach allows:
 Ember ML allows for dynamic backend selection and switching:
 
 ```python
-from ember_ml.backend import set_backend, get_backend
+from ember_ml.ops import set_backend, get_backend
 
 # Set the backend to PyTorch
 set_backend('torch')

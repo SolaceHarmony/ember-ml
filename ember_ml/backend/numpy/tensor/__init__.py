@@ -17,7 +17,7 @@ from ember_ml.backend.numpy.tensor.ops import (
     reshape, transpose, concatenate, stack, split, expand_dims, squeeze, tile, pad,
     
     # Indexing operations
-    slice as slice_tensor, slice_update, gather, tensor_scatter_nd_update,
+    slice_tensor, slice_update, gather, tensor_scatter_nd_update,
     
     # Utility operations
     to_numpy, item, shape, dtype, copy, var, sort, argsort, maximum,

@@ -1,6 +1,10 @@
 import numpy as np
 from typing import List, Tuple, Optional
 
+from ember_ml import ops
+from ember_ml.nn import tensor
+from ember_ml.nn.tensor.types import TensorLike
+
 class BinaryWaveState:
     """Exact binary wave state using Python's arbitrary precision integers"""
     
@@ -76,7 +80,7 @@ class ExactBinaryNetwork:
             for i in range(num_neurons)
         ]
         
-    def process_pcm(self, pcm_data: np.ndarray) -> np.ndarray:
+    def process_pcm(self, pcm_data: TensorLike) -> TensorLike:
         """Process PCM audio through exact binary network"""
         output_samples = []
         output_scale = 1.0  # Adaptive output scaling
@@ -145,15 +149,15 @@ class ExactBinaryNetwork:
             
             output_samples.append(scaled_val)
             
-        return np.array(output_samples, dtype=np.int16)
+        return tensor.convert_to_tensor(output_samples, dtype=np.int16)
 
-def create_test_signal(duration_sec: float, sample_rate: int) -> np.ndarray:
+def create_test_signal(duration_sec: float, sample_rate: int) -> TensorLike:
     """Create test signal with multiple frequencies"""
-    t = np.linspace(0, duration_sec, int(duration_sec * sample_rate))
+    t = tensor.linspace(0, duration_sec, int(duration_sec * sample_rate))
     signal = (
-        0.5 * np.sin(2 * np.pi * 440 * t) +  # A4
-        0.3 * np.sin(2 * np.pi * 880 * t) +  # A5
-        0.2 * np.sin(2 * np.pi * 1760 * t)   # A6
+        0.5 * ops.sin(2 * ops.pi * 440 * t) +  # A4
+        0.3 * ops.sin(2 * ops.pi * 880 * t) +  # A5
+        0.2 * ops.sin(2 * ops.pi * 1760 * t)   # A6
     )
     return (signal * 32767).astype(np.int16)
 
@@ -175,7 +179,7 @@ class BinaryExactProcessor:
         """
         self.network = ExactBinaryNetwork(num_neurons, threshold)
         
-    def process(self, input_data: np.ndarray) -> np.ndarray:
+    def process(self, input_data: TensorLike) -> TensorLike:
         """
         Process input data through the binary exact network.
         
@@ -187,7 +191,7 @@ class BinaryExactProcessor:
         """
         return self.network.process_pcm(input_data)
         
-    def analyze(self, input_data: np.ndarray, output_data: np.ndarray) -> dict:
+    def analyze(self, input_data: TensorLike, output_data: TensorLike) -> dict:
         """
         Analyze the processing results.
         
@@ -199,8 +203,8 @@ class BinaryExactProcessor:
             Dictionary with analysis metrics
         """
         return {
-            'input_range': (np.min(input_data), np.max(input_data)),
-            'output_range': (np.min(output_data), np.max(output_data)),
+            'input_range': (ops.stats.min(input_data), ops.stats.max(input_data)),
+            'output_range': (ops.stats.min(output_data), ops.stats.max(output_data)),
             'input_mean': np.mean(np.abs(input_data)),
             'output_mean': np.mean(np.abs(output_data)),
             'input_std': np.std(input_data),

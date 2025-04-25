@@ -22,16 +22,16 @@ class HarmonicTrainer:
         Compute the Mean Squared Error loss between target embedding and generated wave.
         
         Args:
-            params (np.ndarray): Wave parameters (amplitudes, frequencies, phases)
-            t (np.ndarray): Time points
-            target_embedding (np.ndarray): Target embedding to match
+            params (TensorLike): Wave parameters (amplitudes, frequencies, phases)
+            t (TensorLike): Time points
+            target_embedding (TensorLike): Target embedding to match
             
         Returns:
             float: MSE loss value
         """
         amplitudes, frequencies, phases = np.split(params, 3)
         harmonic = (
-            amplitudes[:, None] * np.sin(2 * np.pi * frequencies[:, None] * t + phases[:, None])
+            amplitudes[:, None] * ops.sin(2 * ops.pi * frequencies[:, None] * t + phases[:, None])
         ).sum(axis=0)
         
         return ((target_embedding - harmonic) ** 2).mean()
@@ -41,14 +41,14 @@ class HarmonicTrainer:
         Compute numerical gradients for the harmonic parameters using finite differences.
         
         Args:
-            params (np.ndarray): Current parameter values
-            t (np.ndarray): Time points
-            target_embedding (np.ndarray): Target embedding to match
+            params (TensorLike): Current parameter values
+            t (TensorLike): Time points
+            target_embedding (TensorLike): Target embedding to match
             
         Returns:
-            np.ndarray: Computed gradients for all parameters
+            TensorLike: Computed gradients for all parameters
         """
-        gradients = np.zeros_like(params)
+        gradients = tensor.zeros_like(params)
         for i in range(len(params)):
             params_step = params.copy()
             
@@ -70,11 +70,11 @@ class HarmonicTrainer:
         Train harmonic wave parameters to match transformer embeddings.
         
         Args:
-            embeddings (np.ndarray): Target embeddings of shape (batch_size, embedding_dim)
-            t (np.ndarray): Time points for wave generation
+            embeddings (TensorLike): Target embeddings of shape (batch_size, embedding_dim)
+            t (TensorLike): Time points for wave generation
             
         Returns:
-            np.ndarray: Trained parameters
+            TensorLike: Trained parameters
             list: Training history (losses)
         """
         batch_size = embeddings.shape[0]
@@ -109,11 +109,11 @@ class HarmonicTrainer:
         Generate harmonic waves using the learned parameters.
         
         Args:
-            params (np.ndarray): Learned parameters
-            t (np.ndarray): Time points
+            params (TensorLike): Learned parameters
+            t (TensorLike): Time points
             
         Returns:
-            np.ndarray: Generated harmonic waves
+            TensorLike: Generated harmonic waves
         """
         batch_size = params.shape[0]
         return harmonic_wave(params, t, batch_size)

@@ -6,7 +6,7 @@ import pytest
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from ember_ml.attention.causal import (
+from ember_ml.nn.attention import (
     CausalAttention,
     PredictionAttention,
     AttentionState,
@@ -179,11 +179,11 @@ class TestCausalAttention:
         assert hasattr(state, 'temporal_weight')
         assert hasattr(state, 'causal_weight')
         assert hasattr(state, 'novelty_weight')
-        
+        from ember_ml.nn import tensor
         # Check weight ranges after sigmoid
-        temporal_weight = torch.sigmoid(torch.tensor(state.temporal_weight)).item()
-        causal_weight = torch.sigmoid(torch.tensor(state.causal_weight)).item()
-        novelty_weight = torch.sigmoid(torch.tensor(state.novelty_weight)).item()
+        temporal_weight = torch.sigmoid(tensor.convert_to_tensor(state.temporal_weight)).item()
+        causal_weight = torch.sigmoid(tensor.convert_to_tensor(state.causal_weight)).item()
+        novelty_weight = torch.sigmoid(tensor.convert_to_tensor(state.novelty_weight)).item()
         
         assert 0.0 <= temporal_weight <= 1.0
         assert 0.0 <= causal_weight <= 1.0

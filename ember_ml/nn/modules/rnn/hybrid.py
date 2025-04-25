@@ -44,13 +44,13 @@ class HybridNeuron(BaseNeuron):
         self.memory_buffer = []
         self.max_memory_size = 100
         
-    def _initialize_state(self) -> torch.Tensor:
+    def _initialize_state(self) -> tensor.convert_to_tensor:
         """Initialize neuron state."""
         return torch.zeros(self.hidden_size)
         
     def update(self,
-               input_signal: torch.Tensor,
-               **kwargs) -> torch.Tensor:
+               input_signal: tensor.convert_to_tensor,
+               **kwargs) -> tensor.convert_to_tensor:
         """
         Update neuron state using hybrid processing.
 
@@ -99,7 +99,7 @@ class HybridNeuron(BaseNeuron):
         """Load neuron state and parameters."""
         super().load_state(state_dict)
         self.hidden_size = state_dict['hidden_size']
-        self.memory_buffer = [torch.tensor(m) for m in state_dict['memory_buffer']]
+        self.memory_buffer = [tensor.convert_to_tensor(m) for m in state_dict['memory_buffer']]
         self.max_memory_size = state_dict['max_memory_size']
 
 class AttentionLayer(nn.Module):
@@ -126,9 +126,9 @@ class AttentionLayer(nn.Module):
         self.scale = hidden_dim ** 0.5
         
     def forward(self, 
-                query: torch.Tensor,
-                key: torch.Tensor,
-                value: torch.Tensor) -> torch.Tensor:
+                query: tensor.convert_to_tensor,
+                key: tensor.convert_to_tensor,
+                value: tensor.convert_to_tensor) -> tensor.convert_to_tensor:
         """
         Compute attention-weighted output.
 
@@ -205,8 +205,8 @@ class HybridLNNModel(nn.Module):
         self.output_layer = nn.Linear(lstm_hidden_size, output_size)
         
     def forward(self,
-                input_sequence: torch.Tensor,
-                times: torch.Tensor) -> torch.Tensor:
+                input_sequence: tensor.convert_to_tensor,
+                times: tensor.convert_to_tensor) -> tensor.convert_to_tensor:
         """
         Process input sequence through hybrid architecture.
 
@@ -231,7 +231,7 @@ class HybridLNNModel(nn.Module):
         # Process sequence
         for t in range(seq_len - 1):
             # Time interval for integration
-            t_span = torch.tensor(
+            t_span = tensor.convert_to_tensor(
                 [times[t], times[t + 1]]
             ).to(device)
             
@@ -270,11 +270,11 @@ class HybridLNNModel(nn.Module):
     
     def _integrate_ode(self,
                       cell: nn.Module,
-                      x0: torch.Tensor,
-                      t_span: torch.Tensor,
-                      u: torch.Tensor,
+                      x0: tensor.convert_to_tensor,
+                      t_span: tensor.convert_to_tensor,
+                      u: tensor.convert_to_tensor,
                       method: str = 'rk4',
-                      options: dict = {'step_size': 0.1}) -> torch.Tensor:
+                      options: dict = {'step_size': 0.1}) -> tensor.convert_to_tensor:
         """
         Integrate ODE for LTC cell.
 
@@ -316,9 +316,9 @@ class ImprovedLiquidTimeConstantCell(nn.Module):
         self.tau = nn.Parameter(torch.ones(hidden_size))
         
     def forward(self,
-                t: torch.Tensor,
-                x: torch.Tensor,
-                u: torch.Tensor) -> torch.Tensor:
+                t: tensor.convert_to_tensor,
+                x: tensor.convert_to_tensor,
+                u: tensor.convert_to_tensor) -> tensor.convert_to_tensor:
         """
         Compute state derivative.
 

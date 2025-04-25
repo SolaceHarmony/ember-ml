@@ -25,7 +25,7 @@ class FrequencyAnalyzer:
         self.window_size = window_size
         self.overlap = overlap
         
-    def compute_spectrum(self, signal: torch.Tensor) -> torch.Tensor:
+    def compute_spectrum(self, signal: tensor.convert_to_tensor) -> tensor.convert_to_tensor:
         """
         Compute frequency spectrum.
 
@@ -43,7 +43,7 @@ class FrequencyAnalyzer:
         spectrum = torch.fft.rfft(padded_signal * window)
         return torch.abs(spectrum)
         
-    def find_peaks(self, signal: torch.Tensor, threshold: float = 0.1, tolerance: float = 0.01) -> List[Dict[str, float]]:
+    def find_peaks(self, signal: tensor.convert_to_tensor, threshold: float = 0.1, tolerance: float = 0.01) -> List[Dict[str, float]]:
         """
         Find peak frequencies.
 
@@ -89,7 +89,7 @@ class FrequencyAnalyzer:
                 
         return sorted(merged_peaks.values(), key=lambda x: x['amplitude'], reverse=True)
         
-    def harmonic_ratio(self, signal: torch.Tensor) -> float:
+    def harmonic_ratio(self, signal: tensor.convert_to_tensor) -> float:
         """
         Compute harmonic to noise ratio.
 
@@ -127,7 +127,7 @@ class WaveSynthesizer:
                  frequency: float,
                  duration: float,
                  amplitude: float = 1.0,
-                 phase: float = 0.0) -> torch.Tensor:
+                 phase: float = 0.0) -> tensor.convert_to_tensor:
         """
         Generate sine wave.
 
@@ -146,7 +146,7 @@ class WaveSynthesizer:
     def harmonic_wave(self,
                      frequencies: List[float],
                      amplitudes: List[float],
-                     duration: float) -> torch.Tensor:
+                     duration: float) -> tensor.convert_to_tensor:
         """
         Generate wave with harmonics.
 
@@ -172,8 +172,8 @@ class WaveSynthesizer:
         return wave
         
     def apply_envelope(self,
-                      wave: torch.Tensor,
-                      envelope: torch.Tensor) -> torch.Tensor:
+                      wave: tensor.convert_to_tensor,
+                      envelope: tensor.convert_to_tensor) -> tensor.convert_to_tensor:
         """
         Apply amplitude envelope.
 
@@ -217,7 +217,7 @@ class HarmonicProcessor:
         self.analyzer = FrequencyAnalyzer(sampling_rate)
         self.synthesizer = WaveSynthesizer(sampling_rate)
         
-    def decompose(self, signal: torch.Tensor) -> Dict[str, List[float]]:
+    def decompose(self, signal: tensor.convert_to_tensor) -> Dict[str, List[float]]:
         """
         Decompose signal into harmonic components.
 
@@ -236,7 +236,7 @@ class HarmonicProcessor:
     def reconstruct(self,
                    frequencies: List[float],
                    amplitudes: List[float],
-                   duration: float) -> torch.Tensor:
+                   duration: float) -> tensor.convert_to_tensor:
         """
         Reconstruct signal from components.
 
@@ -264,9 +264,9 @@ class HarmonicProcessor:
         return signal
         
     def filter_harmonics(self,
-                        signal: torch.Tensor,
+                        signal: tensor.convert_to_tensor,
                         keep_frequencies: List[float],
-                        tolerance: float = 0.1) -> torch.Tensor:
+                        tolerance: float = 0.1) -> tensor.convert_to_tensor:
         """
         Filter specific harmonics.
 

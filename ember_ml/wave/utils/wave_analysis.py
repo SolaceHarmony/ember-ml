@@ -7,7 +7,9 @@ This module provides utilities for analyzing wave signals.
 import numpy as np
 from typing import Union, List, Tuple, Optional, Dict
 from scipy import signal
-
+from ember_ml import ops
+from ember_ml.nn import tensor
+from ember_ml.nn.tensor import TensorLike
 # Try to import librosa, but don't fail if it's not available
 try:
     import librosa
@@ -15,7 +17,7 @@ try:
 except ImportError:
     LIBROSA_AVAILABLE = False
 
-def compute_fft(wave: np.ndarray, sample_rate: int = 44100) -> Tuple[np.ndarray, np.ndarray]:
+def compute_fft(wave: TensorLike, sample_rate: int = 44100) -> Tuple[TensorLike, TensorLike]:
     """
     Compute the FFT of a wave signal.
     
@@ -32,8 +34,8 @@ def compute_fft(wave: np.ndarray, sample_rate: int = 44100) -> Tuple[np.ndarray,
     frequencies = np.fft.rfftfreq(n, 1 / sample_rate)
     return frequencies, magnitudes
 
-def compute_stft(wave: np.ndarray, sample_rate: int = 44100, 
-                 window_size: int = 2048, hop_length: int = 512) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+def compute_stft(wave: TensorLike, sample_rate: int = 44100, 
+                 window_size: int = 2048, hop_length: int = 512) -> Tuple[TensorLike, TensorLike, TensorLike]:
     """
     Compute the Short-Time Fourier Transform of a wave signal.
     
@@ -49,7 +51,7 @@ def compute_stft(wave: np.ndarray, sample_rate: int = 44100,
     f, t, Zxx = signal.stft(wave, fs=sample_rate, nperseg=window_size, noverlap=window_size - hop_length)
     return t, f, np.abs(Zxx)
 
-def compute_mfcc(wave: np.ndarray, sample_rate: int = 44100, n_mfcc: int = 13) -> np.ndarray:
+def compute_mfcc(wave: TensorLike, sample_rate: int = 44100, n_mfcc: int = 13) -> TensorLike:
     """
     Compute Mel-frequency cepstral coefficients.
     
@@ -65,7 +67,7 @@ def compute_mfcc(wave: np.ndarray, sample_rate: int = 44100, n_mfcc: int = 13) -
         raise ImportError("librosa is required for MFCC computation")
     return librosa.feature.mfcc(y=wave, sr=sample_rate, n_mfcc=n_mfcc)
 
-def compute_spectral_centroid(wave: np.ndarray, sample_rate: int = 44100) -> np.ndarray:
+def compute_spectral_centroid(wave: TensorLike, sample_rate: int = 44100) -> TensorLike:
     """
     Compute spectral centroid.
     
@@ -79,11 +81,11 @@ def compute_spectral_centroid(wave: np.ndarray, sample_rate: int = 44100) -> np.
     if not LIBROSA_AVAILABLE:
         # Fallback implementation using FFT
         frequencies, magnitudes = compute_fft(wave, sample_rate)
-        centroid = np.sum(frequencies * magnitudes) / np.sum(magnitudes) if np.sum(magnitudes) > 0 else 0
-        return np.array([centroid])
+        centroid = ops.stats.sum(frequencies * magnitudes) / ops.stats.sum(magnitudes) if ops.stats.sum(magnitudes) > 0 else 0
+        return tensor.convert_to_tensor([centroid])
     return librosa.feature.spectral_centroid(y=wave, sr=sample_rate)[0]
 
-def compute_spectral_bandwidth(wave: np.ndarray, sample_rate: int = 44100) -> np.ndarray:
+def compute_spectral_bandwidth(wave: TensorLike, sample_rate: int = 44100) -> TensorLike:
     """
     Compute spectral bandwidth.
     
@@ -97,12 +99,12 @@ def compute_spectral_bandwidth(wave: np.ndarray, sample_rate: int = 44100) -> np
     if not LIBROSA_AVAILABLE:
         # Fallback implementation using FFT
         frequencies, magnitudes = compute_fft(wave, sample_rate)
-        centroid = np.sum(frequencies * magnitudes) / np.sum(magnitudes) if np.sum(magnitudes) > 0 else 0
-        bandwidth = np.sqrt(np.sum(((frequencies - centroid) ** 2) * magnitudes) / np.sum(magnitudes)) if np.sum(magnitudes) > 0 else 0
-        return np.array([bandwidth])
+        centroid = ops.stats.sum(frequencies * magnitudes) / ops.stats.sum(magnitudes) if ops.stats.sum(magnitudes) > 0 else 0
+        bandwidth = ops.sqrt(ops.stats.sum(((frequencies - centroid) ** 2) * magnitudes) / ops.stats.sum(magnitudes)) if ops.stats.sum(magnitudes) > 0 else 0
+        return tensor.convert_to_tensor([bandwidth])
     return librosa.feature.spectral_bandwidth(y=wave, sr=sample_rate)[0]
 
-def compute_spectral_contrast(wave: np.ndarray, sample_rate: int = 44100) -> np.ndarray:
+def compute_spectral_contrast(wave: TensorLike, sample_rate: int = 44100) -> TensorLike:
     """
     Compute spectral contrast.
     
@@ -117,7 +119,7 @@ def compute_spectral_contrast(wave: np.ndarray, sample_rate: int = 44100) -> np.
         raise ImportError("librosa is required for spectral contrast computation")
     return librosa.feature.spectral_contrast(y=wave, sr=sample_rate)
 
-def compute_spectral_rolloff(wave: np.ndarray, sample_rate: int = 44100) -> np.ndarray:
+def compute_spectral_rolloff(wave: TensorLike, sample_rate: int = 44100) -> TensorLike:
     """
     Compute spectral rolloff.
     
@@ -134,10 +136,10 @@ def compute_spectral_rolloff(wave: np.ndarray, sample_rate: int = 44100) -> np.n
         cumsum = np.cumsum(magnitudes)
         rolloff_point = 0.85 * cumsum[-1]  # Default rolloff at 85%
         rolloff_idx = np.where(cumsum >= rolloff_point)[0][0]
-        return np.array([frequencies[rolloff_idx]])
+        return tensor.convert_to_tensor([frequencies[rolloff_idx]])
     return librosa.feature.spectral_rolloff(y=wave, sr=sample_rate)[0]
 
-def compute_zero_crossing_rate(wave: np.ndarray) -> float:
+def compute_zero_crossing_rate(wave: TensorLike) -> float:
     """
     Compute zero crossing rate.
     
@@ -149,11 +151,11 @@ def compute_zero_crossing_rate(wave: np.ndarray) -> float:
     """
     if not LIBROSA_AVAILABLE:
         # Fallback implementation
-        zero_crossings = np.sum(np.abs(np.diff(np.signbit(wave))))
+        zero_crossings = ops.stats.sum(np.abs(np.diff(np.signbit(wave))))
         return zero_crossings / len(wave)
     return np.mean(librosa.feature.zero_crossing_rate(wave))
 
-def compute_rms(wave: np.ndarray) -> float:
+def compute_rms(wave: TensorLike) -> float:
     """
     Compute root mean square.
     
@@ -163,9 +165,9 @@ def compute_rms(wave: np.ndarray) -> float:
     Returns:
         Root mean square
     """
-    return np.sqrt(np.mean(np.square(wave)))
+    return ops.sqrt(np.mean(np.square(wave)))
 
-def compute_peak_amplitude(wave: np.ndarray) -> float:
+def compute_peak_amplitude(wave: TensorLike) -> float:
     """
     Compute peak amplitude.
     
@@ -175,9 +177,9 @@ def compute_peak_amplitude(wave: np.ndarray) -> float:
     Returns:
         Peak amplitude
     """
-    return np.max(np.abs(wave))
+    return ops.stats.max(np.abs(wave))
 
-def compute_crest_factor(wave: np.ndarray) -> float:
+def compute_crest_factor(wave: TensorLike) -> float:
     """
     Compute crest factor.
     
@@ -191,7 +193,7 @@ def compute_crest_factor(wave: np.ndarray) -> float:
     peak = compute_peak_amplitude(wave)
     return peak / rms if rms > 0 else 0
 
-def compute_dominant_frequency(wave: np.ndarray, sample_rate: int = 44100) -> float:
+def compute_dominant_frequency(wave: TensorLike, sample_rate: int = 44100) -> float:
     """
     Compute dominant frequency.
     
@@ -205,7 +207,7 @@ def compute_dominant_frequency(wave: np.ndarray, sample_rate: int = 44100) -> fl
     frequencies, magnitudes = compute_fft(wave, sample_rate)
     return frequencies[np.argmax(magnitudes)]
 
-def compute_harmonic_ratio(wave: np.ndarray, sample_rate: int = 44100) -> float:
+def compute_harmonic_ratio(wave: TensorLike, sample_rate: int = 44100) -> float:
     """
     Compute harmonic ratio.
     
@@ -220,7 +222,7 @@ def compute_harmonic_ratio(wave: np.ndarray, sample_rate: int = 44100) -> float:
         raise ImportError("librosa is required for harmonic ratio computation")
     return np.mean(librosa.feature.tonnetz(y=librosa.effects.harmonic(wave), sr=sample_rate))
 
-def compute_wave_features(wave: np.ndarray, sample_rate: int = 44100) -> Dict[str, float]:
+def compute_wave_features(wave: TensorLike, sample_rate: int = 44100) -> Dict[str, float]:
     """
     Compute various features of a wave signal.
     

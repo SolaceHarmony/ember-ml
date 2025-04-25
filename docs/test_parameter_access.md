@@ -15,7 +15,7 @@ import pytest
 from ember_ml import ops
 from ember_ml.nn import tensor
 from ember_ml.nn.modules.base_module import BaseModule, Parameter
-from ember_ml.backend import set_backend, get_backend
+from ember_ml.ops import set_backend, get_backend
 
 
 class SimpleModule(BaseModule):
