@@ -5,7 +5,6 @@ This section documents various frontend components of the Ember ML framework tha
 ## Core Structures
 
 *   **Base Module and Parameters:** The fundamental building blocks for creating trainable neural network components. ([Details](core_structures.md))
-*   **Containers:** Modules that hold and manage other layers or components in a structured way. ([Details](containers.md))
 
 ## Foundational Components
 
@@ -17,13 +16,6 @@ This section documents various frontend components of the Ember ML framework tha
 ## Other Model Implementations
 
 *   **Restricted Boltzmann Machines (RBMs):** Implementations of RBMs for feature learning and anomaly detection. ([Details](rbms.md))
-
-## Utilities
-
-*   **Backend Utilities:** Helper functions for managing the backend and converting between tensor types. ([Details](utilities.md#backend-utilities))
-*   **Fraction Utilities:** Tools for working with fractions. ([Details](utilities.md#fraction-utilities))
-*   **Performance Utilities:** Tools for benchmarking and profiling code. ([Details](utilities.md#performance-utilities))
-*   **Visualization Utilities:** General plotting functions. ([Details](utilities.md#visualization-utilities))
 
 ## Operations Interfaces
 

@@ -4,7 +4,7 @@ This section details the architecture and components related to wave-based neura
 
 ## Core Concepts
 
-*   **Binary Waves:** Explores representing information using binary wave patterns and interference. ([Details](binary_waves.md))
+*   **Binary Waves:** Explores representing information using binary wave patterns and interference. ([Details](wave_binary_wave.md))
 *   **Harmonic Waves:** Focuses on representing data, particularly embeddings, using combinations of harmonic functions (sine waves). ([Details](harmonic_waves.md))
 *   **Wave Memory:** Implements memory systems based on wave interactions, including multi-sphere models. ([Details](wave_memory.md))
 *   **Limb Arithmetic:** Provides high-precision computing (HPC) using 64-bit limbs for exact wave calculations. ([Details](wave_limb.md))

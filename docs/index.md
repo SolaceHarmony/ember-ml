@@ -12,7 +12,13 @@ Welcome to the Ember ML documentation. Ember ML is a hardware-optimized neural n
   - [Function-First Design](architecture/function_first_design.md): Detailed explanation of the function-first design pattern
 - [Tutorials](tutorials/index.md): Step-by-step guides for common tasks
 - [Examples](examples/index.md): Code examples and use cases
-- [Plans](plans/): Development plans and roadmaps
+
+## Other Key Documents
+
+- [Initializers Guide](initializers_guide.md): Guide to weight initializers.
+- [Neuron Model vs Role](neuron_model_vs_role.md): Comparison of neuron models and roles.
+- [Testing Parameter Access](test_parameter_access.md): Testing parameter access.
+- [Testing Backends](TESTING_BACKENDS.md): Guide to testing different backends.
 
 ## Quick Start
 
@@ -61,7 +67,7 @@ The project implements various cutting-edge neural network architectures:
 - Stride-Aware Continuous-time Fully Connected (CfC) networks
 - Specialized attention mechanisms and temporal processing units
 
-For more details, see the [Architecture Documentation](architecture/ember_ml_architecture.md).
+For more details, see the [Architecture Documentation](architecture/architecture.md).
 
 ### Multi-Backend Support
 

@@ -4,23 +4,31 @@ This section provides comprehensive documentation on the architecture of Ember M
 
 ## Core Architecture Documents
 
-- [Ember ML Architecture](ember_ml_architecture.md): Comprehensive overview of the Ember ML architecture, including core design principles, component organization, and implementation patterns
+- [Ember ML Architecture](architecture.md): Comprehensive overview of the Ember ML architecture, including core design principles, component organization, and implementation patterns
 - [Function-First Design](function_first_design.md): Detailed explanation of the function-first design pattern used in Ember ML, focusing on how it enables memory optimization and efficient code organization
 
 ## Component Architecture
 
-- [Cell Architecture](architecture_guide.md): Documentation on the cell architecture in Ember ML, including cell types, interfaces, and implementation details
-- [Neural Network Overview](neural_network_overview.md): High-level overview of the neural network architecture in Ember ML
 - [Neural Network Modules](neural_network_modules.md): Detailed documentation on the neural network modules in Ember ML, including Neural Circuit Policies (NCPs) and their implementation
 - [RBM Architecture](rbm_architecture.md): Documentation on the Restricted Boltzmann Machine architecture in Ember ML
+- [Wiring and Neuron Maps](wiring.md): Documentation on connectivity patterns and neuron mapping.
+- [Attention Mechanisms](attention/index.md): Architecture of attention components.
+- [Liquid Neurons](liquidneurons/index.md): Architecture of liquid neuron implementations.
+- [Miscellaneous Components](misc/index.md): Architecture details for other components.
 
 ## Tensor Architecture
 
-- [Tensor Operations Architecture](../api/tensor_architecture.md): Detailed explanation of the tensor operations architecture in Ember ML
+- [Tensor Architecture](tensor_architecture.md): Detailed explanation of the tensor architecture within Ember ML.
 - [Tensor Implementation Guide](../plans/tensor_implementation/tensor_implementation_guide.md): Comprehensive guide for implementing tensor operations across all backends
 - [MLX Tensor Guide](../plans/tensor_implementation/mlx_tensor_guide.md): MLX-specific tensor implementation guide
 - [NumPy Tensor Guide](../plans/tensor_implementation/numpy_tensor_guide.md): NumPy-specific tensor implementation guide
 - [PyTorch Tensor Guide](../plans/tensor_implementation/torch_tensor_guide.md): PyTorch-specific tensor implementation guide
+
+## Specific Topics
+
+- [Bizarromath Integration](bizarromath_integration.md): Details on integrating the Bizarromath library.
+- [Bizarromath Concepts](bizarromath.md): Explanation of Bizarromath concepts used.
+- [Gradient Tape (MLX)](gradient_tape_mlx.md): Documentation on gradient tape implementation for the MLX backend.
 
 ## Design Principles
 

@@ -2,6 +2,82 @@
 
 The `ember_ml.nn.tensor` module provides a backend-agnostic tensor implementation that works with any backend (NumPy, PyTorch, MLX) using the backend abstraction layer. This module is the foundation for tensor operations in Ember ML.
 
+## Overview
+
+The tensor module is designed to provide a consistent API for tensor operations across different backends. It consists of the following components:
+
+- `EmberTensor`: A backend-agnostic tensor class that delegates operations to the current backend
+- `EmberDType`: A backend-agnostic data type class that represents data types across different backends
+- Common tensor operations: Creation, manipulation, and conversion functions
+
+## Architecture
+
+The tensor module follows the backend abstraction architecture of Ember ML:
+
+1. **Frontend Abstractions**: The `ember_ml.nn.tensor` module provides abstract interfaces and common implementations
+2. **Backend Implementations**: The actual implementations reside in the backend directory, with specific implementations for each supported backend (NumPy, PyTorch, MLX)
+3. **Dispatch Mechanism**: The frontend abstractions dispatch calls to the appropriate backend implementation based on the currently selected backend
+
+For a detailed explanation of the tensor operations architecture, see the [Tensor Operations Architecture](tensor_architecture.md) document.
+
+### Backend Folder Structure
+
+Each backend has a `tensor` subfolder that contains the backend-specific tensor and data type implementations:
+
+```
+ember_ml/backend/
+├── numpy/
+│   ├── tensor/
+│   │   ├── tensor.py  # NumPy tensor implementation
+│   │   ├── dtype.py   # NumPy data type implementation
+│   │   ├── ops/       # NumPy tensor operations
+│   │   │   ├── casting.py
+│   │   │   ├── creation.py
+│   │   │   ├── manipulation.py
+│   │   │   ├── indexing.py
+│   │   │   ├── utility.py
+│   │   │   └── random.py
+├── torch/
+│   ├── tensor/
+│   │   ├── tensor.py  # PyTorch tensor implementation
+│   │   ├── dtype.py   # PyTorch data type implementation
+│   │   ├── ops/       # PyTorch tensor operations
+│   │   │   ├── casting.py
+│   │   │   ├── creation.py
+│   │   │   ├── manipulation.py
+│   │   │   ├── indexing.py
+│   │   │   ├── utility.py
+│   │   │   └── random.py
+├── mlx/
+│   ├── tensor/
+│   │   ├── tensor.py  # MLX tensor implementation
+│   │   ├── dtype.py   # MLX data type implementation
+│   │   ├── ops/       # MLX tensor operations
+│   │   │   ├── casting.py
+│   │   │   ├── creation.py
+│   │   │   ├── manipulation.py
+│   │   │   ├── indexing.py
+│   │   │   ├── utility.py
+│   │   │   └── random.py
+```
+
+## Function-First Design
+
+The tensor operations in Ember ML follow a function-first design pattern, where each operation is implemented as a standalone function that can be called directly or through a method on a tensor class.
+
+For example, the `cast()` operation can be called in two ways:
+
+```python
+# As a standalone function
+from ember_ml.nn.tensor import cast
+result = cast(tensor, dtype)
+
+# As a method on EmberTensor
+result = tensor.cast(dtype)
+```
+
+This design provides flexibility and consistency across the framework. For more details, see the [Tensor Operations Architecture](tensor_architecture.md) document.
+
 ## Importing
 
 ```python
@@ -71,14 +147,63 @@ x = tensor.EmberTensor([1, 2, 3], dtype=float32)
 | `tensor.slice_update(x, begin, updates)` | Update a slice of a tensor |
 | `tensor.pad(x, paddings, mode='constant', constant_values=0)` | Pad a tensor |
 
-## Type Conversion
+## Indexing and Slicing
 
-| Function | Description |
-|----------|-------------|
-| `tensor.cast(x, dtype)` | Cast a tensor to a new data type |
-| `tensor.to_numpy(x)` | Convert a tensor to a NumPy array |
-| `tensor.item(x)` | Convert a scalar tensor to a Python scalar |
-| `tensor.shape(x)` | Get the shape of a tensor |
+Ember ML provides two ways to index and slice tensors:
+
+### Bracket Notation (Recommended)
+
+The recommended way to index and slice tensors is using bracket notation, which is more intuitive and consistent with Python's standard indexing syntax:
+
+```python
+from ember_ml.nn.tensor import EmberTensor
+
+# Create a tensor
+a = EmberTensor([[1, 2, 3], [4, 5, 6]])
+
+# Get a single element
+element = a[0, 1]  # 2
+
+# Get a row
+row = a[0]  # [1, 2, 3]
+
+# Get a column
+column = a[:, 1]  # [2, 5]
+
+# Get a slice
+slice_a = a[0:1, 1:3]  # [[2, 3]]
+
+# Set values
+a[0, 1] = 10  # a is now [[1, 10, 3], [4, 5, 6]]
+
+# Set a row
+a[0, :] = [7, 8, 9]  # a is now [[7, 8, 9], [4, 5, 6]]
+
+# Set a column
+a[:, 1] = [10, 11]  # a is now [[7, 10, 9], [4, 11, 6]]
+```
+
+### Index Update API (Alternative)
+
+Alternatively, you can use the `index_update` function with the `index` object, but note that this approach requires using the `value` keyword argument:
+
+```python
+from ember_ml.nn.tensor import EmberTensor, index, index_update
+
+# Create a tensor
+a = EmberTensor([[1, 2, 3], [4, 5, 6]])
+
+# Update a single element
+a = index_update(a, index[0, 1], value=10)  # a is now [[1, 10, 3], [4, 5, 6]]
+
+# Update a row
+a = index_update(a, index[0, :], value=[7, 8, 9])  # a is now [[7, 8, 9], [4, 5, 6]]
+
+# Update a column
+a = index_update(a, index[:, 1], value=[10, 11])  # a is now [[7, 10, 9], [4, 11, 6]]
+```
+
+**Important Note**: When using `index_update`, you must use the `value` keyword argument. Passing the value as a positional argument will result in an error.
 
 ## Random Operations
 
@@ -199,7 +324,11 @@ x_mlx = tensor.convert_to_tensor([1, 2, 3])
 
 ## Backend Purity
 
-The tensor module maintains backend purity by ensuring that all tensor operations go through the backend abstraction layer. This means that you can use the same code with different backends without having to change your code.
+The tensor module maintains backend purity by ensuring that all tensor operations go through the backend abstraction layer via the `ops` module. This means that you can use the same code with different backends without having to change your code.
+
+**Important Note on Return Types:** Functions within the `ops` module (e.g., `ops.add`, `ops.matmul`) operate on and return **native backend tensors** (like `mlx.core.array`, `torch.Tensor`, or `numpy.ndarray`), not `EmberTensor` instances. The `EmberTensor` class serves as a wrapper primarily for user interaction and parameter management. When combining results from `ops` functions with `EmberTensor` or `Parameter` objects, ensure all inputs to subsequent `ops` calls are handled correctly by the backend's conversion utilities (which typically accept native tensors, `EmberTensor`, and `Parameter` objects). Avoid mixing types with direct Python operators (`+`, `*`).
+
+For example, the following code will work with any backend:
 
 ```python
 from ember_ml.nn import tensor
@@ -243,6 +372,23 @@ x_cuda = tensor.convert_to_tensor([1, 2, 3], device='cuda')
 x_mps = tensor.convert_to_tensor([1, 2, 3], device='mps')
 ```
 
+## Backend Selection
+
+The tensor module uses the current backend selected by the `ember_ml.backend` module. You can change the backend using the `set_backend` function:
+
+```python
+from ember_ml.ops import set_backend
+
+# Set the backend to PyTorch
+set_backend('torch')
+
+# Set the backend to NumPy
+set_backend('numpy')
+
+# Set the backend to MLX
+set_backend('mlx')
+```
+
 ## Implementation Details
 
 The tensor module is implemented using a layered architecture:
@@ -252,3 +398,7 @@ The tensor module is implemented using a layered architecture:
 3. **Dispatch Mechanism**: The frontend abstractions dispatch calls to the appropriate backend implementation based on the currently selected backend
 
 This architecture allows Ember ML to provide a consistent API across different backends while still leveraging the unique capabilities of each backend.
+
+## Implementation Guide
+
+For developers who want to implement new tensor operations or modify existing ones, see the [Tensor Implementation Guide](../tensor_impl_guide.md) document.

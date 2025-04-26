@@ -103,7 +103,16 @@ class CfC(Module):
         
         # Build the neuron map if not already built
         if not self.neuron_map.is_built():
-            self.neuron_map.build(input_dim)
+            # Store the masks returned by neuron_map.build()
+            self.input_mask, self.recurrent_mask, self.output_mask = self.neuron_map.build(input_dim)
+        else:
+            # If already built, retrieve the masks
+            # This assumes neuron_map retains its masks after building
+            # If not, we might need to rebuild or find another way to access it
+            # For now, assume it retains the masks
+            self.input_mask = self.neuron_map.get_input_mask()
+            self.recurrent_mask = self.neuron_map.get_recurrent_mask()
+            self.output_mask = self.neuron_map.get_output_mask()
         
         # Get dimensions from neuron map
         units = self.neuron_map.units
@@ -195,8 +204,45 @@ class CfC(Module):
                     ts = time_deltas[:, t]
                 
                 # Project input
-                z = ops.matmul(x_t, self.kernel)
-                z = ops.add(z, ops.matmul(states[0], self.recurrent_kernel))
+                # In the original ncps implementation, the mask is applied to the weights
+                # during the linear transformation, not to the inputs
+                # Create a sparsity mask for the kernel weights based on the input_mask
+                # The input_mask is a 1D tensor of shape (input_dim,) with all ones
+                # We need to expand it to match the kernel shape (input_dim, units*4)
+                input_dim = tensor.shape(self.input_mask)[0]
+                units = self.neuron_map.units
+                
+                # Reshape input_mask for broadcasting with kernel
+                # From (input_dim,) to (input_dim, 1)
+                reshaped_input_mask = tensor.reshape(self.input_mask, (input_dim, 1))
+                
+                # Apply the mask to the kernel
+                # This will broadcast the mask across all gates for each input feature
+                masked_kernel = ops.multiply(self.kernel.data, reshaped_input_mask)
+                z = ops.matmul(x_t, masked_kernel)
+                
+                # Apply recurrent mask to the recurrent kernel
+                # The recurrent_mask is a 2D tensor of shape (units, units)
+                # We need to expand it to match the recurrent_kernel shape (units, units*4)
+                
+                # Create a mask for the recurrent kernel
+                # For each source neuron (row in recurrent_mask),
+                # apply its connectivity pattern to all 4 gates of each target neuron
+                recurrent_units = tensor.shape(self.recurrent_mask)[0]
+                
+                # Reshape for broadcasting: (units, units, 1)
+                reshaped_recurrent_mask = tensor.reshape(self.recurrent_mask, (recurrent_units, recurrent_units, 1))
+                
+                # Reshape recurrent kernel for applying mask: (units, units, 4)
+                reshaped_recurrent_kernel = tensor.reshape(self.recurrent_kernel.data, (recurrent_units, recurrent_units, 4))
+                
+                # Apply mask and reshape back
+                masked_recurrent_kernel_3d = ops.multiply(reshaped_recurrent_kernel, reshaped_recurrent_mask)
+                masked_recurrent_kernel = tensor.reshape(masked_recurrent_kernel_3d, (recurrent_units, recurrent_units * 4))
+                
+                # Use the masked recurrent kernel
+                z = ops.add(z, ops.matmul(states[0], masked_recurrent_kernel))
+                
                 if self.use_bias:
                     z = ops.add(z, self.bias)
                 
@@ -233,6 +279,30 @@ class CfC(Module):
             outputs_tensor = tensor.stack(outputs, axis=1)
         else:
             outputs_tensor = outputs[-1]
+            
+        # If the neuron map is an NCPMap, extract only the motor neurons for the output
+        if isinstance(self.neuron_map, NCPMap):
+            # Apply the stored output mask to the outputs
+            if self.return_sequences:
+                # For sequence output, apply the mask to each time step
+                # Reshape to apply mask across the units dimension for all batch and time steps
+                original_shape = tensor.shape(outputs_tensor)
+                reshaped_outputs = tensor.reshape(outputs_tensor, (-1, self.neuron_map.units))
+                
+                # Apply mask
+                masked_output = ops.multiply(reshaped_outputs, self.output_mask)
+                
+                # Extract only the motor neurons by slicing the last dimension
+                motor_output = masked_output[:, :self.neuron_map.motor_neurons]
+                
+                # Reshape back to include batch and time dimensions
+                outputs_tensor = tensor.reshape(motor_output, (original_shape[0], original_shape[1], self.neuron_map.motor_neurons))
+            else:
+                # For single output, apply the mask directly
+                masked_output = ops.multiply(outputs_tensor, self.output_mask)
+                
+                # Extract only the motor neurons by slicing the last dimension
+                outputs_tensor = masked_output[:, :self.neuron_map.motor_neurons]
         
         # Return outputs and states if requested
         if self.return_state:

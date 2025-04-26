@@ -1,4 +1,4 @@
-# Neuron Maps (nn.modules.wiring)
+# Neuron Maps API (nn.modules.wiring)
 
 The `ember_ml.nn.modules.wiring` package provides a comprehensive set of neuron map implementations for defining custom connectivity patterns in neural networks, including those with spatial properties. These were formerly called "wirings" and have been refactored and enhanced as "neuron maps" to better reflect their role in defining the connectivity structure of neural networks.
 
@@ -410,11 +410,11 @@ The neuron map module is implemented using a layered architecture:
 
 This architecture allows Ember ML to provide a consistent API for defining custom connectivity patterns in neural networks.
 
-## Migration from Wirings to Neuron Maps
+## Migration from Old Wiring API to Neuron Maps API
 
 The neuron map module was previously called "wirings" and has been refactored and enhanced. If you have code that uses the old wirings API, you can migrate to the new neuron maps API as follows:
 
-### Old API (Wirings)
+### Old API (Wiring)
 
 ```python
 from ember_ml.nn.wirings import NCPWiring

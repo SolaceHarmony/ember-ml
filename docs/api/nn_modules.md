@@ -213,9 +213,9 @@ y = activation(y)
 y = dropout(y, training=True)
 ```
 
-## Neuron Maps (Wiring)
+## Neuron Maps
 
-Neuron maps (formerly called wirings) define the connectivity patterns between neurons in a neural network, including advanced configurations with spatial properties. For detailed documentation on all available neuron map implementations, please refer to the [Neuron Maps (Wiring) Documentation](nn_modules_wiring.md).
+Neuron maps (formerly called wirings) define the connectivity patterns between neurons in a neural network, including advanced configurations with spatial properties. For detailed documentation on all available neuron map implementations, please refer to the [Neuron Maps Documentation](nn_modules_wiring.md).
 
 Here is a brief overview of some key neuron map implementations:
 
