@@ -9,6 +9,9 @@ from ember_ml.nn.modules.rnn.spherical_ltc import (
     SphericalLTCChain
 )
 
+from ember_ml.nn import tensor
+from ember_ml import ops
+
 def generate_input_signal(
     total_time: float = 10.0,
     pattern_time: float = 5.0,
@@ -33,11 +36,11 @@ def generate_input_signal(
     t = torch.linspace(0, total_time, num_steps)
     
     # Generate signal
-    signal = torch.zeros(num_steps)
+    signal = tensor.zeros(num_steps)
     signal[:pattern_steps] = torch.sin(2 * ops.pi * freq * t[:pattern_steps])
     
     # Convert to 3D
-    input_3d = torch.zeros(num_steps, 3)
+    input_3d = tensor.zeros(num_steps, 3)
     input_3d[:, 0] = signal  # Project onto x-axis
     
     return input_3d
@@ -87,7 +90,7 @@ def plot_results(
     """
     num_steps = states.size(1)
     num_neurons = states.size(2)
-    time = torch.arange(num_steps) * dt
+    time = tensor.arange(num_steps) * dt
     
     # Plot norms (should stay close to 1)
     plt.figure(figsize=(12, 6))

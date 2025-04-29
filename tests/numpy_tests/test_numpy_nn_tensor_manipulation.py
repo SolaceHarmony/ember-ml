@@ -30,12 +30,12 @@ def test_reshape():
     # Assert correctness
     assert isinstance(result, tensor.EmberTensor)
     assert tensor.shape(result) == (2, 3)
-    assert tensor.convert_to_tensor_equal(result_np, np.arange(6).reshape((2, 3)))
+    assert tensor.convert_to_tensor_equal(result_np, tensor.arange(6).reshape((2, 3)))
 
     # Test with -1 for inferred dimension
     result_inferred = tensor.reshape(x, (-1, 2))
     assert tensor.shape(result_inferred) == (3, 2)
-    assert tensor.convert_to_tensor_equal(tensor.to_numpy(result_inferred), np.arange(6).reshape((3, 2)))
+    assert tensor.convert_to_tensor_equal(tensor.to_numpy(result_inferred), tensor.arange(6).reshape((3, 2)))
 
 def test_transpose():
     # Test tensor.transpose
@@ -54,7 +54,7 @@ def test_transpose():
     y = tensor.arange(24).reshape((2, 3, 4)) # Shape (2, 3, 4)
     result_axes = tensor.transpose(y, axes=(1, 0, 2)) # Swap axes 0 and 1
     assert tensor.shape(result_axes) == (3, 2, 4)
-    assert tensor.convert_to_tensor_equal(tensor.to_numpy(result_axes), np.transpose(np.arange(24).reshape((2, 3, 4)), axes=(1, 0, 2)))
+    assert tensor.convert_to_tensor_equal(tensor.to_numpy(result_axes), np.transpose(tensor.arange(24).reshape((2, 3, 4)), axes=(1, 0, 2)))
 
 def test_concatenate():
     # Test tensor.concatenate
@@ -94,8 +94,8 @@ def test_split():
     assert len(result_num) == 2
     assert tensor.shape(result_num[0]) == (5,)
     assert tensor.shape(result_num[1]) == (5,)
-    assert tensor.convert_to_tensor_equal(tensor.to_numpy(result_num[0]), np.arange(5))
-    assert tensor.convert_to_tensor_equal(tensor.to_numpy(result_num[1]), np.arange(5, 10))
+    assert tensor.convert_to_tensor_equal(tensor.to_numpy(result_num[0]), tensor.arange(5))
+    assert tensor.convert_to_tensor_equal(tensor.to_numpy(result_num[1]), tensor.arange(5, 10))
 
     result_size_splits = tensor.split(x, [3, 7]) # Split after indices 3 and 7
     assert isinstance(result_size_splits, list)
@@ -103,9 +103,9 @@ def test_split():
     assert tensor.shape(result_size_splits[0]) == (3,)
     assert tensor.shape(result_size_splits[1]) == (4,)
     assert tensor.shape(result_size_splits[2]) == (3,)
-    assert tensor.convert_to_tensor_equal(tensor.to_numpy(result_size_splits[0]), np.arange(3))
-    assert tensor.convert_to_tensor_equal(tensor.to_numpy(result_size_splits[1]), np.arange(3, 7))
-    assert tensor.convert_to_tensor_equal(tensor.to_numpy(result_size_splits[2]), np.arange(7, 10))
+    assert tensor.convert_to_tensor_equal(tensor.to_numpy(result_size_splits[0]), tensor.arange(3))
+    assert tensor.convert_to_tensor_equal(tensor.to_numpy(result_size_splits[1]), tensor.arange(3, 7))
+    assert tensor.convert_to_tensor_equal(tensor.to_numpy(result_size_splits[2]), tensor.arange(7, 10))
 
 # Add more test functions for other manipulation functions:
 # test_expand_dims(), test_squeeze(), test_tile()
@@ -116,8 +116,8 @@ def test_split():
 #     result = tensor.expand_dims(x, axis=0) # Add new dimension at axis 0
 #     assert isinstance(result, tensor.EmberTensor)
 #     assert tensor.shape(result) == (1, 5)
-#     assert tensor.convert_to_tensor_equal(tensor.to_numpy(result), np.arange(5)[np.newaxis, :])
+#     assert tensor.convert_to_tensor_equal(tensor.to_numpy(result), tensor.arange(5)[np.newaxis, :])
 #
 #     result_middle = tensor.expand_dims(x, axis=1) # Add new dimension at axis 1
 #     assert tensor.shape(result_middle) == (5, 1)
-#     assert tensor.convert_to_tensor_equal(tensor.to_numpy(result_middle), np.arange(5)[:, np.newaxis])
+#     assert tensor.convert_to_tensor_equal(tensor.to_numpy(result_middle), tensor.arange(5)[:, np.newaxis])

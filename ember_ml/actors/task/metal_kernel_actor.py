@@ -13,9 +13,9 @@ import numpy as np
 # Import EmberTensor and async liquid_cfc_xlstm
 from ember_ml.nn.tensor import EmberTensor
 from ember_ml.asyncml.nn.modules.rnn.liquid_cfc_xlstm import async_liquid_cfc_xlstm
-
+from ember_ml.ops import stats
+from ember_ml.nn.tensor.types import TensorLike
 import ray
-import mlx.core as mx # Keep mlx import for now, as EmberTensor might wrap it
 import time
 import asyncio
 from typing import Dict, List, Optional, Any
@@ -217,10 +217,10 @@ class MetalKernelActor:
         times = tensor.convert_to_tensor(self.processing_times)
         return {
             'count': len(times),
-            'mean': np.mean(times),
-            'min': ops.stats.min(times),
-            'max': ops.stats.max(times),
-            'total': ops.stats.sum(times)
+            'mean': stats.mean(times),
+            'min': stats.min(times),
+            'max': stats.max(times),
+            'total': stats.sum(times)
         }
 
     def get_state(self):

@@ -5,7 +5,7 @@ from ember_ml.nn import tensor
 from ember_ml import ops
 # Assuming a main LiquidNeuralNetwork class exists in ember_ml.models.liquid
 # from ember_ml.models.liquid import LiquidNeuralNetwork
-from ember_ml.nn.modules import Module # Needed for isinstance checks
+from ember_ml.nn.modules import Module, Parameter # Import Parameter
 
 # Placeholder for the LiquidNeuralNetwork class if it's not directly importable
 # Replace with actual import when the class structure is confirmed
@@ -14,7 +14,7 @@ class LiquidNeuralNetwork(Module):
     def __init__(self, *args, **kwargs):
         super().__init__()
         # Placeholder for parameter initialization
-        self.dummy_param = tensor.Parameter(tensor.random_normal((1,)))
+        self.dummy_param = Parameter(tensor.random_normal((1,))) # Use imported Parameter
         self.input_size = kwargs.get('input_size')
         self.output_size = kwargs.get('output_size')
         self.built = False # Assume it follows the build pattern

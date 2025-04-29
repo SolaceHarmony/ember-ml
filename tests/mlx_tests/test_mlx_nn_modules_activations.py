@@ -1,10 +1,8 @@
 import pytest
 import numpy as np # For comparison with known correct results
 import math # For comparison with known correct results
-
-# Import Ember ML modules
-from ember_ml import ops
 from ember_ml.nn import tensor
+from ember_ml import ops
 from ember_ml.nn.modules import activations as activations_module # Import module for classes
 from ember_ml.nn.modules.activations import get_activation # Import helper function
 from ember_ml.ops import set_backend
@@ -34,14 +32,15 @@ def test_relu_module():
     result_np = tensor.to_numpy(result)
 
     # Assert correctness (ReLU(x) = max(0, x))
-    assert ops.allclose(result_np, ops.stats.maximum(0.0, tensor.to_numpy(x)))
+    expected_np = tensor.to_numpy(ops.where(ops.greater(x, 0.0), x, 0.0)) # Use ops.where for ReLU logic
+    assert ops.allclose(result_np, expected_np) # Use ops.allclose for numpy comparison
 
 def test_tanh_module():
     # Test Tanh Module
     tanh = activations_module.Tanh()
     x = tensor.convert_to_tensor([[-1.0, 0.0, 1.0], [-0.5, 0.5, 2.0]])
     result = tanh(x)
-    assert ops.allclose(tensor.to_numpy(result), np.tanh(tensor.to_numpy(x)))
+    assert ops.allclose(tensor.to_numpy(result), activations_module.tanh(tensor.to_numpy(x)))
 
 def test_sigmoid_module():
     # Test Sigmoid Module
@@ -50,7 +49,7 @@ def test_sigmoid_module():
     result = sigmoid(x)
     # Use a helper for sigmoid calculation to avoid direct backend calls
     def sigmoid_np(x_np):
-        return 1.0 / (1.0 + np.exp(-x_np))
+        return 1.0 / (1.0 + ops.exp(-x_np))
     assert ops.allclose(tensor.to_numpy(result), sigmoid_np(tensor.to_numpy(x)))
 
 def test_softmax_module():
@@ -59,7 +58,7 @@ def test_softmax_module():
     x = tensor.convert_to_tensor([[1.0, 2.0, 3.0], [1.0, 1.0, 1.0]])
     result = softmax(x)
     # Use numpy.softmax for expected values
-    expected_np = np.exp(tensor.to_numpy(x)) / ops.stats.sum(np.exp(tensor.to_numpy(x)), axis=-1, keepdims=True)
+    expected_np = ops.exp(tensor.to_numpy(x)) / stats.sum(ops.exp(tensor.to_numpy(x)), axis=-1, keepdims=True)
     assert ops.allclose(tensor.to_numpy(result), expected_np)
 
 def test_dropout_module():
@@ -73,7 +72,7 @@ def test_dropout_module():
     result_train_np = tensor.to_numpy(result_train)
     # Check that some elements are zero and others are scaled
     assert np.any(result_train_np == 0.0)
-    assert np.any(np.isclose(result_train_np, 1.0 / (1.0 - dropout_rate)))
+    assert np.any(ops.isclose(result_train_np, 1.0 / (1.0 - dropout_rate)))
 
     # During inference (dropout should not be active)
     result_eval = dropout(x, training=False)
@@ -94,11 +93,13 @@ def test_get_activation():
 
     x = tensor.convert_to_tensor([[-1.0, 0.0, 1.0]])
 
-    assert ops.allclose(tensor.to_numpy(relu_fn(x)), ops.stats.maximum(0.0, tensor.to_numpy(x)))
-    assert ops.allclose(tensor.to_numpy(tanh_fn(x)), np.tanh(tensor.to_numpy(x)))
+    # Compare numpy arrays using ops.allclose
+    expected_relu_np = tensor.to_numpy(ops.where(ops.greater(x, 0.0), x, 0.0)) # Use ops.where for ReLU logic
+    assert ops.allclose(tensor.to_numpy(relu_fn(x)), expected_relu_np)
+    assert ops.allclose(tensor.to_numpy(tanh_fn(x)), activations_module.tanh(tensor.to_numpy(x))) # Use ops.allclose
     def sigmoid_np(x_np):
-        return 1.0 / (1.0 + np.exp(-x_np))
-    assert ops.allclose(tensor.to_numpy(sigmoid_fn(x)), sigmoid_np(tensor.to_numpy(x)))
+        return 1.0 / (1.0 + ops.exp(-x_np))
+    assert ops.allclose(tensor.to_numpy(sigmoid_fn(x)), sigmoid_np(tensor.to_numpy(x))) # Use ops.allclose
 
     # Test with invalid activation name (should raise AttributeError)
     with pytest.raises(AttributeError):

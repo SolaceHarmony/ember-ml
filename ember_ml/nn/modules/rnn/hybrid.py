@@ -2,13 +2,14 @@
 Hybrid neural architectures combining LTC networks with attention mechanisms and LSTM layers.
 """
 
-import torch
-import torch.nn as nn
-from typing import Optional, Tuple, List, Dict, Any
-import numpy as np
-from .base import BaseNeuron
+from ember_ml.nn import tensor
+from ember_ml import ops
+from typing import Dict, Any
+from ember_ml.nn.modules import Module, activations
+from ember_ml.nn.tensor.types import TensorLike
+from ember_ml.nn.modules.rnn import LSTM
 
-class HybridNeuron(BaseNeuron):
+class HybridNeuron(Module):
     """
     Hybrid neuron combining LTC dynamics with attention mechanisms.
     """
@@ -46,7 +47,7 @@ class HybridNeuron(BaseNeuron):
         
     def _initialize_state(self) -> tensor.convert_to_tensor:
         """Initialize neuron state."""
-        return torch.zeros(self.hidden_size)
+        return tensor.zeros(self.hidden_size)
         
     def update(self,
                input_signal: tensor.convert_to_tensor,
@@ -67,7 +68,7 @@ class HybridNeuron(BaseNeuron):
             self.memory_buffer.pop(0)
             
         # Create memory tensor
-        memory = torch.stack(self.memory_buffer)
+        memory = tensor.stack(self.memory_buffer)
         
         # Apply attention over memory
         attended = self.attention(
@@ -102,7 +103,7 @@ class HybridNeuron(BaseNeuron):
         self.memory_buffer = [tensor.convert_to_tensor(m) for m in state_dict['memory_buffer']]
         self.max_memory_size = state_dict['max_memory_size']
 
-class AttentionLayer(nn.Module):
+class AttentionLayer(Module):
     """Multi-head attention layer for temporal processing."""
     
     def __init__(self, 
@@ -119,16 +120,17 @@ class AttentionLayer(nn.Module):
             value_dim: Value dimension
             hidden_dim: Hidden dimension for attention computation
         """
+        from ember_ml.nn.container import Linear
         super().__init__()
-        self.query = nn.Linear(query_dim, hidden_dim)
-        self.key = nn.Linear(key_dim, hidden_dim)
-        self.value = nn.Linear(value_dim, hidden_dim)
+        self.query = Linear(query_dim, hidden_dim)
+        self.key = Linear(key_dim, hidden_dim)
+        self.value = Linear(value_dim, hidden_dim)
         self.scale = hidden_dim ** 0.5
         
     def forward(self, 
-                query: tensor.convert_to_tensor,
-                key: tensor.convert_to_tensor,
-                value: tensor.convert_to_tensor) -> tensor.convert_to_tensor:
+                query: TensorLike,
+                key: TensorLike,
+                value: TensorLike) -> Any:
         """
         Compute attention-weighted output.
 
@@ -141,18 +143,18 @@ class AttentionLayer(nn.Module):
             Attention-weighted output [batch, hidden_dim]
         """
         # Compute attention scores
-        scores = torch.matmul(
+        scores = ops.matmul(
             self.query(query).unsqueeze(1),
             self.key(key).transpose(-2, -1)
         ) / self.scale
         
         # Apply attention weights
-        attn_weights = torch.softmax(scores, dim=-1)
-        output = torch.matmul(attn_weights, self.value(value))
+        attn_weights = ops.softmax(scores, dim=-1)
+        output = ops.matmul(attn_weights, self.value(value))
         
         return output.squeeze(1)
 
-class HybridLNNModel(nn.Module):
+class HybridLNNModel(Module):
     """
     Hybrid architecture combining LTC networks with LSTM and attention mechanisms.
     Implements the enhanced model from the LNN-CNN analysis.
@@ -181,13 +183,13 @@ class HybridLNNModel(nn.Module):
         self.parallel_chains = parallel_chains
         
         # LTC chains
-        self.ltc_cells = nn.ModuleList([
+        self.ltc_cells = [
             ImprovedLiquidTimeConstantCell(input_size, hidden_size)
             for _ in range(parallel_chains)
-        ])
+        ]
         
         # LSTM layer
-        self.lstm = nn.LSTM(
+        self.lstm = LSTM(
             lstm_hidden_size,
             lstm_hidden_size,
             batch_first=True
@@ -202,7 +204,8 @@ class HybridLNNModel(nn.Module):
         )
         
         # Output layer
-        self.output_layer = nn.Linear(lstm_hidden_size, output_size)
+        from ember_ml.nn.container import Linear
+        self.output_layer = Linear(lstm_hidden_size, output_size)
         
     def forward(self,
                 input_sequence: tensor.convert_to_tensor,
@@ -221,7 +224,7 @@ class HybridLNNModel(nn.Module):
         device = input_sequence.device
         
         # Initialize hidden state
-        x0 = torch.zeros(
+        x0 = tensor.zeros(
             batch_size,
             self.hidden_size * self.parallel_chains
         ).to(device)
@@ -239,7 +242,7 @@ class HybridLNNModel(nn.Module):
             u = input_sequence[:, t, :]
             
             # Split hidden state for parallel chains
-            x0_split = torch.chunk(x0, self.parallel_chains, dim=1)
+            x0_split = tensor.chunk(x0, self.parallel_chains, dim=1)
             
             # Process through LTC chains
             x_new = []
@@ -257,19 +260,19 @@ class HybridLNNModel(nn.Module):
                 x_new.append(x[-1])
             
             # Combine chain outputs
-            x0 = torch.cat(x_new, dim=1)
+            x0 = ops.cat(x_new, dim=1)
             
             # Generate output
             y = self.output_layer(x0)
             outputs.append(y)
             
         # Stack outputs
-        outputs = torch.stack(outputs, dim=1)
+        outputs = tensor.stack(outputs, dim=1)
         
         return outputs
     
     def _integrate_ode(self,
-                      cell: nn.Module,
+                      cell: Module,
                       x0: tensor.convert_to_tensor,
                       t_span: tensor.convert_to_tensor,
                       u: tensor.convert_to_tensor,
@@ -292,7 +295,7 @@ class HybridLNNModel(nn.Module):
         from torchdiffeq import odeint
         return odeint(cell, x0, t_span, method=method, options=options, args=(u,))
 
-class ImprovedLiquidTimeConstantCell(nn.Module):
+class ImprovedLiquidTimeConstantCell(Module):
     """Enhanced LTC cell with nonlinear dynamics."""
     
     def __init__(self, input_size: int, hidden_size: int):
@@ -308,12 +311,14 @@ class ImprovedLiquidTimeConstantCell(nn.Module):
         self.hidden_size = hidden_size
         
         # Weight matrices
-        self.W = nn.Linear(hidden_size, hidden_size)
-        self.U = nn.Linear(input_size, hidden_size)
-        self.b = nn.Parameter(torch.zeros(hidden_size))
+        from ember_ml.nn.container import Linear
+        from ember_ml.nn.modules import Parameter
+        self.W = Linear(hidden_size, hidden_size)
+        self.U = Linear(input_size, hidden_size)
+        self.b = Parameter(tensor.zeros(hidden_size))
         
         # Time constants
-        self.tau = nn.Parameter(torch.ones(hidden_size))
+        self.tau = Parameter(tensor.ones(hidden_size))
         
     def forward(self,
                 t: tensor.convert_to_tensor,
@@ -331,10 +336,10 @@ class ImprovedLiquidTimeConstantCell(nn.Module):
             State derivative
         """
         # Nonlinear term
-        nonlinear_term = torch.sqrt(x + 1)
+        nonlinear_term = ops.sqrt(x + 1)
         
         # State derivative
-        dxdt = (-x / self.tau) + torch.tanh(
+        dxdt = (-x / self.tau) + activations.tanh(
             self.W(x) + self.U(u) + self.b
         )
         

@@ -314,19 +314,19 @@ class GenericFeatureEngineer:
         # Create cyclical features using sine and cosine transformations
         # Hour of day (0-23)
         df[f'{col}_sin_hour'] = ops.sin(2 * ops.pi * df[col].dt.hour / 23.0)
-        df[f'{col}_cos_hour'] = np.cos(2 * ops.pi * df[col].dt.hour / 23.0)
+        df[f'{col}_cos_hour'] = ops.cos(2 * ops.pi * df[col].dt.hour / 23.0)
         
         # Day of week (0-6)
         df[f'{col}_sin_dayofweek'] = ops.sin(2 * ops.pi * df[col].dt.dayofweek / 6.0)
-        df[f'{col}_cos_dayofweek'] = np.cos(2 * ops.pi * df[col].dt.dayofweek / 6.0)
+        df[f'{col}_cos_dayofweek'] = ops.cos(2 * ops.pi * df[col].dt.dayofweek / 6.0)
         
         # Day of month (1-31)
         df[f'{col}_sin_day'] = ops.sin(2 * ops.pi * (df[col].dt.day - 1) / 30.0)
-        df[f'{col}_cos_day'] = np.cos(2 * ops.pi * (df[col].dt.day - 1) / 30.0)
+        df[f'{col}_cos_day'] = ops.cos(2 * ops.pi * (df[col].dt.day - 1) / 30.0)
         
         # Month (1-12)
         df[f'{col}_sin_month'] = ops.sin(2 * ops.pi * (df[col].dt.month - 1) / 11.0)
-        df[f'{col}_cos_month'] = np.cos(2 * ops.pi * (df[col].dt.month - 1) / 11.0)
+        df[f'{col}_cos_month'] = ops.cos(2 * ops.pi * (df[col].dt.month - 1) / 11.0)
         
         print(f"Created cyclical features for datetime column '{col}'")
         return df
@@ -551,7 +551,7 @@ class TemporalStrideProcessor:
         """
         if stride in self.pca_models:
             # Calculate feature importance as the sum of absolute component weights
-            return np.abs(self.pca_models[stride].components_).sum(axis=0)
+            return ops.abs(self.pca_models[stride].components_).sum(axis=0)
         return None
 
 

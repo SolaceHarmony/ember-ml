@@ -200,7 +200,7 @@ class EnhancedNCPMap(EnhancedNeuronMap):
             distances_tensor = tensor.convert_to_tensor(distances)
             
             # Normalize distances to [0, 1] range
-            max_dist = ops.stats.max(distances_tensor)
+            max_dist = stats.max(distances_tensor)
             if tensor.to_numpy(max_dist) > 0:
                 distances_tensor = ops.divide(distances_tensor, max_dist)
             
@@ -290,7 +290,7 @@ class EnhancedNCPMap(EnhancedNeuronMap):
         from scipy.linalg import expm
         
         # Normalize by degree using tensor operations
-        row_sums = ops.stats.sum(recurrent_mask, axis=1)
+        row_sums = stats.sum(recurrent_mask, axis=1)
         
         # Add small epsilon to avoid division by zero
         row_sums_eps = ops.add(row_sums, tensor.convert_to_tensor(1e-8))

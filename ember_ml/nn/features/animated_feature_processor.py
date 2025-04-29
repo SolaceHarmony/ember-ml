@@ -678,27 +678,17 @@ class AnimatedFeatureProcessor:
         if not self.visualization_enabled or tensor.shape(data)[1] == 0:
             return
 
-        try:
-            # Convert tensor to a serializable format
-            try:
-                data_np = tensor.to_numpy(data)
-            except Exception as e:
-                logger.warning(f"Could not convert tensor to NumPy for frame capture, falling back: {e}")
-                data_np = [[tensor.to_numpy(item) for item in row] for row in data]
+        frame_data = {
+            'step': step_description,
+            'feature_type': feature_type,
+            # Store a sample for visualization
+            'data_sample': (data[:100, :].tolist() if hasattr(data, 'shape') and len(data.shape) > 1 
+                            else [row[:] for row in data[:100]]),
+            'shape': tensor.shape(data)
+        }
+        self.processing_frames.append(frame_data)
+        logger.debug(f"Captured animation frame for step: {step_description}")
 
-            frame_data = {
-                'step': step_description,
-                'feature_type': feature_type,
-                # Store a sample for visualization
-                'data_sample': (data_np[:100, :].tolist() if hasattr(data_np, 'shape') and len(data_np.shape) > 1 
-                                else [row[:] for row in data_np[:100]]),
-                'shape': tensor.shape(data)
-            }
-            self.processing_frames.append(frame_data)
-            logger.debug(f"Captured animation frame for step: {step_description}")
-
-        except Exception as e:
-            logger.error(f"Error capturing animation frame for step '{step_description}': {e}", exc_info=True)
 
     def _generate_processing_animation(self) -> None:
         """

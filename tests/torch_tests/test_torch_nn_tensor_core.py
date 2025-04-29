@@ -6,6 +6,7 @@ import torch # Import torch for device checks if needed
 from ember_ml import ops
 from ember_ml.nn import tensor
 from ember_ml.ops import set_backend
+from ember_ml.backend.torch.types import TensorLike # Import TensorLike
 
 # Set the backend for these tests
 set_backend("torch")
@@ -91,23 +92,23 @@ def test_embertensor_to_numpy():
     assert ops.allclose(np_array, tensor.convert_to_tensor(data))
     assert np_array.shape == (2, 2)
     # Check dtype conversion
-    assert np_array.dtype == np.float32 # Assuming default float32
+    assert np_array.dtype == tensor.float32 # Assuming default float32
 
 def test_embertensor_item():
     # Test converting scalar EmberTensor to Python scalar
     t_int = tensor.EmberTensor(42)
     item_int = tensor.item(t_int)
-    assert isinstance(item_int, (int, np.integer))
+    assert isinstance(item_int, (int, tensor.integer))
     assert item_int == 42
 
     t_float = tensor.EmberTensor(3.14)
     item_float = tensor.item(t_float)
-    assert isinstance(item_float, (float, np.floating))
+    assert isinstance(item_float, (float, tensor.floating))
     assert abs(item_float - 3.14) < 1e-6
 
     t_bool = tensor.EmberTensor(True)
     item_bool = tensor.item(t_bool)
-    assert isinstance(item_bool, (bool, np.bool_))
+    assert isinstance(item_bool, (bool, tensor.bool))
     assert item_bool is True
 
     # Test with non-scalar tensor (should raise error)

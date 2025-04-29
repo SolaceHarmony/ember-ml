@@ -22,22 +22,22 @@ def set_numpy_backend():
 def test_normalize_vector():
     # Test vector normalization
     x = tensor.convert_to_tensor([1.0, 2.0, 2.0]) # L2 norm is sqrt(1+4+4) = 3
-    result = ops.normalize_vector(x)
+    result = linearalg.normalize_vector(x)
 
     # Convert to numpy for assertion
     result_np = tensor.to_numpy(result)
 
     # Assert correctness (should be unit vector)
-    assert ops.allclose(np.linalg.norm(result_np), 1.0)
+    assert ops.allclose(ops.linearalg.norm(result_np), 1.0)
     assert ops.allclose(result_np, [1.0/3.0, 2.0/3.0, 2.0/3.0])
 
     # Test with axis
     matrix = tensor.convert_to_tensor([[1.0, 2.0], [3.0, 4.0]])
-    result_axis0 = ops.normalize_vector(matrix, axis=0)
-    result_axis1 = ops.normalize_vector(matrix, axis=1)
+    result_axis0 = linearalg.normalize_vector(matrix, axis=0)
+    result_axis1 = linearalg.normalize_vector(matrix, axis=1)
 
-    assert ops.allclose(np.linalg.norm(tensor.to_numpy(result_axis0), axis=0), [1.0, 1.0])
-    assert ops.allclose(np.linalg.norm(tensor.to_numpy(result_axis1), axis=1), [1.0, 1.0])
+    assert ops.allclose(ops.linearalg.norm(tensor.to_numpy(result_axis0), axis=0), [1.0, 1.0])
+    assert ops.allclose(ops.linearalg.norm(tensor.to_numpy(result_axis1), axis=1), [1.0, 1.0])
 
 
 def test_euclidean_distance():
@@ -89,5 +89,5 @@ def test_cosine_similarity():
 #     rate = 0.5
 #     result = ops.exponential_decay(x, rate=rate)
 #     # Expected: [1.0 * exp(-0.5*0), 2.0 * exp(-0.5*1), 3.0 * exp(-0.5*2)]
-#     expected_np = tensor.convert_to_tensor([1.0 * np.exp(-0.5*0), 2.0 * np.exp(-0.5*1), 3.0 * np.exp(-0.5*2)])
+#     expected_np = tensor.convert_to_tensor([1.0 * ops.exp(-0.5*0), 2.0 * ops.exp(-0.5*1), 3.0 * ops.exp(-0.5*2)])
 #     assert ops.allclose(tensor.to_numpy(result), expected_np)

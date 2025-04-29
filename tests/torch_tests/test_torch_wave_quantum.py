@@ -26,7 +26,7 @@ def test_wavefunction_normalize(set_backend_fixture):
     state_vector = tensor.convert_to_tensor([1.0, 2.0, 3.0, 4.0])
     wf = WaveFunction(state_vector)
     wf.normalize()
-    norm = ops.sqrt(ops.stats.sum(ops.square(ops.abs(wf.state_vector))))
+    norm = ops.sqrt(stats.sum(ops.square(ops.abs(wf.state_vector))))
     # Use ops.allclose for backend-agnostic comparison
     assert ops.allclose(norm, tensor.convert_to_tensor(1.0))
 
@@ -36,7 +36,7 @@ def test_wavefunction_measure(set_backend_fixture):
     wf = WaveFunction(state_vector)
     # Measurement is stochastic, so we check the type and range of the output
     measured_state = wf.measure()
-    assert isinstance(measured_state, int) or isinstance(measured_state, np.integer)
+    assert isinstance(measured_state, int) or isinstance(measured_state, tensor.integer)
     assert 0 <= measured_state < tensor.shape(state_vector)[0]
 
 # Note: Testing wave function evolution with a general Hamiltonian might require
@@ -103,7 +103,7 @@ def test_quantumstate_measure_qubit(set_backend_fixture):
 
     # Measurement is stochastic, check type and range
     measured_result = qs.measure_qubit(0)
-    assert isinstance(measured_result, int) or isinstance(measured_result, np.integer)
+    assert isinstance(measured_result, int) or isinstance(measured_result, tensor.integer)
     assert measured_result in [0, 1]
 
 def test_quantumstate_get_probabilities(set_backend_fixture):
@@ -121,7 +121,7 @@ def test_quantumstate_get_probabilities(set_backend_fixture):
     probabilities = qs.get_probabilities()
     assert tensor.shape(probabilities) == (2,) # For 1 qubit, 2 probabilities
     # Check that probabilities sum to approximately 1
-    assert ops.allclose(ops.stats.sum(probabilities), tensor.convert_to_tensor(1.0))
+    assert ops.allclose(stats.sum(probabilities), tensor.convert_to_tensor(1.0))
     # Check that probabilities are non-negative
     assert ops.all(ops.greater_equal(probabilities, tensor.convert_to_tensor(0.0)))
 

@@ -143,14 +143,14 @@ class TemporalStrideProcessor:
         # Convert to numpy for PCA processing
         # This is one of the few cases where numpy conversion is allowed
         # The conversion is necessary for compatibility with our PCA implementation
-        flat_windows_np = stacked_windows.numpy() if hasattr(stacked_windows, 'numpy') else stacked_windows
+        flat_windows_tensor = stacked_windows 
         
         # Ensure PCA is fit
         if stride not in self.pca_models:
             # Calculate appropriate number of components
             if self.pca_components is None:
                 # Use half the flattened dimension, but cap at 32 components
-                flat_dim = flat_windows_np.shape[1]
+                flat_dim = flat_windows_tensor.shape[1]
                 half_dim = ops.floor_divide(
                     tensor.convert_to_tensor(flat_dim),
                     tensor.convert_to_tensor(2)
@@ -171,14 +171,14 @@ class TemporalStrideProcessor:
                 n_components = min(
                     self.pca_components,
                     batch_size_minus_one,
-                    flat_windows_np.shape[1]
+                    flat_windows_tensor.shape[1]
                 )
                 
             print(f"Fitting PCA for stride {stride} with {n_components} components")
             # Use our backend-agnostic PCA implementation
             pca = PCA()
             pca.fit(
-                flat_windows_np,
+                flat_windows_tensor,
                 n_components=n_components,
                 whiten=False,
                 center=True,
@@ -187,7 +187,7 @@ class TemporalStrideProcessor:
             self.pca_models[stride] = pca
             
         # Transform the data
-        transformed = self.pca_models[stride].transform(flat_windows_np)
+        transformed = self.pca_models[stride].transform(flat_windows_tensor)
         transformed_np = transformed.numpy() if hasattr(transformed, 'numpy') else transformed
         
         # Convert back to EmberTensor
@@ -204,7 +204,7 @@ class TemporalStrideProcessor:
             Sum of explained variance ratios or None if PCA not fit
         """
         if stride in self.pca_models:
-            return EmberTensor(ops.stats.sum(self.pca_models[stride].explained_variance_ratio_))
+            return EmberTensor(stats.sum(self.pca_models[stride].explained_variance_ratio_))
         return None
     
     def get_feature_importance(self, stride: int) -> Optional[EmberTensor]:
@@ -220,6 +220,6 @@ class TemporalStrideProcessor:
         if stride in self.pca_models:
             # Calculate feature importance as the sum of absolute component weights
             abs_components = ops.abs(self.pca_models[stride].components_)
-            importance = ops.stats.sum(abs_components, axis=0)
+            importance = stats.sum(abs_components, axis=0)
             return EmberTensor(importance)
         return None

@@ -107,7 +107,7 @@ class FrequencyAnalyzer:
             
         # Sum peak amplitudes
         peak_sum = sum(p['amplitude'] for p in peaks)
-        total_sum = torch.sum(spectrum).item()
+        total_sum = stats.sum(spectrum).item()
         
         return peak_sum / total_sum if total_sum > 0 else 0.0
 

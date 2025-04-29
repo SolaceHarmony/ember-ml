@@ -44,9 +44,9 @@ def test_mean():
 def test_sum():
     # Test sum calculation
     x = tensor.convert_to_tensor([[1.0, 2.0], [3.0, 4.0]])
-    result_all = ops.stats.sum(x)
-    result_axis0 = ops.stats.sum(x, axis=0)
-    result_axis1 = ops.stats.sum(x, axis=1)
+    result_all = stats.sum(x)
+    result_axis0 = stats.sum(x, axis=0)
+    result_axis1 = stats.sum(x, axis=1)
 
     # Convert to numpy for assertion
     result_all_np = tensor.to_numpy(result_all)
@@ -60,7 +60,7 @@ def test_sum():
 
     # Test with different dtype
     x_int = tensor.convert_to_tensor([[1, 2], [3, 4]], dtype=tensor.int32)
-    result_int = ops.stats.sum(x_int)
+    result_int = stats.sum(x_int)
     assert ops.allclose(tensor.to_numpy(result_int), 10)
 
 # Add more test functions for other ops.stats functions:
@@ -95,6 +95,6 @@ def test_sum():
 #     result_descending_np = tensor.to_numpy(result_descending)
 #
 #     # Assert correctness (compare with numpy.sort)
-#     assert ops.allclose(result_default_np, np.sort(tensor.to_numpy(x)))
-#     assert ops.allclose(result_axis0_np, np.sort(tensor.to_numpy(x), axis=0))
-#     assert ops.allclose(result_descending_np, np.sort(tensor.to_numpy(x), axis=-1)[::-1]) # Simple descending check
+#     assert ops.allclose(result_default_np, tensor.sort(tensor.to_numpy(x)))
+#     assert ops.allclose(result_axis0_np, tensor.sort(tensor.to_numpy(x), axis=0))
+#     assert ops.allclose(result_descending_np, tensor.sort(tensor.to_numpy(x), axis=-1)[::-1]) # Simple descending check

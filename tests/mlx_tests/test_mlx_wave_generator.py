@@ -1,6 +1,4 @@
 import pytest
-import numpy as np # For comparison with known correct results
-import math # For comparison with known correct results
 
 # Import Ember ML modules
 from ember_ml import ops
@@ -68,7 +66,7 @@ def test_signalsynthesizer_square_wave():
     assert square_wave.shape[0] == expected_length
 
     # Check values (should be amplitude or -amplitude)
-    assert ops.all(np.logical_or(np.isclose(square_wave, amplitude), np.isclose(square_wave, -amplitude)))
+    assert ops.all(ops.logical_or(ops.isclose(square_wave, amplitude), ops.isclose(square_wave, -amplitude)))
 
 
 def test_signalsynthesizer_sawtooth_wave():

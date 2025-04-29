@@ -3,13 +3,15 @@ Wave conversion utilities.
 
 This module provides utilities for converting between different wave representations.
 """
-
-import numpy as np
 from typing import Union, List, Tuple, Optional
 from ember_ml.nn.tensor.types import TensorLike # Added import
+from ember_ml.ops import linearalg
 from ember_ml import ops # Moved import to top level
-
-def pcm_to_float(pcm_data: TensorLike, dtype: np.dtype = np.float32) -> TensorLike:
+from typing import Any
+from ember_ml.nn import tensor # Moved import to top level
+# Define TensorLike as a type alias for better readability
+DType = Any
+def pcm_to_float(pcm_data: TensorLike, dtype: Any = tensor.float32) -> Any:
     """
     Convert PCM data to floating point representation.
     
@@ -20,21 +22,21 @@ def pcm_to_float(pcm_data: TensorLike, dtype: np.dtype = np.float32) -> TensorLi
     Returns:
         Floating point representation
     """
-    pcm_data = np.asarray(pcm_data)
-    if pcm_data.dtype.kind not in 'iu':
+    pcm_data = tensor.convert_to_tensor(pcm_data)
+    if 'int' in str(pcm_data.dtype):
         raise TypeError("PCM data must be integer type")
     
-    dtype = np.dtype(dtype)
-    if dtype.kind != 'f':
+    dtype = tensor.dtype(dtype)
+    if 'float' in str(dtype):
         raise TypeError("Output data type must be floating point")
     
-    i = np.iinfo(pcm_data.dtype)
+    i = ops.bitwise.iinfo(pcm_data.dtype) # iinfo does not exist - use ops.bitwise.*
     abs_max = 2 ** (i.bits - 1)
     offset = i.min + abs_max
     
     return (pcm_data.astype(dtype) - offset) / abs_max
 
-def float_to_pcm(float_data: TensorLike, dtype: np.dtype = np.int16) -> TensorLike:
+def float_to_pcm(float_data: TensorLike, dtype: tensor.dtype = tensor.int16) -> TensorLike:
     """
     Convert floating point data to PCM representation.
     
@@ -45,15 +47,15 @@ def float_to_pcm(float_data: TensorLike, dtype: np.dtype = np.int16) -> TensorLi
     Returns:
         PCM representation
     """
-    float_data = np.asarray(float_data)
+    float_data = tensor.asarray(float_data)
     if float_data.dtype.kind != 'f':
         raise TypeError("Input data must be floating point")
     
-    dtype = np.dtype(dtype)
+    dtype = tensor.dtype(dtype)
     if dtype.kind not in 'iu':
         raise TypeError("Output data type must be integer")
     
-    i = np.iinfo(dtype)
+    i = ops.bitwise.iinfo(dtype)
     abs_max = 2 ** (i.bits - 1)
     offset = i.min + abs_max
     
@@ -72,10 +74,10 @@ def pcm_to_db(pcm_data: TensorLike, ref: float = 1.0, min_db: float = -80.0) -> 
         Decibel representation
     """
     float_data = pcm_to_float(pcm_data)
-    power = np.abs(float_data) ** 2
+    power = ops.abs(float_data) ** 2
     # Removed import from here: from ember_ml import ops
-    db = 10 * np.log10(ops.stats.maximum(power, 1e-10) / ref)
-    return ops.stats.maximum(db, min_db)
+    db = 10 * ops.log10(stats.maximum(power, 1e-10) / ref)
+    return stats.maximum(db, min_db)
 
 def db_to_amplitude(db: Union[float, TensorLike]) -> Union[float, TensorLike]:
     """
@@ -101,8 +103,8 @@ def amplitude_to_db(amplitude: Union[float, TensorLike], min_db: float = -80.0) 
         Decibel value
     """
     # Removed import from here: from ember_ml import ops
-    db = 20 * np.log10(ops.stats.maximum(np.abs(amplitude), 1e-10))
-    return ops.stats.maximum(db, min_db)
+    db = 20 * ops.log10(stats.maximum(ops.abs(amplitude), 1e-10))
+    return stats.maximum(db, min_db)
 
 def pcm_to_binary(pcm_data: TensorLike, threshold: float = 0.0) -> TensorLike:
     """
@@ -116,9 +118,9 @@ def pcm_to_binary(pcm_data: TensorLike, threshold: float = 0.0) -> TensorLike:
         Binary representation
     """
     float_data = pcm_to_float(pcm_data)
-    return (float_data > threshold).astype(np.int8)
+    return (float_data > threshold).astype(tensor.int8)
 
-def binary_to_pcm(binary_data: TensorLike, amplitude: float = 1.0, dtype: np.dtype = np.int16) -> TensorLike:
+def binary_to_pcm(binary_data: TensorLike, amplitude: float = 1.0, dtype: tensor.dtype = tensor.int16) -> TensorLike:
     """
     Convert binary data to PCM representation.
     
@@ -130,7 +132,7 @@ def binary_to_pcm(binary_data: TensorLike, amplitude: float = 1.0, dtype: np.dty
     Returns:
         PCM representation
     """
-    float_data = binary_data.astype(np.float32) * 2 - 1
+    float_data = binary_data.astype(tensor.float32) * 2 - 1
     float_data *= amplitude
     return float_to_pcm(float_data, dtype)
 
@@ -145,9 +147,9 @@ def pcm_to_phase(pcm_data: TensorLike) -> TensorLike:
         Phase representation
     """
     float_data = pcm_to_float(pcm_data)
-    return np.angle(np.fft.fft(float_data))
+    return tensor.angle(linearalg.fft(float_data))
 
-def phase_to_pcm(phase_data: TensorLike, magnitude: Optional[TensorLike] = None, dtype: np.dtype = np.int16) -> TensorLike:
+def phase_to_pcm(phase_data: TensorLike, magnitude: Optional[TensorLike] = None, dtype: tensor.dtype = tensor.int16) -> TensorLike:
     """
     Convert phase data to PCM representation.
     
@@ -164,6 +166,6 @@ def phase_to_pcm(phase_data: TensorLike, magnitude: Optional[TensorLike] = None,
         from ember_ml.nn import tensor
         magnitude = tensor.ones_like(phase_data)
 
-    complex_data = magnitude * np.exp(1j * phase_data)
-    float_data = np.real(np.fft.ifft(complex_data))
+    complex_data = magnitude * ops.exp(1j * phase_data)
+    float_data = ops.real(linearalg.fft.ifft(complex_data))
     return float_to_pcm(float_data, dtype)

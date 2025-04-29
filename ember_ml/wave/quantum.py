@@ -49,7 +49,7 @@ class WaveFunction:
         Returns:
             Normalized wave function
         """
-        norm = torch.sqrt(torch.sum(self.probability_density()))
+        norm = torch.sqrt(stats.sum(self.probability_density()))
         return WaveFunction(self.amplitudes / norm, self.phases)
         
     def evolve(self, hamiltonian: tensor.convert_to_tensor, dt: float) -> 'WaveFunction':
@@ -65,7 +65,7 @@ class WaveFunction:
         """
         psi = self.to_complex()
         U = torch.matrix_exp(-1j * hamiltonian * dt)
-        evolved = torch.matmul(U, psi)
+        evolved = ops.matmul(U, psi)
         
         return WaveFunction(
             torch.abs(evolved),
@@ -111,7 +111,7 @@ class QuantumState:
                     op[i, j] = gate[idx_i, idx_j]
                     
         # Apply operator
-        self.amplitudes = torch.matmul(op, self.amplitudes)
+        self.amplitudes = ops.matmul(op, self.amplitudes)
         
     def measure(self, qubit: int) -> Tuple[int, float]:
         """

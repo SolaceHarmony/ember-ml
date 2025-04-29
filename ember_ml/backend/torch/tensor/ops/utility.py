@@ -69,15 +69,13 @@ def _validate_and_get_torch_dtype(dtype: Optional[Any]) -> Optional[torch.dtype]
     # If it's not a string, EmberDType, or torch.dtype, it's invalid
     raise ValueError(f"Invalid dtype: {dtype} of type {type(dtype)}")
 
-
-def _convert_input(x: TensorLike, dtype: Optional[DType] = None) -> Any:
+def _convert_input(x: TensorLike, dtype: Optional[DType] = None, device: Optional[Union[None,torch.device]]=None) -> Any:
     """
     Convert input to Torch array.
 
     Handles various input types:
     - Torch arrays (returned as-is)
     - NumPy arrays (converted to Torch arrays)
-    - TorchTensor objects (extract underlying data)
     - EmberTensor objects (extract underlying data)
     - Python scalars (int, float, bool)
     - Python sequences (list, tuple)
@@ -93,37 +91,26 @@ def _convert_input(x: TensorLike, dtype: Optional[DType] = None) -> Any:
         x: Input data to convert
 
     Returns:
-        Torch array
-
+        torch.Tensor or None if error occurs
     Raises:
         ValueError: If the input cannot be converted to an Torch tensor.
     """
-    # Handle None values
+    if dtype is None:
+        # Import default_float and default_int for type conversion
+        # Use the default float type for MLX
+        dtype = default_float
+    else:
+        # Validate and get the MLX dtype
+        dtype = _validate_and_get_torch_dtype(dtype)    
     if x is None:
-        # Create a default zero tensor (scalar)
-        # Use the provided dtype if available, otherwise default to float
-        target_torch_dtype = _validate_and_get_torch_dtype(dtype) if dtype is not None else default_float
-        return torch.tensor(0.0, dtype=target_torch_dtype)
+        return torch.tensor(0.0, dtype=dtype)
+    
     # Already an Torch tensor - check by type and module
-    # Using isinstance for potentially more robust check
-    if isinstance(x, torch.Tensor):
-        # If dtype is provided and different, convert. Otherwise return as is.
-        # Let _convert_to_tensor handle the final conversion if needed.
-        return x
-    # Fallback check if isinstance fails for some reason
     elif (hasattr(x, '__class__') and
         hasattr(x.__class__, '__module__') and
         x.__class__.__module__ == 'torch' and
         x.__class__.__name__ == 'Tensor'):
         return x
-    # Handle TorchTensor objects
-    if (hasattr(x, '__class__') and
-        hasattr(x.__class__, '__name__') and
-        x.__class__.__name__ == 'TorchTensor'):
-        if hasattr(x, '_tensor') and isinstance(x._tensor, torch.Tensor):
-            return x._tensor
-        else:
-             raise ValueError(f"TorchTensor does not have a valid '_tensor' attribute: {x}")
 
     # Handle EmberTensor objects
     if (hasattr(x, '__class__') and
@@ -133,7 +120,7 @@ def _convert_input(x: TensorLike, dtype: Optional[DType] = None) -> Any:
             # The tensor within EmberTensor might be from another backend,
             # so we recursively call _convert_input to handle it properly.
             # Pass the original dtype down
-            return _convert_input(x._tensor, dtype=dtype)
+            return _convert_input(x._tensor, dtype=dtype, device=device)
         else:
             raise ValueError(f"EmberTensor does not have a '_tensor' attribute: {x}")
 
@@ -148,43 +135,34 @@ def _convert_input(x: TensorLike, dtype: Optional[DType] = None) -> Any:
             return _convert_input(x.data, dtype=dtype)
         else:
             raise ValueError(f"Parameter object does not have a 'data' attribute: {x}")
+    # Better detection of numpy scalar types
+    is_numpy_scalar = (hasattr(x, 'item') and
+                      hasattr(x, '__class__') and
+                      hasattr(x.__class__, '__module__') and
+                      x.__class__.__module__.startswith('numpy') and
+                      (not hasattr(x, 'shape') or x.size == 1))
+    is_numpy = (hasattr(x, '__class__') and 
+                hasattr(x.__class__, '__module__') and 
+                (x.__class__.__module__.startswith('numpy')))
 
     # Check for NumPy arrays by type name rather than direct import
-    if (hasattr(x, '__class__') and
+    if is_numpy_scalar is not True and (hasattr(x, '__class__') and
         x.__class__.__module__ == 'numpy' and
         x.__class__.__name__ == 'ndarray'):
-        # Use x.copy() to avoid potential memory sharing issues
-        # Let torch.from_numpy handle dtype conversion (e.g., float64 -> float32 if needed later)
         # Convert from numpy, let _convert_to_tensor handle final dtype if needed
-        return torch.from_numpy(x.copy())
-
-    # Handle NumPy scalar types using hasattr
-    if (hasattr(x, 'item') and
-        hasattr(x, '__class__') and
-        hasattr(x.__class__, '__module__') and
-        x.__class__.__module__ == 'numpy'):
+        draft_np = torch.from_numpy(x.copy())
+        return draft_np.to(dtype=dtype) # Convert to the specified dtype
+    elif is_numpy:
+        # Handle NumPy arrays (not scalars)
         try:
-            # Convert NumPy scalar to its Python equivalent, then to Torch array
-            # Use the new validation function to get the appropriate Torch dtype
-            py_scalar = x.item()
-            # Get the corresponding torch dtype, preserving precision where possible
-            # Determine target dtype: Use provided dtype first, else infer from numpy dtype
-            target_torch_dtype = _validate_and_get_torch_dtype(dtype)
-            if target_torch_dtype is None:
-                target_torch_dtype = _validate_and_get_torch_dtype(x.dtype) # Infer from numpy
-
-            if target_torch_dtype:
-                 return torch.tensor(py_scalar, dtype=target_torch_dtype)
-            else:
-                 # Fallback if dtype validation fails or inference fails
-                 # Let torch infer from the python type
-                 return torch.tensor(py_scalar)
+            # Convert from numpy, let _convert_to_tensor handle final dtype if needed
+            draft_np = torch.from_numpy(x.copy())
+            return draft_np.to(dtype=dtype)
         except Exception as e:
-             raise ValueError(f"Cannot convert NumPy scalar {type(x)} to torch.Tensor: {e}")
+            raise ValueError(f"Cannot convert NumPy array {type(x)} to torch.Tensor: {e}")
 
     # Handle Python scalars (int, float, bool), EXCLUDING NumPy scalars handled above
     is_python_scalar = isinstance(x, (int, float, bool))
-    is_numpy_scalar = (hasattr(x, 'item') and hasattr(x, '__class__') and hasattr(x.__class__, '__module__') and x.__class__.__module__ == 'numpy')
 
     if is_python_scalar and not is_numpy_scalar:
         try:
@@ -204,6 +182,7 @@ def _convert_input(x: TensorLike, dtype: Optional[DType] = None) -> Any:
                  return torch.tensor(x, dtype=torch.bool)
         except Exception as e:
             raise ValueError(f"Cannot convert Python scalar {type(x)} to torch.Tensor: {e}")
+        
     # Handle Python sequences (potential 1D or higher tensors or lists of Parameters)
     # Handle lists of Parameter objects specifically
     if isinstance(x, list) and all(hasattr(item, 'data') for item in x):
@@ -214,25 +193,10 @@ def _convert_input(x: TensorLike, dtype: Optional[DType] = None) -> Any:
     # Handle other Python sequences (potential 1D or higher tensors) recursively
     if isinstance(x, (list, tuple)):
        try:
-            # Convert items first before creating the final array
-            # Convert items first, passing the original dtype down for potential scalar conversions
-            converted_items = [_convert_input(item, dtype=dtype) for item in x]
-            # Determine final dtype: Use provided dtype if available, else let torch infer
-            target_torch_dtype = _validate_and_get_torch_dtype(dtype)
-            if target_torch_dtype is not None:
-                # Ensure items are tensors before creating the final tensor with specified dtype
-                # This might involve an intermediate tensor creation if items aren't already tensors
-                try:
-                    # Attempt direct creation with dtype
-                    return torch.tensor(converted_items, dtype=target_torch_dtype)
-                except TypeError:
-                    # If direct creation fails (e.g., mixed types not handled by torch.tensor with dtype),
-                    # create an intermediate tensor first and then convert dtype.
-                    intermediate_tensor = torch.tensor(converted_items)
-                    return intermediate_tensor.to(dtype=target_torch_dtype)
-            else:
-                # Let torch infer the dtype from the list of converted items
-                return torch.tensor(converted_items)
+            # Convert to a Torch tensor, let _convert_to_tensor handle final dtype if needed
+            # Use the default dtype for the sequence
+            draft_seq = torch.tensor(x, dtype=dtype)
+            return draft_seq.to(dtype=dtype) # Convert to the specified dtype
        except Exception as e:
             # Safely get item types, handling potential errors
             try:
@@ -242,7 +206,6 @@ def _convert_input(x: TensorLike, dtype: Optional[DType] = None) -> Any:
             except Exception:
                 item_types = ["<unknown>"]
             raise ValueError(f"Cannot convert sequence {type(x)} with item types {item_types} to Torch tensor: {str(e)}")
-
 
     # For any other type, reject it with a corrected list of supported types
     raise ValueError(f"Cannot convert {type(x)} to torch.Tensor. Supported types: Python scalars/sequences, NumPy scalars/arrays, TorchTensor, EmberTensor, Parameter.")
@@ -655,11 +618,30 @@ def _create_new_tensor(creation_func: Callable, dtype: Optional[Any] = None, dev
 
         # Call torch.arange with positional and only supported keyword args
         return creation_func(*pos_args, **allowed_kwargs)
+    # Special case for torch.bernoulli
+    elif creation_func == torch.bernoulli:
+            # Expects the probability tensor to be passed via 'input' kwarg
+            if 'input' not in kwargs:
+                 raise ValueError("torch.bernoulli via _create_new_tensor requires 'input' kwarg (probability tensor)")
+            prob_tensor = kwargs['input']
+            # Call torch.bernoulli on the provided probability tensor
+            # Note: torch.bernoulli doesn't take requires_grad, device, dtype directly
+            # Filter out unsupported kwargs before calling
+            allowed_kwargs = {} # Only pass generator if needed, which isn't handled here yet
+            return creation_func(prob_tensor, **allowed_kwargs)
     else:
         # Assume other functions take their primary args via kwargs (e.g., N, M for eye)
         # This might fail if function expects positional args not covered here.
-            return creation_func(**kwargs)
-        
+            # Filter out requires_grad if not supported by the function (best effort)
+            # A more robust solution would inspect the function signature
+            temp_kwargs = kwargs.copy()
+            if 'requires_grad' in temp_kwargs:
+                 # Check if creation_func likely supports requires_grad (heuristic)
+                 # Functions like zeros, ones, randn, rand usually do.
+                 if creation_func not in [torch.zeros, torch.ones, torch.randn, torch.rand, torch.full, torch.empty]:
+                      temp_kwargs.pop('requires_grad')
+            return creation_func(**temp_kwargs)
+
 
 # Expose necessary functions
 __all__ = [

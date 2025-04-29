@@ -55,10 +55,10 @@ class SphereState:
     def __post_init__(self):
         """Convert states to numpy arrays and validate."""
         if not isinstance(self.fast_state, TensorLike):
-            self.fast_state = tensor.convert_to_tensor(self.fast_state, dtype=np.float32)
+            self.fast_state = tensor.convert_to_tensor(self.fast_state, dtype=tensor.float32)
             
         if not isinstance(self.slow_state, TensorLike):
-            self.slow_state = tensor.convert_to_tensor(self.slow_state, dtype=np.float32)
+            self.slow_state = tensor.convert_to_tensor(self.slow_state, dtype=tensor.float32)
             
         if self.fast_state.shape != (4,):
             raise ValueError("Fast state must be a 4D vector")

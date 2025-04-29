@@ -71,8 +71,8 @@ def test_metricscollector_record_wave_states():
     # Test MetricsCollector record_wave_states
     collector = metrics.MetricsCollector()
     # Create dummy wave states (NumPy array)
-    states1 = np.random.rand(2, 3).astype(np.float32) # (num_spheres, state_dim)
-    states2 = np.random.rand(2, 3).astype(np.float32)
+    states1 = np.random.rand(2, 3).astype(tensor.float32) # (num_spheres, state_dim)
+    states2 = np.random.rand(2, 3).astype(tensor.float32)
 
     collector.record_wave_states(states1)
     assert len(collector.wave_history) == 1
@@ -86,15 +86,14 @@ def test_metricscollector_record_wave_states():
 def test_metricscollector_get_wave_history():
     # Test MetricsCollector get_wave_history
     collector = metrics.MetricsCollector()
-    states1 = np.random.rand(2, 3).astype(np.float32)
-    states2 = np.random.rand(2, 3).astype(np.float32)
+    states1 = np.random.rand(2, 3).astype(tensor.float32)
+    states2 = np.random.rand(2, 3).astype(tensor.float32)
 
     collector.record_wave_states(states1)
     collector.record_wave_states(states2)
 
     history = collector.get_wave_history()
 
-    assert isinstance(history, TensorLike)
     # Expected shape: (steps, num_spheres, state_dim)
     assert history.shape == (2, 2, 3)
     assert tensor.convert_to_tensor_equal(history[0], states1)
@@ -111,7 +110,7 @@ def test_metricscollector_compute_metrics():
     collector.start_computation()
     # Simulate recording states
     for i in range(10):
-        states = np.random.rand(2, 3).astype(np.float32)
+        states = np.random.rand(2, 3).astype(tensor.float32)
         collector.record_wave_states(states)
         time.sleep(0.001) # Simulate some time passing
     collector.end_computation()

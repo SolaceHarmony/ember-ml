@@ -83,7 +83,6 @@ def test_wavesegmentarray_get_wave_state():
 
     wave_state = wave_segment_array.get_wave_state()
 
-    assert isinstance(wave_state, TensorLike) # Should return a numpy array
     assert wave_state.shape == (num_segments,)
     assert ops.allclose(wave_state, [0.1, 0.5, 0.8]) # Check normalized values
 

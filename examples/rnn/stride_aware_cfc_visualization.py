@@ -81,7 +81,7 @@ def visualize_stride_temporal_dynamics(time_steps=100, stride_lengths=[1, 3, 5],
     for freq in frequencies[:input_dim]:
         signal = ops.sin(freq * t) + 0.1 * np.random.randn(time_steps)
         input_signals.append(signal)
-    input_sequence = tensor.stack(input_signals, axis=1).astype(np.float32)
+    input_sequence = tensor.stack(input_signals, axis=1).astype(tensor.float32)
 
     # Create cells for each stride length
     stride_cells = {}
@@ -199,7 +199,7 @@ def visualize_stride_temporal_dynamics(time_steps=100, stride_lengths=[1, 3, 5],
     change_rates = {}
     for stride, states_np in state_evolution_np.items():
         # Compute L2 norm of state differences
-        diffs = np.linalg.norm(states_np[1:] - states_np[:-1], axis=1)
+        diffs = ops.linearalg.norm(states_np[1:] - states_np[:-1], axis=1)
         change_rates[stride] = diffs
 
     for stride, rates in change_rates.items():
@@ -213,7 +213,7 @@ def visualize_stride_temporal_dynamics(time_steps=100, stride_lengths=[1, 3, 5],
     ax3.grid(True, alpha=0.3)
 
     # 4. Input sensitivity analysis - how different strides respond to input features
-    # input_idx = np.arange(0, time_steps, max(stride_lengths)) # Unused variable
+    # input_idx = tensor.arange(0, time_steps, max(stride_lengths)) # Unused variable
     ax4 = fig.add_subplot(gs[2, :2])
 
     # Plot input signals
@@ -239,11 +239,11 @@ def visualize_stride_temporal_dynamics(time_steps=100, stride_lengths=[1, 3, 5],
         # Take FFT of first few neurons and average
         fft_magnitudes = []
         for n in range(min(5, units)):
-            fft = np.abs(np.fft.rfft(states_np[:, n]))
+            fft = ops.abs(linearalg.rfft(states_np[:, n]))
             fft_magnitudes.append(fft)
 
-        avg_fft = np.mean(tensor.convert_to_tensor(fft_magnitudes), axis=0)
-        freqs = np.fft.rfftfreq(time_steps)
+        avg_fft = stats.mean(tensor.convert_to_tensor(fft_magnitudes), axis=0)
+        freqs = linearalg.rfftfreq(time_steps)
 
         ax5.plot(freqs, avg_fft, label=f"Stride {stride}")
 

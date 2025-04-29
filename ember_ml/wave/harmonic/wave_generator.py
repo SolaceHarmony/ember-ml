@@ -16,12 +16,12 @@ def harmonic_wave(params, t, batch_size):
     """
     harmonics = []
     for i in range(batch_size):
-        amplitudes, frequencies, phases = np.split(params[i], 3)
+        amplitudes, frequencies, phases = tensor.split(params[i], 3)
         harmonic = (
             amplitudes[:, None] * ops.sin(2 * ops.pi * frequencies[:, None] * t + phases[:, None])
         )
         harmonics.append(harmonic.sum(axis=0))
-    return np.vstack(harmonics)
+    return tensor.vstack(harmonics)
 
 def map_embeddings_to_harmonics(embeddings):
     """
@@ -38,4 +38,4 @@ def map_embeddings_to_harmonics(embeddings):
     params = []
     for i in range(batch_size):
         params.append(np.random.rand(3 * embedding_dim))  # Amplitudes, Frequencies, Phases
-    return np.vstack(params)
+    return tensor.vstack(params)

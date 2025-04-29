@@ -388,7 +388,7 @@ class PrecisionReducingVisitor(ast.NodeVisitor):
                     'line': node.lineno
                 })
             
-            # Check for tensor.convert_to_tensor(tensor), np.asarray(tensor), etc.
+            # Check for tensor.convert_to_tensor(tensor), tensor.asarray(tensor), etc.
             if isinstance(node.func.value, ast.Name) and node.func.value.id in self.numpy_aliases:
                 if node.func.attr in ('array', 'asarray'):
                     location = f"{self.current_function}:{node.lineno}" if self.current_function else f"line {node.lineno}"

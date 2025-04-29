@@ -29,7 +29,7 @@ class HarmonicTrainer:
         Returns:
             float: MSE loss value
         """
-        amplitudes, frequencies, phases = np.split(params, 3)
+        amplitudes, frequencies, phases = tensor.split(params, 3)
         harmonic = (
             amplitudes[:, None] * ops.sin(2 * ops.pi * frequencies[:, None] * t + phases[:, None])
         ).sum(axis=0)

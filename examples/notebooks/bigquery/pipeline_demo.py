@@ -334,7 +334,7 @@ class IntegratedPipeline:
         # Define a generator to yield data in batches
         def data_generator(data, batch_size=100):
             # Shuffle data
-            indices = np.random.permutation(len(data))
+            indices = tensor.random_permutation(len(data))
             data = data[indices]
             
             for i in range(0, len(data), batch_size):

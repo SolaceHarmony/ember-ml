@@ -40,7 +40,7 @@ def generate_data(n_samples=1000, n_features=10, anomaly_fraction=0.05):
     
     # Generate anomalies
     n_anomalies = int(n_samples * anomaly_fraction)
-    anomaly_indices = np.random.choice(n_samples, n_anomalies, replace=False)
+    anomaly_indices = ops.random_choice(n_samples, n_anomalies, replace=False)
     
     # Create different types of anomalies
     normal_tensor = tensor.convert_to_tensor(normal_data)
@@ -49,7 +49,7 @@ def generate_data(n_samples=1000, n_features=10, anomaly_fraction=0.05):
         
         if anomaly_type == 0:  # Spike anomaly
             feature_idx = np.random.randint(0, n_features)
-            spike_value = np.random.uniform(3.0, 5.0)
+            spike_value = tensor.random_uniform(3.0, 5.0)
             current_value = normal_tensor[idx, feature_idx]
             updated_value = ops.add(current_value, tensor.convert_to_tensor(spike_value))
             # Update the tensor using bracket assignment

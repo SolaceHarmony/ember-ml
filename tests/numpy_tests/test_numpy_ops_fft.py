@@ -74,5 +74,5 @@ def test_fft2_ifft2():
 #     assert ops.allclose(irfft_result_np, x_np)
 #
 #     # Compare RFFT result with numpy's RFFT
-#     expected_rfft_np = np.fft.rfft(x_np)
+#     expected_rfft_np = linearalg.rfft(x_np)
 #     assert ops.allclose(rfft_result_np, expected_rfft_np)

@@ -20,7 +20,7 @@ class HebbianLayer:
     wire together."
     
     Attributes:
-        weights (NDArray[np.float32]): Connection weight matrix
+        weights (NDArray[tensor.float32]): Connection weight matrix
         eta (float): Learning rate for weight updates
         input_size (int): Number of input units
         output_size (int): Number of output units
@@ -50,7 +50,7 @@ class HebbianLayer:
         # Keep track of weight statistics
         self._weight_history: list[Tuple[float, float]] = []  # (mean, std)
     
-    def forward(self, inputs: NDArray[np.float32]) -> NDArray[np.float32]:
+    def forward(self, inputs: NDArray[tensor.float32]) -> NDArray[tensor.float32]:
         """
         Compute forward pass through the layer.
         
@@ -58,7 +58,7 @@ class HebbianLayer:
             inputs: Input activity vector (input_size,)
             
         Returns:
-            NDArray[np.float32]: Output activity vector (output_size,)
+            NDArray[tensor.float32]: Output activity vector (output_size,)
             
         Raises:
             ValueError: If input shape doesn't match input_size
@@ -72,8 +72,8 @@ class HebbianLayer:
         return self.weights @ inputs
     
     def hebbian_update(self,
-                      inputs: NDArray[np.float32],
-                      outputs: NDArray[np.float32]) -> None:
+                      inputs: NDArray[tensor.float32],
+                      outputs: NDArray[tensor.float32]) -> None:
         """
         Update weights using Hebbian learning rule.
         
@@ -107,7 +107,7 @@ class HebbianLayer:
         
         # Record weight statistics
         self._weight_history.append(
-            (float(np.mean(self.weights)), float(np.std(self.weights)))
+            (float(stats.mean(self.weights)), float(stats.std(self.weights)))
         )
     
     def get_weight_stats(self) -> list[Tuple[float, float]]:
@@ -129,11 +129,11 @@ class HebbianLayer:
         self.weights = np.random.randn(self.output_size, self.input_size) * weight_scale
         self._weight_history.clear()
     
-    def get_weights(self) -> NDArray[np.float32]:
+    def get_weights(self) -> NDArray[tensor.float32]:
         """
         Get the current weight matrix.
         
         Returns:
-            NDArray[np.float32]: Copy of weight matrix
+            NDArray[tensor.float32]: Copy of weight matrix
         """
         return self.weights.copy()

@@ -72,7 +72,7 @@ def lstsq(a: TensorLike, b: TensorLike, rcond: Optional[float] = None) -> Tuple[
         b_array = b_array.reshape(m, 1)
     
     # Compute SVD of A
-    from ember_ml.backend.mlx.linearalg.decomp_ops import svd # Corrected path
+    from ember_ml.backend.mlx.linearalg.svd_ops import svd # Corrected path
     u, s, vh = svd(a_array)
     
     # Set default rcond if not provided

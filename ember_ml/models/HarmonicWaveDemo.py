@@ -62,7 +62,7 @@ def generate_embeddings(texts):
             embeddings_list_np.append(cls_embedding_np)
         # Convert the final list of numpy arrays to an EmberTensor
         # vstack might handle this, but explicit conversion is safer
-        embeddings_np = np.vstack(embeddings_list_np) # Need numpy temporarily
+        embeddings_np = tensor.vstack(embeddings_list_np) # Need numpy temporarily
         return tensor.convert_to_tensor(embeddings_np)
     except ImportError:
         raise ImportError("PyTorch and transformers library are required for generate_embeddings function.")

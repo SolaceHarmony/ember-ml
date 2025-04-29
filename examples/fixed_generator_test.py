@@ -266,10 +266,10 @@ true_negatives = ops.logical_and(ops.equal(predicted_anomalies, 0), ops.equal(te
 false_negatives = ops.logical_and(ops.equal(predicted_anomalies, 0), ops.equal(test_labels, 1))
 
 # Convert boolean tensors to count
-tp_sum = ops.stats.sum(tensor.cast(true_positives, tensor.int32))
-fp_sum = ops.stats.sum(tensor.cast(false_positives, tensor.int32))
-tn_sum = ops.stats.sum(tensor.cast(true_negatives, tensor.int32))
-fn_sum = ops.stats.sum(tensor.cast(false_negatives, tensor.int32))
+tp_sum = stats.sum(tensor.cast(true_positives, tensor.int32))
+fp_sum = stats.sum(tensor.cast(false_positives, tensor.int32))
+tn_sum = stats.sum(tensor.cast(true_negatives, tensor.int32))
+fn_sum = stats.sum(tensor.cast(false_negatives, tensor.int32))
 
 # Calculate precision, recall, and F1 score
 precision = tp_sum / (tp_sum + fp_sum) if (tp_sum + fp_sum) > 0 else 0.0

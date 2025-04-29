@@ -1,5 +1,5 @@
 import pytest
-import numpy as np # For comparison with known correct results
+
 import matplotlib.pyplot as plt # For testing plotting functions
 
 # Import Ember ML modules

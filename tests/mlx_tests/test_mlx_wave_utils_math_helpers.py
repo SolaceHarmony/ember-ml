@@ -2,6 +2,7 @@ import pytest
 import numpy as np
 from ember_ml.ops import set_backend
 from ember_ml.nn import tensor
+from ember_ml.ops import stats
 from ember_ml import ops
 from ember_ml.wave.utils import math_helpers
 
@@ -19,7 +20,7 @@ def test_normalize_vector(set_backend_fixture):
     """Test normalize_vector function."""
     vec = tensor.convert_to_tensor([1.0, 2.0, 3.0])
     normalized_vec = math_helpers.normalize_vector(vec)
-    norm = ops.sqrt(ops.stats.sum(ops.square(normalized_vec)))
+    norm = ops.sqrt(stats.sum(ops.square(normalized_vec)))
     assert ops.allclose(norm, tensor.convert_to_tensor(1.0))
     assert tensor.shape(normalized_vec) == tensor.shape(vec)
     assert normalized_vec.dtype == vec.dtype

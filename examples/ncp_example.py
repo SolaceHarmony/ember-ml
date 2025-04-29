@@ -114,7 +114,7 @@ def main():
     print("\nEvaluating NCP model...")
     model.reset_state()
     y_pred = tensor.to_numpy(model(tensor.convert_to_tensor(X_test)))
-    test_loss = np.mean(np.square(y_pred - y_test))
+    test_loss = stats.mean(np.square(y_pred - y_test))
     print(f"Test Loss: {test_loss:.6f}")
     
     # Plot the results

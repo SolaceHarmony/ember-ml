@@ -144,8 +144,8 @@ def test_batchnormalization_forward_inference():
     bn_layer.build(input_shape)
 
     # Manually set moving averages (simulating training)
-    mean_val = tensor.convert_to_tensor(np.random.rand(input_shape[-1]).astype(np.float32))
-    var_val = tensor.convert_to_tensor(np.random.rand(input_shape[-1]).astype(np.float32) + 0.1) # Avoid zero variance
+    mean_val = tensor.convert_to_tensor(np.random.rand(input_shape[-1]).astype(tensor.float32))
+    var_val = tensor.convert_to_tensor(np.random.rand(input_shape[-1]).astype(tensor.float32) + 0.1) # Avoid zero variance
     bn_layer.moving_mean = mean_val
     bn_layer.moving_variance = var_val
 

@@ -27,7 +27,7 @@ def sample_wave_data():
     """Create sample wave data."""
     sample_rate = 1000
     duration = 1.0
-    t = tensor.linspace(0, duration, int(duration * sample_rate), endpoint=False)
+    t = tensor.linspace(0, duration, int(duration * sample_rate))
     # Create a simple sine wave
     wave = ops.sin(2 * ops.pi * 5 * t) + 0.5 * ops.sin(2 * ops.pi * 15 * t)
     return tensor.convert_to_tensor(wave, dtype=tensor.float32), sample_rate
@@ -92,7 +92,7 @@ def test_wavesynthesizer_sine_wave():
     assert sine_wave.shape[0] == expected_length
 
     # Check values at specific points (basic check)
-    t = tensor.linspace(0, duration, expected_length, endpoint=False)
+    t = tensor.linspace(0, duration, expected_length)
     expected_wave = amplitude * ops.sin(2 * ops.pi * frequency * t + phase)
     assert ops.allclose(sine_wave, expected_wave)
 

@@ -58,13 +58,13 @@ def analyze_memory_transfers(device='mps', size=5000, dtype=torch.float32):
     
     # First operation: matrix multiplication
     c = time_operation("A @ B (first time)", 
-                      lambda: torch.matmul(a, b))
+                      lambda: ops.matmul(a, b))
     print_tensor_info(c, "Result C")
     
     # Second operation: same matrix multiplication
     # If tensors stay in GPU memory, this should be faster
     d = time_operation("A @ B (second time)", 
-                      lambda: torch.matmul(a, b))
+                      lambda: ops.matmul(a, b))
     print_tensor_info(d, "Result D")
     
     # Third operation: matrix multiplication after moving tensors to CPU and back
@@ -77,7 +77,7 @@ def analyze_memory_transfers(device='mps', size=5000, dtype=torch.float32):
     
     # Matrix multiplication after moving
     e = time_operation("A_back @ B_back", 
-                      lambda: torch.matmul(a_back, b_back))
+                      lambda: ops.matmul(a_back, b_back))
     print_tensor_info(e, "Result E")
     
     # Chain of operations
@@ -85,12 +85,12 @@ def analyze_memory_transfers(device='mps', size=5000, dtype=torch.float32):
     
     # Single chain without intermediate variables
     f = time_operation("A @ B + (A @ B).T", 
-                      lambda: torch.matmul(a, b) + torch.matmul(a, b).T)
+                      lambda: ops.matmul(a, b) + ops.matmul(a, b).T)
     print_tensor_info(f, "Result F")
     
     # Chain with intermediate variables
     temp = time_operation("temp = A @ B", 
-                         lambda: torch.matmul(a, b))
+                         lambda: ops.matmul(a, b))
     g = time_operation("temp + temp.T", 
                       lambda: temp + temp.T)
     print_tensor_info(g, "Result G")

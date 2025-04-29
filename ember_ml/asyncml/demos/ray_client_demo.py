@@ -3,20 +3,17 @@ Demonstrates using the asynchronous Ray client for the neuromorphic computing sy
 """
 
 import asyncio
-import numpy as np
 import matplotlib.pyplot as plt
 # Demonstrates using the asynchronous Ray client for the neuromorphic computing system.
  
-import asyncio
-import numpy as np
-import matplotlib.pyplot as plt
  
 # Import EmberTensor
 from ember_ml.nn.tensor import EmberTensor
  
 # Import the asynchronous client from the new structure
-from ember_ml.asyncml.client import NeuromorphicClient
- 
+from ember_ml.asyncml.client.client import NeuromorphicClient
+from ember_ml import ops
+from ember_ml.nn import tensor
 async def test_client_demo():
     """
     Demonstrates creating a client, processing a sequence, and visualizing results.
@@ -29,7 +26,7 @@ async def test_client_demo():
     seq_len = 50
     t = tensor.linspace(0, 4 * ops.pi, seq_len)
     sin_data = ops.sin(t)
-    cos_data = np.cos(t)
+    cos_data = ops.cos(t)
     sequence_data_np = np.column_stack((sin_data, cos_data))
  
     # Convert NumPy data to EmberTensor

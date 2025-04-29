@@ -34,7 +34,7 @@ def test_binarywaveprocessor_process_pcm():
     # For now, just test that the function exists and can be called.
     processor = binary_wave_processor.BinaryWaveProcessor()
     # Create dummy PCM data (NumPy array)
-    pcm_data = ops.sin(tensor.linspace(0, 10, 100)).astype(np.float32)
+    pcm_data = ops.sin(tensor.linspace(0, 10, 100)).astype(tensor.float32)
 
     # process_pcm returns processed PCM data (NumPy array)
     processed_pcm = processor.process_pcm(pcm_data)

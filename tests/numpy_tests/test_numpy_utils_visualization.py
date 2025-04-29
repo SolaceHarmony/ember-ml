@@ -3,6 +3,7 @@ import numpy as np # For comparison with known correct results
 import matplotlib.pyplot as plt # For testing plotting functions
 
 # Import Ember ML modules
+from ember_ml.backend.numpy.types import TensorLike # Import TensorLike
 from ember_ml import ops
 from ember_ml.nn import tensor
 from ember_ml.utils import visualization # Import visualization utilities

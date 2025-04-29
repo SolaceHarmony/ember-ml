@@ -6,7 +6,7 @@ from ember_ml import ops
 from ember_ml.nn import tensor
 from ember_ml.wave.binary import binary_wave_processor # Import the module
 from ember_ml.ops import set_backend
-
+from ember_ml.nn.tensor.types import TensorLike
 # Set the backend for these tests
 set_backend("mlx")
 
@@ -33,7 +33,7 @@ def test_binarywaveprocessor_process_pcm():
     # For now, just test that the function exists and can be called.
     processor = binary_wave_processor.BinaryWaveProcessor()
     # Create dummy PCM data (NumPy array)
-    pcm_data = ops.sin(tensor.linspace(0, 10, 100)).astype(np.float32)
+    pcm_data = ops.sin(tensor.linspace(0, 10, 100)).astype(tensor.float32)
 
     # process_pcm returns processed PCM data (NumPy array)
     processed_pcm = processor.process_pcm(pcm_data)

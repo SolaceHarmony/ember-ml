@@ -1009,11 +1009,11 @@ class TerabyteTemporalStrideProcessor:
             PCA-transformed data
         """
         # Convert to numpy for sklearn PCA
-        window_batch_np = backend_utils.tensor_to_numpy_safe(window_batch)
-        batch_size, window_size, feature_dim = window_batch_np.shape
+        window_batch_tensor = backend_utils.tensor_to_numpy_safe(window_batch)
+        batch_size, window_size, feature_dim = window_batch_tensor.shape
         
         # Reshape for PCA: [batch_size, window_size * feature_dim]
-        flat_windows = window_batch_np.reshape(batch_size, -1)
+        flat_windows = window_batch_tensor.reshape(batch_size, -1)
         
         # Ensure PCA is fit
         if stride not in self.pca_models:
@@ -1050,11 +1050,11 @@ class TerabyteTemporalStrideProcessor:
             PCA-transformed data
         """
         # Convert to numpy for sklearn PCA
-        window_batch_np = backend_utils.tensor_to_numpy_safe(window_batch)
-        batch_size, window_size, feature_dim = window_batch_np.shape
+        window_batch_tensor = backend_utils.tensor_to_numpy_safe(window_batch)
+        batch_size, window_size, feature_dim = window_batch_tensor.shape
         
         # Reshape for PCA: [batch_size, window_size * feature_dim]
-        flat_windows = window_batch_np.reshape(batch_size, -1)
+        flat_windows = window_batch_tensor.reshape(batch_size, -1)
         
         # Ensure PCA is fit
         if stride not in self.pca_models:
@@ -1110,7 +1110,7 @@ class TerabyteTemporalStrideProcessor:
             components = backend_utils.convert_to_tensor_safe(self.pca_models[stride].components_)
             
             # Use ops module for all backends
-            importance = ops.stats.sum(ops.abs(components), axis=0)
+            importance = stats.sum(ops.abs(components), axis=0)
             
             # Convert to numpy for compatibility with pandas/sklearn
             return backend_utils.tensor_to_numpy_safe(importance)
@@ -1173,5 +1173,5 @@ if __name__ == "__main__":
         print("Stride perspectives:")
         for stride, data in stride_perspectives.items():
             # Convert to numpy for printing
-            data_np = backend_utils.tensor_to_numpy_safe(data)
-            print(f"Stride {stride}: {data_np.shape}")
+            data_tensor = backend_utils.tensor_to_numpy_safe(data)
+            print(f"Stride {stride}: {data_tensor.shape}")

@@ -8,7 +8,7 @@ dopamine dynamics for modulating neural behavior based on input strength.
 import numpy as np
 from dataclasses import dataclass
 from typing import List, Tuple
-
+from ember_ml.ops import stats
 
 @dataclass
 class DopamineState:
@@ -130,7 +130,7 @@ class DopamineModulator:
         """
         if not self.state.recent_changes:
             return 0.0
-        return np.mean(self.state.recent_changes)
+        return stats.mean(self.state.recent_changes)
     
     def reset(self) -> None:
         """Reset the dopamine system to initial state."""

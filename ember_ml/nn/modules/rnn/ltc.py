@@ -141,7 +141,9 @@ class LTC(Module):
         self.erev = Parameter(tensor.zeros((units, units)))
         
         # Initialize weights for input connections
-        if self.neuron_map.input_mapping in ["affine", "linear"]:
+        # Check if input_mapping exists, default to "affine" if not (for compatibility with maps like FullyConnectedMap)
+        input_mapping = getattr(self.neuron_map, 'input_mapping', 'affine')
+        if input_mapping in ["affine", "linear"]:
             self.sensory_sigma = Parameter(tensor.ones((self.input_size,)))
             self.sensory_mu = Parameter(tensor.zeros((self.input_size,)))
             self.sensory_w = Parameter(glorot_uniform((self.input_size, units)))
@@ -149,16 +151,18 @@ class LTC(Module):
             
             # Initialize input projection
             self.input_kernel = Parameter(glorot_uniform((self.input_size, units)))
-            if self.neuron_map.input_mapping == "affine":
+            if input_mapping == "affine": # Use the retrieved or default input_mapping
                 self.input_bias = Parameter(tensor.zeros((units,)))
-        
+
         # Initialize output projection
-        if self.neuron_map.output_mapping in ["affine", "linear"]:
+        # Check if output_mapping exists, default to "affine" if not
+        output_mapping = getattr(self.neuron_map, 'output_mapping', 'affine')
+        if output_mapping in ["affine", "linear"]:
             output_dim = self.neuron_map.output_dim
             self.output_kernel = Parameter(glorot_uniform((units, output_dim)))
-            if self.neuron_map.output_mapping == "affine":
+            if output_mapping == "affine": # Use the retrieved or default output_mapping
                 self.output_bias = Parameter(tensor.zeros((output_dim,)))
-        
+
         # Create memory cell if using mixed memory and it wasn't created during init
         if self.mixed_memory and self.memory_cell is None:
             self.memory_cell = self._create_memory_cell(self.input_size, self.state_size)
@@ -268,8 +272,10 @@ class LTC(Module):
         # Solve ODE using multiple unfoldings
         for i in range(ode_unfolds):
             # Calculate activation
-            activation = get_activation(self.neuron_map.activation)(v_pre)
-            
+            # Use getattr to safely access activation, default to 'tanh' if not present on map
+            activation_name = getattr(self.neuron_map, 'activation', 'tanh')
+            activation = get_activation(activation_name)(v_pre)
+
             # Calculate synaptic current
             syn_current = ops.matmul(activation, masked_w)
             
@@ -288,14 +294,18 @@ class LTC(Module):
             
             # Perform element-wise multiplication and sum along the last dimension
             # This will result in a tensor of shape (batch_size, units)
-            syn_current = ops.stats.sum(ops.multiply(syn_current, erev_minus_v), axis=2)
+            syn_current = stats.sum(ops.multiply(syn_current, erev_minus_v), axis=2)
             
             # Calculate sensory current
             sensory_current = tensor.zeros_like(syn_current)
-            if self.neuron_map.input_mapping in ["affine", "linear"]:
+            # Check if input_mapping exists, default to "affine" if not
+            input_mapping = getattr(self.neuron_map, 'input_mapping', 'affine')
+            if input_mapping in ["affine", "linear"]:
                 # Apply activation to inputs
-                sensory_activation = get_activation(self.neuron_map.activation)(inputs)
-                
+                # Use getattr for activation as well, defaulting to tanh
+                activation_name = getattr(self.neuron_map, 'activation', 'tanh')
+                sensory_activation = get_activation(activation_name)(inputs)
+
                 # Ensure inputs and weights have compatible shapes for matrix multiplication
                 # inputs shape: (batch_size, input_size)
                 # self.sensory_w shape: (input_size, units)
@@ -324,7 +334,7 @@ class LTC(Module):
                 
                 # Perform element-wise multiplication and sum along the input_size dimension
                 # Result shape: (batch_size, units)
-                sensory_current = ops.stats.sum(ops.multiply(sensory_current, sensory_erev_minus_v), axis=1)
+                sensory_current = stats.sum(ops.multiply(sensory_current, sensory_erev_minus_v), axis=1)
             
             # Calculate leak current
             leak_current = ops.multiply(gleak, ops.subtract(self.vleak, v_pre))
@@ -377,14 +387,14 @@ class LTC(Module):
         # Use ops/tensor for calculations, avoid numpy
         # Ensure adjacency_matrix is a tensor first
         adj_matrix_tensor = tensor.convert_to_tensor(self.neuron_map.adjacency_matrix)
-        return ops.stats.sum(tensor.abs(adj_matrix_tensor))
+        return stats.sum(tensor.abs(adj_matrix_tensor))
     
     @property
     def sensory_synapse_count(self):
         # Use ops/tensor for calculations, avoid numpy
         sensory_matrix_tensor = tensor.convert_to_tensor(self.neuron_map.sensory_adjacency_matrix)
         # sum result might be a 0-dim tensor, convert to float if necessary
-        sum_val = ops.stats.sum(tensor.abs(sensory_matrix_tensor))
+        sum_val = stats.sum(tensor.abs(sensory_matrix_tensor))
         # Convert to scalar without using float() cast
         return tensor.item(sum_val)
     

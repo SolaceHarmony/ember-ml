@@ -52,8 +52,8 @@ def test_spherestate_dataclass():
     # Test SphereState dataclass initialization and validation
     state_dim = 4
     # Create dummy state vectors (NumPy arrays)
-    fast_vec_np = np.random.rand(state_dim).astype(np.float32)
-    slow_vec_np = np.random.rand(state_dim).astype(np.float32)
+    fast_vec_np = np.random.rand(state_dim).astype(tensor.float32)
+    slow_vec_np = np.random.rand(state_dim).astype(tensor.float32)
     noise_std = 0.1
 
     # Convert to tensors
@@ -184,11 +184,11 @@ def test_multispherewavemodel_run():
     steps = 10
     # Create dummy input waves and gating signals (NumPy arrays or lists)
     # The shape of input_waves_seq should be (steps, num_spheres, state_dim)
-    input_waves_seq_np = np.random.rand(steps, num_spheres, state_dim).astype(np.float32)
+    input_waves_seq_np = np.random.rand(steps, num_spheres, state_dim).astype(tensor.float32)
     input_waves_seq = tensor.convert_to_tensor(input_waves_seq_np)
 
     # The shape of gating_seq should be (steps, num_spheres) or (steps,)
-    gating_seq_np = np.random.rand(steps, num_spheres).astype(np.float32)
+    gating_seq_np = np.random.rand(steps, num_spheres).astype(tensor.float32)
     gating_seq = tensor.convert_to_tensor(gating_seq_np)
 
 

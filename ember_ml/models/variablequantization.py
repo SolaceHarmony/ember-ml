@@ -1,12 +1,13 @@
 import hashlib
-import numpy as np
 from dataclasses import dataclass
 from typing import List, Tuple, Optional
 import time
 from ember_ml.nn import tensor
 from ember_ml.ops import set_backend
 from ember_ml.nn.tensor.types import TensorLike
+from ember_ml.ops import stats
 from ember_ml import ops
+
 @dataclass
 class BlockHash:
     block_id: int
@@ -68,10 +69,10 @@ class VerifiedQuantizer:
         start_time = time.time()
         
         # Convert input to numpy array if it isn't already
-        data = np.asarray(data)
+        data = tensor.asarray(data)
         
         # Compute scale based on absolute maximum
-        abs_max = ops.stats.max(np.abs(data)) if len(data) > 0 else 1.0
+        abs_max = stats.max(ops.abs(data)) if len(data) > 0 else 1.0
         
         # Perform quantization
         quantized = self.quantize_8bit(data)
@@ -94,7 +95,7 @@ class VerifiedQuantizer:
         """Quantize all data in blocks"""
         from ember_ml import ops
         data = tensor.convert_to_tensor(data)
-        blocks = tensor.convert_to_tensor(data, ops.stats.ceil(len(data) / self.block_size))
+        blocks = tensor.convert_to_tensor(data, ops.ceil(len(data) / self.block_size))
         return [self.quantize_block(i, block) for i, block in enumerate(blocks)]
     
     def compute_metrics(self, original: TensorLike, quantized: TensorLike, abs_max: float) -> Tuple[float, float]:
@@ -105,22 +106,21 @@ class VerifiedQuantizer:
         # Mean squared error using the same scale as quantization
         scale = abs_max / 127.0
         dequantized = (quantized.astype(float) - 128) * scale
-        mse = np.mean((original - dequantized) ** 2)
+        mse = stats.mean((original - dequantized) ** 2)
         
         return compression_ratio, float(mse)
     
     def quantize_8bit(self, data: TensorLike) -> TensorLike:
         """Quantize float data to 8 bits"""
-        abs_max = ops.stats.max(np.abs(data)) if len(data) > 0 else 1.0
+        abs_max = stats.max(ops.abs(data)) if len(data) > 0 else 1.0
         scale = abs_max / 127.0
         
         # Scale to [-127, 127] range and shift to [0, 255]
         scaled = ops.clip(data / scale, -127, 127)
-        return np.round(scaled + 128).astype(np.uint8)
+        return ops.round(scaled + 128).astype(tensor.uint8)
 
 def test_quantization():
     # Generate test data
-    np.random.seed(42)  # For reproducibility
     data = tensor.random_normal(0, 1, 1000)
     
     # Create quantizer

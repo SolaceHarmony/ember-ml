@@ -56,7 +56,7 @@ def create_dummy_binary_classification_data():
 
 def create_dummy_learning_curve_data():
     """Creates dummy data for learning curve plot."""
-    epochs = np.arange(1, 11)
+    epochs = tensor.arange(1, 11)
     train_scores = tensor.linspace(0.9, 0.95, 10)
     val_scores = tensor.linspace(0.85, 0.92, 10)
     return epochs, train_scores, val_scores

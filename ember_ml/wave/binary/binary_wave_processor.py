@@ -43,15 +43,15 @@ class BinaryWaveProcessor:
     def pcm_to_binary(self, pcm_data: TensorLike) -> TensorLike:
         """Convert PCM audio data to binary representation using improved delta-sigma"""
         # Normalize PCM data to [-1, 1]
-        if pcm_data.dtype == np.int16:
+        if pcm_data.dtype == tensor.int16:
             normalized = pcm_data / 32768.0
-        elif pcm_data.dtype == np.int32:
+        elif pcm_data.dtype == tensor.int32:
             normalized = pcm_data / 2147483648.0
         else:
-            normalized = pcm_data.astype(np.float32)
+            normalized = pcm_data.astype(tensor.float32)
         
         # Second-order delta-sigma modulation
-        binary = tensor.zeros(len(normalized), dtype=np.uint8)
+        binary = tensor.zeros(len(normalized), dtype=tensor.uint8)
         error1 = 0  # First integrator
         error2 = 0  # Second integrator
         
@@ -76,15 +76,15 @@ class BinaryWaveProcessor:
     def extract_frequency_bands(self, binary_data: TensorLike) -> List[TensorLike]:
         """Extract frequency band information with improved filtering"""
         # Convert binary to float for FFT
-        float_data = binary_data.astype(np.float32) * 2 - 1
+        float_data = binary_data.astype(tensor.float32) * 2 - 1
         
         # Apply Hanning window
         window = np.hanning(len(float_data))
         windowed_data = float_data * window
         
         # Compute FFT
-        spectrum = np.fft.rfft(windowed_data)
-        freqs = np.fft.rfftfreq(len(float_data), 1/self.config.sample_rate)
+        spectrum = linearalg.rfft(windowed_data)
+        freqs = linearalg.rfftfreq(len(float_data), 1/self.config.sample_rate)
         
         # Extract bands with smoother transitions
         band_data = []
@@ -101,7 +101,7 @@ class BinaryWaveProcessor:
             # Convert back to binary with hysteresis
             threshold = 0.0
             hysteresis = 0.1
-            binary = tensor.zeros_like(band_signal, dtype=np.uint8)
+            binary = tensor.zeros_like(band_signal, dtype=tensor.uint8)
             state = 0
             
             for i in range(len(band_signal)):
@@ -122,13 +122,13 @@ class BinaryWaveProcessor:
         phase = np.angle(analytic_signal)
         
         # Calculate average phase
-        mean_phase = np.mean(phase) % (2 * ops.pi)
+        mean_phase = stats.mean(phase) % (2 * ops.pi)
         
         return binary_data, mean_phase
     
     def _hilbert_transform(self, binary_data: TensorLike) -> TensorLike:
         """Compute Hilbert transform of binary signal"""
-        float_data = binary_data.astype(np.float32) * 2 - 1
+        float_data = binary_data.astype(tensor.float32) * 2 - 1
         spectrum = np.fft.fft(float_data)
         n = len(spectrum)
         h = tensor.zeros(n)
@@ -163,21 +163,21 @@ class BinaryWaveProcessor:
     def binary_to_pcm(self, binary_data: TensorLike) -> TensorLike:
         """Convert binary representation back to PCM audio with improved filtering"""
         # Convert to float
-        float_data = binary_data.astype(np.float32) * 2 - 1
+        float_data = binary_data.astype(tensor.float32) * 2 - 1
         
         # Apply sinc reconstruction filter
         filter_length = 31
-        t = np.arange(-filter_length//2, filter_length//2 + 1)
+        t = tensor.arange(-filter_length//2, filter_length//2 + 1)
         sinc = np.sinc(t/2)  # Nyquist frequency
         window = np.hamming(len(sinc))
         filter_kernel = sinc * window
-        filter_kernel = filter_kernel / ops.stats.sum(filter_kernel)
+        filter_kernel = filter_kernel / stats.sum(filter_kernel)
         
         # Apply filter
         filtered = np.convolve(float_data, filter_kernel, mode='same')
         
         # Convert to 16-bit PCM
-        pcm_int16 = ops.clip(filtered * 32767, -32768, 32767).astype(np.int16)
+        pcm_int16 = ops.clip(filtered * 32767, -32768, 32767).astype(tensor.int16)
         return pcm_int16
 
 class BinaryWaveNeuron:
@@ -186,7 +186,7 @@ class BinaryWaveNeuron:
     def __init__(self, num_freq_bands: int, phase_sensitivity: float = 0.5):
         self.num_freq_bands = num_freq_bands
         self.phase_sensitivity = phase_sensitivity
-        self.state = tensor.zeros(num_freq_bands, dtype=np.uint8)
+        self.state = tensor.zeros(num_freq_bands, dtype=tensor.uint8)
         self.phase = tensor.zeros(num_freq_bands)
         self.threshold = 0.3  # Lower threshold for more activation
         self.weights = np.random.random(num_freq_bands) * 0.5 + 0.25  # Better initialization
@@ -199,17 +199,17 @@ class BinaryWaveNeuron:
     
     def compute_interference(self, input_waves: List[TensorLike], input_phases: List[float]) -> TensorLike:
         """Compute wave interference patterns with improved phase sensitivity"""
-        interference = tensor.zeros_like(self.state, dtype=np.float32)
+        interference = tensor.zeros_like(self.state, dtype=tensor.float32)
         
         for i, (wave, phase) in enumerate(zip(input_waves, input_phases)):
             # Compute phase difference with wrapping
-            phase_diff = np.abs(((self.phase[i] - phase + ops.pi) % (2 * ops.pi)) - ops.pi)
+            phase_diff = ops.abs(((self.phase[i] - phase + ops.pi) % (2 * ops.pi)) - ops.pi)
             
             # Gaussian phase sensitivity
-            phase_factor = np.exp(-phase_diff**2 / (2 * self.phase_sensitivity**2))
+            phase_factor = ops.exp(-phase_diff**2 / (2 * self.phase_sensitivity**2))
             
             # Compute weighted contribution with temporal integration
-            wave_energy = ops.stats.sum(wave) / len(wave)  # Energy in the wave
+            wave_energy = stats.sum(wave) / len(wave)  # Energy in the wave
             interference[i] = wave_energy * self.weights[i] * phase_factor
             
         return interference
@@ -241,8 +241,8 @@ class BinaryWaveNeuron:
         # Compute STDP updates
         for i in range(self.num_freq_bands):
             # Compute correlation between input and output
-            input_energy = np.mean([wave[i] if i < len(wave) else 0 for wave in input_waves])
-            output_energy = np.mean(output)
+            input_energy = stats.mean([wave[i] if i < len(wave) else 0 for wave in input_waves])
+            output_energy = stats.mean(output)
             
             # Compute weight update
             if output_energy > 0:
@@ -257,7 +257,7 @@ class BinaryWaveNeuron:
     
     def generate_output(self, interference: TensorLike) -> TensorLike:
         """Generate binary output with hysteresis"""
-        output = tensor.zeros_like(interference, dtype=np.uint8)
+        output = tensor.zeros_like(interference, dtype=tensor.uint8)
         
         # Add hysteresis to prevent rapid switching
         hysteresis = 0.05
@@ -308,5 +308,5 @@ def create_test_signal(duration: float, sample_rate: int) -> TensorLike:
     signal = signal + noise
     
     # Normalize and convert to int16
-    signal = signal / ops.stats.max(np.abs(signal))
-    return (signal * 32767).astype(np.int16)
+    signal = signal / stats.max(ops.abs(signal))
+    return (signal * 32767).astype(tensor.int16)

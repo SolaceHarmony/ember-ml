@@ -31,7 +31,7 @@ def load_digits_dataset():
     """Load and preprocess the digits dataset."""
     # Load digits dataset
     digits = datasets.load_digits()
-    X = digits.data.astype(np.float32)
+    X = digits.data.astype(tensor.float32)
     y = digits.target
     
     # Scale data to [0, 1]
@@ -102,7 +102,7 @@ def visualize_results(results):
     training_times = [results[backend]['training_time'] for backend in backends]
     test_errors = [results[backend]['test_error'] for backend in backends]
     
-    x = np.arange(len(backends))
+    x = tensor.arange(len(backends))
     width = 0.35
     
     ax1 = plt.gca()

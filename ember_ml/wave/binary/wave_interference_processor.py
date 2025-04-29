@@ -224,7 +224,7 @@ class WaveInterferenceNetwork:
             
             outputs.append(output_pcm)
         
-        return tensor.convert_to_tensor(outputs, dtype=np.int16)
+        return tensor.convert_to_tensor(outputs, dtype=tensor.int16)
 
 def create_test_signal(duration_sec: float, sample_rate: int) -> TensorLike:
     """Create test signal with multiple frequencies"""
@@ -234,7 +234,7 @@ def create_test_signal(duration_sec: float, sample_rate: int) -> TensorLike:
         0.3 * ops.sin(2 * ops.pi * 880 * t) +  # A5
         0.2 * ops.sin(2 * ops.pi * 1760 * t)   # A6
     )
-    return (signal * 32767).astype(np.int16)
+    return (signal * 32767).astype(tensor.int16)
 
 class WaveInterferenceProcessor:
     """
@@ -285,14 +285,14 @@ class WaveInterferenceProcessor:
         for freq in freqs:
             # Generate sine wave at this frequency
             sine = ops.sin(2 * ops.pi * freq * t)
-            sine_pcm = (sine * 32767).astype(np.int16)
+            sine_pcm = (sine * 32767).astype(tensor.int16)
             
             # Process through network
             output = self.process(sine_pcm)
             
             # Calculate response
-            input_power = np.mean(np.abs(sine_pcm))
-            output_power = np.mean(np.abs(output))
+            input_power = stats.mean(ops.abs(sine_pcm))
+            output_power = stats.mean(ops.abs(output))
             
             # Store response ratio
             responses[freq] = output_power / input_power if input_power > 0 else 0
@@ -318,6 +318,6 @@ if __name__ == "__main__":
     # Print stats
     print(f"Input shape: {test_signal.shape}")
     print(f"Output shape: {output.shape}")
-    print(f"Input range: [{ops.stats.min(test_signal)}, {ops.stats.max(test_signal)}]")
-    print(f"Output range: [{ops.stats.min(output)}, {ops.stats.max(output)}]")
+    print(f"Input range: [{stats.min(test_signal)}, {stats.max(test_signal)}]")
+    print(f"Output range: [{stats.min(output)}, {stats.max(output)}]")
     print(f"Frequency response: {freq_response}")

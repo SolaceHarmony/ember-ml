@@ -82,81 +82,6 @@ def initialize_random_seed(seed: int = 42) -> None:
     else:
         logger.warning(f"Backend {get_backend()} does not support setting random seed")
 
-def convert_to_tensor_safe(data: Any) -> Any:
-    """
-    Safely convert data to a tensor using the current backend.
-    
-    This function handles various input types and edge cases.
-    
-    Args:
-        data: Input data (numpy array, list, etc.)
-        
-    Returns:
-        Tensor in the current backend format
-    """
-    if data is None:
-        return None
-    
-    try:
-        return tensor.convert_to_tensor(data)
-    except Exception as e:
-        logger.warning(f"Error converting to tensor: {e}")
-        # Re-raise the exception since ember_ml is required
-        raise
-
-def tensor_to_numpy_safe(tensor: Any) -> Any:
-    """
-    Safely convert a tensor to a NumPy array.
-    
-    Args:
-        tensor: Input tensor from any backend
-        
-    Returns:
-        numpy.ndarray: NumPy array
-    """
-    if tensor is None:
-        return None
-    
-    try:
-        # Check if it's already a NumPy array
-        if hasattr(tensor, '__class__') and tensor.__class__.__name__ == 'ndarray':
-            return tensor
-        
-        # Handle PyTorch MPS tensors
-        if hasattr(tensor, 'device') and hasattr(tensor.device, 'type') and tensor.device.type == 'mps':
-            # Move MPS tensor to CPU first
-            if hasattr(tensor, 'detach'):
-                tensor = tensor.detach().cpu()
-            else:
-                tensor = tensor.cpu()
-        
-        # Try to convert to NumPy
-        if hasattr(tensor, 'numpy'):
-            return tensor.numpy()
-        elif hasattr(tensor, 'detach') and hasattr(tensor.detach(), 'numpy'):
-            # PyTorch tensor
-            return tensor.detach().numpy()
-        else:
-            # Try ops conversion
-            return tensor.to_numpy(tensor)
-    except Exception as e:
-        logger.warning(f"Error converting tensor to NumPy: {e}")
-        # Re-raise the exception since ember_ml is required
-        raise
-
-def random_uniform(shape: Union[int, Tuple[int, ...]], low: float = 0.0, high: float = 1.0) -> Any:
-    """
-    Generate uniform random values using the current backend.
-    
-    Args:
-        shape: Shape of the output tensor
-        low: Lower bound of the distribution
-        high: Upper bound of the distribution
-        
-    Returns:
-        Tensor of random values in the current backend format
-    """
-    return tensor.random_uniform(shape=shape, minval=low, maxval=high)
 
 def sin_cos_transform(values: Any, period: float = 1.0) -> Tuple[Any, Any]:
     """
@@ -169,7 +94,7 @@ def sin_cos_transform(values: Any, period: float = 1.0) -> Tuple[Any, Any]:
     Returns:
         Tuple of (sin_values, cos_values) in the current backend format
     """
-    values_tensor = convert_to_tensor_safe(values)
+    values_tensor = values 
     
     sin_values = ops.sin(2 * ops.pi * values_tensor / period)
     cos_values = ops.cos(2 * ops.pi * values_tensor / period)
@@ -190,7 +115,7 @@ def vstack_safe(arrays: List[Any]) -> Any:
         return None
     
     # Convert all arrays to the same format
-    converted_arrays = [convert_to_tensor_safe(arr) for arr in arrays]
+    converted_arrays = [arr for arr in arrays]
     
     # Check if all arrays have the same shape except for the first dimension
     shapes = [tensor.shape(arr)[1:] for arr in converted_arrays]

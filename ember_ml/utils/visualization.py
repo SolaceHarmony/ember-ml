@@ -112,8 +112,8 @@ def plot_confusion_matrix(cm: TensorLike, class_names: Optional[List[str]] = Non
     thresh = tensor.item(ops.divide(thresh_tensor, tensor.convert_to_tensor(2.0)))
     
     cm_shape = tensor.shape(cm)
-    for i in range(cm_np.shape[0]):
-        for j in range(cm_np.shape[1]):
+    for i in range(cm_tensor.shape[0]):
+        for j in range(cm_tensor.shape[1]):
             value = cm_np[i, j]
             # Format as integer string without using int() cast
             ax.text(j, i, f"{value:.0f}",

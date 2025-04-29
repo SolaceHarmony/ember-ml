@@ -86,7 +86,7 @@ class BinaryWave(nn.Module):
         basis = basis * self.amplitude_scale.unsqueeze(-1)
         
         # Solve for output
-        output = torch.matmul(
+        output = ops.matmul(
             torch.pinverse(basis),
             wave_flat
         )

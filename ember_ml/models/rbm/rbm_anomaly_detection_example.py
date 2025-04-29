@@ -91,7 +91,7 @@ def generate_telemetry_data(n_samples=1000, n_features=10, anomaly_fraction=0.05
     # Generate random indices for anomalies
     # Note: tensor.random_choice is not available, so we'll use numpy for this specific operation
     # In a real application, you would implement this using tensor operations
-    anomaly_indices_np = np.random.choice(n_samples, n_anomalies_np, replace=False)
+    anomaly_indices_np = ops.random_choice(n_samples, n_anomalies_np, replace=False)
     anomaly_indices = anomaly_indices_np.tolist()  # Convert to list for pandas indexing
     
     # Convert back to tensor for operations
@@ -303,10 +303,10 @@ def main():
     labels_tensor = tensor.convert_to_tensor(test_labels)
     
     # Compute metrics using tensor operations
-    true_positives = ops.stats.sum(ops.logical_and(ops.equal(pred_tensor, 1), ops.equal(labels_tensor, 1)))
-    false_positives = ops.stats.sum(ops.logical_and(ops.equal(pred_tensor, 1), ops.equal(labels_tensor, 0)))
-    true_negatives = ops.stats.sum(ops.logical_and(ops.equal(pred_tensor, 0), ops.equal(labels_tensor, 0)))
-    false_negatives = ops.stats.sum(ops.logical_and(ops.equal(pred_tensor, 0), ops.equal(labels_tensor, 1)))
+    true_positives = stats.sum(ops.logical_and(ops.equal(pred_tensor, 1), ops.equal(labels_tensor, 1)))
+    false_positives = stats.sum(ops.logical_and(ops.equal(pred_tensor, 1), ops.equal(labels_tensor, 0)))
+    true_negatives = stats.sum(ops.logical_and(ops.equal(pred_tensor, 0), ops.equal(labels_tensor, 0)))
+    false_negatives = stats.sum(ops.logical_and(ops.equal(pred_tensor, 0), ops.equal(labels_tensor, 1)))
     
     # Calculate metrics using ops
     precision_denom = ops.add(true_positives, false_positives)

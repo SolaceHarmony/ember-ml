@@ -1,7 +1,8 @@
 # tests/mlx_tests/test_nn_rnn.py
 from ember_ml import ops
 from ember_ml.nn import tensor
-from ember_ml.nn import modules
+# from ember_ml.nn import modules # Removed old import
+from ember_ml.nn.modules import rnn # Import rnn submodule
 from ember_ml.nn.modules.wiring import NCPMap, FullyConnectedNCPMap
 
 # Note: Assumes conftest.py provides the mlx_backend fixture
@@ -17,7 +18,7 @@ def _get_rnn_params():
 def test_rnn_forward_mlx(mlx_backend): # Use fixture
     """Tests RNN layer single step forward pass with MLX backend."""
     input_size, hidden_size, batch_size, _ = _get_rnn_params()
-    layer = modules.RNN(input_size, hidden_size, return_sequences=False, return_state=True)
+    layer = rnn.RNN(input_size, hidden_size, return_sequences=False, return_state=True) # Use rnn.RNN
     x_t = tensor.random_normal((batch_size, 1, input_size))  # Single time step
     h_prev = tensor.zeros((1, batch_size, hidden_size))  # Initial state
     
@@ -31,13 +32,13 @@ def test_rnn_forward_mlx(mlx_backend): # Use fixture
 def test_rnn_layer_forward_mlx(mlx_backend): # Use fixture
     """Tests RNN layer forward pass shape with MLX backend."""
     input_size, hidden_size, batch_size, seq_len = _get_rnn_params()
-    layer = modules.RNN(input_size, hidden_size) # Default return_state=False
+    layer = rnn.RNN(input_size, hidden_size) # Use rnn.RNN
     x = tensor.random_normal((batch_size, seq_len, input_size))
     # Layer returns outputs by default. Set return_state=True to get final state.
     outputs = layer(x) # Get only outputs
     y = outputs
     # Now test with state return
-    layer_state = modules.RNN(input_size, hidden_size, return_state=True)
+    layer_state = rnn.RNN(input_size, hidden_size, return_state=True) # Use rnn.RNN
     outputs_state, final_state = layer_state(x)
     h_final = final_state[0] # Unpack final state list
     assert tensor.shape(y) == (batch_size, seq_len, hidden_size), "y shape mismatch"
@@ -47,7 +48,7 @@ def test_rnn_layer_forward_mlx(mlx_backend): # Use fixture
 def test_lstm_forward_mlx(mlx_backend): # Use fixture
     """Tests LSTM layer single step forward pass with MLX backend."""
     input_size, hidden_size, batch_size, _ = _get_rnn_params()
-    layer = modules.LSTM(input_size, hidden_size, return_sequences=False, return_state=True)
+    layer = rnn.LSTM(input_size, hidden_size, return_sequences=False, return_state=True) # Use rnn.LSTM
     x_t = tensor.random_normal((batch_size, 1, input_size))  # Single time step
     h_prev = tensor.zeros((1, batch_size, hidden_size))  # Initial hidden state
     c_prev = tensor.zeros((1, batch_size, hidden_size))  # Initial cell state
@@ -64,13 +65,13 @@ def test_lstm_forward_mlx(mlx_backend): # Use fixture
 def test_lstm_layer_forward_mlx(mlx_backend): # Use fixture
     """Tests LSTM layer forward pass shape with MLX backend."""
     input_size, hidden_size, batch_size, seq_len = _get_rnn_params()
-    layer = modules.LSTM(input_size, hidden_size) # Default return_state=False
+    layer = rnn.LSTM(input_size, hidden_size) # Use rnn.LSTM
     x = tensor.random_normal((batch_size, seq_len, input_size))
     # Layer returns outputs by default. Set return_state=True to get final state.
     outputs = layer(x) # Get only outputs
     y = outputs
     # Now test with state return
-    layer_state = modules.LSTM(input_size, hidden_size, return_state=True)
+    layer_state = rnn.LSTM(input_size, hidden_size, return_state=True) # Use rnn.LSTM
     outputs_state, final_state = layer_state(x)
     h_final, c_final = final_state # Unpack final state tuple
     assert tensor.shape(y) == (batch_size, seq_len, hidden_size), "y shape mismatch"
@@ -81,7 +82,7 @@ def test_lstm_layer_forward_mlx(mlx_backend): # Use fixture
 def test_gru_forward_mlx(mlx_backend): # Use fixture
     """Tests GRU layer single step forward pass with MLX backend."""
     input_size, hidden_size, batch_size, _ = _get_rnn_params()
-    layer = modules.GRU(input_size, hidden_size, return_sequences=False, return_state=True)
+    layer = rnn.GRU(input_size, hidden_size, return_sequences=False, return_state=True) # Use rnn.GRU
     x_t = tensor.random_normal((batch_size, 1, input_size))  # Single time step
     h_prev = tensor.zeros((1, batch_size, hidden_size))  # Initial state
     
@@ -95,13 +96,13 @@ def test_gru_forward_mlx(mlx_backend): # Use fixture
 def test_gru_layer_forward_mlx(mlx_backend): # Use fixture
     """Tests GRU layer forward pass shape with MLX backend."""
     input_size, hidden_size, batch_size, seq_len = _get_rnn_params()
-    layer = modules.GRU(input_size, hidden_size) # Default return_state=False
+    layer = rnn.GRU(input_size, hidden_size) # Use rnn.GRU
     x = tensor.random_normal((batch_size, seq_len, input_size))
     # Layer returns outputs by default. Set return_state=True to get final state.
     outputs = layer(x) # Get only outputs
     y = outputs
     # Now test with state return
-    layer_state = modules.GRU(input_size, hidden_size, return_state=True)
+    layer_state = rnn.GRU(input_size, hidden_size, return_state=True) # Use rnn.GRU
     outputs_state, final_state = layer_state(x)
     h_final = final_state[0] # Unpack final state list
     assert tensor.shape(y) == (batch_size, seq_len, hidden_size), "y shape mismatch"
@@ -235,8 +236,8 @@ def test_cfc_with_enhanced_ncpmap_mlx(mlx_backend):
     )
     
     # Create CfC layer with the enhanced NCPMap
-    layer = modules.CfC(neuron_map=neuron_map, return_sequences=True)
-    
+    layer = rnn.CfC(neuron_map=neuron_map, return_sequences=True) # Use rnn.CfC
+
     # Test forward pass
     x = tensor.random_normal((batch_size, seq_len, input_size))
     outputs = layer(x)
@@ -246,9 +247,9 @@ def test_cfc_with_enhanced_ncpmap_mlx(mlx_backend):
     assert tensor.shape(outputs) == (batch_size, seq_len, output_dim), "Output shape mismatch"
     
     # Test with return_state=True
-    layer_state = modules.CfC(neuron_map=neuron_map, return_sequences=True, return_state=True)
+    layer_state = rnn.CfC(neuron_map=neuron_map, return_sequences=True, return_state=True) # Use rnn.CfC
     outputs_state, final_state = layer_state(x)
-    
+
     # Verify output and state shapes
     output_dim = tensor.shape(outputs_state)[2]
     assert tensor.shape(outputs_state) == (batch_size, seq_len, output_dim), "Output shape mismatch"
@@ -282,8 +283,8 @@ def test_ltc_with_enhanced_ncpmap_mlx(mlx_backend):
     )
     
     # Create LTC layer with the enhanced NCPMap
-    layer = modules.LTC(neuron_map=neuron_map, return_sequences=True)
-    
+    layer = rnn.LTC(neuron_map=neuron_map, return_sequences=True) # Use rnn.LTC
+
     # Test forward pass
     x = tensor.random_normal((batch_size, seq_len, input_size))
     outputs = layer(x)
@@ -292,9 +293,9 @@ def test_ltc_with_enhanced_ncpmap_mlx(mlx_backend):
     assert tensor.shape(outputs) == (batch_size, seq_len, neuron_map.motor_neurons), "Output shape mismatch"
     
     # Test with return_state=True
-    layer_state = modules.LTC(neuron_map=neuron_map, return_sequences=True, return_state=True)
+    layer_state = rnn.LTC(neuron_map=neuron_map, return_sequences=True, return_state=True) # Use rnn.LTC
     outputs_state, final_state = layer_state(x)
-    
+
     # Verify output and state shapes
     assert tensor.shape(outputs_state) == (batch_size, seq_len, neuron_map.motor_neurons), "Output shape mismatch"
     assert tensor.shape(final_state) == (batch_size, neuron_map.units), "h_final shape mismatch"
@@ -320,8 +321,8 @@ def test_ltc_with_fully_connected_ncpmap_mlx(mlx_backend):
     )
     
     # Create LTC layer with the FullyConnectedNCPMap
-    layer = modules.LTC(neuron_map=neuron_map, return_sequences=True)
-    
+    layer = rnn.LTC(neuron_map=neuron_map, return_sequences=True) # Use rnn.LTC
+
     # Test forward pass
     x = tensor.random_normal((batch_size, seq_len, input_size))
     outputs = layer(x)
@@ -330,9 +331,9 @@ def test_ltc_with_fully_connected_ncpmap_mlx(mlx_backend):
     assert tensor.shape(outputs) == (batch_size, seq_len, neuron_map.output_dim), "Output shape mismatch"
     
     # Test with return_state=True
-    layer_state = modules.LTC(neuron_map=neuron_map, return_sequences=True, return_state=True)
+    layer_state = rnn.LTC(neuron_map=neuron_map, return_sequences=True, return_state=True) # Use rnn.LTC
     outputs_state, final_state = layer_state(x)
-    
+
     # Verify output and state shapes
     assert tensor.shape(outputs_state) == (batch_size, seq_len, neuron_map.output_dim), "Output shape mismatch"
     assert tensor.shape(final_state) == (batch_size, neuron_map.units), "h_final shape mismatch"

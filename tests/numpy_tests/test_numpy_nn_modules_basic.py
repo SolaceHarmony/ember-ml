@@ -57,7 +57,7 @@ def test_parameter_properties_numpy(numpy_backend):
     # Check requires_grad property (backend dependent, might need specific check)
     # assert param.requires_grad is False # This might not be a direct attribute on EmberTensor
 
-    assert isinstance(tensor.to_numpy(param.data), np.ndarray), "Data not numpy.ndarray" # Check for backend tensor
+    assert isinstance(tensor.to_numpy(param.data), tensor.EmberTensor), "Data not numpy.ndarray" # Check for backend tensor
     assert tensor.shape(param.data) == tensor.shape(data), "Shape mismatch"
     assert ops.allclose(param.data, data), "Data content mismatch" # Use ops.allclose (returns bool)
 

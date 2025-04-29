@@ -296,5 +296,18 @@ __all__ = [
     'huber_loss',
     'log_cosh_loss',
 
-
+    # Linear Algebra operations
+    'qr',
+    'svd',
+    'cholesky',
+    'eig',
+    'eigvals',
+    'eigh',
+    'inv',
+    'det',
+    'norm',
+    'diag',
+    'diagonal',
+    'solve',
+    'lstsq'
 ]

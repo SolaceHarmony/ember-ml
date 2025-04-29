@@ -4,6 +4,7 @@ from ember_ml import ops
 from ember_ml.nn import tensor
 from ember_ml.nn.tensor.common.ember_tensor import EmberTensor
 import numpy as np
+from ember_ml.nn.tensor.types import TensorLike
 
 # Note: Assumes conftest.py provides the numpy_backend fixture
 
@@ -23,7 +24,7 @@ def dtype_pair(request):
 def get_allowed_tensor_types(backend_name: str) -> tuple:
     allowed_types = [EmberTensor]
     if backend_name == 'numpy':
-        allowed_types.append(TensorLike)  # type: ignore
+        allowed_types.append(tensor.EmberTensor)
     # Removed torch/mlx checks as they are not relevant here
     return tuple(allowed_types)
 
@@ -49,9 +50,8 @@ def test_tensor_cast_numpy(numpy_backend, dtype_pair): # Use fixture
     allowed_types = get_allowed_tensor_types('numpy')
     assert isinstance(t_casted, allowed_types), f"Cast result type ({type(t_casted)}) invalid"
     assert tensor.shape(t_casted) == tensor.shape(t_original), "Cast changed shape"
-    casted_dtype_str = tensor.to_dtype_str(tensor.dtype(t_casted))
-    target_dtype_str = str(target_dtype)
-    assert casted_dtype_str == target_dtype_str, f"Cast failed: expected '{target_dtype_str}', got '{casted_dtype_str}'"
+    # Compare the actual NumPy dtype object with the expected NumPy dtype object
+    assert t_casted.dtype == target_dtype._backend_dtype, f"Cast failed: expected dtype '{target_dtype.name}', got '{tensor.to_dtype_str(t_casted.dtype)}'"
 
     # Value checks
     np_original = tensor.to_numpy(t_original)
@@ -70,7 +70,7 @@ def test_tensor_to_numpy_numpy(numpy_backend): # Use fixture
     data = [[1.1, 2.2], [3.3, 4.4]]
     t_ember = tensor.convert_to_tensor(data)
     t_numpy = tensor.to_numpy(t_ember)
-    assert isinstance(t_numpy, TensorLike), "Not TensorLike"
+    assert isinstance(t_numpy, tensor.EmberTensor), "Not tensor.EmberTensor"
     assert ops.allclose(t_numpy, tensor.convert_to_tensor(data)), "Content mismatch"
     assert t_numpy.shape == tuple(tensor.shape(t_ember)), "Shape mismatch"
 
@@ -78,17 +78,17 @@ def test_tensor_item_numpy(numpy_backend): # Use fixture
     """Tests tensor.item for scalar tensors with NumPy backend."""
     t_int = tensor.convert_to_tensor(42)
     item_int = tensor.item(t_int)
-    assert isinstance(item_int, (int, np.integer)), "Int type failed"
+    assert isinstance(item_int, (int, tensor.integer)), "Int type failed"
     assert item_int == 42, "Int value failed"
 
     t_float = tensor.convert_to_tensor(3.14)
     item_float = tensor.item(t_float)
-    assert isinstance(item_float, (float, np.floating)), "Float type failed"
+    assert isinstance(item_float, (float, tensor.floating)), "Float type failed"
     assert ops.less(ops.abs(ops.subtract(item_float, 3.14)), 1e-6), "Float value failed"
 
     t_bool = tensor.convert_to_tensor(True)
     item_bool = tensor.item(t_bool)
-    assert isinstance(item_bool, (bool, np.bool_)), "Bool type failed"
+    assert isinstance(item_bool, (bool, tensor.bool)), "Bool type failed"
     assert bool(item_bool) is True, "Bool value failed"
 
     t_non_scalar = tensor.convert_to_tensor([1, 2])

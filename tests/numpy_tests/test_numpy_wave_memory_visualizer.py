@@ -30,7 +30,7 @@ def dummy_model_and_history():
 
     # Create dummy history data (NumPy array)
     steps = 10
-    history_np = np.random.rand(steps, num_spheres, state_dim).astype(np.float32)
+    history_np = np.random.rand(steps, num_spheres, state_dim).astype(tensor.float32)
 
     return model, history_np
 
@@ -54,9 +54,9 @@ def test_wavememoryanalyzer_analyze_model(dummy_model_and_history):
     # We can reduce the number of steps for testing.
     steps = 5 # Reduced steps for faster test
     # Create dummy input waves and gating signals (NumPy arrays or lists)
-    input_waves_seq_np = np.random.rand(steps, model.num_spheres, model.state_dim).astype(np.float32)
+    input_waves_seq_np = np.random.rand(steps, model.num_spheres, model.state_dim).astype(tensor.float32)
     input_waves_seq = tensor.convert_to_tensor(input_waves_seq_np)
-    gating_seq_np = np.random.rand(steps, model.num_spheres).astype(np.float32)
+    gating_seq_np = np.random.rand(steps, model.num_spheres).astype(tensor.float32)
     gating_seq = tensor.convert_to_tensor(gating_seq_np)
 
     # Mock the run method to return the dummy history

@@ -6,7 +6,7 @@ making it compatible with all backends (NumPy, PyTorch, MLX).
 """
 
 from typing import Optional, Any, Tuple
-
+from ember_ml.ops import stats
 from ember_ml import ops
 from ember_ml.nn import tensor
 
@@ -50,11 +50,11 @@ class Normalize:
         
         # Compute norms
         if norm == "l1":
-            self.norms_ = ops.stats.sum(ops.abs(X_tensor), axis=axis, keepdims=True)
+            self.norms_ = stats.sum(ops.abs(X_tensor), axis=axis, keepdims=True)
         elif norm == "l2":
-            self.norms_ = ops.sqrt(ops.stats.sum(ops.square(X_tensor), axis=axis, keepdims=True))
+            self.norms_ = ops.sqrt(stats.sum(ops.square(X_tensor), axis=axis, keepdims=True))
         elif norm == "max":
-            self.norms_ = ops.stats.max(ops.abs(X_tensor), axis=axis, keepdims=True)
+            self.norms_ = stats.max(ops.abs(X_tensor), axis=axis, keepdims=True)
         else:
             raise ValueError(f"Unsupported norm: {norm}")
         

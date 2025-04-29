@@ -33,9 +33,9 @@ def dummy_wave_file():
         nframes = int(sample_rate * duration)
         amplitude = 32760 # Max amplitude for 16-bit audio
 
-        t = tensor.linspace(0, duration, nframes, endpoint=False)
+        t = tensor.linspace(0, duration, nframes)
         wave_data = amplitude * ops.sin(2 * ops.pi * frequency * t)
-        wave_data_int16 = wave_data.astype(np.int16)
+        wave_data_int16 = wave_data.astype(tensor.int16)
 
         with wave.open(file_path, 'wb') as wf:
             wf.setnchannels(1) # Mono
@@ -76,23 +76,23 @@ def test_audioprocessor_load_audio(dummy_wave_file):
     # The loaded audio should have the target sample rate, so its length should be duration * target_sample_rate
     expected_length = int(1.0 * target_sample_rate) # Duration of dummy file is 1.0s
     assert abs(audio_data.shape[0] - expected_length) <= 1 # Allow for minor off-by-one
-    assert audio_data.dtype == np.float32 # Should be float32
+    assert audio_data.dtype == tensor.float32 # Should be float32
 
 
 def test_audioprocessor_normalize_audio():
     # Test AudioProcessor normalize_audio
-    audio_data = tensor.convert_to_tensor([0.5, -0.5, 1.0, -1.0, 0.0], dtype=np.float32)
+    audio_data = tensor.convert_to_tensor([0.5, -0.5, 1.0, -1.0, 0.0], dtype=tensor.float32)
     processor = audio_processor.AudioProcessor(1000) # Sample rate doesn't matter for this test
 
     normalized_data = processor.normalize_audio(audio_data)
 
     assert isinstance(normalized_data, TensorLike)
-    assert ops.allclose(ops.stats.max(np.abs(normalized_data)), 1.0) # Peak amplitude should be 1.0
+    assert ops.allclose(stats.max(ops.abs(normalized_data)), 1.0) # Peak amplitude should be 1.0
 
 
 def test_audioprocessor_segment_audio():
     # Test AudioProcessor segment_audio
-    audio_data = np.arange(20, dtype=np.float32) # [0, 1, ..., 19]
+    audio_data = tensor.arange(20, dtype=tensor.float32) # [0, 1, ..., 19]
     segment_length = 5
     hop_length = 2
     processor = audio_processor.AudioProcessor(1000) # Sample rate doesn't matter

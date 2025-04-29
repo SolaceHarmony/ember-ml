@@ -12,6 +12,7 @@ from typing import Dict, List, Optional, Tuple, Union, Any
 
 from ember_ml import ops
 from ember_ml.nn import tensor
+
 class RBM:
     """
     Backend-agnostic implementation of a Restricted Boltzmann Machine.
@@ -74,35 +75,29 @@ class RBM:
         self.weights = tensor.random_normal(
             (n_visible, n_hidden), 
             mean=0.0, 
-            stddev=0.01 / ops.sqrt(tensor.convert_to_tensor(n_visible))
+            stddev=ops.div(0.01, ops.sqrt(tensor.convert_to_tensor(n_visible)))
         )
         self.visible_bias = tensor.zeros(n_visible)
         self.hidden_bias = tensor.zeros(n_hidden)
-        
-        # Move to device if specified
-        if device:
-            self.weights = ops.to_device(self.weights, device)
-            self.visible_bias = ops.to_device(self.visible_bias, device)
-            self.hidden_bias = ops.to_device(self.hidden_bias, device)
-        
+ 
         # Initialize momentum terms
         self.weights_momentum = tensor.zeros_like(self.weights)
         self.visible_bias_momentum = tensor.zeros_like(self.visible_bias)
         self.hidden_bias_momentum = tensor.zeros_like(self.hidden_bias)
         
         # For tracking training progress
-        self.training_errors = []
-        self.training_states = [] if track_states else None
-        self.dream_states = []
+        self.training_errors: List[float] = []
+        self.training_states: Optional[List[Dict[str, Any]]] = [] if track_states else None
+        self.dream_states: List[tensor.EmberTensor] = []
         
         # For anomaly detection
-        self.reconstruction_error_threshold = None
-        self.free_energy_threshold = None
+        self.reconstruction_error_threshold: Optional[float] = None
+        self.free_energy_threshold: Optional[float] = None
         
         # Training metadata
-        self.training_time = 0
-        self.n_epochs_trained = 0
-        self.last_batch_error = float('inf')
+        self.training_time: float = 0.0
+        self.n_epochs_trained: int = 0
+        self.last_batch_error: float = float('inf')
     
     def sigmoid(self, x):
             """
@@ -253,7 +248,7 @@ class RBM:
         
         # Compute reconstruction error
         reconstruction_error = ops.stats.mean(
-            ops.stats.sum(ops.pow(ops.subtract(batch_data, neg_visible_probs), 2), axis=1)
+            stats.sum(ops.pow(ops.subtract(batch_data, neg_visible_probs), 2), axis=1)
         )
         
         # Track state if enabled
@@ -410,7 +405,7 @@ class RBM:
         """
         data = tensor.convert_to_tensor(data)
         reconstructed = self.reconstruct(data)
-        squared_error = ops.stats.sum(ops.pow(ops.subtract(data, reconstructed), 2), axis=1)
+        squared_error = stats.sum(ops.pow(ops.subtract(data, reconstructed), 2), axis=1)
         
         if per_sample:
             return squared_error
@@ -432,7 +427,7 @@ class RBM:
         """
         data = tensor.convert_to_tensor(data)
         visible_bias_term = ops.dot(data, self.visible_bias)
-        hidden_term = ops.stats.sum(
+        hidden_term = stats.sum(
             ops.log(ops.add(1, ops.exp(ops.add(ops.dot(data, self.weights), self.hidden_bias)))),
             axis=1
         )
@@ -552,7 +547,7 @@ class RBM:
         
         # Save to file using NumPy
         import numpy as np
-        np.save(filepath, model_data, allow_pickle=True)
+        ops.save(filepath, model_data, allow_pickle=True)
         print(f"Model saved to {filepath}")
     
     @classmethod
@@ -570,7 +565,7 @@ class RBM:
         """
         # Load model data
         import numpy as np
-        model_data = np.load(filepath, allow_pickle=True).item()
+        model_data = ops.load(filepath, allow_pickle=True).item()
         
         # Create model
         rbm = cls(

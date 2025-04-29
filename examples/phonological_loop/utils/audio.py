@@ -142,7 +142,7 @@ def generate_tts_speech(text, filename=None, sample_rate=16000):
             # Save to file if filename is provided
             if filename:
                 # Convert to int16 for saving
-                output_audio_int16 = (output_audio_np * 32767).astype(np.int16)
+                output_audio_int16 = (output_audio_np * 32767).astype(tensor.int16)
                 wavfile.write(filename, output_sr, output_audio_int16)
                 print(f"Saved real TTS audio to {filename}")
             

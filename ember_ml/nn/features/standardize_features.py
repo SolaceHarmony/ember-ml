@@ -58,15 +58,14 @@ class Standardize:
         
         # Compute standard deviation
         if with_std:
-            if with_mean:
-                X_centered = X_tensor - self.mean_
-                var = ops.stats.mean(ops.square(X_centered), axis=axis, keepdims=True)
-            else:
-                var = ops.stats.mean(ops.square(X_tensor), axis=axis, keepdims=True)
-            
+            # Calculate variance directly using ops.stats.var(ddof=0)
+            # This might be more numerically stable than manual calculation.
+            var = ops.stats.var(X_tensor, axis=axis, keepdims=True, ddof=0)
+
             # Avoid division by zero
-            eps = 1e-8  # Small constant to avoid division by zero
-            self.scale_ = ops.sqrt(ops.clip(var, min_value=eps))
+            eps = 1e-6  # Keep increased epsilon
+            # Use positional arguments min_val=eps, max_val=None for ops.clip
+            self.scale_ = ops.sqrt(ops.clip(var, eps, None))
         else:
             self.scale_ = None
         
@@ -146,13 +145,15 @@ class Standardize:
         
         # Unscale data
         if self.with_std_ and self.scale_ is not None:
-            X_unscaled = X_tensor * self.scale_
+            # Use ops.multiply
+            X_unscaled = ops.multiply(X_tensor, self.scale_)
         else:
             X_unscaled = X_tensor
-        
+
         # Uncenter data
         if self.with_mean_ and self.mean_ is not None:
-            X_original = X_unscaled + self.mean_
+            # Use ops.add
+            X_original = ops.add(X_unscaled, self.mean_)
         else:
             X_original = X_unscaled
         

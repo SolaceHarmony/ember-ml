@@ -3,15 +3,13 @@ Asynchronous implementation of the liquid_cfc_xlstm neural network module.
 """
 
 import asyncio
-import asyncio
-import numpy as np
 from typing import Dict, Any
 
 # Import asynchronous tensor operations
-from ember_ml.async.ops import (
-    matmul, sigmoid, tanh, where, ones_like, zeros_like, outer, add, subtract, multiply, divide
-)
-
+from ember_ml.asyncml.ops import matmul, where, add, subtract, multiply, divide
+from ember_ml.asyncml.nn.modules.activations import sigmoid,tanh
+from ember_ml.asyncml.nn import tensor
+from ember_ml.asyncml.nn.tensor import zeroes_like, ones_like
 async def async_liquid_cfc_xlstm(
     input_x: Any,
     model_params: Dict[str, Any],
@@ -35,7 +33,7 @@ async def async_liquid_cfc_xlstm(
         A tuple containing the next states (h_liquid_next, c_t_next, n_t_next)
         and the next recurrent weights (W_recurrent_next).
     """
-    # Recurrent input (using async matmul)
+    # Recurrent input (using async ops.matmul)
     x_t = await matmul(W_recurrent, h_liquid)
 
     # Gate computations (using async sigmoid and tanh)

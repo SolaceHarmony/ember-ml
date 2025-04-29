@@ -198,7 +198,7 @@ class GUCE(Module):
             Viscosity tensor
         """
         # Calculate energy as sum of squared state elements
-        energy = ops.stats.sum(ops.square(state), axis=-1, keepdims=True)
+        energy = stats.sum(ops.square(state), axis=-1, keepdims=True)
         
         # Store energy for history and for returning
         self.energy_history.append(energy)

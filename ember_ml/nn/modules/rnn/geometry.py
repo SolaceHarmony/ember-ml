@@ -1,9 +1,15 @@
 """Geometric operations for non-Euclidean neural computations."""
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
+from regex import T
+from ember_ml.nn import tensor
+from ember_ml.nn.modules import Module, Parameter
+from ember_ml.ops import stats
+from ember_ml.ops import linearalg
+from ember_ml import ops
 from typing import Tuple
+from ember_ml.nn.tensor.types import TensorLike
+from typing import Any
+
 
 def normalize_sphere(vec: tensor.convert_to_tensor, eps: float = 1e-12) -> tensor.convert_to_tensor:
     """Normalize vectors to the unit sphere.
@@ -15,15 +21,15 @@ def normalize_sphere(vec: tensor.convert_to_tensor, eps: float = 1e-12) -> tenso
     Returns:
         Normalized vectors on unit sphere
     """
-    norm = torch.norm(vec, dim=-1, keepdim=True)
+    norm = linearalg.norm(vec, dim=-1, keepdim=True)
     mask = norm > eps
-    return torch.where(mask, vec / norm, vec)
+    return ops.where(mask, vec / norm, vec)
 
 def log_map_sphere(
-    p: tensor.convert_to_tensor,
-    q: tensor.convert_to_tensor,
+    p: TensorLike,
+    q: TensorLike,
     eps: float = 1e-12
-) -> tensor.convert_to_tensor:
+) -> Any:
     """Logarithmic map on unit sphere (Log_p(q)).
     
     Maps point q to the tangent space at p.
@@ -41,22 +47,22 @@ def log_map_sphere(
     q_n = normalize_sphere(q, eps)
     
     # Compute angle between p and q
-    dot_prod = torch.sum(p_n * q_n, dim=-1, keepdim=True)
-    dot_prod = torch.clamp(dot_prod, -1.0 + eps, 1.0 - eps)
-    theta = torch.arccos(dot_prod)
+    dot_prod = stats.sum(p_n * q_n, dim=-1, keepdim=True)
+    dot_prod = ops.clamp(dot_prod, -1.0 + eps, 1.0 - eps)
+    theta = ops.arccos(dot_prod)
     
     # Handle small angles
     small_angle = theta < eps
     if small_angle.any():
-        return torch.zeros_like(p)
+        return tensor.zeros_like(p)
     
     # Compute direction in tangent space
     perp = q_n - dot_prod * p_n
-    perp_norm = torch.norm(perp, dim=-1, keepdim=True)
+    perp_norm = linearalg.norm(perp, dim=-1, keepdim=True)
     perp_mask = perp_norm > eps
     
     # Combine results
-    dir_vec = torch.where(perp_mask, perp / perp_norm, torch.zeros_like(perp))
+    dir_vec = ops.where(perp_mask, perp / perp_norm, tensor.zeros_like(perp))
     return dir_vec * theta
 
 def exp_map_sphere(
@@ -77,7 +83,7 @@ def exp_map_sphere(
         Point(s) on sphere
     """
     # Get vector norm
-    v_norm = torch.norm(v, dim=-1, keepdim=True)
+    v_norm = linearalg.norm(v, dim=-1, keepdim=True)
     small_norm = v_norm < eps
     
     if small_norm.any():
@@ -88,12 +94,12 @@ def exp_map_sphere(
     dir_vec = v / v_norm
     
     # Remove component along p
-    proj_p = torch.sum(dir_vec * p_n, dim=-1, keepdim=True) * p_n
+    proj_p = stats.sum(dir_vec * p_n, dim=-1, keepdim=True) * p_n
     dir_vec = dir_vec - proj_p
     dir_vec = normalize_sphere(dir_vec, eps)
     
     # Compute new point
-    new_point = torch.cos(v_norm) * p_n + torch.sin(v_norm) * dir_vec
+    new_point = ops.cos(v_norm) * p_n + ops.sin(v_norm) * dir_vec
     return normalize_sphere(new_point, eps)
 
 def parallel_transport_sphere(
@@ -118,9 +124,9 @@ def parallel_transport_sphere(
     q_n = normalize_sphere(q, eps)
     
     # Get geodesic
-    dot_prod = torch.sum(p_n * q_n, dim=-1, keepdim=True)
-    dot_prod = torch.clamp(dot_prod, -1.0 + eps, 1.0 - eps)
-    theta = torch.arccos(dot_prod)
+    dot_prod = stats.sum(p_n * q_n, dim=-1, keepdim=True)
+    dot_prod = ops.clamp(dot_prod, -1.0 + eps, 1.0 - eps)
+    theta = ops.arccos(dot_prod)
     
     # Handle small angles
     small_angle = theta < eps
@@ -132,25 +138,25 @@ def parallel_transport_sphere(
     transport_dir = normalize_sphere(transport_dir, eps)
     
     # Transport v
-    v_proj_p = torch.sum(v * p_n, dim=-1, keepdim=True) * p_n
+    v_proj_p = stats.sum(v * p_n, dim=-1, keepdim=True) * p_n
     v_perp = v - v_proj_p
     
     transported = (
-        torch.cos(theta) * v_perp +
-        torch.sin(theta) * torch.cross(transport_dir, v_perp)
+        ops.cos(theta) * v_perp +
+        ops.sin(theta) * ops.cross(transport_dir, v_perp)
     )
     
     return transported
 
-class SphericalLinear(nn.Module):
+class SphericalLinear(Module):
     """Linear transformation in spherical geometry.
     
     Maps tangent vectors between spherical tangent spaces.
     """
     def __init__(self, in_features: int, out_features: int):
         super().__init__()
-        self.weight = nn.Parameter(torch.randn(out_features, in_features))
-        self.bias = nn.Parameter(torch.randn(out_features))
+        self.weight = Parameter(tensor.random_normal(out_features, in_features))
+        self.bias = Parameter(tensor.random_normal(out_features))
         
     def forward(
         self,
@@ -167,7 +173,7 @@ class SphericalLinear(nn.Module):
             (output tangent vectors, new base point)
         """
         # Linear transform in tangent space
-        output = F.linear(x, self.weight, self.bias)
+        output = ops.linear(x, self.weight, self.bias)
         
         # Map result to sphere
         new_point = exp_map_sphere(base_point, output)

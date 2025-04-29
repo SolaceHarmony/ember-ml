@@ -101,7 +101,7 @@ def test_tensor_to_numpy_safe():
     assert isinstance(np_array, TensorLike)
     assert ops.allclose(np_array, tensor.convert_to_tensor(data))
     assert np_array.shape == (2, 2)
-    assert np_array.dtype == np.float32 # Assuming default float32
+    assert np_array.dtype == tensor.float32 # Assuming default float32
 
 
 def test_print_backend_info(capsys):

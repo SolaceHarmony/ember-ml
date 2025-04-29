@@ -167,15 +167,15 @@ class RestrictedBoltzmannMachine(Module):
         if self.hidden_type == 'binary':
             # Check if hidden_activations has more than 1 dimension before specifying axis
             if len(tensor.shape(hidden_activations)) > 1:
-                hidden_term = -ops.stats.sum(ops.log(1 + ops.exp(hidden_activations)), axis=1)  # softplus
+                hidden_term = -stats.sum(ops.log(1 + ops.exp(hidden_activations)), axis=1)  # softplus
             else:
-                hidden_term = -ops.stats.sum(ops.log(1 + ops.exp(hidden_activations)))  # softplus
+                hidden_term = -stats.sum(ops.log(1 + ops.exp(hidden_activations)))  # softplus
         else:  # gaussian
             # Check if hidden_activations has more than 1 dimension before specifying axis
             if len(tensor.shape(hidden_activations)) > 1:
-                hidden_term = -0.5 * ops.stats.sum(hidden_activations * hidden_activations, axis=1)
+                hidden_term = -0.5 * stats.sum(hidden_activations * hidden_activations, axis=1)
             else:
-                hidden_term = -0.5 * ops.stats.sum(hidden_activations * hidden_activations)
+                hidden_term = -0.5 * stats.sum(hidden_activations * hidden_activations)
         
         return visible_term + hidden_term
     
@@ -335,7 +335,7 @@ class RestrictedBoltzmannMachine(Module):
         squared_error = ops.square(ops.subtract(data, reconstructed))
         
         # Sum across features
-        error = ops.stats.sum(squared_error, axis=1)
+        error = stats.sum(squared_error, axis=1)
         
         if per_sample:
             return error

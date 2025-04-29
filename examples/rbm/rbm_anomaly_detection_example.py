@@ -49,7 +49,7 @@ def generate_telemetry_data(n_samples=1000, n_features=10, anomaly_fraction=0.05
     
     # Generate anomalies
     n_anomalies = int(n_samples * anomaly_fraction)
-    anomaly_indices = np.random.choice(n_samples, n_anomalies, replace=False)
+    anomaly_indices = ops.random_choice(n_samples, n_anomalies, replace=False)
     
     # Create different types of anomalies
     for idx in anomaly_indices:
@@ -58,13 +58,13 @@ def generate_telemetry_data(n_samples=1000, n_features=10, anomaly_fraction=0.05
         if anomaly_type == 0:
             # Spike anomaly
             feature_idx = np.random.randint(0, n_features)
-            normal_data[idx, feature_idx] += np.random.uniform(3, 5)
+            normal_data[idx, feature_idx] += tensor.random_uniform(3, 5)
         elif anomaly_type == 1:
             # Correlation anomaly
             normal_data[idx, :] = tensor.random_normal(0, 1, n_features)
         else:
             # Collective anomaly
-            normal_data[idx, :] += np.random.uniform(2, 3, n_features)
+            normal_data[idx, :] += tensor.random_uniform(2, 3, n_features)
     
     # Create DataFrame
     columns = [f"feature_{i+1}" for i in range(n_features)]
@@ -204,7 +204,7 @@ def main():
     print("\nDetecting anomalies...")
     
     # Combine validation and anomaly data for testing
-    test_features = np.vstack([val_features, anomaly_features])
+    test_features = tensor.vstack([val_features, anomaly_features])
     test_labels = np.hstack([
         tensor.zeros(len(val_features)),
         tensor.ones(len(anomaly_features))
@@ -215,10 +215,10 @@ def main():
     anomaly_scores = detector.anomaly_score(test_features)
     
     # Compute metrics
-    true_positives = ops.stats.sum((predicted_anomalies == 1) & (test_labels == 1))
-    false_positives = ops.stats.sum((predicted_anomalies == 1) & (test_labels == 0))
-    true_negatives = ops.stats.sum((predicted_anomalies == 0) & (test_labels == 0))
-    false_negatives = ops.stats.sum((predicted_anomalies == 0) & (test_labels == 1))
+    true_positives = stats.sum((predicted_anomalies == 1) & (test_labels == 1))
+    false_positives = stats.sum((predicted_anomalies == 1) & (test_labels == 0))
+    true_negatives = stats.sum((predicted_anomalies == 0) & (test_labels == 0))
+    false_negatives = stats.sum((predicted_anomalies == 0) & (test_labels == 1))
     
     precision = true_positives / (true_positives + false_positives) if (true_positives + false_positives) > 0 else 0
     recall = true_positives / (true_positives + false_negatives) if (true_positives + false_negatives) > 0 else 0
@@ -299,7 +299,7 @@ def main():
     )
     
     # Get normal data for comparison
-    normal_indices = np.where(predicted_anomalies == 0)[0]
+    normal_indices = ops.where(predicted_anomalies == 0)[0]
     normal_data = test_features[normal_indices]
     
     # Plot detailed statistical distributions for each category

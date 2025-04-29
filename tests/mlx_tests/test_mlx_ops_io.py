@@ -1,5 +1,4 @@
 import pytest
-import numpy as np # For comparison with known correct results
 import os
 
 # Import Ember ML modules

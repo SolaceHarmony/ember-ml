@@ -59,7 +59,7 @@ def test_benchmark():
 
     assert isinstance(avg_time, float)
     assert avg_time > 0 # Should take some time
-    assert isinstance(last_result, (float, np.floating)) # Should return a scalar
+    assert isinstance(last_result, (float, tensor.floating)) # Should return a scalar
 
     # Check if the benchmark function returns statistics (mean, std, min, max, times)
     # The benchmark function itself returns only avg_time and last_result.

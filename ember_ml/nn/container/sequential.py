@@ -7,6 +7,10 @@ that works with any backend (NumPy, PyTorch, MLX).
 
 from typing import Optional, Union, Tuple, Any, Dict, List, Sequence
 
+# Import necessary layer modules for from_config reconstruction
+from . import linear
+from ..modules import activations
+from typing import Dict, Any, List # Ensure these are imported if not already
 from ember_ml import ops
 from ember_ml.nn.modules import Module
 from ember_ml.nn import tensor
@@ -93,7 +97,62 @@ class Sequential(Module):
                 for layer in self.layers
             ]
         }
-    
+
+    @classmethod
+    def from_config(cls, config: Dict[str, Any]) -> 'Sequential':
+        """
+        Creates a Sequential container from its config.
+
+        This method reconstructs the container and its layers based on the
+        provided configuration dictionary.
+
+        Args:
+            config: Dictionary containing the configuration, typically obtained
+                    from `get_config()`. Expected format: {'layers': [...]}.
+
+        Returns:
+            A new Sequential instance configured according to the input config.
+
+        Raises:
+            ValueError: If the configuration is invalid or a layer class
+                        cannot be found or instantiated.
+        """
+        reconstructed_layers = []
+        layer_configs = config.get('layers', [])
+
+        # Map class names to actual classes (adjust imports as needed)
+        # TODO: Implement a more robust layer registry/lookup mechanism
+        available_modules = {
+            'Linear': linear.Linear,
+            'ReLU': activations.ReLU,
+            # Add other potential layer classes from container/modules here
+            # e.g., 'BatchNormalization': batch_normalization.BatchNormalization,
+        }
+
+        for layer_config in layer_configs:
+            class_name = layer_config.get('class_name')
+            layer_specific_config = layer_config.get('config', {})
+
+            if not class_name:
+                raise ValueError("Layer configuration missing 'class_name'.")
+
+            LayerClass = available_modules.get(class_name)
+            if LayerClass is None:
+                raise ValueError(f"Unknown layer class '{class_name}'. Ensure it's imported and added to 'available_modules'.")
+
+            try:
+                # Check if the layer class has its own from_config method
+                if hasattr(LayerClass, 'from_config') and callable(getattr(LayerClass, 'from_config')):
+                     layer_instance = LayerClass.from_config(layer_specific_config)
+                else:
+                     # Otherwise, instantiate directly using the config kwargs
+                     layer_instance = LayerClass(**layer_specific_config)
+                reconstructed_layers.append(layer_instance)
+            except Exception as e:
+                raise ValueError(f"Failed to instantiate layer '{class_name}' from config: {e}")
+
+        return cls(layers=reconstructed_layers)
+
     def state_dict(self) -> Dict[str, Any]:
         """
         Get the state dictionary of the container.

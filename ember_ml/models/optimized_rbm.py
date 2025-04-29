@@ -6,12 +6,12 @@ designed for processing large-scale data with efficient memory usage and support
 for chunked training.
 """
 
-import numpy as np
 import time
 from datetime import datetime
 import os
 import logging
 from typing import Dict, List, Optional, Tuple, Union, Any, Generator
+from ember_ml.ops import stats
 from ember_ml import ops
 from ember_ml.nn import tensor
 from ember_ml.nn.tensor.types import TensorLike
@@ -125,9 +125,9 @@ class OptimizedRBM:
         self.weights_torch = tensor.convert_to_tensor(self.weights, dtype=torch.float32, device=self.device)
         self.visible_bias_torch = tensor.convert_to_tensor(self.visible_bias, dtype=torch.float32, device=self.device)
         self.hidden_bias_torch = tensor.convert_to_tensor(self.hidden_bias, dtype=torch.float32, device=self.device)
-        self.weights_momentum_torch = tensor.convert_to_tensor(self.weights_momentum, dtype=torch.float32, device=self.device)
-        self.visible_bias_momentum_torch = tensor.convert_to_tensor(self.visible_bias_momentum, dtype=torch.float32, device=self.device)
-        self.hidden_bias_momentum_torch = tensor.convert_to_tensor(self.hidden_bias_momentum, dtype=torch.float32, device=self.device)
+        self.weights_momentum_torch = tensor.convert_to_tensor(self.weights_momentum, dtype=tensor.float32, device=self.device)
+        self.visible_bias_momentum_torch = tensor.convert_to_tensor(self.visible_bias_momentum, dtype=tensor.float32, device=self.device)
+        self.hidden_bias_momentum_torch = tensor.convert_to_tensor(self.hidden_bias_momentum, dtype=tensor.float32, device=self.device)
     
     def _to_cpu(self):
         """Convert torch tensors back to numpy arrays."""
@@ -139,7 +139,7 @@ class OptimizedRBM:
             self.visible_bias_momentum = self.visible_bias_momentum_torch.cpu().numpy()
             self.hidden_bias_momentum = self.hidden_bias_momentum_torch.cpu().numpy()
     
-    def sigmoid(self, x: Union[TensorLike]) -> Union[TensorLike, tensor.convert_to_tensor]:
+    def sigmoid(self, x: Union[TensorLike]) -> Union[TensorLike, tensor.EmberTensor]:
         """
         Compute sigmoid function with numerical stability improvements.
         
@@ -149,16 +149,16 @@ class OptimizedRBM:
         Returns:
             Sigmoid of input
         """
-        if self.use_gpu and isinstance(x, tensor.convert_to_tensor):
+        if self.use_gpu and isinstance(x, tensor.EmberTensor):
             # Clip values to avoid overflow/underflow
             x = torch.clamp(x, -15, 15)
             return 1.0 / (1.0 + torch.exp(-x))
         else:
             # Clip values to avoid overflow/underflow
             x = ops.clip(x, -15, 15)
-            return 1.0 / (1.0 + np.exp(-x))
+            return 1.0 / (1.0 + ops.exp(-x))
     
-    def compute_hidden_probabilities(self, visible_states: Union[TensorLike, tensor.convert_to_tensor]) -> Union[TensorLike, tensor.convert_to_tensor]:
+    def compute_hidden_probabilities(self, visible_states: Union[TensorLike, tensor.EmberTensor]) -> Union[TensorLike, tensor.EmberTensor]:
         """
         Compute probabilities of hidden units given visible states.
         
@@ -168,20 +168,20 @@ class OptimizedRBM:
         Returns:
             Probabilities of hidden units [batch_size, n_hidden]
         """
-        if self.use_gpu and isinstance(visible_states, tensor.convert_to_tensor):
+        if self.use_gpu and isinstance(visible_states, tensor.EmberTensor):
             # Compute activations: visible_states @ weights + hidden_bias
-            hidden_activations = torch.matmul(visible_states, self.weights_torch) + self.hidden_bias_torch
+            hidden_activations = ops.matmul(visible_states, self.weights_torch) + self.hidden_bias_torch
             return self.sigmoid(hidden_activations)
         else:
             # Convert to numpy if needed
-            if isinstance(visible_states, tensor.convert_to_tensor):
+            if isinstance(visible_states, tensor.EmberTensor):
                 visible_states = visible_states.cpu().numpy()
             
             # Compute activations: visible_states @ weights + hidden_bias
-            hidden_activations = np.dot(visible_states, self.weights) + self.hidden_bias
+            hidden_activations = ops.dot(visible_states, self.weights) + self.hidden_bias
             return self.sigmoid(hidden_activations)
     
-    def sample_hidden_states(self, hidden_probs: Union[TensorLike, tensor.convert_to_tensor]) -> Union[TensorLike, tensor.convert_to_tensor]:
+    def sample_hidden_states(self, hidden_probs: Union[TensorLike, tensor.EmberTensor]) -> Union[TensorLike, tensor.EmberTensor]:
         """
         Sample binary hidden states from their probabilities.
         
@@ -194,16 +194,16 @@ class OptimizedRBM:
         if not self.use_binary_states:
             return hidden_probs
         
-        if self.use_gpu and isinstance(hidden_probs, tensor.convert_to_tensor):
+        if self.use_gpu and isinstance(hidden_probs, tensor.EmberTensor):
             return (hidden_probs > torch.rand_like(hidden_probs)).float()
         else:
             # Convert to numpy if needed
-            if isinstance(hidden_probs, tensor.convert_to_tensor):
+            if isinstance(hidden_probs, tensor.EmberTensor):
                 hidden_probs = hidden_probs.cpu().numpy()
             
-            return (hidden_probs > np.random.random(hidden_probs.shape)).astype(np.float32)
+            return (hidden_probs > tensor.random_normal(hidden_probs.shape)).astype(tensor.float32)
     
-    def compute_visible_probabilities(self, hidden_states: Union[TensorLike, tensor.convert_to_tensor]) -> Union[TensorLike, tensor.convert_to_tensor]:
+    def compute_visible_probabilities(self, hidden_states: Union[TensorLike, tensor.EmberTensor]) -> Union[TensorLike, tensor.EmberTensor]:
         """
         Compute probabilities of visible units given hidden states.
         
@@ -213,20 +213,20 @@ class OptimizedRBM:
         Returns:
             Probabilities of visible units [batch_size, n_visible]
         """
-        if self.use_gpu and isinstance(hidden_states, tensor.convert_to_tensor):
+        if self.use_gpu and isinstance(hidden_states, tensor.EmberTensor):
             # Compute activations: hidden_states @ weights.T + visible_bias
-            visible_activations = torch.matmul(hidden_states, self.weights_torch.t()) + self.visible_bias_torch
+            visible_activations = ops.matmul(hidden_states, self.weights_torch.t()) + self.visible_bias_torch
             return self.sigmoid(visible_activations)
         else:
             # Convert to numpy if needed
-            if isinstance(hidden_states, tensor.convert_to_tensor):
+            if isinstance(hidden_states, tensor.EmberTensor):
                 hidden_states = hidden_states.cpu().numpy()
             
             # Compute activations: hidden_states @ weights.T + visible_bias
-            visible_activations = np.dot(hidden_states, self.weights.T) + self.visible_bias
+            visible_activations = ops.dot(hidden_states, self.weights.T) + self.visible_bias
             return self.sigmoid(visible_activations)
     
-    def sample_visible_states(self, visible_probs: Union[TensorLike, tensor.convert_to_tensor]) -> Union[TensorLike, tensor.convert_to_tensor]:
+    def sample_visible_states(self, visible_probs: Union[TensorLike, tensor.EmberTensor]) -> Union[TensorLike, tensor.EmberTensor]:
         """
         Sample binary visible states from their probabilities.
         
@@ -239,16 +239,16 @@ class OptimizedRBM:
         if not self.use_binary_states:
             return visible_probs
         
-        if self.use_gpu and isinstance(visible_probs, tensor.convert_to_tensor):
+        if self.use_gpu and isinstance(visible_probs, tensor.EmberTensor):
             return (visible_probs > torch.rand_like(visible_probs)).float()
         else:
             # Convert to numpy if needed
-            if isinstance(visible_probs, tensor.convert_to_tensor):
+            if isinstance(visible_probs, tensor.EmberTensor):
                 visible_probs = visible_probs.cpu().numpy()
             
-            return (visible_probs > np.random.random(visible_probs.shape)).astype(np.float32)
+            return (visible_probs > tensor.random_normal(visible_probs.shape)).astype(tensor.float32)
     
-    def contrastive_divergence(self, batch_data: Union[TensorLike, tensor.convert_to_tensor], k: int = 1) -> float:
+    def contrastive_divergence(self, batch_data: Union[TensorLike, tensor.EmberTensor], k: int = 1) -> float:
         """
         Perform contrastive divergence algorithm for a single batch.
         
@@ -263,7 +263,7 @@ class OptimizedRBM:
             Reconstruction error for this batch
         """
         # Convert to torch tensor if using GPU
-        if self.use_gpu and not isinstance(batch_data, tensor.convert_to_tensor):
+        if self.use_gpu and not isinstance(batch_data, tensor.EmberTensor):
             batch_data = tensor.convert_to_tensor(batch_data, dtype=torch.float32, device=self.device)
         
         batch_size = len(batch_data)
@@ -275,7 +275,7 @@ class OptimizedRBM:
             pos_hidden_states = self.sample_hidden_states(pos_hidden_probs)
             
             # Compute positive associations
-            pos_associations = torch.matmul(batch_data.t(), pos_hidden_probs)
+            pos_associations = ops.matmul(batch_data.t(), pos_hidden_probs)
             
             # Negative phase
             # Start with the hidden states from positive phase
@@ -292,7 +292,7 @@ class OptimizedRBM:
                 neg_hidden_states = self.sample_hidden_states(neg_hidden_probs)
             
             # Compute negative associations
-            neg_associations = torch.matmul(neg_visible_states.t(), neg_hidden_probs)
+            neg_associations = ops.matmul(neg_visible_states.t(), neg_hidden_probs)
             
             # Compute gradients
             weights_gradient = (pos_associations - neg_associations) / batch_size
@@ -310,14 +310,14 @@ class OptimizedRBM:
             self.hidden_bias_torch += self.learning_rate * self.hidden_bias_momentum_torch
             
             # Compute reconstruction error
-            reconstruction_error = torch.mean(torch.sum((batch_data - neg_visible_probs) ** 2, dim=1)).item()
+            reconstruction_error = torch.mean(stats.sum((batch_data - neg_visible_probs) ** 2, dim=1)).item()
         else:
             # CPU implementation
             pos_hidden_probs = self.compute_hidden_probabilities(batch_data)
             pos_hidden_states = self.sample_hidden_states(pos_hidden_probs)
             
             # Compute positive associations
-            pos_associations = np.dot(batch_data.T, pos_hidden_probs)
+            pos_associations = ops.dot(batch_data.T, pos_hidden_probs)
             
             # Negative phase
             # Start with the hidden states from positive phase
@@ -334,12 +334,12 @@ class OptimizedRBM:
                 neg_hidden_states = self.sample_hidden_states(neg_hidden_probs)
             
             # Compute negative associations
-            neg_associations = np.dot(neg_visible_states.T, neg_hidden_probs)
+            neg_associations = ops.dot(neg_visible_states.T, neg_hidden_probs)
             
             # Compute gradients
             weights_gradient = (pos_associations - neg_associations) / batch_size
-            visible_bias_gradient = np.mean(batch_data - neg_visible_states, axis=0)
-            hidden_bias_gradient = np.mean(pos_hidden_probs - neg_hidden_probs, axis=0)
+            visible_bias_gradient = stats.mean(batch_data - neg_visible_states, axis=0)
+            hidden_bias_gradient = stats.mean(pos_hidden_probs - neg_hidden_probs, axis=0)
             
             # Update with momentum and weight decay
             self.weights_momentum = self.momentum * self.weights_momentum + weights_gradient
@@ -352,7 +352,7 @@ class OptimizedRBM:
             self.hidden_bias += self.learning_rate * self.hidden_bias_momentum
             
             # Compute reconstruction error
-            reconstruction_error = np.mean(ops.stats.sum((batch_data - neg_visible_probs) ** 2, axis=1))
+            reconstruction_error = stats.mean(stats.sum((batch_data - neg_visible_probs) ** 2, axis=1))
         
         self.last_batch_error = reconstruction_error
         return reconstruction_error
@@ -465,8 +465,8 @@ class OptimizedRBM:
                 errors.extend(batch_errors)
                 energies.extend(batch_energies)
             
-            self.reconstruction_error_threshold = np.percentile(errors, 95)  # 95th percentile
-            self.free_energy_threshold = np.percentile(energies, 5)  # 5th percentile
+            self.reconstruction_error_threshold = stats.percentile(errors, 95)  # 95th percentile
+            self.free_energy_threshold = stats.percentile(energies, 5)  # 5th percentile
             
             logger.info(f"Reconstruction error threshold: {self.reconstruction_error_threshold:.4f}")
             logger.info(f"Free energy threshold: {self.free_energy_threshold:.4f}")
@@ -477,7 +477,7 @@ class OptimizedRBM:
         
         return training_errors
     
-    def transform(self, data: Union[TensorLike, tensor.convert_to_tensor]) -> TensorLike:
+    def transform(self, data: Union[TensorLike, tensor.EmberTensor]) -> TensorLike:
         """
         Transform data to hidden representation.
         
@@ -488,14 +488,14 @@ class OptimizedRBM:
             Hidden representation [n_samples, n_hidden]
         """
         # Convert to torch tensor if using GPU
-        if self.use_gpu and not isinstance(data, tensor.convert_to_tensor):
+        if self.use_gpu and not isinstance(data, tensor.EmberTensor):
             data = tensor.convert_to_tensor(data, dtype=torch.float32, device=self.device)
         
         # Compute hidden probabilities
         hidden_probs = self.compute_hidden_probabilities(data)
         
         # Convert to numpy if needed
-        if self.use_gpu and isinstance(hidden_probs, tensor.convert_to_tensor):
+        if self.use_gpu and isinstance(hidden_probs, tensor.EmberTensor):
             hidden_probs = hidden_probs.cpu().numpy()
         
         return hidden_probs
@@ -523,12 +523,12 @@ class OptimizedRBM:
         
         # Combine all hidden probabilities
         if hidden_probs_list:
-            return np.vstack(hidden_probs_list)
+            return tensor.vstack(hidden_probs_list)
         else:
             from ember_ml.nn.tensor import tensor
             return tensor.convert_to_tensor([])
     
-    def reconstruct(self, data: Union[TensorLike, tensor.convert_to_tensor]) -> TensorLike:
+    def reconstruct(self, data: Union[TensorLike, tensor.EmberTensor]) -> TensorLike:
         """
         Reconstruct input data.
         
@@ -539,7 +539,7 @@ class OptimizedRBM:
             Reconstructed data [n_samples, n_visible]
         """
         # Convert to torch tensor if using GPU
-        if self.use_gpu and not isinstance(data, tensor.convert_to_tensor):
+        if self.use_gpu and not isinstance(data, tensor.EmberTensor):
             data = tensor.convert_to_tensor(data, dtype=torch.float32, device=self.device)
         
         # Compute hidden probabilities and sample states
@@ -550,12 +550,12 @@ class OptimizedRBM:
         visible_probs = self.compute_visible_probabilities(hidden_states)
         
         # Convert to numpy if needed
-        if self.use_gpu and isinstance(visible_probs, tensor.convert_to_tensor):
+        if self.use_gpu and isinstance(visible_probs, tensor.EmberTensor):
             visible_probs = visible_probs.cpu().numpy()
         
         return visible_probs
     
-    def reconstruction_error(self, data: Union[TensorLike, tensor.convert_to_tensor], per_sample: bool = False) -> Union[float, TensorLike]:
+    def reconstruction_error(self, data: Union[TensorLike, tensor.EmberTensor], per_sample: bool = False) -> Union[float, TensorLike]:
         """
         Compute reconstruction error for input data.
         
@@ -567,19 +567,19 @@ class OptimizedRBM:
             Reconstruction error (mean or per sample)
         """
         # Convert to torch tensor if using GPU
-        if self.use_gpu and not isinstance(data, tensor.convert_to_tensor):
+        if self.use_gpu and not isinstance(data, tensor.EmberTensor):
             data = tensor.convert_to_tensor(data, dtype=torch.float32, device=self.device)
         
         # Reconstruct data
         reconstructed = self.reconstruct(data)
         
         # Compute squared error
-        if self.use_gpu and isinstance(data, tensor.convert_to_tensor):
+        if self.use_gpu and isinstance(data, tensor.EmberTensor):
             # Convert reconstructed to tensor if it's not already
-            if not isinstance(reconstructed, tensor.convert_to_tensor):
+            if not isinstance(reconstructed, tensor.EmberTensor):
                 reconstructed = tensor.convert_to_tensor(reconstructed, dtype=torch.float32, device=self.device)
             
-            squared_error = torch.sum((data - reconstructed) ** 2, dim=1)
+            squared_error = stats.sum((data - reconstructed) ** 2, dim=1)
             
             if per_sample:
                 return squared_error.cpu().numpy()
@@ -587,17 +587,17 @@ class OptimizedRBM:
                 return torch.mean(squared_error).item()
         else:
             # Convert data to numpy if it's a tensor
-            if isinstance(data, tensor.convert_to_tensor):
+            if isinstance(data, tensor.EmberTensor):
                 data = data.cpu().numpy()
             
-            squared_error = ops.stats.sum((data - reconstructed) ** 2, axis=1)
+            squared_error = stats.sum((data - reconstructed) ** 2, axis=1)
             
             if per_sample:
                 return squared_error
             else:
-                return np.mean(squared_error)
+                return stats.mean(squared_error)
     
-    def free_energy(self, data: Union[TensorLike, tensor.convert_to_tensor]) -> TensorLike:
+    def free_energy(self, data: Union[TensorLike, tensor.EmberTensor]) -> TensorLike:
         """
         Compute free energy for input data.
         
@@ -611,13 +611,13 @@ class OptimizedRBM:
             Free energy for each sample [n_samples]
         """
         # Convert to torch tensor if using GPU
-        if self.use_gpu and not isinstance(data, tensor.convert_to_tensor):
+        if self.use_gpu and not isinstance(data, tensor.EmberTensor):
             data = tensor.convert_to_tensor(data, dtype=torch.float32, device=self.device)
         
         if self.use_gpu:
-            visible_bias_term = torch.matmul(data, self.visible_bias_torch)
-            hidden_term = torch.sum(
-                torch.log(1 + torch.exp(torch.matmul(data, self.weights_torch) + self.hidden_bias_torch)),
+            visible_bias_term = ops.matmul(data, self.visible_bias_torch)
+            hidden_term = stats.sum(
+                torch.log(1 + torch.exp(ops.matmul(data, self.weights_torch) + self.hidden_bias_torch)),
                 dim=1
             )
             
@@ -625,18 +625,18 @@ class OptimizedRBM:
             return result.cpu().numpy()
         else:
             # Convert data to numpy if it's a tensor
-            if isinstance(data, tensor.convert_to_tensor):
+            if isinstance(data, tensor.EmberTensor):
                 data = data.cpu().numpy()
             
-            visible_bias_term = np.dot(data, self.visible_bias)
-            hidden_term = ops.stats.sum(
-                np.log(1 + np.exp(np.dot(data, self.weights) + self.hidden_bias)),
+            visible_bias_term = ops.dot(data, self.visible_bias)
+            hidden_term = stats.sum(
+                ops.log(1 + ops.exp(ops.dot(data, self.weights) + self.hidden_bias)),
                 axis=1
             )
             
             return -hidden_term - visible_bias_term
     
-    def anomaly_score(self, data: Union[TensorLike, tensor.convert_to_tensor], method: str = 'reconstruction') -> TensorLike:
+    def anomaly_score(self, data: Union[TensorLike, tensor.EmberTensor], method: str = 'reconstruction') -> TensorLike:
         """
         Compute anomaly score for input data.
         
@@ -655,7 +655,7 @@ class OptimizedRBM:
         else:
             raise ValueError(f"Unknown method: {method}")
     
-    def is_anomaly(self, data: Union[TensorLike, tensor.convert_to_tensor], method: str = 'reconstruction') -> TensorLike:
+    def is_anomaly(self, data: Union[TensorLike, tensor.EmberTensor], method: str = 'reconstruction') -> TensorLike:
         """
         Determine if input data is anomalous.
         
@@ -710,7 +710,7 @@ class OptimizedRBM:
         }
         
         # Save to file
-        np.save(filepath, model_data, allow_pickle=True)
+        ops.save(filepath, model_data, allow_pickle=True)
         logger.info(f"Model saved to {filepath}")
     
     @classmethod
@@ -727,7 +727,7 @@ class OptimizedRBM:
             Loaded RBM model
         """
         # Load model data
-        model_data = np.load(filepath, allow_pickle=True).item()
+        model_data = ops.load(filepath, allow_pickle=True).item()
         
         # Create model
         rbm = cls(
@@ -791,7 +791,7 @@ class OptimizedRBM:
 # Example usage
 if __name__ == "__main__":
     # Create sample data
-    data = np.random.rand(1000, 20)
+    data = tensor.random_normal(1000, 20)
     
     # Create RBM
     rbm = OptimizedRBM(

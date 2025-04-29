@@ -2,9 +2,7 @@
 import mlx.core as mx # Ensure mx is imported
 from typing import Union, Optional, Any, Sequence, Callable, Tuple
 
-from traitlets import default
-
-from ember_ml.backend.mlx.types import TensorLike, DType
+from ember_ml.backend.mlx.types import TensorLike, DType,default_float, default_int
 
 def _validate_and_get_mlx_dtype(dtype: Optional[Any]) -> Optional[mx.Dtype]:
     """
@@ -68,14 +66,13 @@ def _validate_and_get_mlx_dtype(dtype: Optional[Any]) -> Optional[mx.Dtype]:
     # If it's not a string, EmberDType, or MLX Dtype, it's invalid
     raise ValueError(f"Invalid dtype: {dtype} of type {type(dtype)}")
 
-def _convert_input(x: TensorLike, dtype: Optional[Union[None,DType]]=None, device: Optional[Union[None,mx.Device]]=None) -> Any:
+def _convert_input(x: TensorLike, dtype: Optional[DType]=None, device: Optional[Union[None,mx.Device]]=None) -> Any:
     """
     Convert input to MLX array.
 
     Handles various input types:
     - MLX arrays (returned as-is)
     - NumPy arrays (converted to MLX arrays)
-    - MLXTensor objects (extract underlying data)
     - EmberTensor objects (extract underlying data)
     - Python scalars (int, float, bool)
     - Python sequences (list, tuple)
@@ -91,16 +88,21 @@ def _convert_input(x: TensorLike, dtype: Optional[Union[None,DType]]=None, devic
         x: Input data to convert
 
     Returns:
-        MLX array
+        mlx.core.array or None if error
 
     Raises:
         ValueError: If the input cannot be converted to an MLX array
     """
-    # Handle None values
+    if dtype is None:
+        # Use the default float type for MLX
+        dtype = default_float
+    else:
+        # Validate and get the MLX dtype
+        dtype = _validate_and_get_mlx_dtype(dtype)
+
     if x is None:
-        # Create a default zero tensor (scalar)
-        from ember_ml.backend.mlx.types import default_float
-        return mx.array(0.0, dtype=default_float)
+        return mx.array(0.0, dtype=dtype)
+    
     # Already an MLX array - check by type and module
     elif (hasattr(x, '__class__') and
         hasattr(x.__class__, '__module__') and
@@ -115,7 +117,8 @@ def _convert_input(x: TensorLike, dtype: Optional[Union[None,DType]]=None, devic
         if hasattr(x, '_tensor'):
             # The tensor within EmberTensor might be from another backend,
             # so we recursively call _convert_input to handle it properly.
-            return _convert_input(x._tensor)
+            # Pass the original dtype down
+            return _convert_input(x._tensor, dtype=dtype)
         else:
             raise ValueError(f"EmberTensor does not have a '_tensor' attribute: {x}")
 
@@ -126,7 +129,8 @@ def _convert_input(x: TensorLike, dtype: Optional[Union[None,DType]]=None, devic
         x.__class__.__name__ == 'Parameter'):
         if hasattr(x, 'data'):
             # Recursively convert the underlying data
-            return _convert_input(x.data)
+            # Pass the original dtype down
+            return _convert_input(x.data, dtype=dtype)
         else:
             raise ValueError(f"Parameter object does not have a 'data' attribute: {x}")
     # Better detection of numpy scalar types
@@ -135,71 +139,29 @@ def _convert_input(x: TensorLike, dtype: Optional[Union[None,DType]]=None, devic
                       hasattr(x.__class__, '__module__') and
                       x.__class__.__module__.startswith('numpy') and
                       (not hasattr(x, 'shape') or x.size == 1))
+    is_numpy = (hasattr(x, '__class__') and 
+                hasattr(x.__class__, '__module__') and 
+                (x.__class__.__module__.startswith('numpy')))
 
     # Check for NumPy arrays by type name rather than direct import
     if is_numpy_scalar is not True and (hasattr(x, '__class__') and
         x.__class__.__module__ == 'numpy' and
         x.__class__.__name__ == 'ndarray'):
-        # Ensure numpy arrays are properly converted to MLX arrays
-        from ember_ml.backend.mlx.tensor.dtype import MLXDType
-        
-        # Handle numpy dtype conversion
-        if hasattr(x, 'dtype'):
-            # Get the appropriate MLX dtype
-            backend_dtype = _validate_and_get_mlx_dtype(x.dtype)
-            
-            # Special handling for float64 - convert to float32 for MLX
-            if str(x.dtype) == 'float64':
-                backend_dtype = mx.float32
-                
-            # Special handling for bool - ensure it's converted to MLX bool_
-            if str(x.dtype) == 'bool':
-                if hasattr(mx, 'bool_'):
-                    backend_dtype = mx.bool_
-                else:
-                    backend_dtype = mx.uint8
-        else:
-            backend_dtype = default_float
-            
-        return mx.array(x, dtype=backend_dtype)
-        
-    # Handle NumPy scalar types using hasattr
-    if is_numpy_scalar:
+        # Ensure numpy arrays are properly converted to MLX arrays   
+        return mx.array(x, dtype=dtype)
+    elif is_numpy:
+        # Handle NumPy arrays (including scalars)
         try:
-            # Convert NumPy scalar to its Python equivalent, then to MLX array
-            py_scalar = x.item()
-            
-            # Get MLX dtype from numpy dtype with special handling
-            if hasattr(x, 'dtype'):
-                # Special handling for float64 - convert to float32 for MLX
-                if str(x.dtype) == 'float64':
-                    mlx_dtype = mx.float32
-                # Special handling for bool - ensure it's converted to MLX bool_
-                elif str(x.dtype) == 'bool':
-                    if hasattr(mx, 'bool_'):
-                        mlx_dtype = mx.bool_
-                    else:
-                        mlx_dtype = mx.uint8
-                else:
-                    mlx_dtype = _validate_and_get_mlx_dtype(x.dtype)
-            else:
-                mlx_dtype = None
-                
-            if mlx_dtype:
-                return mx.array(py_scalar, dtype=mlx_dtype)
-            else:
-                # Fallback if dtype validation fails
-                return mx.array(py_scalar)
+            # Convert NumPy array to MLX array
+            return mx.array(x, dtype=dtype)
         except Exception as e:
-            raise ValueError(f"Cannot convert NumPy scalar {type(x)} to MLX array: {e}")
+            raise ValueError(f"Cannot convert NumPy array {type(x)} to MLX array: {e}")
 
     # Handle Python scalars (int, float, bool), EXCLUDING NumPy scalars handled above
     is_python_scalar = isinstance(x, (int, float, bool))
 
-    if is_python_scalar:
+    if is_python_scalar and not is_numpy_scalar:
         try:
-            # Import default_float and default_int for type conversion
-            from ember_ml.backend.mlx.types import default_float, default_int
             # Map Python types to default MLX types
             if isinstance(x, float):
                 return mx.array(x, dtype=default_float)
@@ -215,15 +177,16 @@ def _convert_input(x: TensorLike, dtype: Optional[Union[None,DType]]=None, devic
     if isinstance(x, list) and all(hasattr(item, 'data') for item in x):
         # If it's a list of objects with a 'data' attribute (assuming Parameters),
         # return a list of their underlying data (MLX arrays)
-        return [item.data for item in x]
+        return mx.array(mx.stack([item.data for item in x]))
 
     # Handle other Python sequences (potential 1D or higher tensors) recursively
     if isinstance(x, (list, tuple)):
        try:
-            # Convert items first before creating the final array
-            converted_items = [_convert_input(item) for item in x]
-            # Let MLX determine the best dtype from the converted items
-            return mx.array(converted_items)
+            # Convert the sequence to a NumPy array first
+            # This handles nested sequences and ensures proper conversion
+            x = mx.array(x, dtype=dtype)
+            # Convert to MLX array
+            return mx.array(x, dtype=dtype)
        except Exception as e:
             # Safely get item types, handling potential errors
             try:
@@ -233,8 +196,7 @@ def _convert_input(x: TensorLike, dtype: Optional[Union[None,DType]]=None, devic
             except Exception:
                 item_types = ["<unknown>"]
             raise ValueError(f"Cannot convert sequence {type(x)} with item types {item_types} to MLX array: {str(e)}")
-
-
+       
     # For any other type, reject it with a corrected list of supported types
     raise ValueError(f"Cannot convert {type(x)} to MLX array. Supported types: Python scalars/sequences, NumPy scalars/arrays, MLXTensor, EmberTensor, Parameter.")
 

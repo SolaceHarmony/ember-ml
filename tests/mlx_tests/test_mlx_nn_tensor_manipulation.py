@@ -31,7 +31,7 @@ def test_reshape():
     assert hasattr(result, 'shape') or hasattr(result, '__array__')
     assert tensor.shape(result) == (2, 3)
     # Use tensor.convert_to_tensor for comparison
-    expected = tensor.convert_to_tensor(np.arange(6).reshape((2, 3)))
+    expected = tensor.convert_to_tensor(tensor.arange(6).reshape((2, 3)))
     result_tensor = tensor.convert_to_tensor(result_np)
     assert tensor.shape(result_tensor) == tensor.shape(expected)
 
@@ -39,7 +39,7 @@ def test_reshape():
     result_inferred = tensor.reshape(x, (-1, 2))
     assert tensor.shape(result_inferred) == (3, 2)
     # Use tensor.convert_to_tensor for comparison
-    expected = tensor.convert_to_tensor(np.arange(6).reshape((3, 2)))
+    expected = tensor.convert_to_tensor(tensor.arange(6).reshape((3, 2)))
     assert tensor.shape(result_inferred) == tensor.shape(expected)
 
 def test_transpose():
@@ -139,8 +139,8 @@ def test_split():
 #     result = tensor.expand_dims(x, axis=0) # Add new dimension at axis 0
 #     assert isinstance(result, tensor.EmberTensor)
 #     assert tensor.shape(result) == (1, 5)
-#     assert tensor.convert_to_tensor_equal(tensor.to_numpy(result), np.arange(5)[np.newaxis, :])
+#     assert tensor.convert_to_tensor_equal(tensor.to_numpy(result), tensor.arange(5)[np.newaxis, :])
 #
 #     result_middle = tensor.expand_dims(x, axis=1) # Add new dimension at axis 1
 #     assert tensor.shape(result_middle) == (5, 1)
-#     assert tensor.convert_to_tensor_equal(tensor.to_numpy(result_middle), np.arange(5)[:, np.newaxis])
+#     assert tensor.convert_to_tensor_equal(tensor.to_numpy(result_middle), tensor.arange(5)[:, np.newaxis])

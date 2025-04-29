@@ -16,11 +16,11 @@ from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 
 # Import our modules
+from ember_ml.ops import stats
 from ember_ml import ops
 from ember_ml.nn import tensor
 from ember_ml.models.rbm.rbm_module import RBMModule
 from ember_ml.nn.tensor.types import TensorLike
-
 class RBMBasedAnomalyDetector:
     """
     Anomaly detection system based on Restricted Boltzmann Machines.
@@ -110,13 +110,13 @@ class RBMBasedAnomalyDetector:
             
             if scaling_method == 'standard':
                 # Compute mean and std for standardization
-                self.feature_means = np.mean(X, axis=0)
-                self.feature_stds = np.std(X, axis=0)
+                self.feature_means = stats.mean(X, axis=0)
+                self.feature_stds = stats.std(X, axis=0)
                 self.feature_stds[self.feature_stds == 0] = 1.0  # Avoid division by zero
             else:
                 # Compute min and max for min-max scaling
-                self.feature_mins = ops.stats.min(X, axis=0)
-                self.feature_maxs = ops.stats.max(X, axis=0)
+                self.feature_mins = stats.min(X, axis=0)
+                self.feature_maxs = stats.max(X, axis=0)
                 # Avoid division by zero
                 self.feature_maxs[self.feature_maxs == self.feature_mins] += 1e-8
         
@@ -251,12 +251,12 @@ class RBMBasedAnomalyDetector:
                 batch_size
             )
             
-            visible_bias_gradient = ops.stats.mean(
+            visible_bias_gradient = stats.mean(
                 ops.subtract(X_tensor, neg_visible_states),
                 axis=0
             )
             
-            hidden_bias_gradient = ops.stats.mean(
+            hidden_bias_gradient = stats.mean(
                 ops.subtract(pos_hidden_probs, neg_hidden_probs),
                 axis=0
             )
@@ -363,17 +363,17 @@ class RBMBasedAnomalyDetector:
         print(f"[DEBUG] Anomaly scores numpy array shape: {anomaly_scores.shape}")
         print(f"[DEBUG] Anomaly scores stats - min: {anomaly_scores.min()}, max: {anomaly_scores.max()}, mean: {anomaly_scores.mean()}")
         print(f"[DEBUG] Computing threshold at {self.anomaly_threshold_percentile}th percentile")
-        self.anomaly_threshold = np.percentile(
+        self.anomaly_threshold = stats.percentile(
             anomaly_scores,
             self.anomaly_threshold_percentile
         )
         print(f"[DEBUG] Anomaly threshold set to: {self.anomaly_threshold}")
         
         # Compute statistics of anomaly scores
-        self.anomaly_scores_mean = np.mean(anomaly_scores)
-        self.anomaly_scores_std = np.std(anomaly_scores)
+        self.anomaly_scores_mean = stats.mean(anomaly_scores)
+        self.anomaly_scores_std = stats.std(anomaly_scores)
         print(f"[DEBUG] Anomaly scores mean: {self.anomaly_scores_mean}, std: {self.anomaly_scores_std}")
-        self.anomaly_scores_std = np.std(anomaly_scores)
+        self.anomaly_scores_std = stats.std(anomaly_scores)
         
         self.training_time = time.time() - start_time
         self.is_fitted = True
@@ -416,7 +416,7 @@ class RBMBasedAnomalyDetector:
         # Determine anomalies
         print(f"[DEBUG] Predict - Using threshold: {self.anomaly_threshold}")
         anomalies = anomaly_scores > self.anomaly_threshold
-        print(f"[DEBUG] Predict - Found {ops.stats.sum(anomalies)} anomalies out of {len(anomalies)} samples ({ops.stats.sum(anomalies)/len(anomalies)*100:.2f}%)")
+        print(f"[DEBUG] Predict - Found {stats.sum(anomalies)} anomalies out of {len(anomalies)} samples ({stats.sum(anomalies)/len(anomalies)*100:.2f}%)")
         
         return anomalies
     
@@ -430,7 +430,7 @@ class RBMBasedAnomalyDetector:
         Returns:
             Anomaly scores [n_samples]
         """
-        if not self.is_fitted:
+        if not self.is_fitted or self.rbm is None:
             raise ValueError("Anomaly detector is not fitted yet. Call fit() first.")
         
         # Preprocess data
@@ -457,7 +457,7 @@ class RBMBasedAnomalyDetector:
         Returns:
             Anomaly probabilities [n_samples]
         """
-        if not self.is_fitted:
+        if not self.is_fitted or self.rbm is None:
             raise ValueError("Anomaly detector is not fitted yet. Call fit() first.")
         
         # Compute anomaly scores
@@ -467,7 +467,7 @@ class RBMBasedAnomalyDetector:
         normalized_scores = (scores - self.anomaly_scores_mean) / self.anomaly_scores_std
         
         # Map to [0, 1] using sigmoid
-        return 1.0 / (1.0 + np.exp(-normalized_scores))
+        return 1.0 / (1.0 + ops.exp(-normalized_scores))
     
     def reconstruct(self, X: TensorLike) -> TensorLike:
         """
@@ -479,7 +479,7 @@ class RBMBasedAnomalyDetector:
         Returns:
             Reconstructed data [n_samples, n_features]
         """
-        if not self.is_fitted:
+        if not self.is_fitted or self.rbm is None:
             raise ValueError("Anomaly detector is not fitted yet. Call fit() first.")
         
         # Preprocess data
@@ -509,7 +509,7 @@ class RBMBasedAnomalyDetector:
         Args:
             filepath: Path to save the model
         """
-        if not self.is_fitted:
+        if not self.is_fitted or self.rbm is None:
             raise ValueError("Anomaly detector is not fitted yet. Call fit() first.")
         
         # Create directory if it doesn't exist
@@ -541,7 +541,7 @@ class RBMBasedAnomalyDetector:
         # In a real implementation, we would need to implement save/load for RBMModule
         
         # Save model data
-        np.save(filepath, model_data, allow_pickle=True)
+        ops.save(filepath, model_data, allow_pickle=True)
         print(f"Anomaly detector saved to {filepath}")
     
     @classmethod
@@ -556,7 +556,7 @@ class RBMBasedAnomalyDetector:
             Loaded anomaly detector
         """
         # Load model data
-        model_data = np.load(filepath, allow_pickle=True).item()
+        model_data = ops.load(filepath, allow_pickle=True).item()
         
         # Create detector
         detector = cls(
@@ -606,7 +606,7 @@ class RBMBasedAnomalyDetector:
         Returns:
             Summary string
         """
-        if not self.is_fitted:
+        if not self.is_fitted or self.rbm is None:
             return "RBM-based Anomaly Detector (not fitted)"
         
         summary = [
@@ -659,7 +659,7 @@ class RBMBasedAnomalyDetector:
             - category_labels: Array with cluster labels for each sample (-1 for normal samples)
             - cluster_info: Dictionary with information about each cluster
         """
-        if not self.is_fitted:
+        if not self.is_fitted or self.rbm is None:
             raise ValueError("Anomaly detector is not fitted yet. Call fit() first.")
         
         # Preprocess data
@@ -671,7 +671,7 @@ class RBMBasedAnomalyDetector:
             anomaly_flags = self.predict(X)
         
         # Get anomalous samples
-        anomaly_indices = np.where(anomaly_flags)[0]
+        anomaly_indices = ops.where(anomaly_flags)[0]
         anomaly_samples = X_scaled[anomaly_indices]
         
         print(f"[DEBUG] Found {len(anomaly_indices)} anomalies to categorize")
@@ -737,7 +737,7 @@ class RBMBasedAnomalyDetector:
             
             # Get features that are most activated for this cluster
             feature_activations = X_scaled[cluster_indices].mean(axis=0)
-            top_features_idx = np.argsort(np.abs(feature_activations))[::-1][:3]  # Top 3 features
+            top_features_idx = np.argsort(ops.abs(feature_activations))[::-1][:3]  # Top 3 features
             
             # Store cluster information
             cluster_info[cluster_id] = {
@@ -785,7 +785,7 @@ def detect_anomalies_from_features(
     n_train = int(n_samples * training_fraction)
     
     # Shuffle data
-    indices = np.random.permutation(n_samples)
+    indices = tensor.random_permutation(n_samples)
     train_indices = indices[:n_train]
     test_indices = indices[n_train:]
     
@@ -809,7 +809,7 @@ def detect_anomalies_from_features(
     anomaly_scores = detector.anomaly_score(test_features)
     
     if verbose:
-        n_anomalies = ops.stats.sum(anomaly_flags)
+        n_anomalies = stats.sum(anomaly_flags)
         print(f"Detected {n_anomalies} anomalies out of {len(test_features)} samples "
               f"({n_anomalies/len(test_features)*100:.2f}%)")
     

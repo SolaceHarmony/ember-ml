@@ -44,7 +44,7 @@ class EmbeddingGenerator:
             cls_embedding = outputs.last_hidden_state[:, 0, :].numpy()
             embeddings.append(cls_embedding)
             
-        return np.vstack(embeddings)
+        return tensor.vstack(embeddings)
     
     def batch_generate_embeddings(self, texts, batch_size=32):
         """
@@ -63,4 +63,4 @@ class EmbeddingGenerator:
             batch_embeddings = self.generate_embeddings(batch_texts)
             embeddings.append(batch_embeddings)
             
-        return np.vstack(embeddings)
+        return tensor.vstack(embeddings)

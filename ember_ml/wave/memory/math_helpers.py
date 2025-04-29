@@ -21,7 +21,7 @@ def normalize_vector(vec: TensorLike, epsilon: float = 1e-12) -> TensorLike:
     Returns:
         Normalized vector
     """
-    norm = np.linalg.norm(vec)
+    norm = ops.linearalg.norm(vec)
     if norm > epsilon:
         return vec / norm
     return tensor.convert_to_tensor([1.0, 0.0, 0.0, 0.0])  # Default 4D unit vector
@@ -36,7 +36,7 @@ def compute_phase_angle(vec: TensorLike) -> float:
     Returns:
         Phase angle in radians
     """
-    return np.arctan2(np.linalg.norm(vec[1:]), vec[0])
+    return np.arctan2(ops.linearalg.norm(vec[1:]), vec[0])
 
 def compute_energy(vec: TensorLike) -> float:
     """
@@ -48,7 +48,7 @@ def compute_energy(vec: TensorLike) -> float:
     Returns:
         Energy value
     """
-    return ops.stats.sum(vec**2)
+    return stats.sum(vec**2)
 
 def partial_interference(base: TensorLike, 
                        new: TensorLike, 
@@ -70,7 +70,7 @@ def partial_interference(base: TensorLike,
     new = normalize_vector(new)
     
     # Compute dot product and angle
-    dot_prod = ops.clip(np.dot(base, new), -1.0, 1.0)
+    dot_prod = ops.clip(ops.dot(base, new), -1.0, 1.0)
     angle = np.arccos(dot_prod)
     
     if angle < epsilon:
@@ -78,7 +78,7 @@ def partial_interference(base: TensorLike,
         
     # Compute perpendicular component
     perp = new - dot_prod * base
-    perp_norm = np.linalg.norm(perp)
+    perp_norm = ops.linearalg.norm(perp)
     
     if perp_norm < epsilon:
         return base
@@ -89,7 +89,7 @@ def partial_interference(base: TensorLike,
     
     # Return interpolated vector
     return normalize_vector(
-        base * np.cos(angle) + direction * ops.sin(angle)
+        base * ops.cos(angle) + direction * ops.sin(angle)
     )
 
 def compute_phase_coherence(vectors: List[TensorLike]) -> float:
@@ -109,7 +109,7 @@ def compute_phase_coherence(vectors: List[TensorLike]) -> float:
     diffs = [abs(p1 - p2) for i, p1 in enumerate(phases) 
              for p2 in phases[i+1:]]
              
-    return float(np.mean(np.cos(diffs)))
+    return float(stats.mean(ops.cos(diffs)))
 
 def compute_interference_strength(vectors: List[TensorLike]) -> float:
     """
@@ -126,7 +126,7 @@ def compute_interference_strength(vectors: List[TensorLike]) -> float:
         
     # Compute all pairwise dot products
     dot_products = tensor.convert_to_tensor([
-        [np.abs(np.dot(v1, v2)) for v2 in vectors]
+        [ops.abs(ops.dot(v1, v2)) for v2 in vectors]
         for v1 in vectors
     ])
     
@@ -134,7 +134,7 @@ def compute_interference_strength(vectors: List[TensorLike]) -> float:
     np.fill_diagonal(dot_products, 0)
     
     # Return average non-zero interference
-    return float(np.mean(dot_products[dot_products != 0]))
+    return float(stats.mean(dot_products[dot_products != 0]))
 
 def compute_energy_stability(energy_history: List[float]) -> float:
     """
@@ -150,7 +150,7 @@ def compute_energy_stability(energy_history: List[float]) -> float:
         return 1.0
         
     # Use inverse of energy standard deviation as stability metric
-    return 1.0 / (1.0 + np.std(energy_history))
+    return 1.0 / (1.0 + stats.std(energy_history))
 
 def create_rotation_matrix(angle: float, axis: int = 0) -> TensorLike:
     """
@@ -163,8 +163,8 @@ def create_rotation_matrix(angle: float, axis: int = 0) -> TensorLike:
     Returns:
         4x4 rotation matrix
     """
-    c, s = np.cos(angle), ops.sin(angle)
-    matrix = np.eye(4)
+    c, s = ops.cos(angle), ops.sin(angle)
+    matrix = ops.eye(4)
     
     if axis == 0:  # xy rotation
         matrix[0:2, 0:2] = [[c, -s], [s, c]]

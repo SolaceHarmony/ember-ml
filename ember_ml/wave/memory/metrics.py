@@ -119,7 +119,7 @@ class MetricsCollector:
         
         # Compute energy history
         energies = [
-            [ops.stats.sum(state**2) for state in states]
+            [stats.sum(state**2) for state in states]
             for states in self.wave_history
         ]
         total_energy = [sum(e) for e in energies]

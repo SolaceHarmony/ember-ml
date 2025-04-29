@@ -33,7 +33,7 @@ def test_normalize_vector():
     # Assert correctness (should be unit vector)
     assert isinstance(result, tensor.EmberTensor)
     assert tensor.shape(result) == (3,)
-    assert ops.allclose(np.linalg.norm(result_np), 1.0)
+    assert ops.allclose(ops.linearalg.norm(result_np), 1.0)
     assert ops.allclose(result_np, [1.0/3.0, 2.0/3.0, 2.0/3.0])
 
     # Test with epsilon
@@ -41,7 +41,7 @@ def test_normalize_vector():
     result_small = math_helpers.normalize_vector(x_small, epsilon=1e-9)
     assert isinstance(result_small, tensor.EmberTensor)
     assert tensor.shape(result_small) == (2,)
-    assert ops.allclose(np.linalg.norm(tensor.to_numpy(result_small)), 1.0)
+    assert ops.allclose(ops.linearalg.norm(tensor.to_numpy(result_small)), 1.0)
 
 
 def test_compute_phase_angle():

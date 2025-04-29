@@ -32,7 +32,7 @@ def plot_waveform(wave: TensorLike, sample_rate: int = 44100, title: str = "Wave
         Matplotlib figure
     """
     fig, ax = plt.subplots(figsize=(10, 4))
-    time = np.arange(len(wave)) / sample_rate
+    time = tensor.arange(len(wave)) / sample_rate
     ax.plot(time, wave)
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Amplitude")
@@ -123,7 +123,7 @@ def plot_mel_spectrogram(wave: TensorLike, sample_rate: int = 44100,
         
     mel_spec = librosa.feature.melspectrogram(y=wave, sr=sample_rate, n_fft=n_fft,
                                              hop_length=hop_length, n_mels=n_mels)
-    mel_spec_db = librosa.power_to_db(mel_spec, ref=ops.stats.max)
+    mel_spec_db = librosa.power_to_db(mel_spec, ref=stats.max)
     
     fig, ax = plt.subplots(figsize=(10, 4))
     img = librosa.display.specshow(mel_spec_db, x_axis='time', y_axis='mel',
@@ -242,7 +242,7 @@ def plot_wave_comparison(waves: List[TensorLike], labels: List[str],
         axes = [axes]
     
     for i, (wave, label) in enumerate(zip(waves, labels)):
-        time = np.arange(len(wave)) / sample_rate
+        time = tensor.arange(len(wave)) / sample_rate
         axes[i].plot(time, wave)
         axes[i].set_ylabel("Amplitude")
         axes[i].set_title(label)

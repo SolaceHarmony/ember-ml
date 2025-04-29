@@ -43,13 +43,13 @@ def test_pwmprocessor_pcm_to_pwm():
 
     # Create dummy PCM data (NumPy array, float32)
     # Values should be in the range [-1.0, 1.0]
-    pcm_data = tensor.convert_to_tensor([0.0, 0.5, -0.5, 1.0, -1.0, 0.25, -0.25], dtype=np.float32)
+    pcm_data = tensor.convert_to_tensor([0.0, 0.5, -0.5, 1.0, -1.0, 0.25, -0.25], dtype=tensor.float32)
 
     # pcm_to_pwm returns a binary NumPy array
     processed_pcm = processor.pcm_to_pwm(pcm_data)
 
     assert isinstance(processed_pcm, TensorLike)
-    assert ops.all(np.logical_or(processed_pcm == 0, processed_pcm == 1)) # Should contain only 0s and 1s
+    assert ops.all(ops.logical_or(processed_pcm == 0, processed_pcm == 1)) # Should contain only 0s and 1s
     # Check the length of the PWM signal
     # Expected length = len(pcm_data) * bits_per_block * (sample_rate / carrier_freq)
     # For this example: 7 * 8 * (8000 / 1000) = 7 * 8 * 8 = 448
@@ -73,7 +73,7 @@ def test_pwmprocessor_pwm_to_pcm():
         tensor.zeros(bits_per_block * int(sample_rate / carrier_freq)), # 0% duty cycle
         tensor.ones(bits_per_block * int(sample_rate / carrier_freq) // 2), tensor.zeros(bits_per_block * int(sample_rate / carrier_freq) // 2), # 50% duty cycle
         tensor.ones(bits_per_block * int(sample_rate / carrier_freq)), # 100% duty cycle
-    ]).astype(np.int32)
+    ]).astype(tensor.int32)
 
     # pwm_to_pcm returns a NumPy array (float32)
     reconstructed_pcm = processor.pwm_to_pcm(pwm_signal)
@@ -82,7 +82,7 @@ def test_pwmprocessor_pwm_to_pcm():
     # Expected length = len(pwm_signal) / (bits_per_block * (sample_rate / carrier_freq))
     expected_length = len(pwm_signal) // (bits_per_block * int(sample_rate / carrier_freq))
     assert reconstructed_pcm.shape[0] == expected_length
-    assert reconstructed_pcm.dtype == np.float32
+    assert reconstructed_pcm.dtype == tensor.float32
 
     # More detailed tests would involve checking the reconstructed PCM values
     # against the expected values based on the PWM duty cycles.

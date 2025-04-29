@@ -22,11 +22,10 @@ def random_normal(shape: Shape, mean: float = 0.0, stddev: float = 1.0,
     torch_dtype = _validate_and_get_torch_dtype(dtype)
     # Convert mean and stddev to tensors
     mean_tensor = tensor_ops.convert_to_tensor(mean, dtype=torch_dtype, device=device)
-    stddev_tensor = tensor_ops.convert_to_tensor(stddev, dtype=torch_dtype, device=device)
     # torch.normal takes mean, std, size (shape). Use kwargs.
     # Helper handles dtype and device.
     # Note: shape is passed as 'shape' kwarg - the helper will extract it and pass as 'size' positional arg
-    return _create_new_tensor(torch.normal, dtype=dtype, device=device, shape=shape, mean=mean_tensor, std=stddev_tensor)
+    return _create_new_tensor(torch.normal, dtype=dtype, device=device, shape=shape, mean=mean, std=stddev)
 
 def random_uniform(shape: Shape, minval: float = 0.0, maxval: float = 1.0,
                     dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:

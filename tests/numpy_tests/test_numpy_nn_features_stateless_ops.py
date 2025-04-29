@@ -44,7 +44,7 @@ def test_one_hot():
     # Test with different output dtype
     result_int = features.one_hot(indices, num_classes=depth, dtype=tensor.int32)
     assert tensor.dtype(result_int) == tensor.int32
-    assert tensor.convert_to_tensor_equal(tensor.to_numpy(result_int), expected_np.astype(np.int32))
+    assert tensor.convert_to_tensor_equal(tensor.to_numpy(result_int), expected_np.astype(tensor.int32))
 
     # Test with invalid indices (out of range) - should raise an error
     indices_invalid = tensor.convert_to_tensor([0, 3, 1]) # Index 3 is out of range for depth 3

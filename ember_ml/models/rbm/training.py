@@ -59,7 +59,7 @@ def contrastive_divergence_step(rbm, batch_data, k=1):
     
     # Compute reconstruction error
     reconstruction_error = ops.stats.mean(
-        ops.stats.sum(ops.square(ops.subtract(batch_data, neg_visible_probs)), axis=1)
+        stats.sum(ops.square(ops.subtract(batch_data, neg_visible_probs)), axis=1)
     )
     
     return (weights_gradient, visible_bias_gradient, hidden_bias_gradient), reconstruction_error

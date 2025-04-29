@@ -36,13 +36,13 @@ class GenericTypeDetector:
         
         for col_name, col_type in df.dtypes.items():
             if self._is_numeric_type(col_type):
-                numeric_cols.append(col_name)
+                numeric_cols.append(str(col_name))
             elif self._is_datetime_type(col_type):
-                datetime_cols.append(col_name)
+                datetime_cols.append(str(col_name))
             elif self._is_boolean_type(col_type):
-                boolean_cols.append(col_name)
+                boolean_cols.append(str(col_name))
             else:
-                categorical_cols.append(col_name)
+                categorical_cols.append(str(col_name))
         
         # Additional heuristics for categorical columns
         for col in numeric_cols[:]:  # Use a copy to avoid modification during iteration

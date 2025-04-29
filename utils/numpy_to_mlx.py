@@ -348,11 +348,11 @@ COMMON PITFALLS WITH TYPE CONVERSION:
    ✅ BETTER: mx.cast(mx.array(5), mx.float32)
 
 2. Using astype method:
-   ❌ WRONG: a.astype(np.float32)
+   ❌ WRONG: a.astype(tensor.float32)
    ✅ CORRECT: mx.cast(a, mx.float32)
 
 3. Using NumPy dtype constants:
-   ❌ WRONG: mx.cast(a, np.float32)
+   ❌ WRONG: mx.cast(a, tensor.float32)
    ✅ CORRECT: mx.cast(a, mx.float32)
 
 4. Forgetting to convert scalar values to tensors before operations:

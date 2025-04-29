@@ -43,7 +43,7 @@ def test_sphereprojection_initialization_and_forward_shape(set_backend_fixture):
     output = projection(input_data)
     assert tensor.shape(output) == (32, 4) # Shape should be preserved after projection
     # Check if projected onto unit sphere (norm should be ~1)
-    norm = ops.sqrt(ops.stats.sum(ops.square(output), axis=-1))
+    norm = ops.sqrt(stats.sum(ops.square(output), axis=-1))
     assert ops.allclose(norm, tensor.ones(tensor.shape(norm)), atol=1e-6)
 
 def test_multisphereprojection_initialization_and_forward_shape(set_backend_fixture):
@@ -56,7 +56,7 @@ def test_multisphereprojection_initialization_and_forward_shape(set_backend_fixt
     output = projection(input_data)
     assert tensor.shape(output) == (32, num_segments, 4) # Shape should be preserved
     # Check if each segment is projected onto a unit sphere
-    norm = ops.sqrt(ops.stats.sum(ops.square(output), axis=-1))
+    norm = ops.sqrt(stats.sum(ops.square(output), axis=-1))
     assert ops.allclose(norm, tensor.ones(tensor.shape(norm)), atol=1e-6)
 
 def test_multisphereencoder_initialization_and_forward_shape(set_backend_fixture):

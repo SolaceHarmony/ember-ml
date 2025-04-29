@@ -6,6 +6,7 @@ from ember_ml import ops
 from ember_ml.nn import tensor
 from ember_ml.wave.utils import wave_conversion # Import the module
 from ember_ml.ops import set_backend
+from ember_ml.nn.tensor.types import TensorLike
 
 # Set the backend for these tests
 set_backend("mlx")
@@ -23,20 +24,20 @@ def set_mlx_backend():
 def test_pcm_to_float_and_back():
     # Test pcm_to_float and float_to_pcm round trip
     # Create dummy 16-bit PCM data (NumPy array)
-    pcm_data_int16 = tensor.convert_to_tensor([0, 10000, -10000, 32767, -32768], dtype=np.int16)
+    pcm_data_int16 = tensor.convert_to_tensor([0, 10000, -10000, 32767, -32768], dtype=tensor.int16)
 
     # Convert to float
-    float_data = wave_conversion.pcm_to_float(pcm_data_int16, dtype=np.float32)
+    float_data = wave_conversion.pcm_to_float(pcm_data_int16, dtype=tensor.float32)
     assert isinstance(float_data, TensorLike)
-    assert float_data.dtype == np.float32
+    assert float_data.dtype == tensor.float32
     assert ops.all(float_data >= -1.0)
     assert ops.all(float_data <= 1.0)
     assert ops.allclose(float_data, pcm_data_int16 / 32768.0) # Check conversion logic
 
     # Convert back to PCM
-    reconstructed_pcm = wave_conversion.float_to_pcm(float_data, dtype=np.int16)
+    reconstructed_pcm = wave_conversion.float_to_pcm(float_data, dtype=tensor.int16)
     assert isinstance(reconstructed_pcm, TensorLike)
-    assert reconstructed_pcm.dtype == np.int16
+    assert reconstructed_pcm.dtype == tensor.int16
     # Allow some tolerance for round trip due to floating point
     assert ops.allclose(reconstructed_pcm, pcm_data_int16, atol=1) # Allow small error
 
@@ -44,7 +45,7 @@ def test_pcm_to_float_and_back():
 def test_pcm_to_db_and_back():
     # Test pcm_to_db and db_to_amplitude round trip
     # Create dummy PCM data (NumPy array, float32)
-    pcm_data_float = tensor.convert_to_tensor([0.1, 0.5, 1.0, 0.01], dtype=np.float32)
+    pcm_data_float = tensor.convert_to_tensor([0.1, 0.5, 1.0, 0.01], dtype=tensor.float32)
     ref = 1.0
     min_db = -60.0
 
@@ -64,7 +65,7 @@ def test_pcm_to_db_and_back():
 
 def test_amplitude_to_db():
     # Test amplitude_to_db
-    amplitude_data = tensor.convert_to_tensor([0.1, 0.5, 1.0, 0.01], dtype=np.float32)
+    amplitude_data = tensor.convert_to_tensor([0.1, 0.5, 1.0, 0.01], dtype=tensor.float32)
     min_db = -60.0
 
     db_data = wave_conversion.amplitude_to_db(amplitude_data, min_db=min_db)
@@ -76,24 +77,24 @@ def test_amplitude_to_db():
 def test_pcm_to_binary_and_back():
     # Test pcm_to_binary and binary_to_pcm round trip
     # Create dummy PCM data (NumPy array, float32)
-    pcm_data_float = tensor.convert_to_tensor([-0.5, 0.1, 0.6, -0.8, 0.9], dtype=np.float32)
+    pcm_data_float = tensor.convert_to_tensor([-0.5, 0.1, 0.6, -0.8, 0.9], dtype=tensor.float32)
     threshold = 0.5
 
     # Convert to binary
     binary_data = wave_conversion.pcm_to_binary(pcm_data_float, threshold=threshold)
     assert isinstance(binary_data, TensorLike)
-    assert ops.all(np.logical_or(binary_data == 0, binary_data == 1)) # Should be binary
+    assert ops.all(ops.logical_or(binary_data == 0, binary_data == 1)) # Should be binary
     # Check conversion logic
-    expected_binary = tensor.convert_to_tensor([0, 0, 1, 0, 1], dtype=np.int32)
+    expected_binary = tensor.convert_to_tensor([0, 0, 1, 0, 1], dtype=tensor.int32)
     assert tensor.convert_to_tensor_equal(binary_data, expected_binary)
 
     # Convert back to PCM
     amplitude = 1.0
-    reconstructed_pcm = wave_conversion.binary_to_pcm(binary_data, amplitude=amplitude, dtype=np.float32)
+    reconstructed_pcm = wave_conversion.binary_to_pcm(binary_data, amplitude=amplitude, dtype=tensor.float32)
     assert isinstance(reconstructed_pcm, TensorLike)
-    assert reconstructed_pcm.dtype == np.float32
+    assert reconstructed_pcm.dtype == tensor.float32
     # Check conversion logic
-    expected_pcm = tensor.convert_to_tensor([0.0, 0.0, 1.0, 0.0, 1.0], dtype=np.float32) * amplitude
+    expected_pcm = tensor.convert_to_tensor([0.0, 0.0, 1.0, 0.0, 1.0], dtype=tensor.float32) * amplitude
     assert ops.allclose(reconstructed_pcm, expected_pcm)
 
 
@@ -103,8 +104,8 @@ def test_pcm_to_phase_and_back():
     # Use a signal with known phase properties (e.g., a simple sine wave)
     sample_rate = 1000
     duration = 1.0
-    t = tensor.linspace(0, duration, sample_rate, endpoint=False)
-    pcm_data_float = ops.sin(2 * ops.pi * 10 * t).astype(np.float32)
+    t = tensor.linspace(0, duration, sample_rate)
+    pcm_data_float = ops.sin(2 * ops.pi * 10 * t).astype(tensor.float32)
 
     # pcm_to_phase relies on numpy.fft
     # We can test that it runs without errors and returns expected types/shapes if dependencies are met.

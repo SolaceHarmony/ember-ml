@@ -229,7 +229,7 @@ class LimbWaveNetwork:
             
             outputs.append(output_pcm)
         
-        return tensor.convert_to_tensor(outputs, dtype=np.int16)
+        return tensor.convert_to_tensor(outputs, dtype=tensor.int16)
 
 def create_test_signal(duration_sec: float, sample_rate: int) -> TensorLike:
     """Create test signal with multiple frequencies"""
@@ -239,7 +239,7 @@ def create_test_signal(duration_sec: float, sample_rate: int) -> TensorLike:
         0.3 * ops.sin(2 * ops.pi * 880 * t) +  # A5
         0.2 * ops.sin(2 * ops.pi * 1760 * t)   # A6
     )
-    return (signal * 32767).astype(np.int16)
+    return (signal * 32767).astype(tensor.int16)
 
 if __name__ == "__main__":
     # Create test signal
@@ -254,5 +254,5 @@ if __name__ == "__main__":
     # Print stats
     print(f"Input shape: {test_signal.shape}")
     print(f"Output shape: {output.shape}")
-    print(f"Input range: [{ops.stats.min(test_signal)}, {ops.stats.max(test_signal)}]")
-    print(f"Output range: [{ops.stats.min(output)}, {ops.stats.max(output)}]")
+    print(f"Input range: [{stats.min(test_signal)}, {stats.max(test_signal)}]")
+    print(f"Output range: [{stats.min(output)}, {stats.max(output)}]")

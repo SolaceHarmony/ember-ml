@@ -67,6 +67,6 @@ class Loss:
         elif self.reduction == 'mean':
             return ops.stats.mean(loss)
         elif self.reduction == 'sum':
-            return ops.stats.sum(loss)
+            return stats.sum(loss)
         else:
             raise ValueError(f"Invalid reduction: {self.reduction}")

@@ -4,11 +4,11 @@ Spherical variant of LTC neurons operating on unit sphere manifold.
 
 from typing import Optional, Union, Dict, Any, Tuple
 from dataclasses import dataclass
+from ember_ml.ops import linearalg
 from ember_ml import ops
 from ember_ml.nn import tensor
 from ember_ml.nn.modules.rnn.geometric import GeometricNeuron, normalize_sphere
 from ember_ml.nn.modules.rnn.blocky import BaseChain
-
 @dataclass
 class SphericalLTCConfig:
     """Configuration for Spherical LTC neurons."""
@@ -40,7 +40,7 @@ def log_map_sphere(p, q):
         
     # Compute direction in tangent space
     perp = ops.subtract(q_n, ops.multiply(dot_prod, p_n))
-    perp_norm = ops.norm(perp)
+    perp_norm = linearalg.norm(perp)
     
     if ops.less(perp_norm, 1e-12):
         return tensor.zeros_like(p)
@@ -58,7 +58,7 @@ def exp_map_sphere(p, v):
     Returns:
         Point on sphere reached by geodesic in direction v
     """
-    norm_v = ops.norm(v)
+    norm_v = linearalg.norm(v)
     if ops.less(norm_v, 1e-12):
         return p
     

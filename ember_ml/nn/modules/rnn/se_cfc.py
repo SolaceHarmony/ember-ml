@@ -318,7 +318,7 @@ class seCfC(Module):
         weighted_weights = ops.multiply(weighted_weights, self.communicability_tensor)
         
         # Sum the weighted weights
-        reg_loss = ops.stats.sum(weighted_weights)
+        reg_loss = stats.sum(weighted_weights)
         
         # Scale by regularization strength
         reg_loss = ops.multiply(reg_loss, self.regularization_strength)

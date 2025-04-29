@@ -54,7 +54,7 @@ def test_crossentropy_loss():
     epsilon = 1e-7
     y_pred_clipped = ops.clip(tensor.to_numpy(y_pred), epsilon, 1.0 - epsilon)
     y_true_np = tensor.to_numpy(y_true)
-    expected_np = -np.mean(y_true_np * np.log(y_pred_clipped) + (1 - y_true_np) * np.log(1 - y_pred_clipped))
+    expected_np = -stats.mean(y_true_np * np.log(y_pred_clipped) + (1 - y_true_np) * np.log(1 - y_pred_clipped))
     assert ops.allclose(result_np, expected_np)
 
     # Test with logits

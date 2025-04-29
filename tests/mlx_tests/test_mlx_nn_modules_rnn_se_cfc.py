@@ -1,5 +1,4 @@
 import pytest
-import numpy as np
 
 from ember_ml import ops
 from ember_ml.nn import tensor

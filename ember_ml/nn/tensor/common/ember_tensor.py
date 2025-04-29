@@ -619,9 +619,9 @@ class EmberTensor(TensorInterface):
             import numpy as np
             x_np = to_numpy(x)
             if descending:
-                result = np.sort(x_np, axis=axis)[::-1]
+                result = tensor.sort(x_np, axis=axis)[::-1]
             else:
-                result = np.sort(x_np, axis=axis)
+                result = tensor.sort(x_np, axis=axis)
             return _convert_to_backend_tensor(result)
     
     def argsort(self, x: Any, axis: int = -1, descending: bool = False) -> Any:

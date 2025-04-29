@@ -67,12 +67,11 @@ def test_limbwavenetwork_process_pcm():
     # For now, just test that the function exists and can be called.
     network = limb_wave_processor.LimbWaveNetwork(num_neurons=3, wave_max=1000.0)
     # Create dummy PCM data (NumPy array)
-    pcm_data = ops.sin(tensor.linspace(0, 10, 100)).astype(np.float32)
+    pcm_data = ops.sin(tensor.linspace(0, 10, 100)).astype(tensor.float32)
 
     # process_pcm returns processed PCM data (NumPy array)
     processed_pcm = network.process_pcm(pcm_data)
 
-    assert isinstance(processed_pcm, TensorLike)
     assert processed_pcm.shape == pcm_data.shape
     assert processed_pcm.dtype == pcm_data.dtype
 

@@ -1,12 +1,11 @@
 import pytest
-import numpy as np # For comparison with known correct results
 
 # Import Ember ML modules
 from ember_ml import ops
 from ember_ml.nn import tensor
 from ember_ml.utils import backend_utils # Import backend_utils
 from ember_ml.ops import set_backend, get_backend
-
+from ember_ml.nn.tensor.types import TensorLike
 # Set the backend for these tests
 set_backend("mlx")
 
@@ -104,7 +103,7 @@ def test_tensor_to_numpy_safe():
     assert isinstance(np_array, TensorLike)
     assert ops.allclose(np_array, tensor.convert_to_tensor(data))
     assert np_array.shape == (2, 2)
-    assert np_array.dtype == np.float32 # Assuming default float32
+    assert np_array.dtype == tensor.float32 # Assuming default float32
 
 
 def test_print_backend_info(capsys):

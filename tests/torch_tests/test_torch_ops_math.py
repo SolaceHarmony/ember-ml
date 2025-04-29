@@ -72,7 +72,7 @@ def test_cos():
     x = tensor.convert_to_tensor([0.0, ops.pi / 2, ops.pi, 3 * ops.pi / 2, 2 * ops.pi])
     result = ops.cos(x)
     # Use numpy.cos for expected values
-    expected_np = np.cos(tensor.to_numpy(x))
+    expected_np = ops.cos(tensor.to_numpy(x))
     assert ops.allclose(tensor.to_numpy(result), expected_np)
 
 # Add more test functions for other core ops functions:
@@ -95,5 +95,5 @@ def test_cos():
 #     x = tensor.convert_to_tensor([[-1.0, 2.0], [-3.0, 4.0]])
 #     result = ops.abs(x)
 #     # Use numpy.abs for expected values
-#     expected_np = np.abs(tensor.to_numpy(x))
+#     expected_np = ops.abs(tensor.to_numpy(x))
 #     assert ops.allclose(tensor.to_numpy(result), expected_np)

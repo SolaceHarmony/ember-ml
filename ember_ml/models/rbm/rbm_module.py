@@ -178,7 +178,7 @@ class RBMModule(Module):
             Reconstruction error (mean or per sample)
         """
         reconstructed = self.reconstruct(visible_states)
-        squared_error = ops.stats.sum(ops.square(ops.subtract(visible_states, reconstructed)), axis=1)
+        squared_error = stats.sum(ops.square(ops.subtract(visible_states, reconstructed)), axis=1)
         
         if per_sample:
             return squared_error
@@ -196,7 +196,7 @@ class RBMModule(Module):
             Free energy [batch_size]
         """
         visible_bias_term = ops.matmul(visible_states, self.visible_bias.data)
-        hidden_term = ops.stats.sum(
+        hidden_term = stats.sum(
             ops.log(ops.add(1.0, ops.exp(ops.add(ops.matmul(visible_states, self.weights.data), self.hidden_bias.data)))),
             axis=1
         )

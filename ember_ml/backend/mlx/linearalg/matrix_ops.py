@@ -9,7 +9,7 @@ from typing import Union, Tuple, Optional, Literal
 
 # Import from tensor_ops
 from ember_ml.backend.mlx.types import TensorLike
-from ember_ml.backend.mlx.linearalg.decomp_ops import svd # Corrected path
+from ember_ml.backend.mlx.linearalg.svd_ops import svd # Corrected path
 from ember_ml.backend.mlx.tensor import MLXDType
 from ember_ml.backend.mlx.types import OrdLike
 

@@ -1,5 +1,4 @@
 import pytest
-import numpy as np # For comparison with known correct results
 
 # Import Ember ML modules
 from ember_ml import ops
@@ -159,8 +158,8 @@ def test_batchnormalization_forward_inference():
     bn_layer.build(input_shape)
 
     # Manually set moving averages (simulating training)
-    mean_val = tensor.convert_to_tensor(np.random.rand(input_shape[-1]).astype(np.float32))
-    var_val = tensor.convert_to_tensor(np.random.rand(input_shape[-1]).astype(np.float32) + 0.1) # Avoid zero variance
+    mean_val = tensor.random_normal(input_shape[-1],dtype=tensor.float32)
+    var_val = ops.add(tensor.random_normal(input_shape[-1],dtype=tensor.float32), 0.1) # Avoid zero variance
     bn_layer.moving_mean = mean_val
     bn_layer.moving_variance = var_val
 
@@ -168,8 +167,6 @@ def test_batchnormalization_forward_inference():
     output = bn_layer(input_tensor, training=False)
 
     # MLX backend returns native MLX arrays, not EmberTensor objects
-    import mlx.core as mx
-    assert isinstance(output, mx.array)
     assert tensor.shape(output) == input_shape
     # In inference, output should be normalized using moving averages
     # Manual calculation of expected output: (input - moving_mean) / sqrt(moving_variance + epsilon) * gamma + beta

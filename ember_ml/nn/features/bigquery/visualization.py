@@ -128,15 +128,13 @@ def capture_frame(
         Dictionary with frame data
     """
     try:
-        # Convert tensor to numpy array
-        data_np = tensor.to_numpy(data)
         
         # Create frame data
         frame_data = {
             'id': frame_id,
             'type': frame_type,
             'shape': tensor.shape(data),
-            'data_sample': data_np[:min(100, data_np.shape[0]), :].tolist()
+            'data_sample': data[:min(100, data.shape[0]), :].tolist()
         }
         
         logger.debug(f"Captured frame '{frame_id}' of type '{frame_type}'")

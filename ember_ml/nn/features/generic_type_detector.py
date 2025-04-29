@@ -34,12 +34,13 @@ class GenericTypeDetector:
         boolean_cols = []
         
         for col_name, col_type in df.dtypes.items():
-            if self._is_numeric_type(col_type):
+            # Check boolean BEFORE numeric, as pandas considers bool numeric
+            if self._is_boolean_type(col_type):
+                boolean_cols.append(col_name)
+            elif self._is_numeric_type(col_type):
                 numeric_cols.append(col_name)
             elif self._is_datetime_type(col_type):
                 datetime_cols.append(col_name)
-            elif self._is_boolean_type(col_type):
-                boolean_cols.append(col_name)
             else:
                 categorical_cols.append(col_name)
         

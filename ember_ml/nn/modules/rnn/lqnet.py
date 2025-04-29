@@ -143,7 +143,7 @@ class LQNet(Module):
             Viscosity tensor
         """
         # Calculate energy as sum of squared state elements
-        energy = ops.stats.sum(ops.square(state), axis=-1, keepdims=True)
+        energy = stats.sum(ops.square(state), axis=-1, keepdims=True)
         
         # Calculate viscosity using Boltzmann factor
         return ops.multiply(self.nu_0, ops.exp(ops.multiply(-self.beta, energy)))

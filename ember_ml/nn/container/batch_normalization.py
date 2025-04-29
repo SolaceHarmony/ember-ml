@@ -110,8 +110,8 @@ class BatchNormalization(Module):
         if training:
             # Compute statistics from mini-batch
             mean = ops.stats.mean(x, axis=reduction_axes, keepdims=True)
-            variance = tensor.var(x, axis=reduction_axes, keepdims=True)
-            
+            variance = ops.stats.var(x, axis=reduction_axes, keepdims=True) # Use ops.stats.var
+
             # Update moving statistics
             self.moving_mean = ops.add(
                 ops.multiply(self.moving_mean, self.momentum),

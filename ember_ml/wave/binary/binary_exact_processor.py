@@ -149,7 +149,7 @@ class ExactBinaryNetwork:
             
             output_samples.append(scaled_val)
             
-        return tensor.convert_to_tensor(output_samples, dtype=np.int16)
+        return tensor.convert_to_tensor(output_samples, dtype=tensor.int16)
 
 def create_test_signal(duration_sec: float, sample_rate: int) -> TensorLike:
     """Create test signal with multiple frequencies"""
@@ -159,7 +159,7 @@ def create_test_signal(duration_sec: float, sample_rate: int) -> TensorLike:
         0.3 * ops.sin(2 * ops.pi * 880 * t) +  # A5
         0.2 * ops.sin(2 * ops.pi * 1760 * t)   # A6
     )
-    return (signal * 32767).astype(np.int16)
+    return (signal * 32767).astype(tensor.int16)
 
 class BinaryExactProcessor:
     """
@@ -203,12 +203,12 @@ class BinaryExactProcessor:
             Dictionary with analysis metrics
         """
         return {
-            'input_range': (ops.stats.min(input_data), ops.stats.max(input_data)),
-            'output_range': (ops.stats.min(output_data), ops.stats.max(output_data)),
-            'input_mean': np.mean(np.abs(input_data)),
-            'output_mean': np.mean(np.abs(output_data)),
-            'input_std': np.std(input_data),
-            'output_std': np.std(output_data),
+            'input_range': (stats.min(input_data), stats.max(input_data)),
+            'output_range': (stats.min(output_data), stats.max(output_data)),
+            'input_mean': stats.mean(ops.abs(input_data)),
+            'output_mean': stats.mean(ops.abs(output_data)),
+            'input_std': stats.std(input_data),
+            'output_std': stats.std(output_data),
         }
 
 if __name__ == "__main__":

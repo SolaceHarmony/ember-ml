@@ -193,8 +193,8 @@ def process_datetime_features(
                     component_names.append(f"{col}_{comp_name}_cos")
                 else:
                     # For non-cyclic features, normalize
-                    min_val = ops.stats.min(comp_tensor)
-                    max_val = ops.stats.max(comp_tensor)
+                    min_val = stats.min(comp_tensor)
+                    max_val = stats.max(comp_tensor)
                     range_val = ops.subtract(max_val, min_val)
                     
                     # Avoid division by zero

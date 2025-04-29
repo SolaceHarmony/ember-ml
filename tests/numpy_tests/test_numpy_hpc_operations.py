@@ -51,10 +51,10 @@ def test_hpc_orthogonal_vs_standard_qr(numpy_backend):
     # Now try with standard QR (using NumPy directly for comparison)
     import numpy as np
     a_np = tensor.to_numpy(a)
-    q_np, _ = np.linalg.qr(a_np, mode='reduced')
-    q_t_q_np = np.matmul(q_np.T, q_np)
-    identity_np = np.eye(m)
-    error_standard = np.mean(np.abs(q_t_q_np - identity_np))
+    q_np, _ = ops.linearalg.qr(a_np, mode='reduced')
+    q_t_q_np = ops.matmul(q_np.T, q_np)
+    identity_np = ops.eye(m)
+    error_standard = stats.mean(ops.abs(q_t_q_np - identity_np))
 
     # The HPC implementation should have significantly better numerical stability
     assert ops.all(ops.less(error_hpc, tensor.convert_to_tensor(error_standard, dtype=tensor.float32))), f"HPC error: {error_hpc}, Standard error: {error_standard}"

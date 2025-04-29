@@ -94,7 +94,7 @@ def _find_ncomponents(
     elif isinstance(n_components, float) and 0 < n_components < 1.0:
         # Compute number of components that explain at least n_components of variance
         ratio_cumsum = ops.cumsum(explained_variance_ratio)
-        n_components = ops.add(ops.stats.sum(ops.less(ratio_cumsum, n_components)), 1)
+        n_components = ops.add(stats.sum(ops.less(ratio_cumsum, n_components)), 1)
     elif n_components == 'mle':
         # Minka's MLE for selecting number of components
         n_components = _infer_dimensions(explained_variance, n_samples)
@@ -131,13 +131,13 @@ def _infer_dimensions(explained_variance, n_samples):
                         ops.multiply(-0.5, n_samples),
                         ops.add(
                             ops.add(
-                                ops.stats.sum(ops.log(explained_variance[:i+1])),
+                                stats.sum(ops.log(explained_variance[:i+1])),
                                 ops.multiply(n_components - i - 1, ops.log(sigma2))
                             ),
                             ops.add(
                                 ops.divide(n_components - i - 1, n_components - i),
                                 ops.add(
-                                    ops.divide(ops.stats.sum(explained_variance[:i+1]), sigma2),
+                                    ops.divide(stats.sum(explained_variance[:i+1]), sigma2),
                                     ops.divide(ops.multiply(n_components - i - 1, sigma2), sigma2)
                                 )
                             )
@@ -148,7 +148,7 @@ def _infer_dimensions(explained_variance, n_samples):
             ll = tensor.tensor_scatter_nd_update(
                 ll,
                 [[i]],
-                [ops.multiply(-0.5, ops.multiply(n_samples, ops.stats.sum(ops.log(explained_variance))))]
+                [ops.multiply(-0.5, ops.multiply(n_samples, stats.sum(ops.log(explained_variance))))]
             )
 
     return ops.add(ops.stats.argmax(ll), 1) # Use ops.stats.argmax
@@ -323,7 +323,7 @@ class PCA:
             # Use a_min and a_max for ops.clip, using float('inf') for upper bound
             denominator = ops.clip(denominator, 1e-8, float('inf'))  # Avoid division by zero
             explained_variance = ops.divide(ops.square(S), denominator)
-            total_var = ops.stats.sum(explained_variance)
+            total_var = stats.sum(explained_variance)
             # Use a_min and a_max for ops.clip, using float('inf') for upper bound
             total_var = ops.clip(total_var, 1e-8, float('inf'))  # Avoid division by zero
             explained_variance_ratio = ops.divide(explained_variance, total_var)
@@ -347,7 +347,7 @@ class PCA:
             explained_variance = ops.divide(ops.square(S), denominator)
             
             # Calculate total variance with safeguards
-            squared_sum = ops.stats.sum(ops.square(X_centered))
+            squared_sum = stats.sum(ops.square(X_centered))
             total_var = ops.divide(squared_sum, denominator)
             
             # Ensure non-zero denominator for ratio calculation
@@ -371,7 +371,7 @@ class PCA:
             eigenvals = ops.clip(eigenvals, 0.0, float('inf'))
             # Compute equivalent variables to full SVD output
             explained_variance = eigenvals
-            total_var = ops.stats.sum(explained_variance)
+            total_var = stats.sum(explained_variance)
             # Ensure non-zero denominator for ratio calculation
             total_var = ops.clip(total_var, 1e-8, float('inf'))  # Avoid division by zero
             explained_variance_ratio = ops.divide(explained_variance, total_var)

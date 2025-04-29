@@ -696,7 +696,7 @@ class TensorInterface(ABC):
         Randomly permute a sequence or return a permuted range.
         
         Args:
-            x: If x is an integer, randomly permute np.arange(x).
+            x: If x is an integer, randomly permute tensor.arange(x).
                If x is an array, make a copy and shuffle the elements randomly.
             dtype: Optional data type
             device: Optional device to place the tensor on

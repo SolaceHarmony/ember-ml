@@ -66,7 +66,7 @@ def test_hpc_orthogonal_vs_standard_qr(torch_backend):
     a_torch = tensor.to_numpy(a)
     a_torch = tensor.convert_to_tensor(a_torch, dtype=torch.float32)
     q_torch, _ = torch.linalg.qr(a_torch, mode='reduced')
-    q_t_q_torch = torch.matmul(q_torch.T, q_torch)
+    q_t_q_torch = ops.matmul(q_torch.T, q_torch)
     identity_torch = torch.eye(m)
     error_standard = torch.mean(torch.abs(q_t_q_torch - identity_torch)).item()
     
@@ -192,8 +192,8 @@ def test_qr_128_precision(torch_backend):
     q_std, r_std = torch.linalg.qr(a)
     
     # Check orthogonality of Q
-    q_t_q_hpc = torch.matmul(q_hpc.T, q_hpc)
-    q_t_q_std = torch.matmul(q_std.T, q_std)
+    q_t_q_hpc = ops.matmul(q_hpc.T, q_hpc)
+    q_t_q_std = ops.matmul(q_std.T, q_std)
     
     identity = torch.eye(n)
     
@@ -202,8 +202,8 @@ def test_qr_128_precision(torch_backend):
     error_std = torch.mean(torch.abs(q_t_q_std - identity)).item()
     
     # Check reconstruction error
-    recon_hpc = torch.matmul(q_hpc, r_hpc)
-    recon_std = torch.matmul(q_std, r_std)
+    recon_hpc = ops.matmul(q_hpc, r_hpc)
+    recon_std = ops.matmul(q_std, r_std)
     
     recon_error_hpc = torch.mean(torch.abs(recon_hpc - a)).item()
     recon_error_std = torch.mean(torch.abs(recon_std - a)).item()

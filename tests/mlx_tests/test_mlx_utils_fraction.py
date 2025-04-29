@@ -1,5 +1,5 @@
 import pytest
-import numpy as np # For comparison with known correct results
+
 from fractions import Fraction # Import Python's Fraction for comparison
 
 # Import Ember ML modules

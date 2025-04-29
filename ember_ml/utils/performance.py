@@ -54,10 +54,10 @@ def benchmark(func: Callable, *args, **kwargs) -> Dict[str, Any]:
         times.append(end_time - start_time)
     
     return {
-        'mean': np.mean(times),
-        'std': np.std(times),
-        'min': ops.stats.min(times),
-        'max': ops.stats.max(times),
+        'mean': stats.mean(times),
+        'std': stats.std(times),
+        'min': stats.min(times),
+        'max': stats.max(times),
         'times': times,
         'result': result
     }
@@ -105,7 +105,7 @@ def plot_benchmark_results(results: Dict[str, Dict[str, Any]], title: str = "Ben
     stds = [results[label]['std'] for label in labels]
     
     fig, ax = plt.subplots(figsize=(10, 6))
-    x = np.arange(len(labels))
+    x = tensor.arange(len(labels))
     ax.bar(x, means, yerr=stds, align='center', alpha=0.7, ecolor='black', capsize=10)
     ax.set_ylabel('Time (s)')
     ax.set_xticks(x)

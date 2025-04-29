@@ -1,7 +1,7 @@
 import pytest
-import numpy as np # For comparison with known correct results
 
 # Import Ember ML modules
+from ember_ml.ops import stats
 from ember_ml import ops
 from ember_ml.nn import tensor
 from ember_ml.ops import set_backend
@@ -51,7 +51,7 @@ def test_binary_crossentropy():
     epsilon = 1e-7
     y_pred_clipped = ops.clip(tensor.to_numpy(y_pred), epsilon, 1.0 - epsilon)
     y_true_np = tensor.to_numpy(y_true)
-    expected_np = -np.mean(y_true_np * np.log(y_pred_clipped) + (1 - y_true_np) * np.log(1 - y_pred_clipped))
+    expected_np = -stats.mean(y_true_np * ops.log(y_pred_clipped) + (1 - y_true_np) * ops.log(1 - y_pred_clipped))
     assert ops.allclose(result_np, expected_np)
 
     # Test with logits

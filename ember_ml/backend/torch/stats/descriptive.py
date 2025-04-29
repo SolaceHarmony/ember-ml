@@ -164,8 +164,19 @@ def mean(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
         return result.reshape(1) if keepdims else result
     else:
         # Compute mean along the specified axis
-        result = torch.mean(x_tensor, dim=axis)
-        return result.unsqueeze(axis) if keepdims else result
+        # Calculate mean without keepdim first
+        result = torch.mean(x_tensor, dim=axis, keepdim=False)
+        if keepdims:
+            # Construct target shape with 1s for reduced axes
+            target_shape = list(x_tensor.shape)
+            if isinstance(axis, Sequence):
+                 for dim in axis:
+                      target_shape[dim] = 1
+            else: # axis is int
+                 target_shape[axis] = 1
+            return result.reshape(target_shape)
+        else:
+             return result
 
 def var(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
        keepdims: bool = False, ddof: int = 0) -> torch.Tensor:
@@ -190,8 +201,19 @@ def var(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
         return result.reshape(1) if keepdims else result
     else:
         # Compute variance along the specified axis
-        result = torch.var(x_tensor, dim=axis, unbiased=(ddof == 1))
-        return result.unsqueeze(axis) if keepdims else result
+        # Calculate variance without keepdim first
+        result = torch.var(x_tensor, dim=axis, unbiased=(ddof == 1), keepdim=False)
+        if keepdims:
+            # Construct target shape with 1s for reduced axes
+            target_shape = list(x_tensor.shape)
+            if isinstance(axis, Sequence):
+                 for dim in axis:
+                      target_shape[dim] = 1
+            else: # axis is int
+                 target_shape[axis] = 1
+            return result.reshape(target_shape)
+        else:
+             return result
 
 def max(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
        keepdims: bool = False) -> torch.Tensor:

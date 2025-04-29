@@ -6,9 +6,8 @@ for computing and tracking attention based on temporal, causal, and novelty fact
 """
 
 from typing import Dict, List, Tuple
-import numpy as np
-
-from .state import AttentionState
+from ember_ml import ops
+from ember_ml.nn.attention.mechanisms.state import AttentionState
 
 
 class CausalAttention:
@@ -66,7 +65,7 @@ class CausalAttention:
         state = self.states.get(neuron_id, AttentionState())
         
         # Update temporal weight based on history length
-        temporal_decay = np.exp(-self.decay_rate * len(self.history))
+        temporal_decay = ops.exp(-self.decay_rate * len(self.history))
         state.temporal_weight = current_state * temporal_decay
         
         # Update causal weight based on prediction accuracy

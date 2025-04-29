@@ -67,7 +67,7 @@ def test_random_bernoulli():
     # Assert properties of Bernoulli distribution
     assert isinstance(result, tensor.EmberTensor)
     assert tensor.shape(result) == shape
-    assert ops.all(np.logical_or(result_np == 0, result_np == 1)) # Should contain only 0s and 1s
+    assert ops.all(ops.logical_or(result_np == 0, result_np == 1)) # Should contain only 0s and 1s
     # Check mean (should be close to p for a large sample)
     assert ops.less(ops.abs(ops.subtract(ops.stats.mean(result), p)), 0.05).item()
 

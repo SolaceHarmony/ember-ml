@@ -88,10 +88,11 @@ def create_lstm_gated_liquid_network(
     )
     
     # Create LSTM layer (ensure return_sequences=True for gating)
-    lstm_layer = LSTM(
-        units=lstm_units,
+    # This is the old pattern and needs to be updated to NeuronMap
+    lstm_layer = LSTM( 
+        input_size=input_dim, # Added input_size
+        hidden_size=lstm_units, # Added hidden_size
         return_sequences=True # Needed for element-wise gating
-        # input_size will be inferred if not provided, or set explicitly
     )
 
     # Create gated liquid network
@@ -175,16 +176,16 @@ class StrideAwareCfCCell(CfC):
         self.stride_scale = self.add_weight(
             shape=(self.units,),
             name="stride_scale",
-            initializer=ops.initializers.Constant(float(self.stride_length)),
-            constraint=lambda x: ops.clip_by_value(x, 0.1, 100.0)
+            initializer="constant", #(float(self.stride_length)),
+            constraint=lambda x: clip_by_value(x, 0.1, 100.0)
         )
         
         # Time scale parameter (learnable)
         self.time_scale = self.add_weight(
             shape=(self.units,),
             name="time_scale",
-            initializer=ops.initializers.Constant(float(self.time_scale_factor)),
-            constraint=lambda x: ops.clip_by_value(x, 0.1, 100.0)
+            initializer=Constant(float(self.time_scale_factor)),
+            constraint=lambda x: clip_by_value(x, 0.1, 100.0)
         )
     
     def call(self, inputs, states, training=None):
@@ -247,25 +248,25 @@ class LiquidNetworkWithMotorNeuron(Module):
         self.mixed_memory = mixed_memory
         
         # Input projection
-        self.input_projection = self.add_module(
+        self.add_module(
             "input_projection",
-            Dense( # Corrected path
-                units=cell.units,
-                input_shape=(input_dim,)
+            Dense(
+                units=cell.units
             )
         )
+        self.input_projection = self.get_module("input_projection")
         
         # Output projection
-        self.output_projection = self.add_module(
+        self.add_module(
             "output_projection",
-            Dense( # Corrected path
-                units=output_dim,
-                input_shape=(cell.units,)
+            Dense(
+                units=output_dim
             )
         )
+        self.output_projection = self.get_module("output_projection")
         
         # Motor neuron
-        self.motor_neuron = self.add_module(
+        self.add_module(
             "motor_neuron",
             MotorNeuron(
                 input_dim=cell.units,
@@ -273,17 +274,18 @@ class LiquidNetworkWithMotorNeuron(Module):
                 adaptive_threshold=adaptive_threshold
             )
         )
+        self.motor_neuron = self.get_module("motor_neuron")
         
         # Mixed memory
         if mixed_memory:
-            self.memory_gate = self.add_module(
+            self.add_module(
                 "memory_gate",
-                Dense( # Corrected path
+                Dense(
                     units=cell.units,
-                    input_shape=(cell.units,),
                     activation="sigmoid"
                 )
             )
+            self.memory_gate = self.get_module("memory_gate")
     
     def call(self, inputs, states=None, training=None):
         """
@@ -367,26 +369,26 @@ class MotorNeuron(Module):
         self.adaptive_threshold = adaptive_threshold
         
         # Output projection
-        self.output_projection = self.add_module(
+        self.add_module(
             "output_projection",
-            Dense( # Corrected path
+            Dense(
                 units=1,
-                input_shape=(input_dim,),
                 activation="sigmoid"
             )
         )
+        self.output_projection = self.get_module("output_projection")
         
         # Adaptive threshold
         if adaptive_threshold:
-            self.threshold_projection = self.add_module(
+            self.add_module(
                 "threshold_projection",
-                Dense( # Corrected path
+                Dense(
                     units=1,
-                    input_shape=(input_dim,),
                     activation="sigmoid",
-                    bias_initializer=ops.initializers.Constant(threshold)
+                    bias_initializer="constant" #(threshold)
                 )
             )
+            self.threshold_projection = self.get_module("threshold_projection")
     
     def call(self, inputs, training=None):
         """
@@ -537,7 +539,7 @@ class MultiStrideLiquidNetwork(Module):
     
     def __init__(
         self,
-        cells: Dict[int, Module],
+        cells: Dict[int, Module], # Changed type hint to Module
         input_dim: int,
         output_dim: int = 1
     ):
@@ -557,23 +559,23 @@ class MultiStrideLiquidNetwork(Module):
         # Input projections
         self.input_projections = {}
         for stride, cell in cells.items():
-            self.input_projections[stride] = self.add_module(
+            self.add_module(
                 f"input_projection_{stride}",
-                Dense( # Corrected path
-                    units=cell.units,
-                    input_shape=(input_dim,)
+                Dense(
+                    units=cell.units
                 )
             )
+            self.input_projections[stride] = self.get_module(f"input_projection_{stride}")
         
         # Output projection
         total_units = sum(cell.units for cell in cells.values())
-        self.output_projection = self.add_module(
+        self.add_module(
             "output_projection",
-            Dense( # Corrected path
-                units=output_dim,
-                input_shape=(total_units,)
+            Dense(
+                units=output_dim
             )
         )
+        self.output_projection = self.get_module("output_projection")
     
     def call(self, inputs, states=None, training=None):
         """

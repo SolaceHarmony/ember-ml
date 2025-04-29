@@ -121,10 +121,10 @@ class WaveMemoryAnalyzer:
         """Plot phase space trajectories."""
         for sphere_id in range(history.shape[1]):
             phase_angles = np.arctan2(
-                np.linalg.norm(history[:, sphere_id, 1:], axis=1),
+                ops.linearalg.norm(history[:, sphere_id, 1:], axis=1),
                 history[:, sphere_id, 0]
             )
-            energies = ops.stats.sum(history[:, sphere_id]**2, axis=1)
+            energies = stats.sum(history[:, sphere_id]**2, axis=1)
             sc = ax.scatter(phase_angles, energies, 
                           c=range(len(phase_angles)),
                           cmap='viridis', 
@@ -140,7 +140,7 @@ class WaveMemoryAnalyzer:
         """Plot energy distribution over time."""
         steps = len(history)
         for sphere_id in range(history.shape[1]):
-            energies = [ops.stats.sum(state**2) for state in history[:, sphere_id]]
+            energies = [stats.sum(state**2) for state in history[:, sphere_id]]
             ax.plot(range(steps), energies, label=f'Sphere {sphere_id}')
             
         ax.set_title('Energy Distribution')
@@ -154,9 +154,9 @@ class WaveMemoryAnalyzer:
         for i in range(history.shape[1]-1):
             phase_diff = []
             for t in range(steps):
-                p1 = np.arctan2(np.linalg.norm(history[t, i, 1:]), 
+                p1 = np.arctan2(ops.linearalg.norm(history[t, i, 1:]), 
                                history[t, i, 0])
-                p2 = np.arctan2(np.linalg.norm(history[t, i+1, 1:]), 
+                p2 = np.arctan2(ops.linearalg.norm(history[t, i+1, 1:]), 
                                history[t, i+1, 0])
                 phase_diff.append(p2 - p1)
             ax.plot(range(steps), phase_diff, label=f'Spheres {i}-{i+1}')
@@ -192,7 +192,7 @@ class WaveMemoryAnalyzer:
         for t in range(steps):
             for i in range(history.shape[1]):
                 interference[t, i] = sum(
-                    abs(np.dot(history[t, i], history[t, j]))
+                    abs(ops.dot(history[t, i], history[t, j]))
                     for j in range(history.shape[1]) if j != i
                 )
                 
@@ -209,7 +209,7 @@ class WaveMemoryAnalyzer:
         steps = len(history)
         for sphere_id in range(history.shape[1]):
             energy_transfer = np.diff(
-                [ops.stats.sum(state**2) for state in history[:, sphere_id]]
+                [stats.sum(state**2) for state in history[:, sphere_id]]
             )
             ax.plot(range(1, steps), energy_transfer, 
                    label=f'Sphere {sphere_id}')
@@ -225,14 +225,14 @@ class WaveMemoryAnalyzer:
         
         # Calculate total energy and phase coherence
         total_energy = [
-            ops.stats.sum([ops.stats.sum(state**2) for state in timestep]) / history.shape[1]
+            stats.sum([stats.sum(state**2) for state in timestep]) / history.shape[1]
             for timestep in history
         ]
         
         phase_coherence = []
         for t in range(steps):
             phases = [
-                np.arctan2(np.linalg.norm(state[1:]), state[0])
+                np.arctan2(ops.linearalg.norm(state[1:]), state[0])
                 for state in history[t]
             ]
             diffs = [
@@ -240,7 +240,7 @@ class WaveMemoryAnalyzer:
                 for i, p1 in enumerate(phases)
                 for p2 in phases[i+1:]
             ]
-            phase_coherence.append(np.mean(np.cos(diffs)))
+            phase_coherence.append(stats.mean(ops.cos(diffs)))
             
         ax.plot(range(steps), total_energy, 
                label='Normalized Total Energy', linewidth=2)

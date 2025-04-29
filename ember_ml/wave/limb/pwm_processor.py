@@ -60,7 +60,7 @@ class PWMProcessor:
                 break
                 
             # Calculate average amplitude for block
-            avg_amplitude = np.mean(block)
+            avg_amplitude = stats.mean(block)
             
             # Convert to duty cycle [0,1]
             duty_cycle = (avg_amplitude + 32768) / 65536
@@ -95,7 +95,7 @@ class PWMProcessor:
                 break
                 
             # Count high samples to determine duty cycle
-            high_count = ops.stats.sum(block > 0)
+            high_count = stats.sum(block > 0)
             duty_cycle = high_count / self.samples_per_period
             
             # Convert duty cycle back to PCM value
@@ -120,14 +120,14 @@ class PWMProcessor:
             block = pwm_signal[i:i + self.samples_per_period]
             if len(block) < self.samples_per_period:
                 break
-            duty_cycles.append(ops.stats.sum(block > 0) / self.samples_per_period)
+            duty_cycles.append(stats.sum(block > 0) / self.samples_per_period)
             
         duty_cycles = tensor.convert_to_tensor(duty_cycles)
         
         return {
-            'mean_duty_cycle': np.mean(duty_cycles),
-            'min_duty_cycle': ops.stats.min(duty_cycles),
-            'max_duty_cycle': ops.stats.max(duty_cycles),
+            'mean_duty_cycle': stats.mean(duty_cycles),
+            'min_duty_cycle': stats.min(duty_cycles),
+            'max_duty_cycle': stats.max(duty_cycles),
             'unique_levels': len(np.unique(duty_cycles)),
             'theoretical_levels': self.levels
         }

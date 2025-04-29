@@ -334,7 +334,7 @@ class ELTC(Module):
             syn_current = tensor.reshape(syn_current, (batch_size, 1, units))
             
             # Perform element-wise multiplication and sum along the last dimension
-            syn_current = ops.stats.sum(ops.multiply(syn_current, erev_minus_v), axis=2)
+            syn_current = stats.sum(ops.multiply(syn_current, erev_minus_v), axis=2)
             
             # Calculate sensory current
             sensory_current = 0
@@ -359,7 +359,7 @@ class ELTC(Module):
                 sensory_current = tensor.reshape(sensory_current, (batch_size, self.input_size, 1))
                 
                 # Perform element-wise multiplication and sum along the input_size dimension
-                sensory_current = ops.stats.sum(ops.multiply(sensory_current, sensory_erev_minus_v), axis=1)
+                sensory_current = stats.sum(ops.multiply(sensory_current, sensory_erev_minus_v), axis=1)
             
             # Calculate leak current
             leak_current = ops.multiply(gleak, ops.subtract(self.vleak, y))
@@ -424,14 +424,14 @@ class ELTC(Module):
         # Use ops/tensor for calculations, avoid numpy
         # Ensure adjacency_matrix is a tensor first
         adj_matrix_tensor = tensor.convert_to_tensor(self.neuron_map.adjacency_matrix)
-        return ops.stats.sum(tensor.abs(adj_matrix_tensor))
+        return stats.sum(tensor.abs(adj_matrix_tensor))
     
     @property
     def sensory_synapse_count(self):
         # Use ops/tensor for calculations, avoid numpy
         sensory_matrix_tensor = tensor.convert_to_tensor(self.neuron_map.sensory_adjacency_matrix)
         # sum result might be a 0-dim tensor, convert to float if necessary
-        sum_val = ops.stats.sum(tensor.abs(sensory_matrix_tensor))
+        sum_val = stats.sum(tensor.abs(sensory_matrix_tensor))
         # Use item() to get Python scalar
         return float(tensor.item(sum_val))
     

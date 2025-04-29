@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     import torch
     import mlx.core
     from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
-    from ember_ml.backend.tensor.convert_to_tensor.tensor import TorchTensor
+    from ember_ml.backend.torch.tensor import TorchTensor
     from ember_ml.backend.mlx.tensor.tensor import MLXTensor
     from ember_ml.nn.tensor.common.ember_tensor import EmberTensor
 
@@ -48,7 +48,7 @@ type TensorLike = Optional[Union[
     'NumpyTensor',
     'TorchTensor',
     'MLXTensor',
-    'tensor.convert_to_tensor'
+    'torch.Tensor',
 ]]
 
 # Dimension-specific tensor types

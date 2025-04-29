@@ -31,13 +31,13 @@ def generate_toy_data(n_samples=500, n_features=100, pattern_size=10, n_patterns
         Generated data with embedded patterns
     """
     # Initialize data with low random values
-    data = np.random.uniform(0, 0.1, (n_samples, n_features))
+    data = tensor.random_uniform(0, 0.1, (n_samples, n_features))
     
     # Create patterns
     patterns = []
     for i in range(n_patterns):
         # Create a random binary pattern
-        pattern = np.random.choice([0, 1], size=pattern_size, p=[0.7, 0.3])
+        pattern = ops.random_choice([0, 1], size=pattern_size, p=[0.7, 0.3])
         # Scale to [0.7, 1.0] for more pronounced patterns
         pattern = pattern * 0.3 + 0.7
         patterns.append(pattern)
@@ -73,7 +73,7 @@ def generate_image_data(n_samples=500, width=10, height=10, n_patterns=3):
     n_pixels = width * height
     
     # Initialize data with low random values
-    data = np.random.uniform(0, 0.1, (n_samples, n_pixels))
+    data = tensor.random_uniform(0, 0.1, (n_samples, n_pixels))
     
     # Create patterns (simple geometric shapes)
     patterns = []
@@ -179,7 +179,7 @@ def main():
         import numpy as np
         from ember_ml.nn import tensor
         n_samples = len(data)
-        indices = np.random.permutation(n_samples)
+        indices = tensor.random_permutation(n_samples)
         for i in range(0, n_samples, batch_size):
             batch_indices = indices[i:i+batch_size]
             if len(batch_indices) == 0:

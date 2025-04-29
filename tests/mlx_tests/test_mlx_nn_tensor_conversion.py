@@ -2,7 +2,6 @@
 import pytest
 from ember_ml import ops
 from ember_ml.nn import tensor
-import numpy as np
 
 # Note: Assumes conftest.py provides the mlx_backend fixture
 
@@ -82,7 +81,7 @@ def test_tensor_to_numpy_mlx(mlx_backend): # Use fixture
     t_ember = tensor.convert_to_tensor(data)
     t_numpy = tensor.to_numpy(t_ember)
     # Check that the result is a numpy array
-    assert isinstance(t_numpy, np.ndarray), "Not numpy.ndarray"
+    assert isinstance(t_numpy, tensor.EmberTensor), "Not numpy.ndarray"
     assert ops.allclose(t_numpy, tensor.convert_to_tensor(data)), "Content mismatch"
     assert t_numpy.shape == tuple(tensor.shape(t_ember)), "Shape mismatch"
 
@@ -90,12 +89,12 @@ def test_tensor_item_mlx(mlx_backend): # Use fixture
     """Tests tensor.item for scalar tensors with MLX backend."""
     t_int = tensor.convert_to_tensor(42)
     item_int = tensor.item(t_int)
-    assert isinstance(item_int, (int, np.integer)), "Int type failed"
+    assert isinstance(item_int, (int, tensor.integer)), "Int type failed"
     assert item_int == 42, "Int value failed"
 
     t_float = tensor.convert_to_tensor(3.14)
     item_float = tensor.item(t_float)
-    assert isinstance(item_float, (float, np.floating)), "Float type failed"
+    assert isinstance(item_float, (float, tensor.floating)), "Float type failed"
     assert ops.less(ops.abs(ops.subtract(item_float, 3.14)), 1e-6), "Float value failed"
 
     t_bool = tensor.convert_to_tensor(True)

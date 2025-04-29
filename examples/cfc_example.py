@@ -79,7 +79,7 @@ def train_cfc_model(model, X_train, y_train, epochs=50, batch_size=32, learning_
         
         # Train in batches
         for i in range(0, tensor.shape(X_train)[0], batch_size):
-            end_idx = ops.stats.min(i + batch_size, tensor.shape(X_train)[0])
+            end_idx = stats.min(i + batch_size, tensor.shape(X_train)[0])
             batch_size_actual = end_idx - i
             batch_X = tensor.slice_tensor(shuffled_X, [i, 0, 0], [batch_size_actual, -1, -1])
             batch_y = tensor.slice_tensor(shuffled_y, [i, 0, 0], [batch_size_actual, -1, -1])

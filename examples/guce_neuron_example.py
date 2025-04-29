@@ -92,7 +92,7 @@ def visualize_results(original, reconstructed, energy, states):
     reconstructed_np = tensor.to_numpy(reconstructed)
     # Ensure reconstructed_np is at least 1-dimensional
     if reconstructed_np.ndim == 0:
-        reconstructed_np = reconstructed_np.reshape(1)
+        reconstructed_np = reconstructed_tensor.reshape(1)
     energy_np = tensor.to_numpy(energy)
     
     # Plot original vs reconstructed signal
@@ -210,11 +210,11 @@ def visualize_frequency_detection(signal, energy, transition_point):
     signal_np = tensor.to_numpy(signal)
     # Ensure signal_np is at least 1-dimensional
     if signal_np.ndim == 0:
-        signal_np = signal_np.reshape(1)
+        signal_np = signal_tensor.reshape(1)
     energy_np = tensor.to_numpy(energy)
     # Ensure energy_np is at least 1-dimensional
     if energy_np.ndim == 0:
-        energy_np = energy_np.reshape(1)
+        energy_np = energy_tensor.reshape(1)
     
     plt.figure(figsize=(12, 8))
     

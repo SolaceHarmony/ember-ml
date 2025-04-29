@@ -1,5 +1,4 @@
 import pytest
-import numpy as np # For comparison with known correct results
 
 # Import Ember ML modules
 from ember_ml import ops
@@ -62,7 +61,7 @@ def test_memorypattern_similarity(sample_memory_pattern_data):
     # Similarity calculation depends on the internal implementation (e.g., dot product, cosine similarity)
     # We can check that the similarity is a float or scalar tensor.
     similarity = memory_pattern1.similarity(memory_pattern2)
-    assert isinstance(similarity, (float, np.floating)) or similarity is not None
+    assert isinstance(similarity, (float, tensor.floating)) or similarity is not None
     # Check if similarity is within a reasonable range (e.g., 0 to 1 for normalized patterns)
     # For these dummy patterns, similarity should be low but non-zero due to random initialization.
     # A more precise test would require known patterns and expected similarity values.

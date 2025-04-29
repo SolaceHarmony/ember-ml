@@ -5,7 +5,7 @@ from ember_ml.nn import tensor
 from ember_ml import ops
 # Assuming attention mechanisms are directly under ember_ml.attention
 # from ember_ml.attention import SomeAttentionModule # Replace with actual imports
-from ember_ml.nn.modules import Module # Needed for isinstance checks
+from ember_ml.nn.modules import Module, Parameter # Import Parameter
 
 # Placeholder for a generic Attention Module if specific names are unknown
 class GenericAttentionModule(Module):
@@ -13,7 +13,7 @@ class GenericAttentionModule(Module):
     def __init__(self, *args, **kwargs):
         super().__init__()
         # Placeholder for parameter initialization
-        self.dummy_param = tensor.Parameter(tensor.random_normal((1,)))
+        self.dummy_param = Parameter(tensor.random_normal((1,))) # Use imported Parameter
         self.input_size = kwargs.get('input_size')
         self.output_size = kwargs.get('output_size')
         self.built = False # Assume it follows the build pattern

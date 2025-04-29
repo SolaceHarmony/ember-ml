@@ -1,14 +1,15 @@
-import os
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler # Keep StandardScaler import
 
 from ember_ml import ops
-from ember_ml.nn.wirings import AutoNCP
-from ember_ml.nn.modules.rnn import CfC
-from ember_ml.nn import Module, Sequential
-
+from ember_ml.nn.modules import AutoNCP, Dense, Dropout # Keep AutoNCP import
+from ember_ml.nn.modules.rnn import CfC # Keep CfC import
+from ember_ml.nn import Module # Keep Module and Sequential imports
+from ember_ml.nn import tensor
+from ember_ml.nn.tensor import EmberTensor
+from ember_ml.nn.container import Sequential,BatchNormalization
+from ember_ml.training
 # --------------------------
 # 📊 Telemetry Data Pipeline
 # --------------------------
@@ -30,7 +31,7 @@ class TelemetryProcessor:
         data = df[numeric_cols]
         
         # Split and scale
-        split_idx = int(len(data) * (1 - self.test_size))
+        split_idx = int(ops.multiply(len(data), ops.subtract(1.0, self.test_size))) # Replaced * and - with ops
         train_data = data.iloc[:split_idx]
         test_data = data.iloc[split_idx:]
         
@@ -43,8 +44,8 @@ class TelemetryProcessor:
     def create_sequences(self, data):
         """Convert raw data into overlapping sequences."""
         sequences = []
-        for i in range(0, len(data) - self.seq_len + 1, self.stride):
-            sequences.append(data[i:i+self.seq_len])
+        for i in range(0, ops.add(ops.subtract(len(data), self.seq_len), 1), self.stride): # Replaced -, + with ops
+            sequences.append(data[i:ops.add(i, self.seq_len)]) # Replaced + with ops
         return tensor.stack(sequences)
 
 # --------------------------
@@ -58,9 +59,9 @@ class LiquidNeuralNetwork:
         
     def _build_model(self):
         # Fast timescale layer for immediate feature detection
-        wiring_fast = wirings.AutoNCP(
+        wiring_fast = AutoNCP(
             units=self.model_size,
-            output_size=self.model_size // 4,
+            output_size=ops.floor_divide(self.model_size, 4), # Replaced // with ops
             sparsity_level=0.5
         )
         
@@ -71,9 +72,9 @@ class LiquidNeuralNetwork:
         )
         
         # Medium timescale layer for pattern recognition
-        wiring_med = wirings.AutoNCP(
-            units=self.model_size // 2,
-            output_size=self.model_size // 8,
+        wiring_med = AutoNCP(
+            units=ops.floor_divide(self.model_size, 2), # Replaced // with ops
+            output_size=ops.floor_divide(self.model_size, 8), # Replaced // with ops
             sparsity_level=0.4
         )
         
@@ -84,9 +85,9 @@ class LiquidNeuralNetwork:
         )
         
         # Slow timescale layer for trend analysis
-        wiring_slow = wirings.AutoNCP(
-            units=self.model_size // 4,
-            output_size=self.model_size // 16,
+        wiring_slow = AutoNCP(
+            units=ops.floor_divide(self.model_size, 4), # Replaced // with ops
+            output_size=ops.floor_divide(self.model_size, 16), # Replaced // with ops
             sparsity_level=0.3
         )
         
@@ -95,27 +96,28 @@ class LiquidNeuralNetwork:
             return_sequences=False,  # Only need final state for anomaly detection
             mixed_memory=True
         )
-        
+        # Build the model
+        # Sequential model with multi-scale liquid neural layers
         model = Sequential([
             # Input layer
-            keras.layers.Input(shape=self.input_shape),
+            EmberTensor(0.0,shape=self.input_shape),
             
             # Multi-scale liquid neural layers
             ltc_fast,
-            keras.layers.BatchNormalization(),
+            BatchNormalization(),
             
             ltc_med,
-            keras.layers.BatchNormalization(),
+            BatchNormalization(),
             
             ltc_slow,
-            keras.layers.BatchNormalization(),
+            BatchNormalization(),
             
             # Anomaly detection head
-            keras.layers.Dense(32, activation='relu'),
-            keras.layers.Dropout(0.3),
-            keras.layers.Dense(16, activation='relu'),
-            keras.layers.Dropout(0.2),
-            keras.layers.Dense(1, activation='sigmoid')
+            Dense(32, activation='relu'),
+            Dropout(0.3),
+            Dense(16, activation='relu'),
+            Dropout(0.2),
+            Dense(1, activation='sigmoid')
         ])
         
         # Optimizer with gradient clipping

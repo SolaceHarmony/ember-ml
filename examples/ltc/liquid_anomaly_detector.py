@@ -17,15 +17,15 @@ def generate_log_data(num_logs=1000):
     """Generate synthetic Splunk-like log data with more pronounced anomaly patterns"""
     log_entries = {
         "timestamp": pd.date_range(start="2025-02-11", periods=num_logs, freq="1min"),
-        "location": np.random.choice(
+        "location": ops.random_choice(
             ["Switch_A", "Switch_B", "Switch_C", "Switch_D", "Switch_E"], 
             num_logs
         ),
-        "message": np.random.choice([
+        "message": ops.random_choice([
             "Link down", "Link up", "High latency", "Packet loss",
             "Auth failure", "Config mismatch", "Power issue"
         ], num_logs, p=[0.1, 0.1, 0.2, 0.2, 0.2, 0.1, 0.1]),  # Adjusted probabilities
-        "severity": np.random.choice(
+        "severity": ops.random_choice(
             ["Low", "Medium", "High", "Critical"], 
             num_logs, 
             p=[0.4, 0.3, 0.2, 0.1]  # More realistic severity distribution
@@ -36,7 +36,7 @@ def generate_log_data(num_logs=1000):
     
     # Insert more distinct anomalous patterns
     num_anomalies = num_logs // 20  # Increased frequency
-    anomaly_indices = np.random.choice(num_logs-10, num_anomalies, replace=False)
+    anomaly_indices = ops.random_choice(num_logs-10, num_anomalies, replace=False)
     
     for idx in anomaly_indices:
         # Create stronger correlated events
@@ -169,7 +169,7 @@ class LiquidAnomalyDetector:
         predictions_np = tensor.to_numpy(predictions)
         
         # Convert predictions to boolean array and flatten
-        return (predictions_np.squeeze() > threshold).astype(bool)
+        return (predictions_tensor.squeeze() > threshold).astype(bool)
     
     def _generate_labels(self, df):
         """Generate labels for training data based on known anomaly patterns"""
@@ -332,7 +332,7 @@ class LiquidAnomalyDetector:
         raw_predictions_np = tensor.to_numpy(raw_predictions)
         
         # Detect anomalies using threshold
-        anomalies = raw_predictions_np.squeeze() > threshold
+        anomalies = raw_predictions_tensor.squeeze() > threshold
         
         # Print anomaly information
         print("\nDetected Anomalies:")

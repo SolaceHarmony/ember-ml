@@ -160,7 +160,7 @@ class CTRQNet(Module):
             Viscosity tensor
         """
         # Calculate energy as sum of squared state elements
-        energy = ops.stats.sum(ops.square(state), axis=-1, keepdims=True)
+        energy = stats.sum(ops.square(state), axis=-1, keepdims=True)
         
         # Calculate viscosity using Boltzmann factor
         return ops.multiply(self.nu_0, ops.exp(ops.multiply(-self.beta, energy)))
@@ -270,7 +270,7 @@ class CTRQNet(Module):
         modulated_waveform = ops.multiply(x_expanded, waveform)
         
         # Sum across input dimension
-        output = ops.stats.sum(modulated_waveform, axis=1)
+        output = stats.sum(modulated_waveform, axis=1)
         
         return output
     

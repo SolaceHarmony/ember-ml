@@ -6,7 +6,7 @@ This module provides a flexible CSV loader that preserves the schema-agnostic ap
 
 import pandas as pd
 import os
-from typing import Dict, List, Optional, Tuple, Union, Any
+from typing import Dict, List, Optional, Tuple, Union, Any, Literal
 
 
 class GenericCSVLoader:
@@ -26,12 +26,13 @@ class GenericCSVLoader:
         """
         self.compression_support = compression_support
         
-    def load_csv(self, 
-                file_path: str, 
-                header_file: Optional[str] = None, 
+    def load_csv(self,
+                file_path: str,
+                header_file: Optional[str] = None,
                 index_col: Optional[str] = None,
                 datetime_cols: Optional[List[str]] = None,
-                encoding: str = 'utf-8') -> pd.DataFrame:
+                encoding: str = 'utf-8',
+                compression: Optional[Literal['infer', 'gzip', 'bz2', 'zip', 'xz', 'zstd']] = None) -> pd.DataFrame:
         """
         Load CSV data with automatic type detection.
         
@@ -70,9 +71,10 @@ class GenericCSVLoader:
         for col, dtype in column_types.items():
             if col in df.columns:
                 try:
-                    df[col] = df[col].astype(dtype)
+                    # Removed astype call as header file does not provide type information for casting
+                    pass # Rely on pandas automatic type inference
                 except Exception as e:
-                    print(f"Warning: Could not convert column {col} to {dtype}: {e}")
+                    print(f"Warning: Error processing column {col} with dtype {dtype}: {e}")
         
         # Convert datetime columns if specified
         if datetime_cols:

@@ -8,9 +8,7 @@ import asyncio
 import ray
 # import mlx.core as mx # Removed as EmberTensor is used
 
-# Import EmberTensor
-from ember_ml.nn.tensor import EmberTensor
- 
+from ember_ml.nn import tensor 
 # Import the MetalKernelActor from its new location
 from ember_ml.actors.task.metal_kernel_actor import MetalKernelActor
  
@@ -32,19 +30,17 @@ async def test_metal_kernel_demo():
     for i in range(5):
         request = {
             # Create input data as EmberTensor
-            'input_data': EmberTensor.random_normal((2,)),
+            'input_data': tensor.random_normal((2,)),
             'sequence_id': 'test-sequence',
             'timestep': i
         }
         result = await metal_kernel.process_data.remote(request)
-        # Result['output'] is expected to be an EmberTensor
         print(f"Process result for timestep {i}: {result}")
  
     # Get performance stats
     stats = await metal_kernel.get_performance_stats.remote()
     print(f"Performance stats: {stats}")
  
-    # Get current state (expected to contain EmberTensor states)
     state = await metal_kernel.get_state.remote()
     print(f"Current state: {state}")
  

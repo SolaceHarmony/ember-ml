@@ -253,7 +253,7 @@ class RBMVisualizer:
         for i in range(1, len(rbm.training_states)):
             prev_weights = rbm.training_states[i-1]['weights']
             curr_weights = rbm.training_states[i]['weights']
-            change = np.mean(np.abs(curr_weights - prev_weights))
+            change = stats.mean(ops.abs(curr_weights - prev_weights))
             weight_changes.append(change)
         
         ax3.plot(weight_changes, 'm-', linewidth=2)
@@ -264,10 +264,10 @@ class RBMVisualizer:
         
         # Plot weight statistics over time
         ax4 = axes[1, 1]
-        weight_means = [np.mean(state['weights']) for state in rbm.training_states]
-        weight_stds = [np.std(state['weights']) for state in rbm.training_states]
-        weight_mins = [ops.stats.min(state['weights']) for state in rbm.training_states]
-        weight_maxs = [ops.stats.max(state['weights']) for state in rbm.training_states]
+        weight_means = [stats.mean(state['weights']) for state in rbm.training_states]
+        weight_stds = [stats.std(state['weights']) for state in rbm.training_states]
+        weight_mins = [stats.min(state['weights']) for state in rbm.training_states]
+        weight_maxs = [stats.max(state['weights']) for state in rbm.training_states]
         
         epochs = range(len(rbm.training_states))
         ax4.plot(epochs, weight_means, 'b-', linewidth=2, label='Mean')
@@ -292,7 +292,7 @@ class RBMVisualizer:
             
             # Calculate convergence rate (slope of log error)
             log_errors = np.log(train_errors)
-            epochs = np.arange(len(log_errors))
+            epochs = tensor.arange(len(log_errors))
             if len(log_errors) > 10:
                 # Use the last 10 epochs to estimate convergence rate
                 slope, _ = np.polyfit(epochs[-10:], log_errors[-10:], 1)
@@ -304,7 +304,7 @@ class RBMVisualizer:
             # Check if training has converged based on error improvement
             if len(error_improvements) > 5:
                 recent_improvements = error_improvements[-5:]
-                avg_recent_improvement = np.mean(recent_improvements)
+                avg_recent_improvement = stats.mean(recent_improvements)
                 has_converged = avg_recent_improvement > -0.01  # Very small improvements
             else:
                 has_converged = False
@@ -457,8 +457,8 @@ class RBMVisualizer:
             
             # Add grid lines if the matrix is not too large
             if rbm.n_visible < 50 and rbm.n_hidden < 50:
-                ax.set_xticks(np.arange(rbm.n_hidden))
-                ax.set_yticks(np.arange(rbm.n_visible))
+                ax.set_xticks(tensor.arange(rbm.n_hidden))
+                ax.set_yticks(tensor.arange(rbm.n_visible))
                 ax.grid(False)
         
         plt.tight_layout()
@@ -509,7 +509,7 @@ class RBMVisualizer:
             Matplotlib figure
         """
         # Select random samples
-        indices = np.random.choice(len(data), min(n_samples, len(data)), replace=False)
+        indices = ops.random_choice(len(data), min(n_samples, len(data)), replace=False)
         samples = data[indices]
         
         # Reconstruct samples - make sure to convert to the right dtype
@@ -607,7 +607,7 @@ class RBMVisualizer:
             Matplotlib figure
         """
         # Select random samples
-        indices = np.random.choice(len(data), min(n_samples, len(data)), replace=False)
+        indices = ops.random_choice(len(data), min(n_samples, len(data)), replace=False)
         samples = data[indices]
         
         # Compute hidden activations - make sure to convert to the right dtype
@@ -643,8 +643,8 @@ class RBMVisualizer:
         ax.set_ylabel('Sample', fontsize=12)
         
         # Add grid lines
-        ax.set_xticks(np.arange(n_hidden_units))
-        ax.set_yticks(np.arange(n_samples))
+        ax.set_xticks(tensor.arange(n_hidden_units))
+        ax.set_yticks(tensor.arange(n_samples))
         ax.set_xticklabels([f"H{i+1}" for i in range(n_hidden_units)])
         ax.set_yticklabels([f"S{i+1}" for i in range(n_samples)])
         
@@ -1173,7 +1173,7 @@ class RBMVisualizer:
             Matplotlib animation
         """
         # Select random samples
-        indices = np.random.choice(len(data), min(n_samples, len(data)), replace=False)
+        indices = ops.random_choice(len(data), min(n_samples, len(data)), replace=False)
         samples = data[indices]
         
         # Create figure
@@ -1368,7 +1368,7 @@ class RBMVisualizer:
             
             # Randomly activate a small percentage (10-20%) of visible units
             n_active = max(1, int(rbm.n_visible * 0.15))
-            active_indices = np.random.choice(rbm.n_visible, n_active, replace=False)
+            active_indices = ops.random_choice(rbm.n_visible, n_active, replace=False)
             
             # Create a mask with 1s at active indices
             mask = tensor.zeros(rbm.n_visible)
@@ -1495,7 +1495,7 @@ class RBMVisualizer:
         
         # If feature names not provided, create generic ones
         if feature_names is None:
-            feature_names = [f"Feature_{i+1}" for i in range(data_np.shape[1])]
+            feature_names = [f"Feature_{i+1}" for i in range(data_tensor.shape[1])]
         
         # Create directory if saving is enabled
         if save:
@@ -1509,8 +1509,8 @@ class RBMVisualizer:
         normal_stats = {
             'mean': tensor.to_numpy(ops.stats.mean(normal_tensor, axis=0)),
             'std': tensor.to_numpy(ops.stats.std(normal_tensor, axis=0)),
-            'min': tensor.to_numpy(ops.stats.min(normal_tensor, axis=0)),
-            'max': tensor.to_numpy(ops.stats.max(normal_tensor, axis=0)),
+            'min': tensor.to_numpy(stats.min(normal_tensor, axis=0)),
+            'max': tensor.to_numpy(stats.max(normal_tensor, axis=0)),
             # Now using ops.stats for percentiles
             '25%': tensor.to_numpy(ops.stats.percentile(normal_tensor, 25, axis=0)),
             'median': tensor.to_numpy(ops.stats.median(normal_tensor, axis=0)),
@@ -1537,8 +1537,8 @@ class RBMVisualizer:
                 'Feature': feature_names,
                 'Category_Mean': tensor.to_numpy(ops.stats.mean(category_tensor, axis=0)),
                 'Category_Std': tensor.to_numpy(ops.stats.std(category_tensor, axis=0)),
-                'Category_Min': tensor.to_numpy(ops.stats.min(category_tensor, axis=0)),
-                'Category_Max': tensor.to_numpy(ops.stats.max(category_tensor, axis=0)),
+                'Category_Min': tensor.to_numpy(stats.min(category_tensor, axis=0)),
+                'Category_Max': tensor.to_numpy(stats.max(category_tensor, axis=0)),
                 'Category_25%': tensor.to_numpy(ops.stats.percentile(category_tensor, 25, axis=0)),
                 'Category_Median': tensor.to_numpy(ops.stats.median(category_tensor, axis=0)),
                 'Category_75%': tensor.to_numpy(ops.stats.percentile(category_tensor, 75, axis=0)),
@@ -1739,8 +1739,8 @@ class RBMVisualizer:
                 # Calculate statistics using ops.stats
                 mean = float(tensor.to_numpy(ops.stats.mean(feat_tensor)))
                 std = float(tensor.to_numpy(ops.stats.std(feat_tensor)))
-                min_val = float(tensor.to_numpy(ops.stats.min(feat_tensor)))
-                max_val = float(tensor.to_numpy(ops.stats.max(feat_tensor)))
+                min_val = float(tensor.to_numpy(stats.min(feat_tensor)))
+                max_val = float(tensor.to_numpy(stats.max(feat_tensor)))
                 
                 
                 # Calculate Z-score compared to normal data
@@ -1926,8 +1926,8 @@ class RBMVisualizer:
             
             # Create a heatmap of feature values for this category
             ax1 = fig.add_subplot(gs[i, 0])
-            feature_means = np.mean(category_samples, axis=0)
-            feature_stds = np.std(category_samples, axis=0)
+            feature_means = stats.mean(category_samples, axis=0)
+            feature_stds = stats.std(category_samples, axis=0)
             
             # Normalize feature values for better visualization
             feature_z_scores = feature_means / (feature_stds + 1e-10)  # Add small epsilon to avoid division by zero
@@ -1940,7 +1940,7 @@ class RBMVisualizer:
             
             # Sort the bars for better visualization
             sort_idx = np.argsort(feature_z_scores)
-            ax1.set_yticks(np.arange(len(feature_names)))
+            ax1.set_yticks(tensor.arange(len(feature_names)))
             ax1.set_yticklabels([feature_names[i] for i in sort_idx])
             
             # Create a second subplot for hidden unit activations
@@ -1952,7 +1952,7 @@ class RBMVisualizer:
             hidden_activations = tensor.to_numpy(hidden_probs)
             
             # Calculate mean activations for each hidden unit
-            mean_activations = np.mean(hidden_activations, axis=0)
+            mean_activations = stats.mean(hidden_activations, axis=0)
             
             # Plot hidden unit activations
             ax2.barh(range(len(mean_activations)), mean_activations, color='coral')
@@ -2055,11 +2055,11 @@ class RBMVisualizer:
         ax.set_ylabel('Features', fontsize=12)
         
         # Set y-axis labels to feature names
-        ax.set_yticks(np.arange(len(feature_names)))
+        ax.set_yticks(tensor.arange(len(feature_names)))
         ax.set_yticklabels(feature_names)
         
         # Set x-axis labels
-        ax.set_xticks(np.arange(rbm.n_hidden))
+        ax.set_xticks(tensor.arange(rbm.n_hidden))
         ax.set_xticklabels([f"H{i+1}" for i in range(rbm.n_hidden)])
         
         # Rotate x labels if there are many hidden units

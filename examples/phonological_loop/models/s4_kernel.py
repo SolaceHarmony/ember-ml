@@ -145,7 +145,7 @@ except ImportError:
             returns: (..., L)
             """
             cauchy_matrix = v.unsqueeze(-1) / (z.unsqueeze(-2) - w.unsqueeze(-1)) # (... N L)
-            return torch.sum(cauchy_matrix, dim=-2)
+            return stats.sum(cauchy_matrix, dim=-2)
 
     # Vandermonde functions
     log.warning( # Changed from error to warning
@@ -294,10 +294,10 @@ def transition(measure, N):
     """ A, B transition matrices for different measures """
     # Legendre (translated)
     if measure == 'legt':
-        Q = np.arange(N, dtype=np.float64)
+        Q = tensor.arange(N, dtype=tensor.float64)
         R = (2*Q + 1) ** .5
-        j, i = np.meshgrid(Q, Q)
-        A = R[:, None] * np.where(i < j, (-1.)**(i-j), 1) * R[None, :]
+        j, i = tensor.meshgrid(Q, Q)
+        A = R[:, None] * ops.where(i < j, (-1.)**(i-j), 1) * R[None, :]
         B = R[:, None]
         A = -A
 
@@ -306,38 +306,38 @@ def transition(measure, N):
         B *= 0.5
     # Legendre (scaled)
     elif measure == 'legs':
-        q = np.arange(N, dtype=np.float64)
-        col, row = np.meshgrid(q, q)
+        q = tensor.arange(N, dtype=tensor.float64)
+        col, row = tensor.meshgrid(q, q)
         r = 2 * q + 1
-        M = -(np.where(row >= col, r, 0) - np.diag(q))
+        M = -(ops.where(row >= col, r, 0) - np.diag(q))
         T = ops.sqrt(np.diag(2 * q + 1))
-        A = T @ M @ np.linalg.inv(T)
+        A = T @ M @ ops.linearalg.inv(T)
         B = np.diag(T)[:, None]
         B = B.copy() # Otherwise "UserWarning: given NumPY array is not writeable..." after torch.as_tensor(B)
     elif measure == 'legsd':
         # Essentially equivalent to S4D-LegS
-        q = np.arange(N, dtype=np.float64)
-        col, row = np.meshgrid(q, q)
+        q = tensor.arange(N, dtype=tensor.float64)
+        col, row = tensor.meshgrid(q, q)
         r = 2 * q + 1
-        M = -(np.where(row >= col, r, 0) - np.diag(q))
+        M = -(ops.where(row >= col, r, 0) - np.diag(q))
         T = ops.sqrt(np.diag(2 * q + 1))
-        A = T @ M @ np.linalg.inv(T)
+        A = T @ M @ ops.linearalg.inv(T)
         B = np.diag(T)[:, None]
         B = B.copy() # Otherwise "UserWarning: given NumPY array is not writeable..." after torch.as_tensor(B)
         A += .5 * B*B[None, :, 0]
         B = B / 2.0
     elif measure in ['fourier_diag', 'foud']:
         # Essentially equivalent to S4D-Lin
-        freqs = np.arange(N//2)
+        freqs = tensor.arange(N//2)
         d = tensor.stack([freqs, tensor.zeros(N//2)], axis=-1).reshape(-1)[:-1]
         A = 2*ops.pi*(-np.diag(d, 1) + np.diag(d, -1))
-        A = A - .5 * np.eye(N)
+        A = A - .5 * ops.eye(N)
         B = tensor.zeros(N)
         B[0::2] = 2**.5
         B[0] = 1
         B = B[:, None]
     elif measure in ['fourier', 'fout']:
-        freqs = np.arange(N//2)
+        freqs = tensor.arange(N//2)
         d = tensor.stack([tensor.zeros(N//2), freqs], axis=-1).reshape(-1)[1:]
         A = ops.pi*(-np.diag(d, 1) + np.diag(d, -1))
         B = tensor.zeros(N)
@@ -394,7 +394,7 @@ def nplr(measure, N, rank=1, dtype=torch.float, diagonalize_precision=True):
     B = torch.as_tensor(B, dtype=dtype)[:, 0] # (N,)
 
     P = rank_correction(measure, N, rank=rank, dtype=dtype) # (r N)
-    AP = A + torch.sum(P.unsqueeze(-2)*P.unsqueeze(-1), dim=-3)
+    AP = A + stats.sum(P.unsqueeze(-2)*P.unsqueeze(-1), dim=-3)
 
     # We require AP to be nearly skew-symmetric
     _A = AP + AP.transpose(-1, -2)
@@ -402,7 +402,7 @@ def nplr(measure, N, rank=1, dtype=torch.float, diagonalize_precision=True):
     diag_mean = torch.mean(torch.diagonal(_A))
     is_identity_multiple = torch.allclose(_A, diag_mean * torch.eye(N, dtype=_A.dtype, device=_A.device), atol=1e-5)
     if not is_identity_multiple:
-        err = torch.sum((_A - diag_mean * torch.eye(N, dtype=_A.dtype, device=_A.device))**2) / N
+        err = stats.sum((_A - diag_mean * torch.eye(N, dtype=_A.dtype, device=_A.device))**2) / N
         log.warning(f"HiPPO matrix correction AP not skew symmetric ({err=})")
 
 
@@ -435,8 +435,8 @@ def nplr(measure, N, rank=1, dtype=torch.float, diagonalize_precision=True):
     # Handle edge case for zero eigenvalues (common in Fourier)
     zero_threshold = 1e-5
     zero_eigenvalues = w_sorted.abs() < zero_threshold
-    if torch.sum(zero_eigenvalues) > 1:
-         log.warning(f"Multiple zero eigenvalues found ({torch.sum(zero_eigenvalues)}), handling might be approximate.")
+    if stats.sum(zero_eigenvalues) > 1:
+         log.warning(f"Multiple zero eigenvalues found ({stats.sum(zero_eigenvalues)}), handling might be approximate.")
          # Keep only one zero eigenvalue if multiple exist (heuristic)
          first_zero_idx = torch.where(zero_eigenvalues.squeeze(-1))[0][0]
          non_zero_mask = torch.ones_like(zero_eigenvalues, dtype=torch.bool)
@@ -526,7 +526,7 @@ def dplr(scaling, N, rank=1, H=1, dtype=torch.float, real_scale=1.0, imag_scale=
 
     if normalize:
         norm = -B/w # (H, N) # Result if you integrate the kernel with constant 1 function
-        zeta = 2*torch.sum(torch.abs(norm)**2, dim=-1, keepdim=True) # Variance with a random C vector
+        zeta = 2*stats.sum(torch.abs(norm)**2, dim=-1, keepdim=True) # Variance with a random C vector
         B = B / zeta**.5
 
     P = torch.randn(rank, H, N//2, dtype=cdtype) # Use cdtype
@@ -670,7 +670,7 @@ class SSKernelNPLR(OptimModule):
             return self.omega, self.z
 
         omega = tensor.convert_to_tensor(
-            np.exp(-2j * ops.pi / (L)), dtype=dtype, device=device
+            ops.exp(-2j * ops.pi / (L)), dtype=dtype, device=device
         )  # \omega_{L}
         omega = omega ** torch.arange(0, L // 2 + 1, device=device)
         z = 2 * (1 - omega) / (1 + omega) # Bilinear transform
@@ -919,7 +919,7 @@ class SSKernelNPLR(OptimModule):
             w_ = w.view(1, 1, self.H, self.N, 1)
             v_ = v.view(v.shape[0], v.shape[1], self.H, self.N, 1)
             cauchy_matrix = v_ / (z_ - w_) # Broadcasting: (B+1+R, C+R, H, N, L/2+1)
-            r = torch.sum(cauchy_matrix, dim=-2) # Sum over N -> (B+1+R, C+R, H, L/2+1)
+            r = stats.sum(cauchy_matrix, dim=-2) # Sum over N -> (B+1+R, C+R, H, L/2+1)
 
 
         # Low-rank Woodbury correction

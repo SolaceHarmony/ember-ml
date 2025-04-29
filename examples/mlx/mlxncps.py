@@ -130,12 +130,12 @@ if HAS_MLX:
     log_entries = {
         "Log_ID": range(1, 101),
         "Timestamp": tensor.linspace(1000, 2000, 100),
-        "Location": np.random.choice(["Switch_A", "Switch_B", "Switch_C", "Switch_D", "Switch_E"], 100),
-        "Message": np.random.choice([
+        "Location": ops.random_choice(["Switch_A", "Switch_B", "Switch_C", "Switch_D", "Switch_E"], 100),
+        "Message": ops.random_choice([
             "Link down", "Link up", "High latency detected", "Packet loss detected",
             "Authentication failure", "Configuration mismatch", "Power supply issue"
         ], 100),
-        "Severity": np.random.choice(["Low", "Medium", "High", "Critical"], 100)
+        "Severity": ops.random_choice(["Low", "Medium", "High", "Critical"], 100)
     }
 
     log_ids = tensor.convert_to_tensor(log_entries["Log_ID"])

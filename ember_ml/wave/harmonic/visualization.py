@@ -59,7 +59,7 @@ class HarmonicVisualizer:
             n_components (int): Number of components to plot
             figsize (tuple): Figure size (width, height)
         """
-        amplitudes, frequencies, phases = np.split(params, 3)
+        amplitudes, frequencies, phases = tensor.split(params, 3)
         
         plt.figure(figsize=figsize)
         

@@ -30,7 +30,7 @@ def test_matmul():
     result_np = tensor.to_numpy(result)
 
     # Assert correctness (using numpy for expected values)
-    expected_np = np.matmul(tensor.to_numpy(a), tensor.to_numpy(b))
+    expected_np = ops.matmul(tensor.to_numpy(a), tensor.to_numpy(b))
     assert ops.allclose(result_np, expected_np)
 
     # Test with different shapes
@@ -39,8 +39,8 @@ def test_matmul():
     result_cd = ops.matmul(c, d)
     result_dc = ops.matmul(d, c)
 
-    assert ops.allclose(tensor.to_numpy(result_cd), np.matmul(tensor.to_numpy(c), tensor.to_numpy(d)))
-    assert ops.allclose(tensor.to_numpy(result_dc), np.matmul(tensor.to_numpy(d), tensor.to_numpy(c)))
+    assert ops.allclose(tensor.to_numpy(result_cd), ops.matmul(tensor.to_numpy(c), tensor.to_numpy(d)))
+    assert ops.allclose(tensor.to_numpy(result_dc), ops.matmul(tensor.to_numpy(d), tensor.to_numpy(c)))
 
 
 def test_det():
@@ -52,7 +52,7 @@ def test_det():
     result_np = tensor.to_numpy(result)
 
     # Assert correctness
-    expected_np = np.linalg.det(tensor.to_numpy(a))
+    expected_np = ops.linearalg.det(tensor.to_numpy(a))
     assert ops.allclose(result_np, expected_np)
 
     # Test with a singular matrix
@@ -75,4 +75,4 @@ def test_det():
 #
 #     # Assert correctness (A @ A_inv should be identity)
 #     identity_check = ops.matmul(a, result)
-#     assert ops.allclose(tensor.to_numpy(identity_check), np.eye(2))
+#     assert ops.allclose(tensor.to_numpy(identity_check), ops.eye(2))

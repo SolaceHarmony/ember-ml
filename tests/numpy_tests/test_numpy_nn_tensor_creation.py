@@ -106,28 +106,28 @@ def test_arange():
     result = tensor.EmberTensor(raw_result)
     assert isinstance(result, tensor.EmberTensor)
     assert tensor.shape(result) == (5,)
-    assert ops.allclose(tensor.to_numpy(result), tensor.convert_to_tensor(np.arange(5)))
+    assert ops.allclose(tensor.to_numpy(result), tensor.convert_to_tensor(tensor.arange(5)))
 
     # Get the raw NumPy array
     raw_result_start_stop = tensor.arange(2, 7)
     # Wrap it in an EmberTensor
     result_start_stop = tensor.EmberTensor(raw_result_start_stop)
     assert tensor.shape(result_start_stop) == (5,)
-    assert ops.allclose(tensor.to_numpy(result_start_stop), tensor.convert_to_tensor(np.arange(2, 7)))
+    assert ops.allclose(tensor.to_numpy(result_start_stop), tensor.convert_to_tensor(tensor.arange(2, 7)))
 
     # Get the raw NumPy array
     raw_result_start_stop_step = tensor.arange(1, 10, 2)
     # Wrap it in an EmberTensor
     result_start_stop_step = tensor.EmberTensor(raw_result_start_stop_step)
     assert tensor.shape(result_start_stop_step) == (5,)
-    assert ops.allclose(tensor.to_numpy(result_start_stop_step), tensor.convert_to_tensor(np.arange(1, 10, 2)))
+    assert ops.allclose(tensor.to_numpy(result_start_stop_step), tensor.convert_to_tensor(tensor.arange(1, 10, 2)))
 
     # Test with float step
     # Get the raw NumPy array
     raw_result_float_step = tensor.arange(1.0, 5.0, 0.5)
     # Wrap it in an EmberTensor
     result_float_step = tensor.EmberTensor(raw_result_float_step)
-    assert ops.allclose(tensor.to_numpy(result_float_step), np.arange(1.0, 5.0, 0.5))
+    assert ops.allclose(tensor.to_numpy(result_float_step), tensor.arange(1.0, 5.0, 0.5))
 
 def test_linspace():
     # Test tensor.linspace
@@ -155,9 +155,9 @@ def test_linspace():
 #     result = tensor.eye(n)
 #     assert isinstance(result, tensor.EmberTensor)
 #     assert tensor.shape(result) == (n, n)
-#     assert ops.allclose(tensor.to_numpy(result), tensor.convert_to_tensor(np.eye(n)))
+#     assert ops.allclose(tensor.to_numpy(result), tensor.convert_to_tensor(ops.eye(n)))
 #
 #     m = 4
 #     result_nm = tensor.eye(n, m)
 #     assert tensor.shape(result_nm) == (n, m)
-#     assert ops.allclose(tensor.to_numpy(result_nm), tensor.convert_to_tensor(np.eye(n, m)))
+#     assert ops.allclose(tensor.to_numpy(result_nm), tensor.convert_to_tensor(ops.eye(n, m)))

@@ -64,7 +64,7 @@ class WaveMultiHeadAttention(nn.Module):
         v = self.v_proj(value).view(batch_size, -1, self.num_heads, self.d_k).transpose(1, 2)
         
         # Compute attention scores
-        scores = torch.matmul(q, k.transpose(-2, -1)) / (self.d_k ** 0.5)
+        scores = ops.matmul(q, k.transpose(-2, -1)) / (self.d_k ** 0.5)
         
         # Apply mask if provided
         if mask is not None:
@@ -75,7 +75,7 @@ class WaveMultiHeadAttention(nn.Module):
         attn = self.dropout(attn)
         
         # Compute output
-        output = torch.matmul(attn, v)
+        output = ops.matmul(attn, v)
         output = output.transpose(1, 2).contiguous().view(batch_size, -1, self.d_model)
         output = self.out_proj(output)
         

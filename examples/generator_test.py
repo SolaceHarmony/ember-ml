@@ -91,7 +91,7 @@ def generate_data(n_samples=1000, n_features=10, anomaly_fraction=0.05) -> pd.Da
     
     # Generate anomalies
     n_anomalies = int(n_samples * anomaly_fraction)
-    anomaly_indices = tensor.convert_to_tensor(np.random.choice(n_samples, n_anomalies, replace=False))
+    anomaly_indices = tensor.convert_to_tensor(ops.random_choice(n_samples, n_anomalies, replace=False))
     
     # Create different types of anomalies
     normal_tensor = tensor.convert_to_tensor(normal_data)
@@ -100,7 +100,7 @@ def generate_data(n_samples=1000, n_features=10, anomaly_fraction=0.05) -> pd.Da
         
         if anomaly_type == 0:  # Spike anomaly
             feature_idx = tensor.convert_to_tensor(np.random.randint(0, n_features))
-            spike_value = tensor.convert_to_tensor(np.random.uniform(3.0, 5.0))
+            spike_value = tensor.convert_to_tensor(tensor.random_uniform(3.0, 5.0))
             current_value = normal_tensor[idx, feature_idx]
             updated_value = ops.add(current_value, tensor.convert_to_tensor(spike_value))
             # Update the tensor using bracket assignment
@@ -260,10 +260,10 @@ true_negatives = ops.logical_and(ops.equal(predicted_anomalies, 0), ops.equal(te
 false_negatives = ops.logical_and(ops.equal(predicted_anomalies, 0), ops.equal(test_labels, 1))
 
 # Convert boolean tensors to count
-tp_sum = ops.stats.sum(tensor.cast(true_positives, tensor.int32))
-fp_sum = ops.stats.sum(tensor.cast(false_positives, tensor.int32))
-tn_sum = ops.stats.sum(tensor.cast(true_negatives, tensor.int32))
-fn_sum = ops.stats.sum(tensor.cast(false_negatives, tensor.int32))
+tp_sum = stats.sum(tensor.cast(true_positives, tensor.int32))
+fp_sum = stats.sum(tensor.cast(false_positives, tensor.int32))
+tn_sum = stats.sum(tensor.cast(true_negatives, tensor.int32))
+fn_sum = stats.sum(tensor.cast(false_negatives, tensor.int32))
 
 # Calculate precision, recall, and F1 score
 precision = tp_sum / (tp_sum + fp_sum) if (tp_sum + fp_sum) > 0 else 0.0

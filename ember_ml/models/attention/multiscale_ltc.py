@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from typing import List, Dict, Any
 import pandas as pd
 import numpy as np
-
+from ember_ml.ops import stats
 from ember_ml import ops
 from ember_ml.nn import tensor
 from ember_ml.nn.tensor import EmberTensor, zeros, ones, reshape, concatenate, to_numpy, convert_to_tensor
@@ -269,8 +269,8 @@ def visualize_multiscale_dynamics(model, test_inputs, test_y, stride_perspective
         ax1.scatter(to_numpy(test_y_tensor), to_numpy(predictions), alpha=0.5)
         
         # Get min and max values for the diagonal line
-        min_val = min(ops.stats.min(test_y_tensor).item(), ops.stats.min(predictions).item())
-        max_val = max(ops.stats.max(test_y_tensor).item(), ops.stats.max(predictions).item())
+        min_val = min(stats.min(test_y_tensor).item(), stats.min(predictions).item())
+        max_val = max(stats.max(test_y_tensor).item(), stats.max(predictions).item())
         ax1.plot([min_val, max_val], [min_val, max_val], 'r--')
     
     ax1.set_title("Prediction vs. Actual")
@@ -296,9 +296,9 @@ def visualize_multiscale_dynamics(model, test_inputs, test_y, stride_perspective
         # Apply PCA to reduce to 2D
         if shape(output)[0] > 2:  # Need at least 3 samples for 2 components
             # Convert to numpy for PCA
-            output_np = to_numpy(output)
+            output_tensor = tensor.convert_to_tensor(output)
             pca = PCA()
-            output_pca = pca.fit_transform(output_np, n_components=min(2, output_np.shape[0]-1))
+            output_pca = pca.fit_transform(output_tensor, n_components=min(2, output_tensor.shape[0]-1))
             
             # Plot the PCA results
             ax3.scatter(output_pca[:, 0],
@@ -736,13 +736,13 @@ class TemporalStrideProcessor:
             PCA-reduced data of shape (num_sequences, num_features * pca_components)
         """
         # Convert to numpy for PCA processing (PCA requires numpy arrays)
-        strided_data_np = to_numpy(strided_data)
-        num_sequences = strided_data_np.shape[0]
-        num_features = strided_data_np.shape[2]  # Original number of features
+        strided_data_tensor = tensor.convert_to_tensor(strided_data)
+        num_sequences = strided_data_tensor.shape[0]
+        num_features = strided_data_tensor.shape[2]  # Original number of features
         reduced_features = []
 
         for i in range(num_sequences):
-            sequence = strided_data_np[i]  # (window_size, num_features)
+            sequence = strided_data_tensor[i]  # (window_size, num_features)
             pca_results = []
             for j in range(num_features):
                 column_data = sequence[:, j].reshape(-1, 1)  # Reshape for PCA
