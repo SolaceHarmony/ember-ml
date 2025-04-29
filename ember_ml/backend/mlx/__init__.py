@@ -61,6 +61,7 @@ from ember_ml.backend.mlx.comparison_ops import (
     allclose,
     isclose,
     all,
+    any,
     where,
     isnan
 )
@@ -247,6 +248,7 @@ __all__ = [
     'allclose',
     'isclose',
     'all',
+    'any',
     'where',
     'isnan',
     

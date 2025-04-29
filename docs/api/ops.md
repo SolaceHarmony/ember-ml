@@ -68,6 +68,7 @@ from ember_ml import ops
 | `ops.allclose(x, y, rtol=1e-5, atol=1e-8)` | Returns whether all elements are close |
 | `ops.isclose(x, y, rtol=1e-5, atol=1e-8)` | Returns whether each element is close |
 | `ops.all(x, axis=None, keepdims=False)` | Test whether all elements evaluate to True |
+| `ops.any(x, axis=None, keepdims=False)` | Test whether any elements evaluate to True |
 | `ops.where(condition, x, y)` | Return elements chosen from x or y depending on condition |
 | `ops.isnan(x)` | Test element-wise for NaN |
 

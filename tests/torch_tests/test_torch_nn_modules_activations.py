@@ -77,8 +77,8 @@ def test_dropout_module():
     result_train = dropout(x, training=True)
     result_train_np = tensor.to_numpy(result_train)
     # Check that some elements are zero and others are scaled
-    assert np.any(result_train_np == 0.0)
-    assert np.any(ops.isclose(result_train_np, 1.0 / (1.0 - dropout_rate)))
+    assert ops.any(result_train_np == 0.0)
+    assert ops.any(ops.isclose(result_train_np, 1.0 / (1.0 - dropout_rate)))
 
     # During inference (dropout should not be active)
     result_eval = dropout(x, training=False)

@@ -54,6 +54,7 @@ def test_sigmoid_module():
 
 def test_softmax_module():
     # Test Softmax Module
+    from ember_ml.ops import stats
     softmax = activations_module.Softmax(axis=-1)
     x = tensor.convert_to_tensor([[1.0, 2.0, 3.0], [1.0, 1.0, 1.0]])
     result = softmax(x)
@@ -62,6 +63,7 @@ def test_softmax_module():
     assert ops.allclose(tensor.to_numpy(result), expected_np)
 
 def test_dropout_module():
+
     # Test Dropout Module (training vs inference)
     dropout_rate = 0.5
     dropout = activations_module.Dropout(rate=dropout_rate, seed=42)
@@ -69,10 +71,9 @@ def test_dropout_module():
 
     # During training (dropout should be active)
     result_train = dropout(x, training=True)
-    result_train_np = tensor.to_numpy(result_train)
     # Check that some elements are zero and others are scaled
-    assert np.any(result_train_np == 0.0)
-    assert np.any(ops.isclose(result_train_np, 1.0 / (1.0 - dropout_rate)))
+    assert ops.any(ops.equal(result_train, 0.0))
+    assert ops.any(ops.isclose(result_train, 1.0 / (1.0 - dropout_rate)))
 
     # During inference (dropout should not be active)
     result_eval = dropout(x, training=False)

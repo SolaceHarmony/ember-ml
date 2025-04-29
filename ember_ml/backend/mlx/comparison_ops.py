@@ -205,7 +205,6 @@ def isclose(x: TensorLike, y: TensorLike, rtol: float = 1e-5, atol: float = 1e-8
     tolerance = mx.add(atol, mx.multiply(rtol, mx.abs(y_tensor)))
     return mx.less_equal(abs_diff, tolerance)
 
-
 def all(x: TensorLike, axis: Any = None, keepdims: bool = False) -> mx.array:
     """
     Check if all elements in a tensor are True.
@@ -225,6 +224,28 @@ def all(x: TensorLike, axis: Any = None, keepdims: bool = False) -> mx.array:
     Tensor = MLXTensor()
     x_tensor = Tensor.convert_to_tensor(x)
     return mx.all(x_tensor, axis=axis, keepdims=keepdims)
+
+
+def any(x: TensorLike, axis: Any = None, keepdims: bool = False) -> mx.array:
+    """
+    Check if any elements in a tensor are True.
+    
+    Args:
+        x: Input tensor
+        axis: Axis or axes along which to perform the reduction.
+            If None, reduce over all dimensions.
+        keepdims: Keep reduced axes as singleton dimensions, defaults to False.
+            
+    Returns:
+        Boolean tensor with True if any elements are True, False otherwise.
+        If axis is specified, the result is a tensor with the specified
+        axes reduced.
+    """
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    Tensor = MLXTensor()
+    x_tensor = Tensor.convert_to_tensor(x)
+    return mx.any(x_tensor, axis=axis, keepdims=keepdims)
+
 
 
 def where(condition: TensorLike, x: TensorLike, y: TensorLike) -> mx.array:
