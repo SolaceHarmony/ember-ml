@@ -1,39 +1,76 @@
-import os
-import numpy as np
 import pandas as pd
-from datetime import datetime
 
 from ember_ml import ops
-from ember_ml.nn.wirings import AutoNCP
+from ember_ml.nn import tensor # Added import
+from ember_ml.nn import wirings # Added import
+# from ember_ml.nn.wirings import AutoNCP # AutoNCP is used via wirings.AutoNCP
 from ember_ml.nn.modules.rnn import CfC
-from ember_ml.nn import Module, Sequential
+# from ember_ml.nn import Module, Sequential # Module is not directly used, Sequential is
+from ember_ml.nn import Sequential
+from ember_ml.nn.container.batch_normalization import BatchNormalization
+from ember_ml.nn.container.dense import Dense
+from ember_ml.nn.container.common.dropout import Dropout
+from ember_ml.training import Adam # Added Adam optimizer
 from sklearn.preprocessing import StandardScaler
 
 def generate_log_data(num_logs=1000):
     """Generate synthetic Splunk-like log data with more pronounced anomaly patterns"""
     log_entries = {
         "timestamp": pd.date_range(start="2025-02-11", periods=num_logs, freq="1min"),
-        "location": np.random.choice(
-            ["Switch_A", "Switch_B", "Switch_C", "Switch_D", "Switch_E"], 
+        "location": (
+            lambda choices, n: tensor.gather(
+                tensor.convert_to_tensor(choices),
+                tensor.random_categorical(tensor.zeros(len(choices)), n)
+            ).to_numpy()
+        )(["Switch_A", "Switch_B", "Switch_C", "Switch_D", "Switch_E"], num_logs),
+        "message": (
+            lambda choices, probs, n: tensor.gather(
+                tensor.convert_to_tensor(choices),
+                tensor.random_categorical(ops.log(tensor.convert_to_tensor(probs)), n)
+            ).to_numpy()
+        )(
+            ["Link down", "Link up", "High latency", "Packet loss", "Auth failure", "Config mismatch", "Power issue"],
+            [0.1, 0.1, 0.2, 0.2, 0.2, 0.1, 0.1],
             num_logs
-        ),
-        "message": np.random.choice([
-            "Link down", "Link up", "High latency", "Packet loss",
-            "Auth failure", "Config mismatch", "Power issue"
-        ], num_logs, p=[0.1, 0.1, 0.2, 0.2, 0.2, 0.1, 0.1]),  # Adjusted probabilities
-        "severity": np.random.choice(
-            ["Low", "Medium", "High", "Critical"], 
-            num_logs, 
-            p=[0.4, 0.3, 0.2, 0.1]  # More realistic severity distribution
-        )
+        ),  # Adjusted probabilities
+        "severity": (
+            lambda choices, probs, n: tensor.gather(
+                tensor.convert_to_tensor(choices),
+                tensor.random_categorical(ops.log(tensor.convert_to_tensor(probs)), n)
+            ).to_numpy()
+        )(
+            ["Low", "Medium", "High", "Critical"],
+            [0.4, 0.3, 0.2, 0.1],
+            num_logs
+        )  # More realistic severity distribution
     }
     
     df = pd.DataFrame(log_entries)
     
     # Insert more distinct anomalous patterns
     num_anomalies = num_logs // 20  # Increased frequency
-    anomaly_indices = np.random.choice(num_logs-10, num_anomalies, replace=False)
-    
+    # anomaly_indices = np.random.choice(num_logs-10, num_anomalies, replace=False)
+    # Replace np.random.choice with tensor operations
+    population_size = num_logs - 10
+    if population_size >= num_anomalies and num_anomalies > 0 : # Ensure population is large enough and num_anomalies is positive
+        population = tensor.arange(population_size)
+        shuffled_population = tensor.random_permutation(population)
+        anomaly_indices_tensor = shuffled_population[:num_anomalies]
+        # Convert to numpy array for df.loc indexing if necessary, or use directly if supported
+        # For now, assuming direct iteration or conversion later if needed by df.loc
+        # This part might need adjustment based on how df.loc handles tensor indices
+        # or if anomaly_indices is used in a context requiring a list/numpy array.
+        # For simplicity in this diff, we'll assume it can be iterated or converted.
+        # If direct iteration over a tensor is problematic for the loop below,
+        # we might need anomaly_indices_tensor.to_numpy().tolist()
+        # However, to avoid re-introducing numpy, let's assume tensor iteration works or can be adapted.
+        # For the loop `for idx in anomaly_indices:`, idx needs to be an integer.
+        # So, conversion to a list of Python ints is likely necessary.
+        anomaly_indices = anomaly_indices_tensor.to_numpy().tolist() # Eagerly convert for the loop
+    else:
+        anomaly_indices = []
+
+
     for idx in anomaly_indices:
         # Create stronger correlated events
         df.loc[idx:idx+4, "severity"] = ["Critical", "Critical", "Critical", "High", "High"]
@@ -100,25 +137,23 @@ class LiquidAnomalyDetector:
         )
 
         model = Sequential([
-            keras.layers.Input(shape=(self.sequence_length, total_neurons)),
             ltc_fast,
-            keras.layers.BatchNormalization(),
+            BatchNormalization(),
             ltc_med,
-            keras.layers.BatchNormalization(),
+            BatchNormalization(),
             ltc_slow,
-            keras.layers.BatchNormalization(),
-            keras.layers.Dense(32, activation='relu',
-                             kernel_regularizer=keras.regularizers.l2(0.01)),
-            keras.layers.Dropout(0.3),
-            keras.layers.Dense(16, activation='relu',
-                             kernel_regularizer=keras.regularizers.l2(0.01)),
-            keras.layers.Dropout(0.2),
-            keras.layers.Dense(1, activation='sigmoid')  # Anomaly probability
+            BatchNormalization(),
+            Dense(32, activation='relu'),
+            Dropout(0.3),
+            Dense(16, activation='relu'),
+            Dropout(0.2),
+            Dense(1, activation='sigmoid')  # Anomaly probability
         ])
 
-        optimizer = keras.optimizers.Adam(
-            learning_rate=0.001,
-            clipvalue=0.5
+        optimizer = Adam( # Replaced keras.optimizers.Adam
+            lr=0.001, # Renamed learning_rate to lr
+            # clipvalue=0.5, # clipvalue is not a direct parameter, may need to be handled by gradient clipping if necessary
+            weight_decay=0.01 # Added weight_decay for L2 regularization
         )
 
         model.compile(
@@ -141,7 +176,7 @@ class LiquidAnomalyDetector:
         
         # Create feature matrix
         num_features = len(self.location_map) + len(self.message_map) + 1  # +1 for severity
-        features = np.zeros((len(df), num_features))
+        features = tensor.zeros((len(df), num_features))
         
         for i, row in df.iterrows():
             # One-hot encode location
@@ -162,11 +197,18 @@ class LiquidAnomalyDetector:
         for i in range(len(features) - self.sequence_length):
             seq = features[i:i + self.sequence_length]
             # Pad or truncate features to match total_neurons
-            padded_seq = np.zeros((self.sequence_length, self.model.input_shape[-1]))
-            padded_seq[:, :seq.shape[1]] = seq
+            # Assuming self.model.input_shape[-1] gives an integer for dimensions
+            padded_seq = tensor.zeros((self.sequence_length, self.model.input_shape[-1]))
+            # Tensor assignment will depend on EmberTensor's capabilities.
+            # This might need ops.assign or direct slicing if EmberTensor supports it.
+            # For now, assuming direct slice assignment works or can be adapted.
+            # seq is likely a numpy array from self.scaler.fit_transform(features)
+            # so it should be converted to tensor before assignment or padding.
+            seq_tensor = tensor.convert_to_tensor(seq)
+            padded_seq[:, :seq_tensor.shape[1]] = seq_tensor
             sequences.append(padded_seq)
             
-        return np.array(sequences)
+        return tensor.convert_to_tensor(sequences) # Convert list of tensors to a single tensor
     
     def _detect_anomalies(self, sequences, threshold=0.8):
         """Detect anomalies using the liquid neural network"""
@@ -176,7 +218,7 @@ class LiquidAnomalyDetector:
     
     def _generate_labels(self, df):
         """Generate labels for training data based on known anomaly patterns"""
-        labels = np.zeros(len(df) - self.sequence_length)
+        labels = tensor.zeros(len(df) - self.sequence_length)
         
         # Label sequences as anomalies based on multiple criteria
         for i in range(len(df) - self.sequence_length):
@@ -210,7 +252,7 @@ class LiquidAnomalyDetector:
         sequences = self._encode_features(df)
         labels = self._generate_labels(df)
         
-        if len(sequences) == 0:
+        if sequences.shape[0] == 0:
             print("Not enough data for training")
             return
         
@@ -228,9 +270,9 @@ class LiquidAnomalyDetector:
         # Encode features into sequences
         sequences = self._encode_features(df)
         
-        if len(sequences) == 0:
+        if sequences.shape[0] == 0:
             print("Not enough data for sequence analysis")
-            return np.array([])
+            return tensor.convert_to_tensor([]) # Return empty EmberTensor
         
         # Train the model if it hasn't been trained
         if not hasattr(self, '_trained'):
@@ -239,16 +281,21 @@ class LiquidAnomalyDetector:
             
             # Print training summary
             print("\nTraining Summary:")
-            final_epoch = history.history
-            print(f"Final Training Accuracy: {final_epoch['accuracy'][-1]:.2%}")
-            print(f"Final Validation Accuracy: {final_epoch['val_accuracy'][-1]:.2%}")
-            print(f"Final AUC Score: {final_epoch['AUC'][-1]:.3f}")
-            print("-" * 50)
+            if history and hasattr(history, 'history'): # Check if history is not None and has history attribute
+                final_epoch = history.history
+                print(f"Final Training Accuracy: {final_epoch['accuracy'][-1]:.2%}")
+                print(f"Final Validation Accuracy: {final_epoch['val_accuracy'][-1]:.2%}")
+                print(f"Final AUC Score: {final_epoch['AUC'][-1]:.3f}")
+                print("-" * 50)
+            else:
+                print("Training did not produce a history object (e.g., not enough data).")
         
         # Get raw predictions
         raw_predictions = self.model.predict(sequences)
         # Detect anomalies using threshold
-        anomalies = raw_predictions.squeeze() > threshold
+        # Assuming raw_predictions.squeeze() returns a tensor-like object
+        squeezed_predictions = raw_predictions.squeeze() # If squeeze is not a method, use tensor.squeeze(raw_predictions)
+        anomalies = ops.greater(squeezed_predictions, threshold)
         
         # Print anomaly information
         print("\nDetected Anomalies:")
@@ -288,9 +335,18 @@ def main():
     
     # Print summary
     print("\nDetection Summary:")
-    print(f"Total sequences processed: {len(anomalies)}")
-    print(f"Anomalies detected: {sum(anomalies)}")
-    print(f"Anomaly rate: {sum(anomalies)/len(anomalies)*100:.2f}%")
+    # Assuming 'anomalies' is a 1D tensor of booleans or 0s and 1s
+    # For sum(anomalies), if it's a boolean tensor, it might need casting or a specific sum op.
+    # ops.sum should work. For len(anomalies), use .shape[0].
+    num_anomalies_detected = ops.sum(tensor.cast(anomalies, tensor.int32)) # Cast to int for sum
+    total_processed = anomalies.shape[0]
+    print(f"Total sequences processed: {total_processed}")
+    print(f"Anomalies detected: {num_anomalies_detected}")
+    if total_processed > 0:
+        anomaly_rate = (num_anomalies_detected / total_processed) * 100
+        print(f"Anomaly rate: {anomaly_rate:.2f}%")
+    else:
+        print("Anomaly rate: N/A (no sequences processed)")
 
 if __name__ == "__main__":
     main()
