@@ -6,7 +6,6 @@ This module provides utilities for working with fractions.
 
 from fractions import Fraction
 from typing import Union, Tuple, List
-import numpy as np
 
 def to_fraction(value: Union[float, int, str]) -> Fraction:
     """

@@ -7,7 +7,6 @@ or if there's unnecessary data transfer happening.
 
 import time
 import torch
-import numpy as np
 
 def print_tensor_info(tensor, name):
     """Print detailed information about a tensor."""
