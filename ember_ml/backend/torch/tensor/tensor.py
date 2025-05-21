@@ -123,6 +123,32 @@ class TorchTensor:
         """
         from ember_ml.backend.torch.tensor.ops.utility import _convert_to_tensor as convert_to_tensor_func
         return convert_to_tensor_func(data, dtype, device)
+        
+    def convert(self, data: Any, dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
+        """
+        Convert input to PyTorch tensor with validated dtype and device in one step.
+        
+        This is a simplified helper method that combines dtype validation and tensor conversion,
+        which is a common pattern when handling dtype and device parameters in operations.
+        
+        Args:
+            data: Input data
+            dtype: Optional data type
+            device: Optional device to place the tensor on
+            
+        Returns:
+            PyTorch tensor with the specified dtype and device
+        """
+        # Use lazy imports to avoid circular dependencies
+        # Validate the dtype first
+        torch_dtype = None
+        if dtype is not None:
+            from ember_ml.backend.torch.tensor.ops.casting import _validate_dtype
+            torch_dtype = _validate_dtype(dtype)
+        
+        # Convert input to PyTorch tensor with the validated dtype and device
+        # Use the convert_to_tensor method which already has lazy imports
+        return self.convert_to_tensor(data, dtype=torch_dtype, device=device)
 
     def slice_tensor(self, data: TensorLike, starts: Sequence[int], sizes: Sequence[int]) -> torch.Tensor:
         """

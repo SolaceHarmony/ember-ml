@@ -62,6 +62,33 @@ class NumpyTensor:
         """
         from ember_ml.backend.numpy.tensor.ops.utility import _convert_to_tensor as convert_to_tensor_func
         return convert_to_tensor_func(data, dtype, device)
+        
+    def convert(self, data: Any, dtype: Optional[DType] = None, device: Optional[str] = None) -> np.ndarray:
+        """
+        Convert input to NumPy array with validated dtype and device in one step.
+        
+        This is a simplified helper method that combines dtype validation and tensor conversion,
+        which is a common pattern when handling dtype and device parameters in operations.
+        
+        Args:
+            data: Input data
+            dtype: Optional data type
+            device: Optional device (ignored for NumPy backend)
+            
+        Returns:
+            NumPy array with the specified dtype
+        """
+        # Use lazy imports to avoid circular dependencies
+        # Validate the dtype first
+        numpy_dtype = None
+        if dtype is not None:
+            from ember_ml.backend.numpy.tensor.ops.casting import _validate_dtype
+            numpy_dtype = _validate_dtype(dtype)
+        
+        # Convert input to NumPy array with the validated dtype
+        # Note: device is ignored for NumPy backend
+        # Use the convert_to_tensor method which already has lazy imports
+        return self.convert_to_tensor(data, dtype=numpy_dtype, device=device)
 
     def slice_tensor(self, data: TensorLike, starts: Sequence[int], sizes: Sequence[int]) -> np.ndarray:
         """

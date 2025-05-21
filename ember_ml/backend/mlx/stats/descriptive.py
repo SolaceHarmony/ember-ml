@@ -26,7 +26,8 @@ def median(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
     """
     # Convert input to MLX array
     from ember_ml.backend.mlx.tensor import MLXTensor
-    x_array = MLXTensor().convert_to_tensor(x)
+    tensor = MLXTensor()
+    x_array = tensor.convert(x)
     
     # Sort values along the specified axis
     sorted_x = mx.sort(x_array, axis=axis)
@@ -45,7 +46,7 @@ def median(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
         
         # For even-length arrays, take the average of the two middle values
         if size % 2 == 0:
-            median_val = (flat_sorted[mid_idx-1] + flat_sorted[mid_idx]) / 2
+            median_val = mx.divide(mx.add(flat_sorted[mid_idx-1], flat_sorted[mid_idx]), mx.array(2.0))
         else:
             median_val = flat_sorted[mid_idx]
             
@@ -74,7 +75,7 @@ def median(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
             mid_val2 = sorted_x[tuple(indices)]
             
             # Average the two middle values
-            median_val = (mid_val1 + mid_val2) / 2
+            median_val = mx.divide(mx.add(mid_val1, mid_val2), mx.array(2.0))
         else:
             # Get the middle value
             indices[axis] = mid_idx
@@ -102,7 +103,8 @@ def std(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
     """
     # Convert input to MLX array
     from ember_ml.backend.mlx.tensor import MLXTensor
-    x_array = MLXTensor().convert_to_tensor(x)
+    tensor = MLXTensor()
+    x_array = tensor.convert(x)
     
     # Compute mean
     mean = mx.mean(x_array, axis=axis, keepdims=True)
@@ -118,11 +120,11 @@ def std(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
         for dim in shape:
              size *= dim # Calculate product using Python
         n = size - ddof
-        variance = mx.sum(squared_diff) / n
+        variance = mx.divide(mx.sum(squared_diff), mx.array(n, dtype=squared_diff.dtype))
     else:
         # Compute along the specified axis
         n = x_array.shape[axis] - ddof
-        variance = mx.sum(squared_diff, axis=axis, keepdims=keepdims) / n
+        variance = mx.divide(mx.sum(squared_diff, axis=axis, keepdims=keepdims), mx.array(n, dtype=squared_diff.dtype))
     
     # Return square root of variance
     return mx.sqrt(variance)
@@ -144,10 +146,11 @@ def percentile(x: TensorLike, q: Union[float, Any],
     """
     # Convert input to MLX array
     from ember_ml.backend.mlx.tensor import MLXTensor
-    x_array = MLXTensor().convert_to_tensor(x)
+    tensor = MLXTensor()
+    x_array = tensor.convert(x)
     
     # Convert percentile to fraction
-    q_frac = q / 100.0
+    q_frac = mx.divide(mx.array(q, dtype=x_array.dtype), mx.array(100.0, dtype=x_array.dtype))
     
     # Sort the array
     sorted_x = mx.sort(x_array, axis=axis)
@@ -215,7 +218,7 @@ def percentile(x: TensorLike, q: Union[float, Any],
             return result
 
 def mean(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
-        keepdims: bool = False) -> mx.array:
+        keepdims: bool = False, dtype: Optional[Any] = None) -> mx.array:
     """
     Compute the mean along the specified axis.
     
@@ -223,16 +226,29 @@ def mean(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
         x: Input tensor
         axis: Axis or axes along which to compute the mean
         keepdims: Whether to keep the reduced dimensions
+        dtype: Optional data type for the output
         
     Returns:
         Mean of the tensor
     """
-    # Convert input to MLX array
+    # Use lazy imports to avoid circular dependencies
+    # Convert input to MLX array with the validated dtype
     from ember_ml.backend.mlx.tensor import MLXTensor
-    x_array = MLXTensor().convert_to_tensor(x)
+    tensor = MLXTensor()
+    x_array = tensor.convert(x, dtype=dtype)
+    
+    # Get the dtype directly from the tensor
+    # This is simpler and more reliable than re-validating
+    mlx_dtype = x_array.dtype
     
     # Compute mean
-    return mx.mean(x_array, axis=axis, keepdims=keepdims)
+    result = mx.mean(x_array, axis=axis, keepdims=keepdims)
+    
+    # Cast to the specified dtype if the result dtype is different
+    if result.dtype != mlx_dtype:
+        result = result.astype(mlx_dtype)
+    
+    return result
 
 def var(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
        keepdims: bool = False, ddof: int = 0) -> mx.array:
@@ -250,7 +266,8 @@ def var(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
     """
     # Convert input to MLX array
     from ember_ml.backend.mlx.tensor import MLXTensor
-    x_array = MLXTensor().convert_to_tensor(x)
+    tensor = MLXTensor()
+    x_array = tensor.convert(x)
     
     # Compute mean
     mean = mx.mean(x_array, axis=axis, keepdims=True)
@@ -266,14 +283,14 @@ def var(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
         for dim in shape:
              size *= dim # Calculate product using Python
         n = size - ddof
-        variance = mx.sum(squared_diff) / n
+        variance = mx.divide(mx.sum(squared_diff), mx.array(n, dtype=squared_diff.dtype))
         if keepdims:
             return mx.expand_dims(variance)
         return variance
     else:
         # Compute along the specified axis
         n = x_array.shape[axis] - ddof
-        return mx.sum(squared_diff, axis=axis, keepdims=keepdims) / n
+        return mx.divide(mx.sum(squared_diff, axis=axis, keepdims=keepdims), mx.array(n, dtype=squared_diff.dtype))
 
 def max(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
        keepdims: bool = False) -> mx.array:
@@ -290,7 +307,8 @@ def max(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
     """
     # Convert input to MLX array
     from ember_ml.backend.mlx.tensor import MLXTensor
-    x_array = MLXTensor().convert_to_tensor(x)
+    tensor = MLXTensor()
+    x_array = tensor.convert(x)
     
     # Compute max
     return mx.max(x_array, axis=axis, keepdims=keepdims)
@@ -310,7 +328,8 @@ def min(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
     """
     # Convert input to MLX array
     from ember_ml.backend.mlx.tensor import MLXTensor
-    x_array = MLXTensor().convert_to_tensor(x)
+    tensor = MLXTensor()
+    x_array = tensor.convert(x)
     
     # Compute min
     return mx.min(x_array, axis=axis, keepdims=keepdims)
@@ -330,7 +349,8 @@ def sum(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
     """
     # Convert input to MLX array
     from ember_ml.backend.mlx.tensor import MLXTensor
-    x_array = MLXTensor().convert_to_tensor(x)
+    tensor = MLXTensor()
+    x_array = tensor.convert(x)
     
     # Compute sum
     return mx.sum(x_array, axis=axis, keepdims=keepdims)
@@ -348,7 +368,8 @@ def cumsum(x: TensorLike, axis: Optional[int] = None) -> mx.array:
     """
     # Convert input to MLX array
     from ember_ml.backend.mlx.tensor import MLXTensor
-    x_array = MLXTensor().convert_to_tensor(x)
+    tensor = MLXTensor()
+    x_array = tensor.convert(x)
     
     # Default axis is 0 if None is provided
     if axis is None:
@@ -372,7 +393,8 @@ def argmax(x: TensorLike, axis: Optional[int] = None,
     """
     # Convert input to MLX array
     from ember_ml.backend.mlx.tensor import MLXTensor
-    x_array = MLXTensor().convert_to_tensor(x)
+    tensor = MLXTensor()
+    x_array = tensor.convert(x)
     
     # If axis is None, flatten the array first
     if axis is None:
@@ -404,7 +426,8 @@ def sort(x: TensorLike, axis: int = -1, descending: bool = False) -> mx.array:
     """
     # Convert input to MLX array
     from ember_ml.backend.mlx.tensor import MLXTensor
-    x_array = MLXTensor().convert_to_tensor(x)
+    tensor = MLXTensor()
+    x_array = tensor.convert(x)
     
     # Sort the array
     sorted_x = mx.sort(x_array, axis=axis)
@@ -432,7 +455,8 @@ def argsort(x: TensorLike, axis: int = -1, descending: bool = False) -> mx.array
     """
     # Convert input to MLX array
     from ember_ml.backend.mlx.tensor import MLXTensor
-    x_array = MLXTensor().convert_to_tensor(x)
+    tensor = MLXTensor()
+    x_array = tensor.convert(x)
     
     # Get argsort indices
     indices = mx.argsort(x_array, axis=axis)
@@ -463,12 +487,13 @@ def gaussian(input_value: TensorLike, mu: TensorLike = 0.0, sigma: TensorLike = 
     """
     # Convert input to MLX array
     from ember_ml.backend.mlx.tensor import MLXTensor
-    x_tensor = MLXTensor().convert_to_tensor(input_value)
-    mu_tensor = MLXTensor().convert_to_tensor(mu)
-    sigma_tensor = MLXTensor().convert_to_tensor(sigma)
-    half = MLXTensor().convert_to_tensor(0.5)
-    two = MLXTensor().convert_to_tensor(2.0)
-    pi_tensor = MLXTensor().convert_to_tensor(math_pi)
+    tensor = MLXTensor()
+    x_tensor = tensor.convert(input_value)
+    mu_tensor = tensor.convert(mu)
+    sigma_tensor = tensor.convert(sigma)
+    half = tensor.convert(0.5)
+    two = tensor.convert(2.0)
+    pi_tensor = tensor.convert(math_pi)
 
     exponent = mx.multiply(
         mx.negative(half),

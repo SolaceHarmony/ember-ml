@@ -40,22 +40,26 @@ for _op_name in _STATS_OPS_LIST:
         globals()[_op_name] = None
     # Built-ins like max, min, sum, sort will be overwritten
 def get_stats_module():
-    """Imports the activation functions from the active backend module."""
-    # This function is not used in this module but can be used for testing purposes
-    # or to ensure that the backend module is imported correctly.
-    # Reload the backend module to ensure the latest version is use
+    """Imports the stats functions from the active backend module."""
+    # Get the backend base module name (e.g., 'ember_ml.backend.numpy')
     backend_base_module_name = get_backend_module().__name__
     print(f"DEBUG: get_stats_module - Backend base module name: {backend_base_module_name}")
+    
+    # Construct the stats module name (e.g., 'ember_ml.backend.numpy.stats')
     module_name = backend_base_module_name + '.stats'
     print(f"DEBUG: get_stats_module - Constructed module name: {module_name}")
+    
     try:
+        # Import the stats module from the backend
         module = importlib.import_module(module_name)
         print(f"DEBUG: get_stats_module - Successfully imported module: {module.__name__}")
         return module
     except ImportError as e:
         print(f"DEBUG: get_stats_module - Failed to import module {module_name}: {e}")
-        # Return None or raise an error, depending on desired behavior
-        # For now, let's return None to see if that's what's happening
+        return None
+    except AttributeError as e:
+        # This catches the "module has no attribute 'ops'" error
+        print(f"DEBUG: get_stats_module - AttributeError: {e}")
         return None
 
 # Keep track of the currently aliased backend for stats

@@ -122,6 +122,33 @@ class MLXTensor:
         """
         from ember_ml.backend.mlx.tensor.ops.utility import _convert_to_tensor as convert_to_tensor_func
         return convert_to_tensor_func(data, dtype, device)
+        
+    def convert(self, data: Any, dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
+        """
+        Convert input to MLX array with validated dtype and device in one step.
+        
+        This is a simplified helper method that combines dtype validation and tensor conversion,
+        which is a common pattern when handling dtype and device parameters in operations.
+        
+        Args:
+            data: Input data
+            dtype: Optional data type
+            device: Optional device to place the tensor on
+            
+        Returns:
+            MLX array with the specified dtype and device
+        """
+        # Use lazy imports to avoid circular dependencies
+        # Validate the dtype first
+        if dtype is not None:
+            from ember_ml.backend.mlx.tensor.ops.utility import _validate_and_get_mlx_dtype
+            mlx_dtype = _validate_and_get_mlx_dtype(dtype)
+        else:
+            mlx_dtype = None
+        
+        # Convert input to MLX array with the validated dtype and device
+        # Use the convert_to_tensor method which already has lazy imports
+        return self.convert_to_tensor(data, dtype=mlx_dtype, device=device)
 
     def slice_tensor(self, data: TensorLike, starts: Sequence[int], sizes: Sequence[int]) -> mx.array:
         """

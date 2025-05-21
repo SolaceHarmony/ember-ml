@@ -233,7 +233,7 @@ class LimbWaveNetwork:
 
 def create_test_signal(duration_sec: float, sample_rate: int) -> TensorLike:
     """Create test signal with multiple frequencies"""
-    t = tensor.linspacepace(0, duration_sec, int(duration_sec * sample_rate))
+    t = tensor.linspace(0, duration_sec, int(duration_sec * sample_rate))
     signal = (
         0.5 * ops.sin(2 * ops.pi * 440 * t) +  # A4
         0.3 * ops.sin(2 * ops.pi * 880 * t) +  # A5

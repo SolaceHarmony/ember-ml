@@ -10,16 +10,6 @@ __all__ = [
     'DEFAULT_DEVICE',
     'DEFAULT_DTYPE',
     
-    # Ops classes removed from __all__
-    # 'TorchMathOps',
-    # 'TorchComparisonOps',
-    # 'TorchDeviceOps',
-    # 'TorchIOOps',
-    # 'TorchLossOps',
-    # 'TorchLinearAlgOps',
-    # 'TorchFeatureOps',
-    # 'TorchVectorOps',
-    # 'TorchStatsOps',
     # Math operations
     'add', 'subtract', 'multiply', 'divide', 'matmul', 'dot',
     'mean', 'sum', 'max', 'min', 'exp', 'log', 'log10', 'log2',
@@ -69,16 +59,6 @@ __all__ = [
    # Activation Ops Functions (added)
    'relu', 'sigmoid', 'tanh', 'softmax', 'softplus',
 ]
-# Removed imports of Ops classes as they are no longer used for dispatch
-# from ember_ml.backend.torch.math_ops import TorchMathOps
-# from ember_ml.backend.torch.comparison_ops import TorchComparisonOps
-# from ember_ml.backend.torch.device_ops import TorchDeviceOps
-# from ember_ml.backend.torch.io_ops import TorchIOOps
-# from ember_ml.backend.torch.loss_ops import TorchLossOps
-# from ember_ml.backend.torch.linearalg import TorchLinearAlgOps
-# from ember_ml.backend.torch.stats import TorchStatsOps
-# from ember_ml.backend.torch.vector_ops import TorchVectorOps
-
 
 # Import specific functions from math_ops
 from ember_ml.backend.torch.math_ops import (
@@ -219,9 +199,6 @@ from ember_ml.backend.torch.tensor.ops import (
    random_normal, random_uniform, random_binomial, random_gamma, random_exponential,
    random_poisson, random_categorical, random_permutation, shuffle, set_seed, get_seed
 )
-# Re-alias tensor ops that clash with math ops (if necessary, though adding to __all__ should be sufficient)
-# var = tensor_var # Example if direct aliasing is needed later
-# sort = tensor_sort # Example if direct aliasing is needed later
 
 # Set power function
 power = pow

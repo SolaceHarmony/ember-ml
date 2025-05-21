@@ -5,16 +5,12 @@ This module provides implementations of descriptive statistics using PyTorch.
 """
 
 import torch
-from typing import Union, Sequence, Optional
+from typing import Union, Sequence, Optional, Any
 
 from ember_ml.backend.torch.types import TensorLike
-from ember_ml.backend.torch.tensor import TorchTensor
-from ember_ml.backend.torch.math_ops import pi
 
 
-Tensor = TorchTensor()
-
-def median(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None, 
+def median(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
           keepdims: bool = False) -> torch.Tensor:
     """
     Compute the median along the specified axis.
@@ -28,7 +24,9 @@ def median(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
         Median of the tensor
     """
     # Convert input to PyTorch tensor
-    x_tensor = Tensor.convert_to_tensor(x)
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor = TorchTensor()
+    x_tensor = tensor.convert(x)
     
     if axis is None:
         # If axis is None, compute median over all elements
@@ -54,7 +52,9 @@ def std(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
         Standard deviation of the tensor
     """
     # Convert input to PyTorch tensor
-    x_tensor = Tensor.convert_to_tensor(x)
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor = TorchTensor()
+    x_tensor = tensor.convert(x)
     
     if axis is None:
         # If axis is None, compute std over all elements
@@ -81,10 +81,12 @@ def percentile(x: TensorLike, q: Union[float, torch.Tensor],
         q-th percentile of the tensor
     """
     # Convert input to PyTorch tensor
-    x_tensor = Tensor.convert_to_tensor(x)
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor = TorchTensor()
+    x_tensor = tensor.convert(x)
     
     # Convert percentile to quantile (0-1)
-    q_normalized = q / 100.0
+    q_normalized = torch.divide(torch.tensor(q, dtype=x_tensor.dtype, device=x_tensor.device), torch.tensor(100.0, dtype=x_tensor.dtype, device=x_tensor.device))
     
     if axis is None:
         # If axis is None, compute percentile over all elements
@@ -102,9 +104,9 @@ def percentile(x: TensorLike, q: Union[float, torch.Tensor],
             result = sorted_x[idx_floor]
         else:
             # Linear interpolation
-            weight_ceil = idx - idx_floor.float()
-            weight_floor = 1.0 - weight_ceil
-            result = weight_floor * sorted_x[idx_floor] + weight_ceil * sorted_x[idx_ceil]
+            weight_ceil = torch.subtract(idx, idx_floor.float())
+            weight_floor = torch.subtract(torch.tensor(1.0, dtype=weight_ceil.dtype, device=weight_ceil.device), weight_ceil)
+            result = torch.add(torch.multiply(weight_floor, sorted_x[idx_floor]), torch.multiply(weight_ceil, sorted_x[idx_ceil]))
         
         return result.reshape(1) if keepdims else result
     else:
@@ -129,8 +131,8 @@ def percentile(x: TensorLike, q: Union[float, torch.Tensor],
             result = sorted_x[indices]
         else:
             # Linear interpolation
-            weight_ceil = idx - idx_floor.float()
-            weight_floor = 1.0 - weight_ceil
+            weight_ceil = torch.subtract(idx, idx_floor.float())
+            weight_floor = torch.subtract(torch.tensor(1.0, dtype=weight_ceil.dtype, device=weight_ceil.device), weight_ceil)
             
             indices[axis] = idx_floor
             floor_val = sorted_x[indices]
@@ -138,12 +140,12 @@ def percentile(x: TensorLike, q: Union[float, torch.Tensor],
             indices[axis] = idx_ceil
             ceil_val = sorted_x[indices]
             
-            result = weight_floor * floor_val + weight_ceil * ceil_val
+            result = torch.add(torch.multiply(weight_floor, floor_val), torch.multiply(weight_ceil, ceil_val))
         
         return result if keepdims else result.squeeze(axis)
 
 def mean(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
-        keepdims: bool = False) -> torch.Tensor:
+        keepdims: bool = False, dtype: Optional[Any] = None) -> torch.Tensor:
     """
     Compute the mean along the specified axis.
     
@@ -151,17 +153,25 @@ def mean(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
         x: Input tensor
         axis: Axis or axes along which to compute the mean
         keepdims: Whether to keep the reduced dimensions
+        dtype: Optional data type for the output
         
     Returns:
         Mean of the tensor
     """
-    # Convert input to PyTorch tensor
-    x_tensor = Tensor.convert_to_tensor(x)
+    # Use lazy imports to avoid circular dependencies
+    # Convert input to PyTorch tensor with the validated dtype
+    from ember_ml.backend.torch.tensor.tensor import TorchTensor
+    tensor_instance = TorchTensor()
+    x_tensor = tensor_instance.convert(x, dtype=dtype)
+    
+    # Get the dtype directly from the tensor
+    # This is simpler and more reliable than re-validating
+    torch_dtype = x_tensor.dtype
     
     if axis is None:
         # If axis is None, compute mean over all elements
         result = torch.mean(x_tensor.flatten())
-        return result.reshape(1) if keepdims else result
+        result = result.reshape(1) if keepdims else result
     else:
         # Compute mean along the specified axis
         # Calculate mean without keepdim first
@@ -174,9 +184,9 @@ def mean(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
                       target_shape[dim] = 1
             else: # axis is int
                  target_shape[axis] = 1
-            return result.reshape(target_shape)
-        else:
-             return result
+            result = result.reshape(target_shape)
+    
+    return result
 
 def var(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
        keepdims: bool = False, ddof: int = 0) -> torch.Tensor:
@@ -193,7 +203,9 @@ def var(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
         Variance of the tensor
     """
     # Convert input to PyTorch tensor
-    x_tensor = Tensor.convert_to_tensor(x)
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor = TorchTensor()
+    x_tensor = tensor.convert(x)
     
     if axis is None:
         # If axis is None, compute variance over all elements
@@ -229,7 +241,9 @@ def max(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
         Maximum value of the tensor
     """
     # Convert input to PyTorch tensor
-    x_tensor = Tensor.convert_to_tensor(x)
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor = TorchTensor()
+    x_tensor = tensor.convert(x)
     
     if axis is None:
         # If axis is None, compute max over all elements
@@ -254,7 +268,9 @@ def min(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
         Minimum value of the tensor
     """
     # Convert input to PyTorch tensor
-    x_tensor = Tensor.convert_to_tensor(x)
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor = TorchTensor()
+    x_tensor = tensor.convert(x)
     
     if axis is None:
         # If axis is None, compute min over all elements
@@ -279,7 +295,9 @@ def sum(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
         Sum of the tensor
     """
     # Convert input to PyTorch tensor
-    x_tensor = Tensor.convert_to_tensor(x)
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor = TorchTensor()
+    x_tensor = tensor.convert(x)
     
     if axis is None:
         # If axis is None, compute sum over all elements
@@ -302,7 +320,9 @@ def cumsum(x: TensorLike, axis: Optional[int] = None) -> torch.Tensor:
         Cumulative sum of the tensor
     """
     # Convert input to PyTorch tensor
-    x_tensor = Tensor.convert_to_tensor(x)
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor = TorchTensor()
+    x_tensor = tensor.convert(x)
     
     if axis is None:
         # If axis is None, compute cumsum over flattened tensor
@@ -325,7 +345,9 @@ def argmax(x: TensorLike, axis: Optional[int] = None,
         Indices of the maximum values
     """
     # Convert input to PyTorch tensor
-    x_tensor = Tensor.convert_to_tensor(x)
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor = TorchTensor()
+    x_tensor = tensor.convert(x)
     
     if axis is None:
         # If axis is None, compute argmax over flattened tensor
@@ -349,7 +371,9 @@ def sort(x: TensorLike, axis: int = -1, descending: bool = False) -> torch.Tenso
         Sorted tensor
     """
     # Convert input to PyTorch tensor
-    x_tensor = Tensor.convert_to_tensor(x)
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor = TorchTensor()
+    x_tensor = tensor.convert(x)
     
     # Sort along the specified axis
     result, _ = torch.sort(x_tensor, dim=axis, descending=descending)
@@ -368,7 +392,9 @@ def argsort(x: TensorLike, axis: int = -1, descending: bool = False) -> torch.Te
         Indices that would sort the tensor
     """
     # Convert input to PyTorch tensor
-    x_tensor = Tensor.convert_to_tensor(x)
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor = TorchTensor()
+    x_tensor = tensor.convert(x)
     
     # Get argsort along the specified axis
     _, indices = torch.sort(x_tensor, dim=axis, descending=descending)
@@ -389,12 +415,15 @@ def gaussian(input_value: TensorLike, mu: TensorLike = 0.0, sigma: TensorLike = 
     Returns:
         The Gaussian function evaluated at the input value(s).
     """
-    x_tensor = Tensor.convert_to_tensor(input_value)
-    mu_tensor = Tensor.convert_to_tensor(mu)
-    sigma_tensor = Tensor.convert_to_tensor(sigma)
-    half = Tensor.convert_to_tensor(0.5)
-    two = Tensor.convert_to_tensor(2.0)
-    pi_tensor = Tensor.convert_to_tensor(pi)
+    from ember_ml.backend.torch.tensor import TorchTensor
+    from ember_ml.backend.torch.math_ops import pi
+    tensor = TorchTensor()
+    x_tensor = tensor.convert(input_value)
+    mu_tensor = tensor.convert(mu)
+    sigma_tensor = tensor.convert(sigma)
+    half = tensor.convert(0.5)
+    two = tensor.convert(2.0)
+    pi_tensor = tensor.convert(pi)
 
     exponent = torch.multiply(
         torch.negative(half),

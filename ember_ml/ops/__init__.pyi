@@ -113,7 +113,7 @@ def rfftn(x: TensorLike) -> Tensor: ...
 def irfftn(x: TensorLike) -> Tensor: ...
 
 # Folders
-# Commented out to avoid issues
-# import ember_ml.ops.linearalg as linearalg
-# import ember_ml.ops.stats as stats
-# import ember_ml.ops.bitwise as bitwise
+# Import submodules for type checking
+from ember_ml.ops import linearalg
+from ember_ml.ops import stats
+from ember_ml.ops import bitwise

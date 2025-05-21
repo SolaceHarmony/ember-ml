@@ -1,7 +1,7 @@
 """MLX tensor random operations."""
 
-import mlx.core as mx
 from typing import Union, Optional, Sequence, Any, List, Tuple
+import mlx.core as mx
 
 from ember_ml.backend.mlx.types import Shape, TensorLike, DType,default_int, default_float
 from ember_ml.backend.mlx.tensor.ops.utility import _create_new_tensor # Import helper
@@ -61,8 +61,10 @@ def random_uniform(shape: Shape, minval: float = 0.0, maxval: float = 1.0,
         # For integer types, generate uniform floats and then cast to int
         # MLX doesn't have a direct randint function, so we need to use uniform and then cast
         # Generate uniform values in [minval, maxval+1) to include maxval
-        high = maxval + 1 if maxval == int(maxval) else int(maxval) + 1
-        low = int(minval)
+        from ember_ml.backend.mlx.tensor import MLXTensor
+        tensor = MLXTensor()
+        high = mx.add(tensor.convert(maxval, dtype=mx.float32), tensor.convert(1, dtype=mx.float32)) if maxval == int(maxval) else mx.add(tensor.convert(int(maxval), dtype=mx.float32), tensor.convert(1, dtype=mx.float32))
+        low = tensor.convert(int(minval), dtype=mx.float32)
         
         # Generate uniform floats in [low, high)
         # MLX's random_uniform only supports float types, so we need to generate floats and then cast to int
@@ -119,11 +121,11 @@ def random_exponential(shape: Shape, scale: float = 1.0,
     u = _create_new_tensor(mx.random.uniform, shape=shape, dtype=dtype, device=device) # Use target dtype for intermediate if specified
 
     # Perform transformation using mx ops
-    scale_tensor = mx.array(scale) # Scale doesn't need helper conversion
-    # Ensure 1.0 has compatible dtype with u if u's dtype was specified
-    one_tensor = mx.array(1.0, dtype=u.dtype)
-    # Clamp to avoid log(0)
-    log_input = mx.maximum(mx.subtract(one_tensor, u), mx.array(1e-9, dtype=u.dtype))
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    tensor = MLXTensor()
+    scale_tensor = tensor.convert(scale, dtype=u.dtype)
+    one_tensor = tensor.convert(1.0, dtype=u.dtype)
+    log_input = mx.maximum(mx.subtract(one_tensor, u), tensor.convert(1e-9, dtype=u.dtype))
     result = mx.multiply(mx.negative(scale_tensor), mx.log(log_input))
 
     # The result should already have the correct dtype from u or inference
@@ -185,7 +187,7 @@ def random_categorical(logits: TensorLike, num_samples: int,
     from ember_ml.backend.mlx.tensor import MLXTensor
 
 
-    logits_tensor = MLXTensor().convert_to_tensor(logits)
+    logits_tensor = MLXTensor().convert(logits)
     
     # MLX's categorical function takes num_samples parameter
     result = mx.random.categorical(logits=logits_tensor, num_samples=num_samples)
@@ -213,14 +215,16 @@ def random_permutation(x: Union[int, TensorLike], dtype: Optional[DType] = None,
     """
     if isinstance(x, int):
         # Create a range and permute it
-        arr = mx.arange(x)
-        indices = mx.random.permutation(x)
+        from ember_ml.backend.mlx.tensor import MLXTensor
+        tensor = MLXTensor()
+        arr = mx.arange(tensor.convert(x, dtype=mx.int32))
+        indices = mx.random.permutation(tensor.convert(x, dtype=mx.int32))
         return arr[indices]
     else:
-        # Import here to avoid circular imports
         from ember_ml.backend.mlx.tensor import MLXTensor
-        arr = MLXTensor().convert_to_tensor(x)
-        indices = mx.random.permutation(arr.shape[0])
+        tensor = MLXTensor()
+        arr = tensor.convert(x)
+        indices = mx.random.permutation(tensor.convert(arr.shape[0], dtype=mx.int32))
         return arr[indices]
 
 def random_shuffle(data: TensorLike) -> mx.array:
@@ -237,7 +241,7 @@ def random_shuffle(data: TensorLike) -> mx.array:
     # Import here to avoid circular imports
     from ember_ml.backend.mlx.tensor import MLXTensor
 
-    data_tensor = MLXTensor().convert_to_tensor(data)
+    data_tensor = MLXTensor().convert(data)
     
     # Get the shape of the tensor
     shape = data_tensor.shape
@@ -265,7 +269,7 @@ def shuffle(x: TensorLike) -> mx.array:
     # Import here to avoid circular imports
     from ember_ml.backend.mlx.tensor import MLXTensor
 
-    x_tensor = MLXTensor().convert_to_tensor(x)
+    x_tensor = MLXTensor().convert(x)
     
     # Get the shape of the tensor
     shape = x_tensor.shape

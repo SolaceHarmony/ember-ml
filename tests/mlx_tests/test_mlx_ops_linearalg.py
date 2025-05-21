@@ -72,16 +72,14 @@ def test_det():
     assert ops.allclose(tensor.to_numpy(result_singular), 0.0)
 
 
-@pytest.mark.skip(reason="QR numerical stability test needs further refinement")
 def test_qr_numerical_stability():
     """
-    Test that QR implementation has good numerical stability
-    for ill-conditioned matrices.
+    Test that QR implementation has 128-bit high precision numerical stability.
     
-    This test verifies that our QR implementation (which uses HPC internally)
-    maintains orthogonality even for challenging matrices.
+    This test verifies that our QR implementation maintains extremely high
+    orthogonality precision even for challenging matrices.
     """
-    # Create a simple test matrix instead of an ill-conditioned one
+    # Create a test matrix
     n = 10
     m = 5
     
@@ -91,22 +89,61 @@ def test_qr_numerical_stability():
     # Perform QR decomposition
     q, r = linearalg.qr(a)
     
-    # Check orthogonality of columns (Q^T * Q should be close to identity)
+    # Print shapes for debugging
+    print(f"Shape of a: {a.shape}")
+    print(f"Shape of q: {q.shape}")
+    print(f"Shape of r: {r.shape}")
+    
+    # Check orthogonality of columns (Q^T * Q should be identity)
     q_t_q = ops.matmul(tensor.transpose(q), q)
-    identity = tensor.eye(m, dtype=tensor.float32)
     
-    # Compute error
-    error = stats.mean(ops.abs(ops.subtract(q_t_q, identity)))
+    # Create identity matrix using MLX operations
+    n_dim = q_t_q.shape[0]
+    # Create zeros tensor
+    identity = tensor.zeros((n_dim, n_dim), dtype=tensor.float32)
+    # Create indices for diagonal
+    indices = tensor.arange(n_dim)
+    # Create diagonal indices as tuples
+    diag_indices = (indices, indices)
+    # Create ones for diagonal
+    diag_values = tensor.ones(n_dim, dtype=tensor.float32)
+    # Use scatter from MLX ops to set diagonal elements to 1
+    from ember_ml.backend.mlx.tensor.ops import scatter
+    identity = scatter(diag_indices, diag_values, (n_dim, n_dim))
     
-    # The error should be small with a relaxed threshold
-    assert ops.all(ops.less(error, tensor.convert_to_tensor(0.1, dtype=tensor.float32))), \
-           f"QR orthogonality error too large: {error}"
+    # Print shapes for debugging
+    print(f"Shape of q_t_q: {q_t_q.shape}")
+    print(f"Shape of identity: {identity.shape}")
+    
+    # Compute error matrix and maximum absolute error
+    diff = ops.subtract(q_t_q, identity)
+    max_error = ops.stats.max(ops.abs(diff))
+    mean_error = stats.mean(ops.abs(diff))
+    
+    # Print actual values for debugging
+    print(f"QR Orthogonality:")
+    print(f"Maximum absolute error: {max_error}")
+    print(f"Mean absolute error: {mean_error}")
+    
+    # Use extremely strict threshold for 128-bit precision
+    # Should be close to machine epsilon for high precision
+    assert ops.less(max_error, tensor.convert_to_tensor(1e-10, dtype=tensor.float32)), \
+           f"QR orthogonality max error too large: {max_error}"
     
     # Check reconstruction
     recon = ops.matmul(q, r)
-    recon_error = stats.mean(ops.abs(ops.subtract(a, recon)))
-    assert ops.all(ops.less(recon_error, tensor.convert_to_tensor(0.1, dtype=tensor.float32))), \
-           f"QR reconstruction error too large: {recon_error}"
+    recon_diff = ops.subtract(a, recon)
+    recon_max_error = ops.max(ops.abs(recon_diff))
+    recon_mean_error = stats.mean(ops.abs(recon_diff))
+    
+    # Print reconstruction errors
+    print(f"QR Reconstruction:")
+    print(f"Maximum reconstruction error: {recon_max_error}")
+    print(f"Mean reconstruction error: {recon_mean_error}")
+    
+    # Verify reconstruction is essentially perfect
+    assert ops.less(recon_max_error, tensor.convert_to_tensor(1e-10, dtype=tensor.float32)), \
+           f"QR reconstruction error too large: {recon_max_error}"
 
 
 @pytest.mark.skip(reason="SVD numerical stability test needs further refinement")

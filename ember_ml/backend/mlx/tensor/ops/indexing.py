@@ -237,76 +237,135 @@ def scatter(indices: TensorLike, updates: TensorLike, shape: Union[ShapeLike, in
         # Convert MLX array shape to Python tuple safely
         # For single values, handle scalar array
         if shape.ndim == 0:
-            # Convert scalar MLX array to Python int via numpy
-            import numpy as np
-            shape_val = np.array(shape).item()
+            # Convert scalar MLX array to Python int
+            shape_val = int(shape.item())
             output_shape = (shape_val,)
         else:
-            # For arrays, convert to numpy then to list of ints
-            import numpy as np
-            shape_np = np.array(shape)
-            output_shape = tuple(int(x) for x in shape_np.tolist())
+            # For arrays, convert to list of ints
+            shape_list = [int(x) for x in shape.tolist()]
+            output_shape = tuple(shape_list)
     else:
         raise TypeError(f"Unsupported type for shape: {type(shape)}")
     
     # Create a zeros tensor of the appropriate shape
     result = mx.zeros(output_shape, dtype=updates_array.dtype)
     
-    # Scatter the updates into the result tensor
-    # Determine the number of updates to process
-    num_updates = updates_array.size if updates_array.ndim == 0 else updates_array.shape[0]
-
-    if indices_array.ndim == 2:
-        # Handle multi-dimensional indices
-        for i in range(num_updates):
-            # Convert indices safely using tolist() and ensure list format
-            current_indices = indices_int[i].tolist()
-            if not isinstance(current_indices, list):
-                current_indices = [current_indices]
-
-            # Prepare the update value (ensure it's an MLX array)
-            update_value = mx.array(updates_array.flatten()[i]) # Use flatten() to get element
-
-            # Use slice_update to update the element at the multi-dimensional index
-            # slice_update expects start_indices and axes
-            # For a single element update at a multi-dimensional index,
-            # start_indices are the indices themselves, and axes are the dimensions being indexed.
-            axes = list(range(len(current_indices)))
-            start_indices = mx.array(current_indices, dtype=mx.int32)
-
+    # Handle the case where indices is a tuple of arrays (for multi-dimensional indexing)
+    if isinstance(indices, tuple) and all(isinstance(idx, (mx.array, list, tuple)) for idx in indices):
+        # This is the case used in the eye function: (indices, indices)
+        # Ensure all index arrays have the same length
+        index_lengths = [len(idx) if hasattr(idx, '__len__') else 1 for idx in indices]
+        if len(set(index_lengths)) > 1:
+            raise ValueError("All index arrays must have the same length")
+        
+        num_indices = index_lengths[0]
+        num_dims = len(indices)
+        
+        # Check if dimensions match
+        if num_dims != len(output_shape):
+            raise ValueError(f"Number of index dimensions ({num_dims}) must match output shape dimensions ({len(output_shape)})")
+        
+        # Process each index
+        for i in range(num_indices):
+            # Extract the i-th index from each dimension
+            current_indices = []
+            for dim in range(num_dims):
+                idx = indices[dim]
+                if isinstance(idx, (list, tuple)):
+                    current_indices.append(int(idx[i]))
+                elif isinstance(idx, mx.array):
+                    current_indices.append(int(idx[i].item()))
+                else:
+                    raise TypeError(f"Unsupported index type: {type(idx)}")
+            
+            # Get the update value
+            if updates_array.ndim == 0:
+                # Scalar update
+                update_value = updates_array
+            elif updates_array.ndim == 1 and updates_array.shape[0] == num_indices:
+                # Vector of updates
+                update_value = updates_array[i]
+            else:
+                raise ValueError(f"Updates shape {updates_array.shape} doesn't match number of indices {num_indices}")
+            
+            # Update the result tensor
             if aggr == "add":
-                # Read the current value at the index, add the update, and write back
+                # Get current value
                 current_value = result[tuple(current_indices)]
-                new_value = mx.add(current_value, update_value)
-                result = mx.slice_update(result, new_value, start_indices, axes)
+                # Add update
+                new_value = current_value + update_value
+                # Update result
+                indices_mx = mx.array(current_indices, dtype=mx.int32)
+                axes = list(range(len(current_indices)))
+                result = mx.slice_update(result, new_value, indices_mx, axes)
             elif aggr == "max":
-                 current_value = result[tuple(current_indices)]
-                 new_value = mx.maximum(current_value, update_value)
-                 result = mx.slice_update(result, new_value, start_indices, axes)
+                current_value = result[tuple(current_indices)]
+                new_value = mx.maximum(current_value, update_value)
+                indices_mx = mx.array(current_indices, dtype=mx.int32)
+                axes = list(range(len(current_indices)))
+                result = mx.slice_update(result, new_value, indices_mx, axes)
             elif aggr == "min":
-                 current_value = result[tuple(current_indices)]
-                 new_value = mx.minimum(current_value, update_value)
-                 result = mx.slice_update(result, new_value, start_indices, axes)
+                current_value = result[tuple(current_indices)]
+                new_value = mx.minimum(current_value, update_value)
+                indices_mx = mx.array(current_indices, dtype=mx.int32)
+                axes = list(range(len(current_indices)))
+                result = mx.slice_update(result, new_value, indices_mx, axes)
     else:
-        # Handle 1D indices
-        for i in range(num_updates):
-            # Convert index safely using tolist() which handles scalar arrays correctly
-            current_idx = indices_int[i].tolist()
-            idx_array = mx.array([current_idx], dtype=mx.int32)
-
-            # Prepare the update value (ensure it's an MLX array)
-            update_value = mx.array(updates_array.flatten()[i]) # Use flatten() to get element
-
-            if aggr == "add":
-                current = result[current_idx]
-                result = mx.slice_update(result, mx.add(current, update_value), idx_array, [0])
-            elif aggr == "max":
-                current = result[current_idx]
-                result = mx.slice_update(result, mx.maximum(current, update_value), idx_array, [0])
-            elif aggr == "min":
-                current = result[current_idx]
-                result = mx.slice_update(result, mx.minimum(current, update_value), idx_array, [0])
-
+        # Handle standard case where indices is a single array
+        # Determine the number of updates to process
+        num_updates = updates_array.size if updates_array.ndim == 0 else updates_array.shape[0]
+        
+        if indices_array.ndim == 2:
+            # Handle multi-dimensional indices
+            for i in range(num_updates):
+                # Convert indices safely using tolist() and ensure list format
+                current_indices = indices_int[i].tolist()
+                if not isinstance(current_indices, list):
+                    current_indices = [current_indices]
+    
+                # Prepare the update value (ensure it's an MLX array)
+                update_value = mx.array(updates_array.flatten()[i]) # Use flatten() to get element
+    
+                # Use slice_update to update the element at the multi-dimensional index
+                # slice_update expects start_indices and axes
+                # For a single element update at a multi-dimensional index,
+                # start_indices are the indices themselves, and axes are the dimensions being indexed.
+                axes = list(range(len(current_indices)))
+                start_indices = mx.array(current_indices, dtype=mx.int32)
+    
+                if aggr == "add":
+                    # Read the current value at the index, add the update, and write back
+                    current_value = result[tuple(current_indices)]
+                    new_value = mx.add(current_value, update_value)
+                    result = mx.slice_update(result, new_value, start_indices, axes)
+                elif aggr == "max":
+                     current_value = result[tuple(current_indices)]
+                     new_value = mx.maximum(current_value, update_value)
+                     result = mx.slice_update(result, new_value, start_indices, axes)
+                elif aggr == "min":
+                     current_value = result[tuple(current_indices)]
+                     new_value = mx.minimum(current_value, update_value)
+                     result = mx.slice_update(result, new_value, start_indices, axes)
+        else:
+            # Handle 1D indices
+            for i in range(num_updates):
+                # Convert index safely using tolist() which handles scalar arrays correctly
+                current_idx = indices_int[i].tolist()
+                idx_array = mx.array([current_idx], dtype=mx.int32)
+    
+                # Prepare the update value (ensure it's an MLX array)
+                update_value = mx.array(updates_array.flatten()[i]) # Use flatten() to get element
+    
+                if aggr == "add":
+                    current = result[current_idx]
+                    result = mx.slice_update(result, mx.add(current, update_value), idx_array, [0])
+                elif aggr == "max":
+                    current = result[current_idx]
+                    result = mx.slice_update(result, mx.maximum(current, update_value), idx_array, [0])
+                elif aggr == "min":
+                    current = result[current_idx]
+                    result = mx.slice_update(result, mx.minimum(current, update_value), idx_array, [0])
+    
     return result
 
 def scatter_op(src: mx.array, index: mx.array, dim_size: int,

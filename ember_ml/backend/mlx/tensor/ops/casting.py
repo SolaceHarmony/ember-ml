@@ -1,10 +1,10 @@
 """MLX tensor casting operations."""
 
-import mlx.core # Restore necessary import for type hint
-# from typing import Optional # Removed unused Optional
+from typing import Optional # Removed unused Optional
 # Removed top-level import of _validate_and_get_mlx_dtype
 # from ember_ml.backend.mlx.tensor.dtype import MLXDType # Restore this import if needed, but likely not used now
 from ember_ml.backend.mlx.types import DType, TensorLike
+import mlx.core # Restore necessary import for type hint
 
 # _validate_dtype helper function removed. Logic should exist in MLXDType.validate_dtype
 
@@ -23,7 +23,7 @@ def cast(tensor: TensorLike, dtype: DType) -> mlx.core.array:
         ValueError: If the target dtype is invalid.
     """
     # Import MLX specifics lazily
-    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+    from ember_ml.backend.mlx.tensor import MLXTensor
     from ember_ml.backend.mlx.tensor.dtype import MLXDType
 
     # 1. Validate and get the MLX dtype
@@ -32,7 +32,7 @@ def cast(tensor: TensorLike, dtype: DType) -> mlx.core.array:
 
     # 2. Convert the input tensor to an MLX array
     tensor_obj = MLXTensor()
-    tensor_array = tensor_obj.convert_to_tensor(tensor)
+    tensor_array = tensor_obj.convert(tensor)
 
     # 3. If the validated dtype is None (meaning no cast needed), return original array
     if mlx_dtype is None:

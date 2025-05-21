@@ -5,11 +5,8 @@ This module provides MLX implementations of bit manipulation operations
 (count_ones, count_zeros, get_bit, set_bit, toggle_bit).
 """
 
-import mlx.core as mx
 from typing import Union
-
-# Import MLXTensor dynamically within functions
-# from ember_ml.backend.mlx.tensor import MLXTensor
+import mlx.core as mx
 from ember_ml.backend.mlx.types import TensorLike
 
 def count_ones(x: TensorLike) -> mx.array:
@@ -24,7 +21,7 @@ def count_ones(x: TensorLike) -> mx.array:
     """
     from ember_ml.backend.mlx.tensor import MLXTensor
     tensor_ops = MLXTensor()
-    x_arr = tensor_ops.convert_to_tensor(x)
+    x_arr = tensor_ops.convert(x)
 
     if not mx.issubdtype(x_arr.dtype, mx.integer):
         raise TypeError(f"count_ones requires an integer type, got {x_arr.dtype}")
@@ -89,7 +86,7 @@ def count_zeros(x: TensorLike) -> mx.array:
     """
     from ember_ml.backend.mlx.tensor import MLXTensor
     tensor_ops = MLXTensor()
-    x_arr = tensor_ops.convert_to_tensor(x)
+    x_arr = tensor_ops.convert(x)
 
     if not mx.issubdtype(x_arr.dtype, mx.integer):
         raise TypeError(f"count_zeros requires an integer type, got {x_arr.dtype}")
@@ -125,8 +122,8 @@ def get_bit(x: TensorLike, position: TensorLike) -> mx.array:
     """
     from ember_ml.backend.mlx.tensor import MLXTensor
     tensor_ops = MLXTensor()
-    x_arr = tensor_ops.convert_to_tensor(x)
-    pos_arr = tensor_ops.convert_to_tensor(position)
+    x_arr = tensor_ops.convert(x)
+    pos_arr = tensor_ops.convert(position)
 
     if not mx.issubdtype(x_arr.dtype, mx.integer):
         raise TypeError(f"get_bit requires an integer type for x, got {x_arr.dtype}")
@@ -157,9 +154,9 @@ def set_bit(x: TensorLike, position: TensorLike, value: TensorLike) -> mx.array:
     """
     from ember_ml.backend.mlx.tensor import MLXTensor
     tensor_ops = MLXTensor()
-    x_arr = tensor_ops.convert_to_tensor(x)
-    pos_arr = tensor_ops.convert_to_tensor(position)
-    val_arr = tensor_ops.convert_to_tensor(value)
+    x_arr = tensor_ops.convert(x)
+    pos_arr = tensor_ops.convert(position)
+    val_arr = tensor_ops.convert(value)
 
     if not mx.issubdtype(x_arr.dtype, mx.integer):
         raise TypeError(f"set_bit requires an integer type for x, got {x_arr.dtype}")
@@ -197,8 +194,8 @@ def toggle_bit(x: TensorLike, position: TensorLike) -> mx.array:
     """
     from ember_ml.backend.mlx.tensor import MLXTensor
     tensor_ops = MLXTensor()
-    x_arr = tensor_ops.convert_to_tensor(x)
-    pos_arr = tensor_ops.convert_to_tensor(position)
+    x_arr = tensor_ops.convert(x)
+    pos_arr = tensor_ops.convert(position)
 
     if not mx.issubdtype(x_arr.dtype, mx.integer):
         raise TypeError(f"toggle_bit requires an integer type for x, got {x_arr.dtype}")

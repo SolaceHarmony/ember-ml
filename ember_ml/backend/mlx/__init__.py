@@ -10,9 +10,6 @@ from ember_ml.backend.mlx.config import (
     DEFAULT_DTYPE
 )
 
-# Import tensor classes
-from ember_ml.backend.mlx.tensor import MLXDType, MLXTensor
-
 
 # Import specific functions from math_ops
 from ember_ml.backend.mlx.math_ops import (
@@ -127,20 +124,6 @@ __all__ = [
     # Configuration variables
     'DEFAULT_DEVICE',
     'DEFAULT_DTYPE',
-
-    # Ops classes removed from export
-    # 'MLXMathOps',
-    # 'MLXComparisonOps',
-    # 'MLXDeviceOps',
-    # 'MLXLinearAlgOps',
-    # 'MLXIOOps',
-    # 'MLXVectorOps',
-    # 'MLXStatsOps',
-    # 'MLXLossOps',
-
-    # Tensor classes removed from export
-    # 'MLXDType',
-    # 'MLXTensor',
 
     # Math operations
     'add',

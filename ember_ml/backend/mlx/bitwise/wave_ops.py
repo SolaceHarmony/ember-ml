@@ -11,7 +11,9 @@ from typing import List, Union
 # Import MLXTensor dynamically within functions
 # from ember_ml.backend.mlx.tensor import MLXTensor
 from ember_ml.backend.mlx.types import TensorLike
-from .basic_ops import bitwise_and, bitwise_or, bitwise_xor # Import from sibling module
+from typing import List, Union
+import mlx.core as mx
+from ember_ml.backend.mlx.types import TensorLike
 
 def binary_wave_interference(waves: List[TensorLike], mode: str = 'xor') -> mx.array:
     """
@@ -32,13 +34,13 @@ def binary_wave_interference(waves: List[TensorLike], mode: str = 'xor') -> mx.a
     tensor_ops = MLXTensor()
 
     # Convert first wave and check type
-    result_arr = tensor_ops.convert_to_tensor(waves[0])
+    result_arr = tensor_ops.convert(waves[0])
     if not mx.issubdtype(result_arr.dtype, mx.integer):
         raise TypeError(f"binary_wave_interference requires integer types, got {result_arr.dtype} for first wave.")
 
     # Apply interference iteratively
     for wave_like in waves[1:]:
-        wave_arr = tensor_ops.convert_to_tensor(wave_like)
+        wave_arr = tensor_ops.convert(wave_like)
         if not mx.issubdtype(wave_arr.dtype, mx.integer):
              raise TypeError(f"binary_wave_interference requires integer types, got {wave_arr.dtype}.")
         # Ensure dtypes match or are compatible for bitwise ops if necessary
@@ -68,10 +70,11 @@ def binary_wave_propagate(wave: TensorLike, shift: TensorLike) -> mx.array:
         MLX array representing the propagated wave pattern.
     """
     from ember_ml.backend.mlx.tensor import MLXTensor
+    from ember_ml.backend.mlx.tensor import MLXTensor
     from .shift_ops import left_shift, right_shift # Import from sibling
     tensor_ops = MLXTensor()
-    wave_arr = tensor_ops.convert_to_tensor(wave)
-    shift_arr = tensor_ops.convert_to_tensor(shift)
+    wave_arr = tensor_ops.convert(wave)
+    shift_arr = tensor_ops.convert(shift)
 
     if not mx.issubdtype(wave_arr.dtype, mx.integer):
         raise TypeError(f"binary_wave_propagate requires an integer type for wave, got {wave_arr.dtype}")
@@ -118,18 +121,28 @@ def create_duty_cycle(length: int, duty_cycle: float) -> mx.array:
     if not isinstance(duty_cycle, (float, int)) or not (0.0 <= duty_cycle <= 1.0):
         raise ValueError("Duty cycle must be a float or int between 0.0 and 1.0.")
 
-    num_ones = int(round(length * duty_cycle)) # Round to nearest integer
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    tensor = MLXTensor()
+    num_ones = mx.round(mx.multiply(tensor.convert(length, dtype=mx.float32), tensor.convert(duty_cycle, dtype=mx.float32)))
 
     # Create pattern with 1s at the beginning
-    if num_ones <= 0:
-        pattern = mx.zeros((length,), dtype=mx.int32)
-    elif num_ones >= length:
-        pattern = mx.ones((length,), dtype=mx.int32)
-    else:
-        pattern = mx.concatenate([
-            mx.ones((num_ones,), dtype=mx.int32),
-            mx.zeros((length - num_ones,), dtype=mx.int32)
-        ])
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    tensor = MLXTensor()
+    length_arr = tensor.convert(length, dtype=mx.int32)
+    num_ones_arr = mx.astype(num_ones, mx.int32)
+
+    pattern = mx.where(
+        mx.less_equal(num_ones_arr, tensor.convert(0, dtype=mx.int32)),
+        mx.zeros((length,), dtype=mx.int32),
+        mx.where(
+            mx.greater_equal(num_ones_arr, length_arr),
+            mx.ones((length,), dtype=mx.int32),
+            mx.concatenate([
+                mx.ones((num_ones_arr.item(),), dtype=mx.int32),
+                mx.zeros((length_arr.item() - num_ones_arr.item(),), dtype=mx.int32)
+            ])
+        )
+    )
 
     return pattern
 
@@ -149,8 +162,10 @@ def generate_blocky_sin(length: int, half_period: int) -> mx.array:
     if not isinstance(half_period, int) or half_period <= 0:
         raise ValueError("Half period must be a positive integer.")
 
-    full_period = 2 * half_period
-    indices = mx.arange(length)
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    tensor = MLXTensor()
+    full_period = mx.multiply(tensor.convert(2, dtype=mx.int32), tensor.convert(half_period, dtype=mx.int32))
+    indices = mx.arange(tensor.convert(length, dtype=mx.int32))
 
     # Calculate cycle position: indices % full_period
     cycle_position = mx.remainder(indices, mx.array(full_period, dtype=indices.dtype))

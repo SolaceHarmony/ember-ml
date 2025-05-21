@@ -9,11 +9,11 @@ import mlx.core as mx
 from typing import Tuple, Optional
 
 # Import from tensor_ops
+from typing import Tuple, Optional
+
+import mlx.core as mx
 from ember_ml.backend.mlx.types import TensorLike
-from ember_ml.backend.mlx.tensor import MLXDType
 
-
-dtype_obj = MLXDType()
 
 def solve(a: TensorLike, b: TensorLike) -> mx.array:
     """
@@ -60,9 +60,12 @@ def lstsq(a: TensorLike, b: TensorLike, rcond: Optional[float] = None) -> Tuple[
     """
     # Convert inputs to MLX arrays with float32 dtype
     from ember_ml.backend.mlx.tensor import MLXTensor
-    Tensor = MLXTensor()
-    a_array = Tensor.convert_to_tensor(a, dtype=dtype_obj.float32)
-    b_array = Tensor.convert_to_tensor(b, dtype=dtype_obj.float32)
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    from ember_ml.backend.mlx.tensor import MLXDType
+    tensor = MLXTensor()
+    dtype_obj = MLXDType()
+    a_array = tensor.convert(a, dtype=dtype_obj.float32)
+    b_array = tensor.convert(b, dtype=dtype_obj.float32)
                                        
     # Get matrix dimensions
     m, n = a_array.shape
@@ -76,40 +79,35 @@ def lstsq(a: TensorLike, b: TensorLike, rcond: Optional[float] = None) -> Tuple[
     u, s, vh = svd(a_array)
     
     # Set default rcond if not provided
-    rcond_value = 1e-15
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    tensor = MLXTensor()
+    rcond_value = tensor.convert(1e-15, dtype=a_array.dtype)
     if rcond is None:
-        max_dim = mx.max(mx.array(a_array.shape))
+        max_dim = mx.max(tensor.convert(a_array.shape, dtype=a_array.dtype))
         max_s = mx.max(s)
-        rcond_tensor = mx.multiply(mx.multiply(max_dim, max_s), mx.array(rcond_value))
+        rcond_tensor = mx.multiply(mx.multiply(max_dim, max_s), rcond_value)
     else:
-        rcond_tensor = mx.array(rcond)
+        rcond_tensor = tensor.convert(rcond, dtype=a_array.dtype)
     
     # Compute rank
-    rank = mx.sum(mx.greater(s, rcond_tensor))
+    rank = mx.sum(mx.greater(s, rcond_tensor)).item()
     
     # Compute solution
     s_inv = mx.zeros_like(s)
     s_size = s.shape[0]  # Get the size of s
-    for i in range(s_size):
-        if mx.greater(s[i], rcond_tensor).item():
-            # Create a new array with the updated value
-            temp = mx.zeros_like(s_inv)
-            temp = temp.at[i].add(mx.divide(mx.array(1.0), s[i]))
-            s_inv = s_inv + temp
+    from ember_ml.backend.mlx.tensor import MLXTensor
+    tensor = MLXTensor()
+    s_inv = mx.where(mx.greater(s, rcond_tensor), mx.divide(tensor.convert(1.0, dtype=s.dtype), s), mx.zeros_like(s))
     
     # Compute solution
     solution = mx.zeros((n, b_array.shape[1]), dtype=a_array.dtype)
-    for i in range(b_array.shape[1]):
-        temp = mx.matmul(mx.transpose(u), b_array[:, i])
-        temp = mx.multiply(temp, s_inv)
-        solution_col = mx.matmul(mx.transpose(vh), temp)
-        solution[:, i] = solution_col
+    temp = mx.matmul(mx.transpose(u), b_array)
+    temp = mx.multiply(temp, s_inv.reshape(-1, 1))
+    solution = mx.matmul(mx.transpose(vh), temp)
     
     # Compute residuals
     residuals = mx.zeros((b_array.shape[1],), dtype=a_array.dtype)
-    for i in range(b_array.shape[1]):
-        residual = mx.sum(mx.square(mx.subtract(b_array[:, i], mx.matmul(a_array, solution[:, i]))))
-        residuals[i] = residual
+    residuals = mx.sum(mx.square(mx.subtract(b_array, mx.matmul(a_array, solution))), axis=0)
     
     return solution, residuals, rank, s
 

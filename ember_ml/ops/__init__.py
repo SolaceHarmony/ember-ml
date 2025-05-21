@@ -55,7 +55,7 @@ _MASTER_OPS_LIST = [
     'vstack', 'hstack',
     # Sub folders
     # Linear algebra
-    # 'stats', 'linearalg', 'bitwise',  # Commented out to avoid issues
+    # These are not functions but submodules that need to be imported
 ]
 
 # Placeholder for functions that will be dynamically loaded
@@ -102,9 +102,21 @@ def _update_ops_aliases():
             missing_ops.append(func_name)
     
     # Import pi directly from math to avoid backend issues
-    
-    setattr(current_ops_module, 'pi', backend_module.math_ops.pi)
-    globals()['pi'] = backend_module.math_ops.pi
+    try:
+        # Try to get pi from the backend's math_ops module
+        setattr(current_ops_module, 'pi', backend_module.math_ops.pi)
+        globals()['pi'] = backend_module.math_ops.pi
+    except AttributeError:
+        # If math_ops is not available, try to get pi directly from the backend
+        try:
+            setattr(current_ops_module, 'pi', backend_module.pi)
+            globals()['pi'] = backend_module.pi
+        except AttributeError:
+            # If pi is not available in the backend, use the value from math
+            import math
+            setattr(current_ops_module, 'pi', math.pi)
+            globals()['pi'] = math.pi
+            print(f"Warning: Using math.pi as fallback for backend '{backend_name}'")
     if missing_ops:
         print(f"Warning: Backend '{backend_name}' does not implement the following ops: {', '.join(missing_ops)}")
     _aliased_backend = backend_name # Mark this backend as aliased
@@ -153,9 +165,15 @@ def set_backend(backend: str):
 _init_backend_name = get_backend() # This call triggers auto-selection if needed
 _update_ops_aliases() # Populate aliases based on the determined backend
 
+# Import submodules
+from ember_ml.ops import stats
+from ember_ml.ops import linearalg
+from ember_ml.ops import bitwise
+
 # --- Define __all__ ---
 # Includes backend controls aliased here and the master list of ops
 __all__ = [
     'set_backend', 'get_backend', 'auto_select_backend', # Expose backend controls via ops
     'pi', # Add pi explicitly
+    'stats', 'linearalg', 'bitwise', # Expose submodules
 ] + _MASTER_OPS_LIST # type: ignore

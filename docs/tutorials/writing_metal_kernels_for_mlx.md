@@ -2,7 +2,7 @@
 
 ## Introduction
 
-MLX provides a high-level interface for machine learning on Apple Silicon, but sometimes you need to write custom Metal kernels for performance-critical operations. This guide covers the process of writing, debugging, and optimizing Metal kernels for MLX, with a focus on practical examples and common pitfalls.
+MLX provides a high-level interface for machine learning on Apple Silicon, but sometimes you need to write custom Metal kernels for performance-critical operations. This guide covers the process of writing, debugging, and optimizing Metal kernels for MLX, with a focus on practical examples and the specific dispatch mechanics used by the framework.
 
 ## Basic Structure of a Metal Kernel in MLX
 
@@ -12,71 +12,128 @@ MLX provides a high-level interface for machine learning on Apple Silicon, but s
 import mlx.core as mx
 
 # Define the kernel source code as a string
+# Note: Only the body of the kernel function is needed here.
+# MLX automatically generates the function signature based on input_names, output_names, and used attributes.
 kernel_source = """
 // Your Metal kernel code here
+// Access thread ID: uint tid = thread_position_in_grid.x;
+// Access threadgroup size: uint3 tpg = threads_per_threadgroup;
+// Access grid size (total threads): uint3 gpg = grid_size; // Note: grid_size.x may behave unexpectedly in MLX dispatch
 """
 
 # Compile the kernel
 compiled_kernel = mx.fast.metal_kernel(
     name="your_kernel_name",
     source=kernel_source,
-    input_names=["input1", "input2"],
-    output_names=["output"],
-    ensure_row_contiguous=True
+    input_names=["input1", "input2"], # Names of input buffers
+    output_names=["output"], # Names of output buffers
+    ensure_row_contiguous=True # Ensures inputs are row-contiguous (can be set to False for strided access)
 )
 
 # Use the kernel
 def your_function(input1, input2):
+    # Prepare inputs as MLX arrays
+    input1_mlx = mx.array(input1)
+    input2_mlx = mx.array(input2)
+    
+    # Determine output shape and dtype
+    output_shape = input1_mlx.shape # Example output shape
+    output_dtype = input1_mlx.dtype # Example output dtype
+    
+    # Configure kernel dispatch
+    # In MLX, the 'grid' parameter specifies the TOTAL NUMBER OF THREADS to dispatch.
+    # The 'threadgroup' parameter specifies the threads per threadgroup.
+    total_threads = input1_mlx.size # Example: one thread per element
+    threadgroup_size = 32 # Example: a common threadgroup size (multiple of SIMD width)
+    
+    # Ensure total_threads is a multiple of threadgroup_size for simplicity in some kernels
+    # total_threads = (total_threads + threadgroup_size - 1) // threadgroup_size * threadgroup_size
+    
+    grid = (total_threads, 1, 1) # Total threads in x-dimension
+    threadgroup = (threadgroup_size, 1, 1) # Threads per threadgroup in x-dimension
+    
     outputs = compiled_kernel(
-        inputs=[input1, input2],
-        output_shapes=[(output_shape)],
-        output_dtypes=[mx.float32],
-        grid=(32, 1, 1),
-        threadgroup=(32, 1, 1)
+        inputs=[input1_mlx, input2_mlx],
+        output_shapes=[output_shape],
+        output_dtypes=[output_dtype],
+        grid=grid, # Total threads
+        threadgroup=threadgroup # Threads per threadgroup
     )
     return outputs[0]
 ```
 
-## Metal Kernel Syntax and Best Practices
+## Metal Kernel Syntax and Built-in Variables in MLX
 
-### Thread Identification
+Understanding how MLX dispatches Metal kernels is crucial for correctly using built-in variables and writing efficient kernel logic.
 
-| Component | Description | Best Practice |
-|-----------|-------------|--------------|
-| `thread_position_in_grid` | Position of the thread in the entire grid | Access the `.x` component for 1D indexing: `uint tid = thread_position_in_grid.x;` |
-| `threads_per_threadgroup` | Number of threads in a threadgroup | Access the `.x` component: `uint num_threads = threads_per_threadgroup.x;` |
-| `thread_position_in_threadgroup` | Position within the current threadgroup | Useful for shared memory operations |
-| `threadgroups_per_grid` | Number of threadgroups in the grid | Rarely needed directly |
+### Thread Dispatch Mechanics in MLX
 
-### Example: Basic Thread Indexing
+Unlike standard Metal programming where `dispatchThreadgroups` is commonly used and `grid_size` represents the number of threadgroups, MLX's `mlx.fast.metal_kernel` uses a dispatch model closer to `dispatchThreads`.
+
+- **`grid` parameter in `mlx.fast.metal_kernel`**: This specifies the **total number of threads** to be launched in each dimension of the grid.
+- **`threadgroup` parameter in `mlx.fast.metal_kernel`**: This specifies the dimensions of the threadgroups. MLX automatically calculates the number of threadgroups needed based on the total threads and the threadgroup size.
+
+### Built-in Variable Semantics in MLX Kernels
+
+Within the Metal kernel source code, the standard Metal built-in variables are available, but their values are populated based on MLX's dispatch:
+
+- **`thread_position_in_grid`**: This provides the linear index of the current thread within the *total number of threads dispatched*. For a 1D grid, `thread_position_in_grid.x` will range from 0 to `total_threads - 1`. This is the primary variable to use for linear indexing of data.
+- **`threads_per_threadgroup`**: This correctly reflects the `threadgroup` size specified in the `mlx.fast.metal_kernel` call.
+- **`grid_size`**: **Crucially, in MLX's dispatch model, `grid_size` within the kernel does NOT represent the number of threadgroups.** Our testing indicates that `grid_size.x` consistently reads as 0, regardless of the configured total threads or threadgroup size. Relying on `grid_size` for calculating global indices or loop strides is not reliable in MLX.
+
+### Correct Thread Indexing and Loop Patterns
+
+Since `thread_position_in_grid.x` provides the linear index within the total threads, you can use it directly for element-wise operations when the total number of threads equals the number of elements to process.
+
+For operations where the total number of elements is greater than the number of launched threads (e.g., processing a large matrix with a limited number of threads), you need to use a grid-stride loop. However, because `grid_size.x` is unreliable, you cannot calculate the total number of threads within the kernel using `grid_size.x * threads_per_threadgroup.x`.
+
+Instead, you should:
+
+1.  **Calculate the total number of threads to launch in your Python code.** This is the value you pass to the `grid` parameter.
+2.  **Pass the total number of threads as an explicit input to your Metal kernel.**
+3.  **Use this explicit input in your Metal kernel to calculate the stride for the grid-stride loop.**
+
+### Example: Grid-Stride Loop with Explicit Total Threads
+
+```python
+# In your Python code:
+total_elements = m * n # Example total elements
+threads_per_group = 32
+total_threads_to_launch = (total_elements + threads_per_group - 1) // threads_per_group * threads_per_group # Ensure multiple of threadgroup size
+grid = (total_threads_to_launch, 1, 1)
+threadgroup = (threads_per_group, 1, 1)
+total_threads_input = mx.array([total_threads_to_launch], dtype=mx.uint32)
+
+compiled_kernel = mx.fast.metal_kernel(
+    # ... other parameters
+    input_names=["input", "total_threads_input"], # Add total_threads_input
+    # ... other parameters
+)
+
+outputs = compiled_kernel(
+    inputs=[input_mlx, total_threads_input], # Pass total_threads_input
+    grid=grid,
+    threadgroup=threadgroup,
+    # ... other parameters
+)
+```
 
 ```metal
+// In your Metal kernel source:
+// Get thread ID
 uint tid = thread_position_in_grid.x;
-uint num_threads = threads_per_threadgroup.x;
 
-// Process elements in parallel with proper striding
-for (uint idx = tid; idx < n; idx += num_threads) {
-    output[idx] = input[idx] * 2.0f;
+// Get total threads from input
+const uint total_threads = total_threads_input[0];
+
+// Process elements using a grid-stride loop with explicit total_threads
+for (uint i = tid; i < total_elements; i += total_threads) {
+    // Your kernel logic using index 'i'
+    output[i] = input[i] * 2.0f; // Example operation
 }
 ```
 
-### SIMD Group Operations
-
-For efficient parallel reductions, use SIMD group operations:
-
-```metal
-uint simd_lane_id = tid % 32;  // 32 is the WARP_SIZE
-uint simd_group_id = tid / 32;
-
-// Each thread computes its partial result
-float thread_sum = 0.0f;
-for (uint i = tid; i < n; i += num_threads) {
-    thread_sum += input[i];
-}
-
-// Reduce within SIMD group (much faster than manual reduction)
-thread_sum = simd_sum(thread_sum);
-```
+This approach ensures that the grid-stride loop uses the correct stride based on the actual number of threads launched by MLX, even though `grid_size.x` is unreliable.
 
 ## Shared Memory Management
 
@@ -104,47 +161,88 @@ threadgroup float shared_matrix[80 * 80]; // 25,600 bytes (under the limit)
 
 ### Synchronization
 
-Always use barriers when accessing shared memory:
+Always use barriers when accessing shared memory to avoid race conditions:
 
 ```metal
 // Write to shared memory
-shared_mem[tid] = input[tid];
+shared_mem[thread_position_in_threadgroup.x] = input[thread_position_in_grid.x];
 
-// Ensure all threads have written to shared memory
+// Ensure all threads in the threadgroup have written to shared memory
 threadgroup_barrier(mem_flags::mem_device);
 
 // Now read from shared memory
-float value = shared_mem[other_idx];
+float value = shared_mem[other_thread_in_group_idx];
 ```
 
 ## Common Patterns for Matrix Operations
+
+### Thread Allocation for Multiple Matrices
+
+When working with multiple matrices (like in QR decomposition), calculate the total workload by summing the elements of all matrices:
+
+```python
+# Calculate total elements for initialization
+q_elements = m * m  # Elements in Q matrix
+r_elements = m * n  # Elements in R matrix
+total_init_elements = q_elements + r_elements  # Total elements to process
+
+# Configure kernel dispatch
+threadgroup_size = 32  # Use a reasonable threadgroup size
+# Ensure total_threads_to_launch is a multiple of threadgroup_size
+total_threads_to_launch = (total_init_elements + threadgroup_size - 1) // threadgroup_size * threadgroup_size
+
+grid = (total_threads_to_launch, 1, 1)
+threadgroup = (threadgroup_size, 1, 1)
+```
+
+In the kernel, you can then use the thread ID to determine which matrix element to process:
+
+```metal
+// Initialize multiple matrices in parallel
+if (tid < total_init_elements) {
+    // Initialize first matrix (e.g., Q matrix in QR decomposition)
+    if (tid < q_elements) {
+        uint row = tid / m;
+        uint col = tid % m;
+        Q_out[tid] = (row == col) ? 1.0f : 0.0f;  // Identity matrix
+    }
+    // Initialize second matrix (e.g., R matrix in QR decomposition)
+    else {
+        uint r_idx = tid - q_elements;
+        R_out[r_idx] = A[r_idx];  // Copy from input
+    }
+}
+```
 
 ### Element-wise Operations
 
 ```metal
 uint tid = thread_position_in_grid.x;
-uint n = shape[0];
-uint num_threads = threads_per_threadgroup.x;
+uint total_elements = total_threads_input[0]; // Get total threads from input
 
-// Process elements in parallel
-for (uint idx = tid; idx < n; idx += num_threads) {
+// Process elements in parallel using grid-stride loop
+for (uint idx = tid; idx < total_elements; idx += total_threads) {
     output[idx] = func(input[idx]);
 }
 ```
 
 ### Matrix Multiplication
 
-```metal
-uint tid = thread_position_in_grid.x;
-uint m = shape[0];
-uint n = shape[1];
-uint k = shape[2];
-uint num_threads = threads_per_threadgroup.x;
+For matrix multiplication, you typically use shared memory and tiling to improve performance. The indexing will involve mapping the linear thread ID to 2D or 3D indices corresponding to the matrix elements being computed.
 
-// Each thread computes one or more elements of the output
-for (uint idx = tid; idx < m * n; idx += num_threads) {
-    uint row = idx / n;
-    uint col = idx % n;
+```metal
+// Example (simplified, without full tiling logic)
+uint tid = thread_position_in_grid.x;
+uint total_threads = total_threads_input[0];
+
+const uint m = A_shape[0];
+const uint n = B_shape[1];
+const uint k = A_shape[1]; // or B_shape[0]
+
+// Each thread computes one element of the output matrix C
+if (tid < m * n) {
+    uint row = tid / n;
+    uint col = tid % n;
     
     float sum = 0.0f;
     for (uint i = 0; i < k; i++) {
@@ -157,515 +255,201 @@ for (uint idx = tid; idx < m * n; idx += num_threads) {
 
 ### Reduction Operations
 
+For reductions, you typically use a combination of thread-local accumulation, SIMD operations for fast within-threadgroup reduction, and potentially shared memory for inter-threadgroup reduction.
+
+#### Critical: Barrier Placement in Parallel Reduction
+
+When implementing parallel reduction using shared memory, the placement of barriers is critical. Always place a barrier **before** reading from shared memory to ensure all threads have completed their writes:
+
 ```metal
+// Example: Parallel reduction with correct barrier placement
+threadgroup float shmem[32]; // Shared memory for reduction
+    
+// Each thread calculates its partial sum
+float partial_sum = 0.0f;
+if (tid < m) {
+    float v_i = R_out[tid * n];
+    partial_sum = v_i * v_i;
+}
+// Store partial sum in shared memory
+shmem[thread_position_in_threadgroup.x] = partial_sum;
+
+// Synchronize before reduction
+threadgroup_barrier(mem_flags::mem_threadgroup);
+
+// Reduce within threadgroup - CORRECT barrier placement
+for (uint stride = threads_per_threadgroup.x/2; stride > 0; stride >>= 1) {
+    threadgroup_barrier(mem_flags::mem_threadgroup); // Barrier BEFORE reading
+    if (thread_position_in_threadgroup.x < stride) {
+        shmem[thread_position_in_threadgroup.x] += shmem[thread_position_in_threadgroup.x + stride];
+    }
+}
+```
+
+Incorrect barrier placement (after the read/write operation) can lead to race conditions and undefined behavior:
+
+```metal
+// INCORRECT barrier placement - can cause race conditions
+for (uint stride = threads_per_threadgroup.x/2; stride > 0; stride >>= 1) {
+    if (thread_position_in_threadgroup.x < stride) {
+        shmem[thread_position_in_threadgroup.x] += shmem[thread_position_in_threadgroup.x + stride];
+    }
+    threadgroup_barrier(mem_flags::mem_threadgroup); // Barrier AFTER reading/writing
+}
+```
+
+#### SIMD-based Reduction Example
+
+```metal
+// Example (simplified, within a single threadgroup)
 uint tid = thread_position_in_grid.x;
-uint n = shape[0];
-uint num_threads = threads_per_threadgroup.x;
-uint simd_lane_id = tid % 32;
-uint simd_group_id = tid / 32;
+uint num_threads_in_group = threads_per_threadgroup.x;
 
-// Each thread computes partial sum
-float thread_sum = 0.0f;
-for (uint i = tid; i < n; i += num_threads) {
-    thread_sum += input[i];
-}
+threadgroup float shared_storage[/* size based on threadgroup_x */];
 
-// Reduce within SIMD group
-thread_sum = simd_sum(thread_sum);
+float thread_partial_sum = 0.0f;
+// Accumulate thread-local sum (using grid-stride loop if needed)
+// ...
 
-// First thread in each SIMD group writes to shared memory
-threadgroup float shared_sums[8];  // Assuming max 8 SIMD groups
-if (simd_lane_id == 0 && simd_group_id < 8) {
-    shared_sums[simd_group_id] = thread_sum;
-}
+// Store thread-local sum in shared memory
+shared_storage[thread_position_in_threadgroup.x] = thread_partial_sum;
 
+// Synchronize within threadgroup
 threadgroup_barrier(mem_flags::mem_device);
 
-// Thread 0 combines results
-if (tid == 0) {
-    float total_sum = 0.0f;
-    for (uint i = 0; i < min(8u, (num_threads + 31) / 32); i++) {
-        total_sum += shared_sums[i];
-    }
-    output[0] = total_sum;
-}
+// Perform reduction within threadgroup using shared memory
+// ... (e.g., parallel reduction in shared memory)
+
+// Use SIMD operations for faster reduction within SIMD groups
+float simd_sum_val = simd_sum(thread_partial_sum);
+
+// Only one thread per SIMD group needs to write to shared memory or global memory
+// ...
 ```
 
-## Advanced Techniques
+## Avoiding Parameter Conflicts
 
-### Tiling for Matrix Operations
+### Shape Parameter Handling
 
-For large matrices, use tiling to improve cache efficiency:
+MLX automatically generates shape parameters for tensor inputs. For example, if you have an input named "A", MLX will automatically generate a parameter named "A_shape" of type `const constant int*`.
 
-```metal
-#define TILE_SIZE 16
+To avoid conflicts, do not explicitly include shape parameters in your `input_names` list that match this pattern. Instead, use the automatically generated shape parameters:
 
-uint tid = thread_position_in_grid.x;
-uint row = tid / TILE_SIZE;
-uint col = tid % TILE_SIZE;
-
-threadgroup float A_tile[TILE_SIZE][TILE_SIZE];
-threadgroup float B_tile[TILE_SIZE][TILE_SIZE];
-
-float sum = 0.0f;
-for (uint t = 0; t < k; t += TILE_SIZE) {
-    // Load tiles into shared memory
-    if (row < m && t + col < k)
-        A_tile[row][col] = A[row * k + (t + col)];
-    else
-        A_tile[row][col] = 0.0f;
-    
-    if (t + row < k && col < n)
-        B_tile[row][col] = B[(t + row) * n + col];
-    else
-        B_tile[row][col] = 0.0f;
-    
-    threadgroup_barrier(mem_flags::mem_device);
-    
-    // Compute partial sum for this tile
-    for (uint i = 0; i < TILE_SIZE; i++)
-        sum += A_tile[row][i] * B_tile[i][col];
-    
-    threadgroup_barrier(mem_flags::mem_device);
-}
-
-if (row < m && col < n)
-    C[row * n + col] = sum;
+```python
+# CORRECT: Let MLX handle the shape parameter
+compiled_kernel = mx.fast.metal_kernel(
+    name="your_kernel_name",
+    source=kernel_source,
+    input_names=["A"],  # Do not include "A_shape"
+    output_names=["output"],
+    ensure_row_contiguous=True
+)
 ```
 
-### Coalesced Memory Access
-
-Ensure threads access memory in a coalesced pattern for better performance:
+In your kernel code, you can access the shape parameter directly:
 
 ```metal
-// Good: Consecutive threads access consecutive memory locations
-for (uint idx = tid; idx < n; idx += num_threads) {
-    output[idx] = input[idx];
-}
-
-// Bad: Consecutive threads access memory with large strides
-for (uint i = 0; i < n / num_threads; i++) {
-    output[tid + i * num_threads] = input[tid + i * num_threads];
-}
+// Access the automatically generated shape parameter
+const uint m = A_shape[0];
+const uint n = A_shape[1];
 ```
 
-## Common Pitfalls and Solutions
+If you need to pass a shape parameter with a different type (e.g., uint32), use a different name:
 
-### 1. Exceeding Shared Memory Limits
-
-**Problem**: Metal has a 32KB limit on shared memory per threadgroup.
-
-**Solution**: 
-- Calculate your shared memory usage carefully: `num_elements * sizeof(element_type)`
-- For large matrices, process them in smaller tiles
-- Reduce the maximum dimensions you support (e.g., limit MAX_K to 32 instead of 512)
-
-**Example Fix**:
-```metal
-// Before (exceeds limit for large matrices)
-threadgroup float shared_Z[4096 * 64];  // 1MB for 4096x64 matrix!
-
-// After (stays under 32KB limit)
-threadgroup float shared_Z[250 * 32];  // ~32KB for 250x32 matrix
-```
-
-### 2. Incorrect Thread ID Access
-
-**Problem**: Using `thread_position_in_grid` directly instead of accessing its components.
-
-**Solution**: Always access the appropriate component (usually `.x` for 1D indexing).
-
-**Example Fix**:
-```metal
-// Before (incorrect)
-uint tid = thread_position_in_grid;  // Error: cannot convert uint3 to uint
-
-// After (correct)
-uint tid = thread_position_in_grid.x;  // Access the x component
-```
-
-### 3. Missing Synchronization Barriers
-
-**Problem**: Reading shared memory before all threads have written to it.
-
-**Solution**: Always use `threadgroup_barrier(mem_flags::mem_device)` after writing to shared memory.
-
-**Example Fix**:
-```metal
-// Before (race condition)
-shared_mem[tid] = input[tid];
-float value = shared_mem[other_idx];  // May read uninitialized data
-
-// After (correct)
-shared_mem[tid] = input[tid];
-threadgroup_barrier(mem_flags::mem_device);
-float value = shared_mem[other_idx];  // Safe to read now
-```
-
-### 4. Inefficient Reduction
-
-**Problem**: Manual reduction is slow and complex.
-
-**Solution**: Use SIMD operations like `simd_sum` for efficient reduction.
-
-**Example Fix**:
-```metal
-// Before (manual reduction)
-if (tid < 32) {
-    for (uint s = 1; s < 32; s *= 2) {
-        float other = shared_mem[tid ^ s];
-        shared_mem[tid] += other;
-    }
-}
-
-// After (using SIMD operations)
-float thread_sum = /* your value */;
-thread_sum = simd_sum(thread_sum);
-```
-
-### 5. Incorrect Function Declarations
-
-**Problem**: Including function declarations in the kernel source causes compilation errors.
-
-**Solution**: Let MLX handle the function declaration; only provide the function body.
-
-**Example Fix**:
-```metal
-// Before (incorrect)
-kernel void your_kernel(
-    const device float *input [[buffer(0)]],
-    device float *output [[buffer(1)]],
-    uint thread_position_in_grid [[thread_position_in_grid]])
-{
-    // Kernel code
-}
-
-// After (correct)
-// No function declaration, just the body
-uint tid = thread_position_in_grid.x;
-// Kernel code
-```
-
-### 6. Thread Divergence
-
-**Problem**: Different execution paths within a SIMD group cause performance issues.
-
-**Solution**: Minimize conditional code within the same SIMD group.
-
-**Example Fix**:
-```metal
-// Before (divergent)
-if (tid % 2 == 0) {
-    // Path A
-} else {
-    // Path B
-}
-
-// After (less divergent)
-// Group similar operations together
-for (uint idx = tid; idx < n; idx += num_threads) {
-    if (idx % 2 == 0) {
-        // All threads process even indices
-    }
-}
-for (uint idx = tid; idx < n; idx += num_threads) {
-    if (idx % 2 == 1) {
-        // All threads process odd indices
-    }
-}
+```python
+# CORRECT: Use a different name for custom shape parameter
+shape_uint32 = mx.array(A.shape, dtype=mx.uint32)
+compiled_kernel = mx.fast.metal_kernel(
+    name="your_kernel_name",
+    source=kernel_source,
+    input_names=["A", "shape_uint32"],  # Different name
+    output_names=["output"],
+    ensure_row_contiguous=True
+)
 ```
 
 ## Debugging Strategies
 
 ### 1. Incremental Testing
 
-Start with a minimal kernel and gradually add complexity:
-
-1. Begin with a simple element-wise operation
-2. Add shared memory usage
-3. Add SIMD operations
-4. Add complex algorithms
-
-This helps isolate where issues occur.
+Start with a minimal kernel that just writes the thread ID to an output buffer to verify basic execution and thread indexing. Gradually add complexity, testing each step.
 
 ### 2. Controlled Inputs
 
-Use inputs with known expected outputs:
+Use small, fixed inputs with known expected outputs to make debugging easier.
+
+### 3. Debug Buffer
+
+Include a debug buffer in your outputs to store intermediate values and flags:
 
 ```python
-# Create a matrix with known singular values for SVD testing
-U, _ = qr(mx.random.normal((n, n)))
-s_values = mx.linspace(n, 1, n)
-V, _ = qr(mx.random.normal((n, n)))
+# Include a debug buffer in outputs
+output_shapes = [(m, n), (16,)]  # Main output and debug buffer
+output_dtypes = [mx.float32, mx.float32]
 
-# Create diagonal matrix
-s_diag = mx.zeros((n, n))
-for i in range(n):
-    s_diag = scatter(mx.array([i, i]), s_values[i], s_diag.shape)
+outputs = compiled_kernel(
+    inputs=[input_mlx],
+    output_shapes=output_shapes,
+    output_dtypes=output_dtypes,
+    grid=grid,
+    threadgroup=threadgroup
+)
 
-# Create test matrix
-A = mx.matmul(U, mx.matmul(s_diag, mx.transpose(V)))
+result, debug_info = outputs
+```
+
+In your kernel, write to the debug buffer at key points:
+
+```metal
+// Set debug values
+if (tid == 0) {
+    dbg[0] = 1.0f;  // Execution flag
+    dbg[1] = float(m);  // Dimensions
+    dbg[2] = float(n);
+    // Store intermediate results
+    dbg[7] = norm;
+    dbg[8] = dot_product;
+}
 ```
 
 ### 3. Error Message Analysis
 
-Common error messages and their meanings:
-
-| Error Message | Likely Cause | Solution |
-|---------------|--------------|----------|
-| `Threadgroup memory size exceeds the maximum` | Too much shared memory | Reduce array sizes |
-| `Unable to build metal library from source` | Syntax error in kernel | Check for typos, missing braces |
-| `Cannot initialize a variable of type 'uint' with an lvalue of type 'uint3'` | Incorrect thread ID access | Use `.x` component |
-| `Extraneous closing brace` | Incorrect function structure | Remove function declaration |
+Pay close attention to compilation errors from the Metal compiler. Use `verbose=True` in `mlx.fast.metal_kernel` to see the generated Metal source code, which can help pinpoint syntax errors or incorrect variable usage.
 
 ### 4. Sandbox Testing
 
-Create isolated test files to debug specific issues:
+Create isolated Python files to test specific kernel functionalities or configurations.
 
-```python
-def test_simple_kernel():
-    kernel_source = """
-    // Simple kernel for testing
-    uint tid = thread_position_in_grid.x;
-    output[tid] = input[tid];
-    """
-    
-    kernel = mx.fast.metal_kernel(
-        name="test_kernel",
-        source=kernel_source,
-        input_names=["input"],
-        output_names=["output"],
-        ensure_row_contiguous=True
-    )
-    
-    # Test with simple data
-    input_data = mx.ones((32,))
-    outputs = kernel(
-        inputs=[input_data],
-        output_shapes=[(32,)],
-        output_dtypes=[mx.float32],
-        grid=(32, 1, 1),
-        threadgroup=(32, 1, 1)
-    )
-    
-    # Verify result
-    print(outputs[0])
-```
+### 5. Metal Validation Layers
+
+Enable Metal validation layers using environment variables (`MTL_DEBUG_LAYER=1`, `MTL_SHADER_VALIDATION=1`) for enhanced diagnostics.
 
 ## Performance Optimization
 
 ### 1. Thread Configuration
 
-Choose appropriate grid and threadgroup sizes:
-
-```python
-# For small operations (< 1024 elements)
-grid = (32, 1, 1)
-threadgroup = (32, 1, 1)
-
-# For medium operations
-grid = (256, 1, 1)
-threadgroup = (256, 1, 1)
-
-# For large operations
-grid = (1024, 1, 1)
-threadgroup = (256, 1, 1)  # Keep threadgroup size reasonable
-```
+- **Total Threads (`grid`)**: Set the total number of threads to be at least the total number of elements you need to process.
+- **Threadgroup Size (`threadgroup`)**: Choose a threadgroup size that is a multiple of the SIMD width (typically 32) for better SIMD utilization. Common threadgroup sizes are 32, 64, 128, 256, 512, or 1024. The total number of threads in a threadgroup (`threadgroup.x * threadgroup.y * threadgroup.z`) must not exceed `maxTotalThreadsPerThreadgroup` (typically 1024).
+- **Balance**: Aim for a balance between the number of threadgroups and the threadgroup size to keep the GPU busy.
 
 ### 2. Memory Access Patterns
 
-Optimize memory access for better performance:
-
-- Coalesced access: Adjacent threads access adjacent memory
-- Minimize bank conflicts in shared memory
-- Use appropriate data types (float32 vs float16)
+- **Coalesced Access**: Design your kernel to ensure that threads within a threadgroup access memory in a coalesced pattern (adjacent threads access adjacent memory locations). This is crucial for performance.
+- **Shared Memory**: Use shared memory to reduce global memory access, but be mindful of the 32KB limit and bank conflicts.
+- **Data Types**: Use appropriate data types (e.g., `half` for float16) to reduce memory bandwidth and improve performance.
 
 ### 3. Algorithmic Optimizations
 
-- Use tiling for matrix operations
-- Leverage SIMD operations for reductions
-- Balance work across threads evenly
+- **Tiling**: Implement tiling for matrix operations to improve data locality and reduce global memory access.
+- **SIMD Operations**: Leverage SIMD operations (`simd_sum`, `simd_max`, etc.) for fast parallel operations within SIMD groups.
+- **Work Distribution**: Ensure work is distributed evenly among threads to avoid idle threads.
 
-## Real-World Example: SVD Power Iteration
+## Conclusion and Recommendations
 
-Here's a complete example of a power iteration kernel for SVD:
+Writing custom Metal kernels in MLX requires a clear understanding of the framework's specific dispatch mechanics and how built-in variables are populated. The key is to recognize that the `grid` parameter specifies the total number of threads and to use `thread_position_in_grid.x` as the primary linear index.
 
-```python
-import mlx.core as mx
+While `grid_size.x` is not reliably available as the number of threadgroups, passing the total number of threads as an explicit input allows for correct implementation of grid-stride loops and efficient processing of larger datasets.
 
-# Define the kernel source
-kernel_source = """
-#define EPSILON 1e-10f
-#define MAX_K 32
-#define WARP_SIZE 32
+Developers should adopt a "total threads" mindset when configuring kernel dispatch in MLX and carefully implement indexing and loop patterns based on `thread_position_in_grid.x`. Incremental testing, controlled inputs, and analysis of generated code are essential debugging strategies.
 
-uint tid = thread_position_in_grid.x;
-uint num_threads = threads_per_threadgroup.x;
-uint simd_lane_id = tid % WARP_SIZE;
-uint simd_group_id = tid / WARP_SIZE;
-
-uint n = shapeParams[0];
-uint k = shapeParams[1];
-uint num_iterations = iterParams[0];
-float tolerance = tolParams[0];
-
-// Shared memory (carefully sized to stay under 32KB limit)
-threadgroup float shared_Z[250 * MAX_K];
-threadgroup float shared_proj[MAX_K];
-threadgroup float shared_norm[MAX_K];
-
-// Initialize Q_out with Q_init
-for (uint idx = tid; idx < n * k; idx += num_threads) {
-    Q_out[idx] = Q_init[idx];
-}
-
-threadgroup_barrier(mem_flags::mem_device);
-
-// Power iteration with Gram-Schmidt orthogonalization
-for (uint iter = 0; iter < num_iterations; iter++) {
-    // Matrix multiplication: Z = A * Q_out
-    for (uint idx = tid; idx < n * k; idx += num_threads) {
-        uint row = idx / k;
-        uint col = idx % k;
-        
-        float sum = 0.0f;
-        for (uint i = 0; i < n; i++) {
-            sum += A[row * n + i] * Q_out[i * k + col];
-        }
-        shared_Z[idx] = sum;
-    }
-    
-    threadgroup_barrier(mem_flags::mem_device);
-    
-    // Gram-Schmidt orthogonalization
-    for (uint col = 0; col < k; col++) {
-        // Orthogonalize against previous columns
-        for (uint j = 0; j < col; j++) {
-            // Compute dot product
-            float thread_proj = 0.0f;
-            for (uint row = tid; row < n; row += num_threads) {
-                thread_proj += Q_out[row * k + j] * shared_Z[row * k + col];
-            }
-            
-            // Reduce using SIMD operations
-            thread_proj = simd_sum(thread_proj);
-            
-            // First thread in each SIMD group writes to shared memory
-            if (simd_lane_id == 0 && simd_group_id < 8) {
-                shared_proj[simd_group_id] = thread_proj;
-            }
-            
-            threadgroup_barrier(mem_flags::mem_device);
-            
-            // Thread 0 combines results
-            if (tid == 0) {
-                float proj = 0.0f;
-                for (uint i = 0; i < min(8u, (num_threads + WARP_SIZE - 1) / WARP_SIZE); i++) {
-                    proj += shared_proj[i];
-                }
-                shared_proj[0] = proj;
-            }
-            
-            threadgroup_barrier(mem_flags::mem_device);
-            
-            float proj = shared_proj[0];
-            
-            // Subtract projection
-            for (uint row = tid; row < n; row += num_threads) {
-                shared_Z[row * k + col] -= proj * Q_out[row * k + j];
-            }
-            
-            threadgroup_barrier(mem_flags::mem_device);
-        }
-        
-        // Compute norm
-        float thread_norm_sq = 0.0f;
-        for (uint row = tid; row < n; row += num_threads) {
-            float val = shared_Z[row * k + col];
-            thread_norm_sq += val * val;
-        }
-        
-        // Reduce using SIMD operations
-        thread_norm_sq = simd_sum(thread_norm_sq);
-        
-        // First thread in each SIMD group writes to shared memory
-        if (simd_lane_id == 0 && simd_group_id < 8) {
-            shared_norm[simd_group_id] = thread_norm_sq;
-        }
-        
-        threadgroup_barrier(mem_flags::mem_device);
-        
-        // Thread 0 computes final norm
-        if (tid == 0) {
-            float norm_sq = 0.0f;
-            for (uint i = 0; i < min(8u, (num_threads + WARP_SIZE - 1) / WARP_SIZE); i++) {
-                norm_sq += shared_norm[i];
-            }
-            float norm = sqrt(norm_sq);
-            shared_norm[0] = norm;
-            shared_norm[1] = (norm > tolerance) ? (1.0f / norm) : 0.0f;
-        }
-        
-        threadgroup_barrier(mem_flags::mem_device);
-        
-        float norm = shared_norm[0];
-        float inv_norm = shared_norm[1];
-        
-        // Normalize column
-        for (uint row = tid; row < n; row += num_threads) {
-            if (norm > tolerance) {
-                Q_out[row * k + col] = shared_Z[row * k + col] * inv_norm;
-            } else {
-                Q_out[row * k + col] = 0.0f;
-            }
-        }
-        
-        threadgroup_barrier(mem_flags::mem_device);
-    }
-}
-"""
-
-# Compile the kernel
-power_iter_kernel = mx.fast.metal_kernel(
-    name="power_iter_kernel",
-    source=kernel_source,
-    input_names=["A", "Q_init", "shapeParams", "iterParams", "tolParams"],
-    output_names=["Q_out"],
-    ensure_row_contiguous=True
-)
-
-# Function to call the kernel
-def power_iteration(A, Q_init, num_iterations=10, tolerance=1e-10):
-    n, k = Q_init.shape
-    shape_params = mx.array([n, k], dtype=mx.uint32)
-    iter_params = mx.array([num_iterations], dtype=mx.uint32)
-    tol_params = mx.array([tolerance], dtype=mx.float32)
-    
-    # Configure kernel execution
-    grid = (32, 1, 1)
-    threadgroup = (32, 1, 1)
-    
-    # Call the kernel
-    outputs = power_iter_kernel(
-        inputs=[A, Q_init, shape_params, iter_params, tol_params],
-        output_shapes=[(n, k)],
-        output_dtypes=[mx.float32],
-        grid=grid,
-        threadgroup=threadgroup
-    )
-    
-    return outputs[0]
-```
-
-## Conclusion
-
-Writing efficient Metal kernels for MLX requires understanding both the Metal Shading Language and MLX's kernel compilation system. By following the best practices and avoiding common pitfalls outlined in this guide, you can create high-performance custom operations that leverage the full power of Apple Silicon.
-
-Remember to:
-1. Start simple and add complexity incrementally
-2. Carefully manage shared memory usage
-3. Use appropriate synchronization barriers
-4. Leverage SIMD operations for efficient reductions
-5. Test thoroughly with controlled inputs
-
-With these principles in mind, you'll be able to write robust and efficient Metal kernels for your MLX applications.
+By following these guidelines and best practices, developers can effectively leverage the power of Metal for performance-critical operations within the MLX framework.

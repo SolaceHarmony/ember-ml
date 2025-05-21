@@ -4,6 +4,8 @@ MLX device operations for ember_ml.
 
 import mlx.core as mx
 from typing import Any, Optional, List, Dict
+from typing import Any, Optional, List, Dict
+import mlx.core as mx
 from ember_ml.backend.mlx.types import TensorLike # Use TensorLike from mlx types
 
 # Module-level variable for default device consistency
@@ -95,9 +97,9 @@ def to_device(x: TensorLike, device: str) -> mx.array:
     # Validate the target device string, but MLX handles placement implicitly
     set_device(device) # This validates and sets the default if possible
     # Ensure input is converted if needed
-    from ember_ml.backend.mlx.tensor.tensor import MLXTensor
+    from ember_ml.backend.mlx.tensor import MLXTensor
     tensor = MLXTensor()
-    x_tensor = tensor.convert_to_tensor(x)
+    x_tensor = tensor.convert(x)
     # In MLX, tensors generally reside on the default device.
     # Explicit movement isn't the primary mechanism like in PyTorch.
     # We return the tensor, assuming it's now on the (new) default device.

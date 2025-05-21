@@ -31,7 +31,7 @@ def sum(x: TensorLike, axis: Optional[ShapeLike] = None, keepdims: bool = False)
     # Local import to avoid potential circular dependencies
     from ember_ml.backend.mlx.tensor import MLXTensor
     tensor_ops = MLXTensor()
-    x_array = tensor_ops.convert_to_tensor(x)
+    x_array = tensor_ops.convert(x)
 
     if axis is None:
         return mx.sum(x_array, keepdims=keepdims)

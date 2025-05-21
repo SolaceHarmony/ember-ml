@@ -3,7 +3,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 from tiled_hpc_qr_experiment import tiled_hpc_qr
-from enhanced_tiled_hpc_qr import enhanced_tiled_hpc_qr
+from sandbox.duds.enhanced_tiled_hpc_qr import enhanced_tiled_hpc_qr
 
 def compare_implementations(sizes=[(50, 50), (100, 100), (200, 200), (500, 500)], repeat=3):
     """

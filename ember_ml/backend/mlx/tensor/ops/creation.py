@@ -138,8 +138,6 @@ def eye(n, m=None, dtype=None, device=None):
     if m is None:
         m = n
     
-    # Create a zeros tensor with shape (n, m)
-    from ember_ml.backend.mlx.tensor.ops.utility import _create_new_tensor
     # Validate dtype
     from ember_ml.backend.mlx.tensor.ops.utility import _validate_and_get_mlx_dtype
     mlx_dtype = _validate_and_get_mlx_dtype(dtype)
@@ -147,17 +145,14 @@ def eye(n, m=None, dtype=None, device=None):
     # Handle float64 not supported in MLX
     if str(mlx_dtype) == 'float64':
         mlx_dtype = mx.float32
-        
-    # Create a zeros tensor with shape (n, m)
-    x = mx.zeros((n, m), dtype=mlx_dtype)
     
-    # Set diagonal elements to 1
+    # Set diagonal elements to 1 using scatter
     min_dim = min(n, m)
     indices = mx.arange(min_dim)
     from ember_ml.backend.mlx.tensor.ops import scatter
-    x = scatter(x, (indices, indices), mx.ones(min_dim, dtype=x.dtype))
+    result = scatter((indices, indices), mx.ones(min_dim, dtype=mlx_dtype), (n, m))
     
-    return x
+    return result
 
 def arange(start: ScalarLike, stop: ScalarLike = None, step: int = 1,
           dtype: 'Optional[DType]' = None, device: Optional[str] = None) -> 'mx.array':

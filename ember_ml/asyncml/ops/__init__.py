@@ -97,7 +97,8 @@ def _update_async_ops_aliases():
     try:
         backend_ops_module = getattr(backend_module, 'ops')
     except AttributeError:
-        print(f"Error: Backend '{backend_name}' does not have an 'ops' module.")
+        # This is expected for most backends, so make it a debug message instead of an error
+        print(f"Debug: Backend '{backend_name}' does not have an 'ops' module. This is expected for most backends.")
         # Set all aliases to None if the ops module is missing
         current_async_ops_module = sys.modules[__name__]
         for func_name in _MASTER_OPS_LIST:
