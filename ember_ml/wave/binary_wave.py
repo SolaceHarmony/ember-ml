@@ -23,6 +23,7 @@ def _flip(x: tensor.EmberTensor, axis: int) -> tensor.EmberTensor:
     flipped = np.flip(x_np, axis)
     return tensor.convert_to_tensor(flipped, dtype=tensor.dtype(x), device=ops.get_device(x))
 
+
 @dataclass
 class WaveConfig:
     """Configuration for binary wave processing."""
@@ -69,6 +70,7 @@ class BinaryWave(Module):
             tensor.expand_dims(t, 0),
         )
         wave = ops.sin(phase_term)
+
         wave = ops.multiply(wave, tensor.expand_dims(self.amplitude_scale, -1))
         
         # Apply input modulation
@@ -118,6 +120,7 @@ class BinaryWave(Module):
             device=ops.get_device(basis),
         )
         output = ops.matmul(pinv_basis, wave_flat)
+
         
         # Reshape to grid
         output = tensor.reshape(
@@ -208,6 +211,7 @@ class BinaryWaveProcessor(Module):
             similarity = ops.subtract(1.0, ops.mean(ops.abs(ops.subtract(wave1, shifted))))
 
             if tensor.item(similarity) > tensor.item(best_similarity):
+
                 best_similarity = similarity
                 best_shift = tensor.convert_to_tensor(shift, device=ops.get_device(wave1))
                 
@@ -247,6 +251,7 @@ class BinaryWaveProcessor(Module):
         flipped = _flip(binary_float, axis=-1)
         flipped = _flip(flipped, axis=-2)
         symmetry = ops.subtract(1.0, ops.mean(ops.abs(ops.subtract(binary_float, flipped))))
+
         
         return {
             'density': density,
@@ -290,12 +295,14 @@ class BinaryWaveEncoder(Module):
             bit_matrix,
             (self.config.grid_size, self.config.grid_size),
         )
+
         
         # Generate phase shifts
         time_slices = []
         for t in range(self.config.num_phases):
             # Roll the matrix for phase shift
             shifted = _roll(bit_matrix, shifts=t, axis=1)
+
             
             # Apply fade factor
             fade_factor = max(0.0, 1.0 - t * self.config.fade_rate)
@@ -304,6 +311,7 @@ class BinaryWaveEncoder(Module):
         # Stack into 4D tensor
         wave_pattern = tensor.stack(time_slices)
         return tensor.expand_dims(wave_pattern, -1)
+
     
     def encode_sequence(self, sequence: str) -> tensor.convert_to_tensor:
         """
@@ -345,10 +353,12 @@ class BinaryWaveNetwork(Module):
         # Learnable parameters
         self.input_proj = Linear(input_size, hidden_size)
         self.wave_proj = Linear(
+
             hidden_size,
             config.grid_size * config.grid_size,
         )
         self.output_proj = Linear(hidden_size, output_size)
+
         
         # Wave memory
         self.register_buffer(
@@ -362,6 +372,7 @@ class BinaryWaveNetwork(Module):
             tensor.random_normal(
                 (config.grid_size, config.grid_size)
             ),
+
         )
         
     def forward(self,
