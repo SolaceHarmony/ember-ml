@@ -74,8 +74,8 @@ def _update_bitwise_aliases():
             missing_ops.append(func_name)
 
     if missing_ops:
-        # Suppress warning here as ops/__init__ might also warn
-        pass
+        # Log missing operations for debugging purposes
+        logging.warning(f"Missing backend functions for {backend_name}: {', '.join(missing_ops)}")
     _aliased_backend_bitwise = backend_name
 
 # --- Initial alias setup ---
