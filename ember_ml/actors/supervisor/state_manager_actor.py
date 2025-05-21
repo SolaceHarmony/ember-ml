@@ -12,7 +12,6 @@ import json
 import pickle
 import os
 import math
-import numpy as np
 from typing import Dict, List, Any, Optional
 from ember_ml.nn.tensor.types import TensorLike
 
