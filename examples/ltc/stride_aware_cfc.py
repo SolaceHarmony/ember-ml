@@ -1,20 +1,18 @@
 import os
 from ncps import wirings
 
-def set_keras_backend(backend_name):
-    os.environ['KERAS_BACKEND'] = backend_name
 
 #Import Keras after setting backend
-import keras
+import ember_ml
+import ember_ml.nn.initializers
+import ember_ml.nn.modules.activations
 
 # LeCun improved tanh activation
-@keras.utils.register_keras_serializable(package="ncps", name="lecun_tanh")
 def lecun_tanh(x):
-    return 1.7159 * keras.activations.tanh(0.66666667 * x)
+    return 1.7159 * ember_ml.nn.modules.activations.tanh(0.66666667 * x)
 
 # Binomial Initializer
-@keras.utils.register_keras_serializable(package="ncps", name="BinomialInitializer")
-class BinomialInitializer(keras.initializers.Initializer):
+class BinomialInitializer(ember_ml.nn.initializers.BinomialInitializer):
     def __init__(self, probability=0.5, seed=None):
         super().__init__()
         self.probability = probability
@@ -22,8 +20,8 @@ class BinomialInitializer(keras.initializers.Initializer):
 
     def __call__(self, shape, dtype=None):
         if dtype is None:
-            dtype = keras.backend.floatx()
-        return keras.tensor.cast(
+            dtype = backend.floatx()
+        return tensor.cast(
             keras.random.uniform(shape, minval=0.0, maxval=1.0, seed=self.seed) < self.probability,
             dtype=dtype
         )
@@ -51,12 +49,12 @@ class StrideAwareWiredCfCCell(keras.layers.Layer):
         self.time_scale_factor = time_scale_factor
         self.fully_recurrent = fully_recurrent
         self.mode = mode
-        self.activation = keras.activations.get(activation)
+        self.activation = ember_ml.nn.modules.activations.get_activation(activation)
 
         self.units = wiring.units
         self.input_dim = wiring.input_dim
         self.output_dim = wiring.output_dim
-        self.recurrent_activation = keras.activations.get('sigmoid')
+        self.recurrent_activation = ember_ml.nn.modules.activations.get_activation('sigmoid')
 
 
     def build(self, input_shape):
@@ -68,8 +66,8 @@ class StrideAwareWiredCfCCell(keras.layers.Layer):
             shape=(input_dim, self.units), # Use self.units here
             initializer='glorot_uniform',
             name='kernel',
-            regularizer=keras.regularizers.L2(0.01),
-            constraint=keras.constraints.MaxNorm(3)
+            regularizer=ember_ml.nn.modules.regularizers.L2(0.01),
+            constraint=ember_ml.nn.modules.constraints.MaxNorm(3)
         )
 
         self.recurrent_kernel = self.add_weight(
@@ -463,8 +461,7 @@ class StrideAwareCfCCell(keras.layers.Layer):
         return cls(activation=activation, **config)
 
 
-@keras.utils.register_keras_serializable(package="ncps", name="StrideAwareCfC")
-class StrideAwareCfC(keras.layers.RNN):
+class StrideAwareCfC(ember_ml.nn.modules.RNN):
     def __init__(
         self,
         cell,  # Now takes a cell *instance*
@@ -478,8 +475,7 @@ class StrideAwareCfC(keras.layers.RNN):
         **kwargs
     ):
         if mixed_memory:
-            @keras.utils.register_keras_serializable(package="ncps", name="MixedMemoryRNN")
-            class MixedMemoryRNN(keras.layers.Layer):
+            class MixedMemoryRNN(ember_ml.nn.modules.RNN):
                 def __init__(self, cell, **kwargs):
                     super().__init__(**kwargs)
                     self.rnn_cell = cell
