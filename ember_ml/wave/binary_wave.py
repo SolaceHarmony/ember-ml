@@ -1,24 +1,28 @@
 """Binary wave neural processing components."""
 
-from typing import Optional, Dict, List, Tuple
 from dataclasses import dataclass
+from typing import Dict, Optional, Tuple
 
 import numpy as np
+
 from ember_ml import ops
-from ember_ml.nn import tensor, container
-from ember_ml.nn.modules.base_module import BaseModule as Module, Parameter
+from ember_ml.nn import tensor
+from ember_ml.nn.modules import Module, Parameter
+from ember_ml.nn.container.linear import Linear
 
-def _roll(x: tensor.Tensor, shifts: int, dim: int = 0) -> tensor.Tensor:
-    """Backend-agnostic roll implemented with NumPy."""
-    arr = tensor.to_numpy(x)
-    rolled = np.roll(arr, shift=shifts, axis=dim)
-    return tensor.convert_to_tensor(rolled)
+def _roll(x: tensor.EmberTensor, shifts: int, axis: int = 0) -> tensor.EmberTensor:
+    """Roll tensor along a given axis using NumPy as a fallback."""
+    x_np = tensor.to_numpy(x)
+    rolled = np.roll(x_np, shifts, axis)
+    return tensor.convert_to_tensor(rolled, dtype=tensor.dtype(x), device=ops.get_device(x))
 
-def _flip(x: tensor.Tensor, dims: List[int]) -> tensor.Tensor:
-    """Backend-agnostic flip implemented with NumPy."""
-    arr = tensor.to_numpy(x)
-    flipped = np.flip(arr, axis=dims)
-    return tensor.convert_to_tensor(flipped)
+
+def _flip(x: tensor.EmberTensor, axis: int) -> tensor.EmberTensor:
+    """Flip tensor along a given axis using NumPy as a fallback."""
+    x_np = tensor.to_numpy(x)
+    flipped = np.flip(x_np, axis)
+    return tensor.convert_to_tensor(flipped, dtype=tensor.dtype(x), device=ops.get_device(x))
+
 
 @dataclass
 class WaveConfig:
@@ -60,12 +64,13 @@ class BinaryWave(Module):
         phases = ops.add(phases, self.phase_shift)
         
         # Generate wave pattern
-        t = tensor.linspace(0, 1, self.config.grid_size * self.config.grid_size)
-        angles = ops.multiply(
-            ops.multiply(2 * ops.pi, tensor.expand_dims(phases, -1)),
-            tensor.expand_dims(t, 0)
+        t = tensor.linspace(0.0, 1.0, self.config.grid_size * self.config.grid_size)
+        phase_term = ops.multiply(
+            ops.multiply(ops.multiply(2.0, ops.pi), tensor.expand_dims(phases, -1)),
+            tensor.expand_dims(t, 0),
         )
-        wave = ops.sin(angles)
+        wave = ops.sin(phase_term)
+
         wave = ops.multiply(wave, tensor.expand_dims(self.amplitude_scale, -1))
         
         # Apply input modulation
@@ -99,21 +104,23 @@ class BinaryWave(Module):
         phases = tensor.arange(self.config.num_phases, dtype=tensor.float32)
         phases = ops.add(phases, self.phase_shift)
 
-        t = tensor.linspace(0, 1, tensor.shape(wave_flat)[1])
-        angles = ops.multiply(
-            ops.multiply(2 * ops.pi, tensor.expand_dims(phases, -1)),
+        t = tensor.linspace(0.0, 1.0, tensor.shape(wave_flat)[1])
+        phase_term = ops.multiply(
+            ops.multiply(ops.multiply(2.0, ops.pi), tensor.expand_dims(phases, -1)),
             tensor.expand_dims(t, 0),
         )
-        basis = ops.sin(angles)
+        basis = ops.sin(phase_term)
         basis = ops.multiply(basis, tensor.expand_dims(self.amplitude_scale, -1))
 
-        # Solve for output using pseudo-inverse formula
-        basis_t = tensor.transpose(basis, (1, 0))
-        pinv = ops.matmul(
-            ops.linearalg.inv(ops.matmul(basis_t, basis)),
-            basis_t,
+        # Solve for output using NumPy pseudoinverse as fallback
+        pinv_basis_np = np.linalg.pinv(tensor.to_numpy(basis))
+        pinv_basis = tensor.convert_to_tensor(
+            pinv_basis_np,
+            dtype=tensor.dtype(basis),
+            device=ops.get_device(basis),
         )
-        output = ops.matmul(pinv, wave_flat)
+        output = ops.matmul(pinv_basis, wave_flat)
+
         
         # Reshape to grid
         output = tensor.reshape(
@@ -167,8 +174,8 @@ class BinaryWaveProcessor(Module):
             Interference pattern
         """
         # Threshold to binary
-        binary1 = wave1 > self.config.threshold
-        binary2 = wave2 > self.config.threshold
+        binary1 = ops.greater(wave1, self.config.threshold)
+        binary2 = ops.greater(wave2, self.config.threshold)
         
         if mode == 'XOR':
             result = ops.logical_xor(binary1, binary2)
@@ -196,16 +203,17 @@ class BinaryWaveProcessor(Module):
         if max_shift is None:
             max_shift = self.config.num_phases // 4
             
-        best_similarity = tensor.convert_to_tensor(0.0, device=wave1.device)
-        best_shift = tensor.convert_to_tensor(0, device=wave1.device)
+        best_similarity = tensor.convert_to_tensor(0.0, device=ops.get_device(wave1))
+        best_shift = tensor.convert_to_tensor(0, device=ops.get_device(wave1))
         
         for shift in range(max_shift):
-            shifted = _roll(wave2, shifts=shift, dim=0)
-            similarity = 1.0 - ops.abs(wave1 - shifted).mean()
-            
-            if similarity > best_similarity:
+            shifted = _roll(wave2, shifts=shift, axis=0)
+            similarity = ops.subtract(1.0, ops.mean(ops.abs(ops.subtract(wave1, shifted))))
+
+            if tensor.item(similarity) > tensor.item(best_similarity):
+
                 best_similarity = similarity
-                best_shift = tensor.convert_to_tensor(shift, device=wave1.device)
+                best_shift = tensor.convert_to_tensor(shift, device=ops.get_device(wave1))
                 
         return {
             'similarity': best_similarity,
@@ -223,20 +231,27 @@ class BinaryWaveProcessor(Module):
         Returns:
             Dict of features
         """
-        binary = wave > self.config.threshold
-        binary_float = binary.float()
+        binary = ops.greater(wave, self.config.threshold)
+        binary_float = tensor.cast(binary, tensor.float32)
         
         # Basic features
-        density = binary_float.mean()
+        density = ops.mean(binary_float)
         
         # Transitions (changes between 0 and 1)
-        transitions = ops.abs(
-            binary_float[..., 1:] - binary_float[..., :-1]
-        ).sum()
+        transitions = ops.sum(
+            ops.abs(
+                ops.subtract(
+                    binary_float[..., 1:],
+                    binary_float[..., :-1]
+                )
+            )
+        )
         
         # Symmetry measure
-        flipped = _flip(binary_float, dims=[-2, -1])
-        symmetry = 1.0 - ops.abs(binary_float - flipped).mean()
+        flipped = _flip(binary_float, axis=-1)
+        flipped = _flip(flipped, axis=-2)
+        symmetry = ops.subtract(1.0, ops.mean(ops.abs(ops.subtract(binary_float, flipped))))
+
         
         return {
             'density': density,
@@ -273,22 +288,30 @@ class BinaryWaveEncoder(Module):
         bin_repr = f"{code_point:016b}"
         
         # Create 2D grid
-        bit_matrix = tensor.convert_to_tensor([int(b) for b in bin_repr], dtype=tensor.float32)
-        bit_matrix = bit_matrix.reshape(self.config.grid_size, self.config.grid_size)
+        bit_matrix = tensor.convert_to_tensor(
+            [int(b) for b in bin_repr], dtype=tensor.float32
+        )
+        bit_matrix = tensor.reshape(
+            bit_matrix,
+            (self.config.grid_size, self.config.grid_size),
+        )
+
         
         # Generate phase shifts
         time_slices = []
         for t in range(self.config.num_phases):
             # Roll the matrix for phase shift
-            shifted = _roll(bit_matrix, shifts=t, dim=1)
+            shifted = _roll(bit_matrix, shifts=t, axis=1)
+
             
             # Apply fade factor
             fade_factor = max(0.0, 1.0 - t * self.config.fade_rate)
-            time_slices.append(shifted * fade_factor)
+            time_slices.append(ops.multiply(shifted, fade_factor))
             
         # Stack into 4D tensor
         wave_pattern = tensor.stack(time_slices)
-        return wave_pattern.unsqueeze(-1)
+        return tensor.expand_dims(wave_pattern, -1)
+
     
     def encode_sequence(self, sequence: str) -> tensor.convert_to_tensor:
         """
@@ -328,21 +351,28 @@ class BinaryWaveNetwork(Module):
         self.processor = BinaryWaveProcessor(config)
         
         # Learnable parameters
-        self.input_proj = container.Linear(input_size, hidden_size)
-        self.wave_proj = container.Linear(
+        self.input_proj = Linear(input_size, hidden_size)
+        self.wave_proj = Linear(
+
             hidden_size,
-            config.grid_size * config.grid_size
+            config.grid_size * config.grid_size,
         )
-        self.output_proj = container.Linear(hidden_size, output_size)
+        self.output_proj = Linear(hidden_size, output_size)
+
         
         # Wave memory
         self.register_buffer(
             'memory_gate',
-            tensor.random_normal((config.grid_size, config.grid_size))
+            tensor.random_normal(
+                (config.grid_size, config.grid_size)
+            ),
         )
         self.register_buffer(
             'update_gate',
-            tensor.random_normal((config.grid_size, config.grid_size))
+            tensor.random_normal(
+                (config.grid_size, config.grid_size)
+            ),
+
         )
         
     def forward(self,
@@ -363,7 +393,10 @@ class BinaryWaveNetwork(Module):
         
         # Generate wave pattern
         wave = self.wave_proj(hidden)
-        wave = wave.reshape(-1, self.config.grid_size, self.config.grid_size)
+        wave = tensor.reshape(
+            wave,
+            (-1, self.config.grid_size, self.config.grid_size),
+        )
         
         # Apply memory gate
         if memory is not None:

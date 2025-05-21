@@ -7,8 +7,10 @@ input and output units.
 """
 
 from typing import Tuple
-import numpy as np
-from numpy.typing import NDArray
+
+from ember_ml import ops
+from ember_ml.nn import tensor
+from ember_ml.ops import stats
 
 
 class HebbianLayer:
@@ -43,14 +45,18 @@ class HebbianLayer:
         self.input_size = input_size
         self.output_size = output_size
         self.eta = eta
-        
+
         # Initialize small random weights
-        self.weights = np.random.randn(output_size, input_size) * weight_scale
+        self.weights = tensor.random_normal(
+            (output_size, input_size),
+            mean=0.0,
+            stddev=weight_scale,
+        )
         
         # Keep track of weight statistics
         self._weight_history: list[Tuple[float, float]] = []  # (mean, std)
     
-    def forward(self, inputs: NDArray[tensor.float32]) -> NDArray[tensor.float32]:
+    def forward(self, inputs: tensor.EmberTensor) -> tensor.EmberTensor:
         """
         Compute forward pass through the layer.
         
@@ -63,17 +69,20 @@ class HebbianLayer:
         Raises:
             ValueError: If input shape doesn't match input_size
         """
-        if inputs.shape != (self.input_size,):
+        inputs_t = tensor.convert_to_tensor(inputs)
+        if tensor.shape(inputs_t) != (self.input_size,):
             raise ValueError(
                 f"Expected input shape ({self.input_size},), "
-                f"got {inputs.shape}"
+                f"got {tensor.shape(inputs_t)}"
             )
-        
-        return self.weights @ inputs
+
+        return ops.matmul(self.weights, inputs_t)
     
-    def hebbian_update(self,
-                      inputs: NDArray[tensor.float32],
-                      outputs: NDArray[tensor.float32]) -> None:
+    def hebbian_update(
+        self,
+        inputs: tensor.EmberTensor,
+        outputs: tensor.EmberTensor,
+    ) -> None:
         """
         Update weights using Hebbian learning rule.
         
@@ -88,22 +97,29 @@ class HebbianLayer:
         Raises:
             ValueError: If input/output shapes don't match layer dimensions
         """
-        if inputs.shape != (self.input_size,):
+        inputs_t = tensor.convert_to_tensor(inputs)
+        outputs_t = tensor.convert_to_tensor(outputs)
+        if tensor.shape(inputs_t) != (self.input_size,):
             raise ValueError(
                 f"Expected input shape ({self.input_size},), "
-                f"got {inputs.shape}"
+                f"got {tensor.shape(inputs_t)}"
             )
-        if outputs.shape != (self.output_size,):
+        if tensor.shape(outputs_t) != (self.output_size,):
             raise ValueError(
                 f"Expected output shape ({self.output_size},), "
-                f"got {outputs.shape}"
+                f"got {tensor.shape(outputs_t)}"
             )
-        
+
         # Compute weight updates using outer product
-        delta_w = self.eta * np.outer(outputs, inputs)
-        
+        inputs_row = tensor.reshape(inputs_t, (1, self.input_size))
+        outputs_col = tensor.reshape(outputs_t, (self.output_size, 1))
+        delta_w = ops.multiply(
+            self.eta,
+            ops.matmul(outputs_col, inputs_row),
+        )
+
         # Apply updates
-        self.weights += delta_w
+        self.weights = ops.add(self.weights, delta_w)
         
         # Record weight statistics
         self._weight_history.append(
@@ -126,14 +142,18 @@ class HebbianLayer:
         Args:
             weight_scale: Scale factor for new random weights
         """
-        self.weights = np.random.randn(self.output_size, self.input_size) * weight_scale
+        self.weights = tensor.random_normal(
+            (self.output_size, self.input_size),
+            mean=0.0,
+            stddev=weight_scale,
+        )
         self._weight_history.clear()
     
-    def get_weights(self) -> NDArray[tensor.float32]:
+    def get_weights(self) -> tensor.EmberTensor:
         """
         Get the current weight matrix.
         
         Returns:
             NDArray[tensor.float32]: Copy of weight matrix
         """
-        return self.weights.copy()
+        return tensor.copy(self.weights)
