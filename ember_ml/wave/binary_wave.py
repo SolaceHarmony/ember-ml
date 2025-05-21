@@ -1,13 +1,27 @@
-"""
-Binary wave neural processing components.
-"""
+"""Binary wave neural processing components."""
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from typing import Optional, Dict, Union, List, Tuple
 from dataclasses import dataclass
+from typing import Dict, Optional, Tuple
+
+import numpy as np
+
+from ember_ml import ops
 from ember_ml.nn import tensor
+from ember_ml.nn.modules import Module, Parameter
+from ember_ml.nn.container.linear import Linear
+
+def _roll(x: tensor.EmberTensor, shifts: int, axis: int = 0) -> tensor.EmberTensor:
+    """Roll tensor along a given axis using NumPy as a fallback."""
+    x_np = tensor.to_numpy(x)
+    rolled = np.roll(x_np, shifts, axis)
+    return tensor.convert_to_tensor(rolled, dtype=tensor.dtype(x), device=ops.get_device(x))
+
+
+def _flip(x: tensor.EmberTensor, axis: int) -> tensor.EmberTensor:
+    """Flip tensor along a given axis using NumPy as a fallback."""
+    x_np = tensor.to_numpy(x)
+    flipped = np.flip(x_np, axis)
+    return tensor.convert_to_tensor(flipped, dtype=tensor.dtype(x), device=ops.get_device(x))
 
 @dataclass
 class WaveConfig:
@@ -17,7 +31,7 @@ class WaveConfig:
     fade_rate: float = 0.1
     threshold: float = 0.5
 
-class BinaryWave(nn.Module):
+class BinaryWave(Module):
     """Base class for binary wave processing."""
     
     def __init__(self, config: WaveConfig = WaveConfig()):
@@ -29,10 +43,10 @@ class BinaryWave(nn.Module):
         """
         super().__init__()
         self.config = config
-        
+
         # Learnable parameters
-        self.phase_shift = nn.Parameter(torch.zeros(config.num_phases))
-        self.amplitude_scale = nn.Parameter(torch.ones(config.num_phases))
+        self.phase_shift = Parameter(tensor.zeros(config.num_phases))
+        self.amplitude_scale = Parameter(tensor.ones(config.num_phases))
         
     def encode(self, x: tensor.convert_to_tensor) -> tensor.convert_to_tensor:
         """
@@ -45,23 +59,30 @@ class BinaryWave(nn.Module):
             Wave pattern
         """
         # Project to phase space
-        phases = torch.arange(self.config.num_phases).float()
-        phases = phases + self.phase_shift
+        phases = tensor.arange(self.config.num_phases, dtype=tensor.float32)
+        phases = ops.add(phases, self.phase_shift)
         
         # Generate wave pattern
-        t = torch.linspace(0, 1, self.config.grid_size * self.config.grid_size)
-        wave = torch.sin(2 * torch.pi * phases.unsqueeze(-1) * t.unsqueeze(0))
-        wave = wave * self.amplitude_scale.unsqueeze(-1)
+        t = tensor.linspace(0.0, 1.0, self.config.grid_size * self.config.grid_size)
+        phase_term = ops.multiply(
+            ops.multiply(ops.multiply(2.0, ops.pi), tensor.expand_dims(phases, -1)),
+            tensor.expand_dims(t, 0),
+        )
+        wave = ops.sin(phase_term)
+        wave = ops.multiply(wave, tensor.expand_dims(self.amplitude_scale, -1))
         
         # Apply input modulation
-        x_flat = x.view(-1)
-        wave = wave * x_flat.unsqueeze(0)
+        x_flat = tensor.reshape(x, (-1,))
+        wave = ops.multiply(wave, tensor.expand_dims(x_flat, 0))
         
         # Reshape to grid
-        wave = wave.view(
-            self.config.num_phases,
-            self.config.grid_size,
-            self.config.grid_size
+        wave = tensor.reshape(
+            wave,
+            (
+                self.config.num_phases,
+                self.config.grid_size,
+                self.config.grid_size,
+            ),
         )
         
         return wave
@@ -77,24 +98,34 @@ class BinaryWave(nn.Module):
             Decoded output
         """
         # Apply inverse wave transform
-        wave_flat = wave.view(self.config.num_phases, -1)
-        phases = torch.arange(self.config.num_phases).float()
-        phases = phases + self.phase_shift
-        
-        t = torch.linspace(0, 1, wave_flat.size(1))
-        basis = torch.sin(2 * torch.pi * phases.unsqueeze(-1) * t.unsqueeze(0))
-        basis = basis * self.amplitude_scale.unsqueeze(-1)
-        
-        # Solve for output
-        output = ops.matmul(
-            torch.pinverse(basis),
-            wave_flat
+        wave_flat = tensor.reshape(wave, (self.config.num_phases, -1))
+        phases = tensor.arange(self.config.num_phases, dtype=tensor.float32)
+        phases = ops.add(phases, self.phase_shift)
+
+        t = tensor.linspace(0.0, 1.0, tensor.shape(wave_flat)[1])
+        phase_term = ops.multiply(
+            ops.multiply(ops.multiply(2.0, ops.pi), tensor.expand_dims(phases, -1)),
+            tensor.expand_dims(t, 0),
         )
+        basis = ops.sin(phase_term)
+        basis = ops.multiply(basis, tensor.expand_dims(self.amplitude_scale, -1))
+
+        # Solve for output using NumPy pseudoinverse as fallback
+        pinv_basis_np = np.linalg.pinv(tensor.to_numpy(basis))
+        pinv_basis = tensor.convert_to_tensor(
+            pinv_basis_np,
+            dtype=tensor.dtype(basis),
+            device=ops.get_device(basis),
+        )
+        output = ops.matmul(pinv_basis, wave_flat)
         
         # Reshape to grid
-        output = output.view(
-            self.config.grid_size,
-            self.config.grid_size
+        output = tensor.reshape(
+            output,
+            (
+                self.config.grid_size,
+                self.config.grid_size,
+            ),
         )
         
         return output
@@ -112,7 +143,7 @@ class BinaryWave(nn.Module):
         wave = self.encode(x)
         return self.decode(wave)
 
-class BinaryWaveProcessor(nn.Module):
+class BinaryWaveProcessor(Module):
     """Processes binary wave patterns."""
     
     def __init__(self, config: WaveConfig = WaveConfig()):
@@ -140,17 +171,17 @@ class BinaryWaveProcessor(nn.Module):
             Interference pattern
         """
         # Threshold to binary
-        binary1 = wave1 > self.config.threshold
-        binary2 = wave2 > self.config.threshold
+        binary1 = ops.greater(wave1, self.config.threshold)
+        binary2 = ops.greater(wave2, self.config.threshold)
         
         if mode == 'XOR':
-            result = torch.logical_xor(binary1, binary2)
+            result = ops.logical_xor(binary1, binary2)
         elif mode == 'AND':
-            result = torch.logical_and(binary1, binary2)
+            result = ops.logical_and(binary1, binary2)
         else:  # OR
-            result = torch.logical_or(binary1, binary2)
-            
-        return result.float()
+            result = ops.logical_or(binary1, binary2)
+
+        return tensor.cast(result, tensor.float32)
     
     def phase_similarity(self,
                         wave1: tensor.convert_to_tensor,
@@ -169,16 +200,16 @@ class BinaryWaveProcessor(nn.Module):
         if max_shift is None:
             max_shift = self.config.num_phases // 4
             
-        best_similarity = tensor.convert_to_tensor(0.0, device=wave1.device)
-        best_shift = tensor.convert_to_tensor(0, device=wave1.device)
+        best_similarity = tensor.convert_to_tensor(0.0, device=ops.get_device(wave1))
+        best_shift = tensor.convert_to_tensor(0, device=ops.get_device(wave1))
         
         for shift in range(max_shift):
-            shifted = torch.roll(wave2, shifts=shift, dims=0)
-            similarity = 1.0 - torch.abs(wave1 - shifted).mean()
-            
-            if similarity > best_similarity:
+            shifted = _roll(wave2, shifts=shift, axis=0)
+            similarity = ops.subtract(1.0, ops.mean(ops.abs(ops.subtract(wave1, shifted))))
+
+            if tensor.item(similarity) > tensor.item(best_similarity):
                 best_similarity = similarity
-                best_shift = tensor.convert_to_tensor(shift, device=wave1.device)
+                best_shift = tensor.convert_to_tensor(shift, device=ops.get_device(wave1))
                 
         return {
             'similarity': best_similarity,
@@ -196,20 +227,26 @@ class BinaryWaveProcessor(nn.Module):
         Returns:
             Dict of features
         """
-        binary = wave > self.config.threshold
-        binary_float = binary.float()
+        binary = ops.greater(wave, self.config.threshold)
+        binary_float = tensor.cast(binary, tensor.float32)
         
         # Basic features
-        density = binary_float.mean()
+        density = ops.mean(binary_float)
         
         # Transitions (changes between 0 and 1)
-        transitions = torch.abs(
-            binary_float[..., 1:] - binary_float[..., :-1]
-        ).sum()
+        transitions = ops.sum(
+            ops.abs(
+                ops.subtract(
+                    binary_float[..., 1:],
+                    binary_float[..., :-1]
+                )
+            )
+        )
         
         # Symmetry measure
-        flipped = torch.flip(binary_float, dims=[-2, -1])
-        symmetry = 1.0 - torch.abs(binary_float - flipped).mean()
+        flipped = _flip(binary_float, axis=-1)
+        flipped = _flip(flipped, axis=-2)
+        symmetry = ops.subtract(1.0, ops.mean(ops.abs(ops.subtract(binary_float, flipped))))
         
         return {
             'density': density,
@@ -217,7 +254,7 @@ class BinaryWaveProcessor(nn.Module):
             'symmetry': symmetry
         }
 
-class BinaryWaveEncoder(nn.Module):
+class BinaryWaveEncoder(Module):
     """Encodes data into binary wave patterns."""
     
     def __init__(self, config: WaveConfig = WaveConfig()):
@@ -246,22 +283,27 @@ class BinaryWaveEncoder(nn.Module):
         bin_repr = f"{code_point:016b}"
         
         # Create 2D grid
-        bit_matrix = tensor.convert_to_tensor([int(b) for b in bin_repr], dtype=torch.float32)
-        bit_matrix = bit_matrix.reshape(self.config.grid_size, self.config.grid_size)
+        bit_matrix = tensor.convert_to_tensor(
+            [int(b) for b in bin_repr], dtype=tensor.float32
+        )
+        bit_matrix = tensor.reshape(
+            bit_matrix,
+            (self.config.grid_size, self.config.grid_size),
+        )
         
         # Generate phase shifts
         time_slices = []
         for t in range(self.config.num_phases):
             # Roll the matrix for phase shift
-            shifted = torch.roll(bit_matrix, shifts=t, dims=1)
+            shifted = _roll(bit_matrix, shifts=t, axis=1)
             
             # Apply fade factor
             fade_factor = max(0.0, 1.0 - t * self.config.fade_rate)
-            time_slices.append(shifted * fade_factor)
+            time_slices.append(ops.multiply(shifted, fade_factor))
             
         # Stack into 4D tensor
-        wave_pattern = torch.stack(time_slices)
-        return wave_pattern.unsqueeze(-1)
+        wave_pattern = tensor.stack(time_slices)
+        return tensor.expand_dims(wave_pattern, -1)
     
     def encode_sequence(self, sequence: str) -> tensor.convert_to_tensor:
         """
@@ -274,9 +316,9 @@ class BinaryWaveEncoder(nn.Module):
             5D tensor of shape (seq_len, num_phases, grid_size, grid_size, 1)
         """
         patterns = [self.encode_char(c) for c in sequence]
-        return torch.stack(patterns)
+        return tensor.stack(patterns)
 
-class BinaryWaveNetwork(nn.Module):
+class BinaryWaveNetwork(Module):
     """Neural network using binary wave processing."""
     
     def __init__(self,
@@ -301,21 +343,25 @@ class BinaryWaveNetwork(nn.Module):
         self.processor = BinaryWaveProcessor(config)
         
         # Learnable parameters
-        self.input_proj = nn.Linear(input_size, hidden_size)
-        self.wave_proj = nn.Linear(
+        self.input_proj = Linear(input_size, hidden_size)
+        self.wave_proj = Linear(
             hidden_size,
-            config.grid_size * config.grid_size
+            config.grid_size * config.grid_size,
         )
-        self.output_proj = nn.Linear(hidden_size, output_size)
+        self.output_proj = Linear(hidden_size, output_size)
         
         # Wave memory
         self.register_buffer(
             'memory_gate',
-            torch.randn(config.grid_size, config.grid_size)
+            tensor.random_normal(
+                (config.grid_size, config.grid_size)
+            ),
         )
         self.register_buffer(
             'update_gate',
-            torch.randn(config.grid_size, config.grid_size)
+            tensor.random_normal(
+                (config.grid_size, config.grid_size)
+            ),
         )
         
     def forward(self,
@@ -336,7 +382,10 @@ class BinaryWaveNetwork(nn.Module):
         
         # Generate wave pattern
         wave = self.wave_proj(hidden)
-        wave = wave.reshape(-1, self.config.grid_size, self.config.grid_size)
+        wave = tensor.reshape(
+            wave,
+            (-1, self.config.grid_size, self.config.grid_size),
+        )
         
         # Apply memory gate
         if memory is not None:

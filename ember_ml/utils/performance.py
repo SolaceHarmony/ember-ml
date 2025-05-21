@@ -7,7 +7,6 @@ This module provides performance utilities for the ember_ml library.
 import time
 import functools
 from typing import Callable, Any, Dict, List, Optional
-import numpy as np
 import matplotlib.pyplot as plt
 
 def timeit(func: Callable) -> Callable:

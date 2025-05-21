@@ -8,7 +8,6 @@ import mlx.core as mx
 import time
 import asyncio
 from typing import Dict, List, Optional, Any
-import numpy as np
 
 # Import EmberTensor and async liquid_cfc_xlstm
 from ember_ml.nn.tensor import EmberTensor
