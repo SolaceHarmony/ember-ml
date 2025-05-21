@@ -170,3 +170,7 @@ tests/test_results_updated.txt
 tests/test_results.txt
 tests/test_results_updated.txt
 tests/test_results.txt
+.clinerules-goddess-of-code
+/examples/rbm/outputs
+examples/rbm/telemetry_data.csv
+/outputs
