@@ -8,12 +8,21 @@ It handles backend switching by updating these aliases.
 
 import importlib
 import sys
-from typing import Optional, Any, Union, TypeVar
+import logging
+from typing import Optional, Any, Union, TypeVar, Protocol, runtime_checkable
+
+# Setup basic logging configuration if not already configured
+if not logging.getLogger().hasHandlers():
+    logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
 # Import types for type annotations
-TensorLike = Any  # Placeholder for actual tensor-like types
-Tensor = Any  # Placeholder for actual tensor types
-DType = Any  # Placeholder for actual data types
+@runtime_checkable
+class TensorLike(Protocol):
+    """Protocol for tensor-like objects"""
+    def __array__(self) -> Any: ...
+
+type Tensor = Any  # Placeholder for actual tensor types
+type DType = Any  # Placeholder for actual data types
 
 # Define type variables for function signatures
 T = TypeVar('T', bound=TensorLike)
@@ -27,14 +36,12 @@ from ember_ml.backend import (
     auto_select_backend
 )
 
-
 # Master list of all functions expected to be aliased by ember_ml.ops
 _MASTER_OPS_LIST = [
     # Math (Core arithmetic, trig, exponential, etc.)
     'add', 'subtract', 'multiply', 'divide', 'matmul', 'dot',
     'exp', 'log', 'log10', 'log2', 'pow', 'sqrt', 'square', 'abs', 'sign', 'sin', 'cos', 'tan',
     'sinh', 'cosh', 'clip', 'negative', 'mod', 'floor_divide', 'floor', 'ceil', 'gradient',
-    # 'pi', # Removed, handled by direct import above
     'power', # Note: 'power' is alias for 'pow'
     # Comparison
     'equal', 'not_equal', 'less', 'less_equal', 'greater', 'greater_equal', 'logical_and', 'logical_or',
@@ -53,9 +60,6 @@ _MASTER_OPS_LIST = [
     'fft2', 'ifft2', 'fftn', 'ifftn', 'rfft', 'irfft', 'rfft2', 'irfft2', 'rfftn', 'irfftn',
     # Array manipulation
     'vstack', 'hstack',
-    # Sub folders
-    # Linear algebra
-    # These are not functions but submodules that need to be imported
 ]
 
 # Placeholder for functions that will be dynamically loaded
@@ -64,7 +68,6 @@ for _op_name in _MASTER_OPS_LIST:
     # Check if the name is already defined (like built-ins: max, min, sum, pow, abs, all)
     if _op_name not in globals():
         globals()[_op_name] = None
-    # For built-ins, we will overwrite them later with the backend version, which is intended.
 
 # Keep track of the currently aliased backend
 _aliased_backend: Optional[str] = None
@@ -83,7 +86,8 @@ def _update_ops_aliases():
     try:
         backend_module = importlib.reload(backend_module)
     except Exception as e:
-        print(f"Warning: Failed to reload backend module {backend_module.__name__}: {e}")
+        import logging
+        logging.warning(f"Failed to reload backend module {backend_module.__name__}: {e}")
     current_ops_module = sys.modules[__name__] # Get the 'ember_ml.ops' module object
 
     missing_ops = []
@@ -93,7 +97,6 @@ def _update_ops_aliases():
             backend_function = getattr(backend_module, func_name)
             setattr(current_ops_module, func_name, backend_function)
             # Also update globals() so functions defined *within this file* can use the aliases
-            # This might be less necessary now but kept for safety.
             globals()[func_name] = backend_function
             successful_aliases += 1
         except AttributeError:
@@ -116,9 +119,11 @@ def _update_ops_aliases():
             import math
             setattr(current_ops_module, 'pi', math.pi)
             globals()['pi'] = math.pi
-            print(f"Warning: Using math.pi as fallback for backend '{backend_name}'")
+            import logging
+            logging.warning(f"Using math.pi as fallback for backend '{backend_name}'")
     if missing_ops:
-        print(f"Warning: Backend '{backend_name}' does not implement the following ops: {', '.join(missing_ops)}")
+        import logging
+        logging.warning(f"Backend '{backend_name}' does not implement the following ops: {', '.join(missing_ops)}")
     _aliased_backend = backend_name # Mark this backend as aliased
 
 # --- Define set_backend for this module to trigger alias updates ---
@@ -130,45 +135,60 @@ def set_backend(backend: str):
         return
     original_set_backend(backend) # Call the original function in backend/__init__.py
     _update_ops_aliases() # Update aliases in this module
+    
     # Explicitly trigger updates in other aliasing modules
+    _update_submodule_aliases()
+
+def _update_submodule_aliases():
+    """Update all submodule aliases when the backend changes."""
     try:
         from ember_ml.ops.stats import _update_stats_aliases
         _update_stats_aliases()
     except ImportError:
-        print("Warning: Could not import or update stats aliases.")
+        import logging
+        logging.warning("Could not import or update stats aliases.")
+    
+    try:
+        from ember_ml.ops.linearalg import _update_linearalg_aliases
+        _update_linearalg_aliases()
+    except ImportError:
+        import logging
+        logging.warning("Could not import or update linearalg aliases.")
+    
+    try:
+        from ember_ml.ops.bitwise import _update_bitwise_aliases
+        _update_bitwise_aliases()
+    except ImportError:
+        import logging
+        logging.warning("Could not import or update bitwise aliases.")
+    
     try:
         from ember_ml.nn.modules.activations import _update_activation_aliases
         _update_activation_aliases()
     except ImportError:
-        print("Warning: Could not import or update activation aliases.")
+        import logging
+        logging.warning("Could not import or update activation aliases.")
+    
     try:
-        # Explicitly trigger update in linearalg module
-        from ember_ml.ops.linearalg import _update_linearalg_aliases
-        _update_linearalg_aliases()
-    except ImportError:
-        print("Warning: Could not import or update linearalg aliases.")
-    try:
-        # Explicitly trigger update in bitwise module
-        from ember_ml.ops.bitwise import _update_bitwise_aliases
-        _update_bitwise_aliases()
-    except ImportError:
-        print("Warning: Could not import or update bitwise aliases.")
-    try:
-        # Explicitly trigger update in features module's aliasing mechanism
         from ember_ml.nn.features import _update_features_aliases
         _update_features_aliases()
     except ImportError:
-        print("Warning: Could not import or update features aliases.")
+        import logging
+        logging.warning("Could not import or update features aliases.")
 
 # --- Initial alias setup ---
 # Ensure backend is determined and aliases populated on first import
 _init_backend_name = get_backend() # This call triggers auto-selection if needed
 _update_ops_aliases() # Populate aliases based on the determined backend
 
-# Import submodules
+# Import submodules AFTER initial setup to ensure they get proper backend context
+# But defer alias updates until after imports to avoid circular imports
 from ember_ml.ops import stats
 from ember_ml.ops import linearalg
 from ember_ml.ops import bitwise
+
+# Now that all modules are imported, trigger alias updates
+_update_submodule_aliases()
 
 # --- Define __all__ ---
 # Includes backend controls aliased here and the master list of ops
