@@ -15,12 +15,12 @@ _BACKEND_MODULE = None
 def set_backend(backend_name: Union[str, Literal['numpy', 'torch', 'mlx']]) -> None:
     """
     Set the backend for neural network operations.
-    
+
     Args:
         backend_name: Name of the backend ('numpy', 'torch', 'mlx')
     """
     global _CURRENT_BACKEND, _BACKEND_MODULE
-    
+
     if backend_name == 'torch':
         _BACKEND_MODULE = importlib.import_module('ember_ml.backend.torch')
     elif backend_name == 'numpy':
@@ -29,36 +29,28 @@ def set_backend(backend_name: Union[str, Literal['numpy', 'torch', 'mlx']]) -> N
         _BACKEND_MODULE = importlib.import_module('ember_ml.backend.mlx')
     else:
         raise ValueError(f"Unknown backend: {backend_name}")
-    
+
     _CURRENT_BACKEND = backend_name
-    
+
     # Import all functions from the backend module into the current namespace
     for name in dir(_BACKEND_MODULE):
         if not name.startswith('_'):
             globals()[name] = getattr(_BACKEND_MODULE, name)
 
-# Import auto_select_backend from the backend module - REMOVED
-# from ember_ml.backend import auto_select_backend
+# Import auto_select_backend from the backend module
+from ember_ml.backend import auto_select_backend
 
-# Set default backend - REMOVED auto_select_backend usage
-# User should explicitly call set_backend() initially.
-# Fallback backend setting if none explicitly set:
+# Set default backend using auto_select_backend
+# This will respect the backend configuration and choose the best available backend
 try:
-    set_backend('torch')
-except ImportError:
-    # Fallback to NumPy if PyTorch is not available
-    try:
-        set_backend('numpy')
-    except ImportError:
-        # Fallback to MLX if NumPy is not available
-        try:
-            set_backend('mlx')
-        except ImportError:
-            # If no backend is available, don't raise error here,
-            # let subsequent ops fail naturally if backend is needed.
-            # Consider adding a warning.
-            print("Warning: No default backend (torch, numpy, mlx) found. Imports may fail if backend operations are used without calling set_backend().")
-            pass # Allow import to proceed without a default backend set
+    backend_name, _ = auto_select_backend()
+    if backend_name:
+        set_backend(backend_name)
+    else:
+        print("Warning: No default backend could be selected. Imports may fail if backend operations are used without calling set_backend().")
+except Exception as e:
+    print(f"Warning: Error selecting default backend: {e}. Imports may fail if backend operations are used without calling set_backend().")
+    pass # Allow import to proceed without a default backend set
 
 # Import submodules
 # from ember_ml import benchmarks # Removed - moved out of package

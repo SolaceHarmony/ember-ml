@@ -9,7 +9,11 @@ import importlib
 import os
 import platform
 from pathlib import Path
-import json # Added json import
+import json
+from typing import Optional, Any, Dict, List, Tuple
+
+# Import the registry module
+from ember_ml.backend.registry import BackendRegistry
 
 # We'll use lazy imports for tensor classes to avoid circular dependencies
 # Initialize variables for lazy loading
@@ -129,15 +133,14 @@ def _save_backend_to_file(backend):
 
 
 def _reload_ops_module():
-    """Reload the ops module to ensure it uses the new backend."""
-    try:
-        ops_module = importlib.import_module('ember_ml.ops')
-        if hasattr(ops_module, '_CURRENT_INSTANCES'): # Assuming this is part of your ops module's state
-            setattr(ops_module, '_CURRENT_INSTANCES', {})
-        importlib.reload(ops_module)
-        print("Info: Ops module reloaded due to backend switch.")
-    except Exception as e:
-        print(f"Warning: Error updating ops module after backend switch: {e}")
+    """
+    This function is kept for backward compatibility but is no longer needed.
+
+    With the new proxy module pattern, backend changes are automatically propagated
+    to all proxy modules via the BackendRegistry, so explicit reloading is not required.
+    """
+    # No action needed - the registry handles backend changes automatically
+    pass
 
 def get_backend():
     """Get the current backend, performing auto-selection if necessary."""
@@ -205,6 +208,13 @@ def set_backend(backend: str):
     os.environ['EMBER_ML_BACKEND'] = backend # Keep env var in sync
     _CURRENT_BACKEND_MODULE = None  # Force reload of module on next get_backend_module()
 
+    # Get the backend module
+    backend_module = get_backend_module()
+
+    # Update the registry
+    registry = BackendRegistry()
+    registry.set_backend(backend, backend_module)
+
     print(f"Info: Backend set to '{backend}'.")
     _reload_ops_module()
 
@@ -212,7 +222,7 @@ def set_backend(backend: str):
 def get_backend_module():
     """Get the current backend module."""
     global _CURRENT_BACKEND_MODULE
-    
+
     current_backend_name = get_backend() # Ensures backend is initialized
 
     if current_backend_name is None:
@@ -233,22 +243,22 @@ def get_backend_module():
                 return _CURRENT_BACKEND_MODULE # Return the (now NumPy) module
             else:
                 raise # Re-raise if NumPy also fails or was the failing one
-    
+
     return _CURRENT_BACKEND_MODULE
 
 
 def get_device(tensor=None):
     """
     Get the current device.
-    
+
     Args:
         tensor: Optional tensor to get the device from
-        
+
     Returns:
         Device name as a string
     """
     backend_name = get_backend()
-    
+
     if tensor is not None and backend_name != 'mlx': # MLX handles device differently for now
         if hasattr(tensor, 'device'):
             return str(tensor.device)
@@ -280,7 +290,7 @@ def set_device(device_identifier: str):
     Set the default device for the current backend.
     This is primarily for MLX, as PyTorch uses torch.set_default_device
     or tensor.to(device) and NumPy is CPU-only.
-    
+
     Args:
         device_identifier: Device string (e.g., "cpu", "gpu", "mps" for torch, or specific for mlx)
     """
@@ -340,7 +350,7 @@ def auto_select_backend():
     if 'torch' in _AVAILABLE_BACKENDS: # If torch loaded but no GPU
         print("Info: Auto-selected PyTorch (CPU) backend.")
         return 'torch', 'cpu'
-    
+
     if 'mlx' in _AVAILABLE_BACKENDS and platform.system() == 'Darwin': # MLX typically on Darwin
         print("Info: Auto-selected MLX backend.")
         return 'mlx', None # MLX device is handled internally by MLX

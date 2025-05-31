@@ -91,7 +91,7 @@ def generate_data(n_samples=1000, n_features=10, anomaly_fraction=0.05) -> pd.Da
     
     # Generate anomalies
     n_anomalies = int(n_samples * anomaly_fraction)
-    anomaly_indices = tensor.convert_to_tensor(ops.random_choice(n_samples, n_anomalies, replace=False))
+    anomaly_indices = tensor.convert_to_tensor(tensor.random_choice(n_samples, n_anomalies, replace=False))
     
     # Create different types of anomalies
     normal_tensor = tensor.convert_to_tensor(normal_data)
