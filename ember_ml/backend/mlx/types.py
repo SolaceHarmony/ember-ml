@@ -14,18 +14,18 @@ from typing import (
 import mlx.core as mx
 
 # Basic type aliases that don't require imports
-type Numeric = Union[int, float]
-type OrdLike = Optional[Union[int, str]]
-type Device = Optional[str]
-type PathLike = Union[str, os.PathLike[str]]
-type Shape = Sequence[int]
-type ShapeType = Union[int, Tuple[int, ...], List[int]]
-type ShapeLike = Union[int, List[int], Tuple[int, ...], Shape]
-type DimSize = Union[int, 'mx.array']
-type Axis = Optional[Union[int, Sequence[int]]]
-type IndexType = Union[int, Sequence[int], 'mx.array'] 
-type Indices = Union[Sequence[int], 'mx.array']
-type TensorLike = Optional[Union[ # type: ignore
+Numeric = Union[int, float]
+OrdLike = Optional[Union[int, str]]
+Device = Optional[str]
+PathLike = Union[str, os.PathLike[str]]
+Shape = Sequence[int]
+ShapeType = Union[int, Tuple[int, ...], List[int]]
+ShapeLike = Union[int, List[int], Tuple[int, ...], Shape]
+DimSize = Union[int, 'mx.array']
+Axis = Optional[Union[int, Sequence[int]]]
+IndexType = Union[int, Sequence[int], 'mx.array']
+Indices = Union[Sequence[int], 'mx.array']
+TensorLike = Optional[Union[ # type: ignore
     Numeric,
     bool,
     List[Any],
@@ -33,7 +33,7 @@ type TensorLike = Optional[Union[ # type: ignore
     'MLXArray',
     'numpy.ndarray',
 ]]
-type ScalarLike = Optional[Union[ # type: ignore
+ScalarLike = Optional[Union[ # type: ignore
     Numeric,
     bool,
     'MLXArray',
@@ -42,8 +42,8 @@ type ScalarLike = Optional[Union[ # type: ignore
 ]]
 
 # MLX specific
-type MLXArray = mx.array
-type DTypeClass = mx.Dtype
+MLXArray = mx.array
+DTypeClass = mx.Dtype
 
 # Precision related
 default_int = mx.int32
@@ -52,7 +52,7 @@ default_bool = mx.bool_ if hasattr(mx, 'bool_') else Any # type: ignore
 
 
 # Default type for dtype
-type DType = Any
+DType = Any
 
 # Conditional type definitions
 if TYPE_CHECKING == True:
@@ -64,7 +64,7 @@ if TYPE_CHECKING == True:
     T = TypeVar('T')  # Used for generic type definitions
     
     # Define types that reference external modules
-    type TensorTypes = Union[
+    TensorTypes = Union[
         MLXArray,
         Any,  # MLXTensor placeholder if exists
         Any,  # EmberTensor placeholder if exists
@@ -72,7 +72,7 @@ if TYPE_CHECKING == True:
         Parameter # Added Parameter
     ]
     
-    type ArrayLike = Union[
+    ArrayLike = Union[
         Any,  # MLXTensor
         MLXArray, 
         Numeric, 
@@ -80,13 +80,13 @@ if TYPE_CHECKING == True:
         Tuple[Any, ...]
     ]
     
-    type DTypes = Union[
+    DTypes = Union[
         mx.Dtype,
         Any,  # numpy.dtype
     ]
     
     # Ensure TensorLike correctly uses the updated TensorTypes
-    type TensorLike = Optional[Union[
+    TensorLike = Optional[Union[
         Numeric,
         bool,
         List[Any],
@@ -94,7 +94,7 @@ if TYPE_CHECKING == True:
         'TensorTypes'
     ]]
     
-    type ScalarLike = Optional[Union[
+    ScalarLike = Optional[Union[
         Numeric,
         bool,
         MLXArray,

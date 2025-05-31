@@ -16,7 +16,7 @@ from ember_ml.backend.numpy.tensor.ops.utility import (
 )
 from ember_ml.backend.numpy.tensor.ops.random import (
     random_normal, random_uniform, random_binomial, random_gamma, random_exponential,
-    random_poisson, random_categorical, random_permutation, shuffle, random_shuffle, set_seed, get_seed
+    random_poisson, random_categorical, random_permutation, shuffle, set_seed, get_seed
 )
 
 __all__ = [
@@ -78,7 +78,6 @@ __all__ = [
     'random_categorical',
     'random_permutation',
     'shuffle',
-    'random_shuffle',
     'set_seed',
     'get_seed',
 ]

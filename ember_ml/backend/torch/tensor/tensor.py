@@ -7,30 +7,30 @@ from ember_ml.backend.torch.tensor.dtype import TorchDType
 import torch
 
 # Basic type aliases
-type Numeric = Union[int, float]
+Numeric = Union[int, float]
 
 
 
 # Type definitions for PyTorch dtypes
-type DTypeStr = str
-type DTypeClass = Union[torch.dtype, str, None]
+DTypeStr = str
+DTypeClass = Union[Any, str, None] # Changed torch.dtype to Any
 
 # Type alias for dtype arguments that maintains compatibility
 # with both PyTorch's dtype system and tensor.py's DType
-type DType = Any  # Using Any for maximum compatibility
+DType = Any  # Using Any for maximum compatibility
 
 # PyTorch tensor types
-type TorchTensorType = torch.Tensor
-type ArrayLike = Union[TorchTensorType, Numeric, List[Any], Tuple[Any, ...]]
+TorchTensorType = Any # Changed torch.Tensor to Any
+ArrayLike = Union[TorchTensorType, Numeric, List[Any], Tuple[Any, ...]]
 
-type TensorTypes = Any
+TensorTypes = Any
 # Conditional imports
 if TYPE_CHECKING:
     import numpy as np
     from ember_ml.nn.tensor.common.ember_tensor import EmberTensor
     from ember_ml.backend.torch.tensor.tensor import TorchTensor
     
-    type TensorTypes = Union[
+    TensorTypes = Union[
         np.ndarray,
         TorchTensorType,
         TorchTensor,
@@ -38,7 +38,7 @@ if TYPE_CHECKING:
     ]
 
 # Main type definitions
-type TensorLike = Optional[Union[
+TensorLike = Optional[Union[
     Numeric,
     bool,
     List[Any],
@@ -47,16 +47,16 @@ type TensorLike = Optional[Union[
 ]]
 
 # Shape types
-type Shape = Sequence[int]
-type ShapeType = Union[int, Tuple[int, ...], List[int]]
-type ShapeLike = Union[int, List[int], Tuple[int, ...], Shape]
+Shape = Sequence[int]
+ShapeType = Union[int, Tuple[int, ...], List[int]]
+ShapeLike = Union[int, List[int], Tuple[int, ...], Shape]
 
 # Dimension types
-type DimSize = Union[int, TorchTensorType]
-type Axis = Optional[Union[int, Sequence[int]]]
+DimSize = Union[int, TorchTensorType]
+Axis = Optional[Union[int, Sequence[int]]]
 
 # Scalar types
-type ScalarLike = Optional[Union[
+ScalarLike = Optional[Union[
     Numeric,
     bool,
     TorchTensorType,
@@ -64,11 +64,11 @@ type ScalarLike = Optional[Union[
 ]]
 
 # Device type
-type Device = Optional[str]
+Device = Optional[str]
 
 # Index types
-type IndexType = Union[int, Sequence[int], TorchTensorType]
-type Indices = Union[Sequence[int], TorchTensorType]
+IndexType = Union[int, Sequence[int], TorchTensorType]
+Indices = Union[Sequence[int], TorchTensorType]
 
 
 class TorchTensor:
@@ -78,7 +78,7 @@ class TorchTensor:
         """Initialize PyTorch tensor operations."""
         self._dtype_cls = TorchDType()
 
-    def zeros(self, shape: Shape, dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
+    def zeros(self, shape: Shape, dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Changed torch.Tensor to Any
         """
         Create a PyTorch tensor of zeros.
 
@@ -93,7 +93,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.creation import zeros as zeros_func
         return zeros_func(shape, dtype, device)
 
-    def ones(self, shape: Shape, dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
+    def ones(self, shape: Shape, dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Changed torch.Tensor to Any
         """
         Create a PyTorch tensor of ones.
 
@@ -108,7 +108,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.creation import ones as ones_func
         return ones_func(shape, dtype, device)
 
-    def convert_to_tensor(self, data: Any, dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
+    def convert_to_tensor(self, data: Any, dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Changed torch.Tensor to Any
         """
         Convert input to PyTorch tensor.
 
@@ -123,7 +123,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.utility import _convert_to_tensor as convert_to_tensor_func
         return convert_to_tensor_func(data, dtype, device)
         
-    def convert(self, data: Any, dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
+    def convert(self, data: Any, dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Changed torch.Tensor to Any
         """
         Convert input to PyTorch tensor with validated dtype and device in one step.
         
@@ -149,7 +149,7 @@ class TorchTensor:
         # Use the convert_to_tensor method which already has lazy imports
         return self.convert_to_tensor(data, dtype=torch_dtype, device=device)
 
-    def slice_tensor(self, data: TensorLike, starts: Sequence[int], sizes: Sequence[int]) -> torch.Tensor:
+    def slice_tensor(self, data: TensorLike, starts: Sequence[int], sizes: Sequence[int]) -> Any: # Changed torch.Tensor to Any
         """
         Extract a slice from a tensor.
 
@@ -164,7 +164,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.indexing import slice_tensor as slice_func
         return slice_func(data, starts, sizes)
 
-    def slice_update(self, data: TensorLike, slices: Any, updates: Any) -> torch.Tensor:
+    def slice_update(self, data: TensorLike, slices: Any, updates: Any) -> Any: # Changed torch.Tensor to Any
         """
         Update a tensor at specific indices.
 
@@ -179,7 +179,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.indexing import slice_update as slice_update_func
         return slice_update_func(data, slices, updates)
 
-    def tensor_scatter_nd_update(self, data: TensorLike, indices: Any, updates: Any) -> torch.Tensor:
+    def tensor_scatter_nd_update(self, data: TensorLike, indices: Any, updates: Any) -> Any: # Changed torch.Tensor to Any
         """
         Update tensor elements at given indices.
 
@@ -194,7 +194,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.indexing import tensor_scatter_nd_update as tensor_scatter_nd_update_func
         return tensor_scatter_nd_update_func(data, indices, updates)
 
-    def item(self, data: TensorLike) -> Union[int, float, bool]:
+    def item(self, data: TensorLike) -> Any: # Changed Union[int, float, bool] to Any
         """
         Extract the scalar value from a tensor.
 
@@ -207,7 +207,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.utility import item as item_func
         return item_func(data)
 
-    def shape(self, data: TensorLike) -> Shape:
+    def shape(self, data: TensorLike) -> Any: # Changed Shape to Any
         """
         Get the shape of a tensor.
 
@@ -220,7 +220,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.utility import shape as shape_func
         return shape_func(data)
 
-    def dtype(self, data: TensorLike) -> DType:
+    def dtype(self, data: TensorLike) -> Any: # Changed DType to Any
         """
         Get the data type of a tensor.
 
@@ -233,7 +233,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.utility import dtype as dtype_func
         return dtype_func(data)
 
-    def zeros_like(self, data: TensorLike, dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
+    def zeros_like(self, data: TensorLike, dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Changed torch.Tensor to Any
         """
         Create a PyTorch tensor of zeros with the same shape as the input.
 
@@ -248,7 +248,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.creation import zeros_like as zeros_like_func
         return zeros_like_func(data, dtype, device)
 
-    def ones_like(self, data: TensorLike, dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
+    def ones_like(self, data: TensorLike, dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Changed torch.Tensor to Any
         """
         Create a PyTorch tensor of ones with the same shape as the input.
 
@@ -263,7 +263,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.creation import ones_like as ones_like_func
         return ones_like_func(data, dtype, device)
 
-    def eye(self, n: int, m: Optional[int] = None, dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
+    def eye(self, n: int, m: Optional[int] = None, dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Changed torch.Tensor to Any
         """
         Create a PyTorch identity matrix.
 
@@ -279,7 +279,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.creation import eye as eye_func
         return eye_func(n, m, dtype, device)
 
-    def reshape(self, data: TensorLike, shape: Shape) -> torch.Tensor:
+    def reshape(self, data: TensorLike, shape: Any) -> Any: # Changed Shape to Any, torch.Tensor to Any
         """
         Reshape a PyTorch tensor to a new shape.
 
@@ -293,7 +293,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.manipulation import reshape as reshape_func
         return reshape_func(data, shape)
 
-    def transpose(self, data: TensorLike, axes: Optional[List[int]] = None) -> torch.Tensor:
+    def transpose(self, data: TensorLike, axes: Optional[List[int]] = None) -> Any: # Changed torch.Tensor to Any
         """
         Permute the dimensions of a PyTorch tensor.
 
@@ -307,7 +307,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.manipulation import transpose as transpose_func
         return transpose_func(data, axes)
 
-    def concatenate(self, data: List[TensorLike], axis: int = 0) -> torch.Tensor:
+    def concatenate(self, data: List[TensorLike], axis: int = 0) -> Any: # Changed torch.Tensor to Any
         """
         Concatenate PyTorch tensors along a specified axis.
 
@@ -321,7 +321,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.manipulation import concatenate as concatenate_func
         return concatenate_func(data, axis)
 
-    def stack(self, data: List[TensorLike], axis: int = 0) -> torch.Tensor:
+    def stack(self, data: List[TensorLike], axis: int = 0) -> Any: # Changed torch.Tensor to Any
         """
         Stack PyTorch tensors along a new axis.
 
@@ -335,7 +335,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.manipulation import stack as stack_func
         return stack_func(data, axis)
 
-    def split(self, data: TensorLike, num_or_size_splits: Union[int, List[int]], axis: int = 0) -> List[torch.Tensor]:
+    def split(self, data: TensorLike, num_or_size_splits: Union[int, List[int]], axis: int = 0) -> List[Any]: # Changed torch.Tensor to Any
         """
         Split a PyTorch tensor into sub-tensors.
 
@@ -350,7 +350,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.manipulation import split as split_func
         return split_func(data, num_or_size_splits, axis)
 
-    def expand_dims(self, data: TensorLike, axis: Union[int, List[int]]) -> torch.Tensor:
+    def expand_dims(self, data: TensorLike, axis: Union[int, List[int]]) -> Any: # Changed torch.Tensor to Any
         """
         Insert new axes into a PyTorch tensor's shape.
 
@@ -364,7 +364,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.manipulation import expand_dims as expand_dims_func
         return expand_dims_func(data, axis)
 
-    def squeeze(self, data: TensorLike, axis: Optional[Union[int, List[int]]] = None) -> torch.Tensor:
+    def squeeze(self, data: TensorLike, axis: Optional[Union[int, List[int]]] = None) -> Any: # Changed torch.Tensor to Any
         """
         Remove single-dimensional entries from a PyTorch tensor's shape.
 
@@ -378,7 +378,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.manipulation import squeeze as squeeze_func
         return squeeze_func(data, axis)
 
-    def copy(self, data: TensorLike) -> torch.Tensor:
+    def copy(self, data: TensorLike) -> Any: # Changed torch.Tensor to Any
         """
         Create a copy of a PyTorch tensor.
 
@@ -391,7 +391,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.utility import copy as copy_func
         return copy_func(data)
 
-    def full(self, shape: Shape, fill_value: Union[int, float, bool], dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
+    def full(self, shape: Any, fill_value: Union[int, float, bool], dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Changed Shape to Any, torch.Tensor to Any
         """
         Create a PyTorch tensor filled with a scalar value.
 
@@ -409,7 +409,7 @@ class TorchTensor:
 
 
 
-    def cast(self, data: TensorLike, dtype: DType) -> torch.Tensor:
+    def cast(self, data: TensorLike, dtype: Any) -> Any: # Changed DType to Any, torch.Tensor to Any
         """
         Cast a tensor to a new data type.
 
@@ -423,7 +423,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.casting import cast as cast_func
         return cast_func(data, dtype)
 
-    def full_like(self, data: TensorLike, fill_value: Union[int, float, bool], dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
+    def full_like(self, data: TensorLike, fill_value: Union[int, float, bool], dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Changed torch.Tensor to Any
         """
         Create a PyTorch tensor filled with a scalar value with the same shape as the input.
 
@@ -439,7 +439,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.creation import full_like as full_like_func
         return full_like_func(data, fill_value, dtype, device)
 
-    def arange(self, start: Union[int, float], stop: Optional[Union[int, float]] = None, step: int = 1, dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
+    def arange(self, start: Union[int, float], stop: Optional[Union[int, float]] = None, step: int = 1, dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Changed torch.Tensor to Any
         """
         Create a PyTorch tensor with evenly spaced values within a given interval.
 
@@ -456,7 +456,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.creation import arange as arange_func
         return arange_func(start, stop, step, dtype, device)
 
-    def linspace(self, start: Union[int, float], stop: Union[int, float], num: int, dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
+    def linspace(self, start: Union[int, float], stop: Union[int, float], num: int, dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Changed torch.Tensor to Any
         """
         Create a PyTorch tensor with evenly spaced values within a given interval.
 
@@ -473,7 +473,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.creation import linspace as linspace_func
         return linspace_func(start, stop, num, dtype, device)
 
-    def tile(self, data: TensorLike, reps: List[int]) -> torch.Tensor:
+    def tile(self, data: TensorLike, reps: List[int]) -> Any: # Changed torch.Tensor to Any
         """
         Construct a PyTorch tensor by tiling a given tensor.
 
@@ -487,7 +487,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.manipulation import tile as tile_func
         return tile_func(data, reps)
 
-    def gather(self, data: TensorLike, indices: Any, axis: int = 0) -> torch.Tensor:
+    def gather(self, data: TensorLike, indices: Any, axis: int = 0) -> Any: # Changed torch.Tensor to Any
         """
         Gather slices from a PyTorch tensor along an axis.
 
@@ -502,7 +502,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.indexing import gather as gather_func
         return gather_func(data, indices, axis)
 
-    def pad(self, data: TensorLike, paddings: List[List[int]], constant_values: int = 0) -> torch.Tensor:
+    def pad(self, data: TensorLike, paddings: List[List[int]], constant_values: int = 0) -> Any: # Changed torch.Tensor to Any
         """
         Pad a tensor with a constant value.
 
@@ -519,7 +519,7 @@ class TorchTensor:
         return pad_func(data, paddings, constant_values)
 
     import numpy
-    def to_numpy(self, data: Optional[TensorLike] = None) -> Optional[numpy.ndarray]:
+    def to_numpy(self, data: Optional[TensorLike] = None) -> Optional[Any]: # Changed numpy.ndarray to Any
         """
         Convert a PyTorch tensor to a NumPy array.
 
@@ -540,7 +540,7 @@ class TorchTensor:
         else:
             return None
 
-    def var(self, data: TensorLike, axis: Optional[Union[int, List[int]]] = None, keepdims: bool = False) -> torch.Tensor:
+    def var(self, data: TensorLike, axis: Optional[Union[int, List[int]]] = None, keepdims: bool = False) -> Any: # Changed torch.Tensor to Any
         """
         Compute the variance of a tensor.
 
@@ -555,7 +555,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.utility import var as var_func
         return var_func(data, axis, keepdims)
 
-    def sort(self, data: TensorLike, axis: int = -1, descending: bool = False) -> torch.Tensor:
+    def sort(self, data: TensorLike, axis: int = -1, descending: bool = False) -> Any: # Changed torch.Tensor to Any
         """
         Sort a tensor along the given axis.
 
@@ -570,7 +570,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.utility import sort as sort_func
         return sort_func(data, axis, descending)
 
-    def argsort(self, data: TensorLike, axis: int = -1, descending: bool = False) -> torch.Tensor:
+    def argsort(self, data: TensorLike, axis: int = -1, descending: bool = False) -> Any: # Changed torch.Tensor to Any
         """
         Return the indices that would sort a tensor along the given axis.
 
@@ -585,7 +585,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.utility import argsort as argsort_func
         return argsort_func(data, axis, descending)
 
-    def maximum(self, data1: TensorLike, data2: TensorLike) -> torch.Tensor:
+    def maximum(self, data1: TensorLike, data2: TensorLike) -> Any: # Changed torch.Tensor to Any
         """
         Element-wise maximum of two tensors.
 
@@ -599,8 +599,8 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.utility import maximum as maximum_func
         return maximum_func(data1, data2)
 
-    def random_normal(self, shape: Shape, mean: float = 0.0, stddev: float = 1.0,
-                      dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
+    def random_normal(self, shape: Any, mean: float = 0.0, stddev: float = 1.0, # Changed Shape to Any
+                      dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Changed torch.Tensor to Any
         """
         Create a tensor with random values from a normal distribution.
 
@@ -617,8 +617,8 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.random import random_normal as random_normal_func
         return random_normal_func(shape, mean, stddev, dtype, device)
 
-    def random_uniform(self, shape: Shape, minval: float = 0.0, maxval: float = 1.0,
-                       dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
+    def random_uniform(self, shape: Any, minval: float = 0.0, maxval: float = 1.0, # Changed Shape to Any
+                       dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Changed torch.Tensor to Any
         """
         Create a tensor with random values from a uniform distribution.
 
@@ -635,8 +635,8 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.random import random_uniform as random_uniform_func
         return random_uniform_func(shape, minval, maxval, dtype, device)
 
-    def random_binomial(self, shape: Shape, p: float = 0.5,
-                        dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
+    def random_binomial(self, shape: Any, p: float = 0.5, # Changed Shape to Any
+                        dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Changed torch.Tensor to Any
         """
         Create a tensor with random values from a binomial distribution.
 
@@ -652,8 +652,8 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.random import random_binomial as random_binomial_func
         return random_binomial_func(shape, p, dtype, device)
 
-    def random_gamma(self, shape: Shape, alpha: float = 1.0, beta: float = 1.0,
-                     dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
+    def random_gamma(self, shape: Any, alpha: float = 1.0, beta: float = 1.0, # Changed Shape to Any
+                     dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Changed torch.Tensor to Any
         """
         Generate random values from a gamma distribution.
 
@@ -670,8 +670,8 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.random import random_gamma as random_gamma_func
         return random_gamma_func(shape, alpha, beta, dtype, device)
 
-    def random_exponential(self, shape: Shape, scale: float = 1.0,
-                           dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
+    def random_exponential(self, shape: Any, scale: float = 1.0, # Changed Shape to Any
+                           dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Changed torch.Tensor to Any
         """
         Generate random values from an exponential distribution.
 
@@ -687,8 +687,8 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.random import random_exponential as random_exponential_func
         return random_exponential_func(shape, scale, dtype, device)
 
-    def random_poisson(self, shape: Shape, lam: float = 1.0,
-                       dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
+    def random_poisson(self, shape: Any, lam: float = 1.0, # Changed Shape to Any
+                       dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Changed torch.Tensor to Any
         """
         Generate random values from a Poisson distribution.
 
@@ -705,7 +705,7 @@ class TorchTensor:
         return random_poisson_func(shape, lam, dtype, device)
 
     def random_categorical(self, data: TensorLike, num_samples: int,
-                                dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
+                                dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Changed torch.Tensor to Any
         """
         Draw samples from a categorical distribution.
 
@@ -721,7 +721,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.random import random_categorical as random_categorical_func
         return random_categorical_func(data, num_samples, dtype, device)
 
-    def random_permutation(self, data: Union[int, TensorLike], dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
+    def random_permutation(self, data: Union[int, TensorLike], dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Changed torch.Tensor to Any
         """
         Randomly permute a sequence or return a permuted range.
 
@@ -737,7 +737,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.random import random_permutation as random_permutation_func
         return random_permutation_func(data, dtype, device)
 
-    def shuffle(self, data: TensorLike) -> torch.Tensor:
+    def shuffle(self, data: TensorLike) -> Any: # Changed torch.Tensor to Any
         """
         Randomly shuffle a PyTorch tensor along the first dimension.
 
@@ -750,7 +750,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.random import shuffle as shuffle_func
         return shuffle_func(data)
 
-    def set_seed(self, seed: int) -> None:
+    def set_seed(self, seed: int) -> Any: # Changed None to Any
         """
         Set the random seed for reproducibility.
 
@@ -760,7 +760,7 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.random import set_seed as set_seed_func
         return set_seed_func(seed)
 
-    def get_seed(self) -> Optional[int]:
+    def get_seed(self) -> Optional[Any]: # Changed int to Any
         """
         Get the current random seed.
 
@@ -771,7 +771,7 @@ class TorchTensor:
         return get_seed_func()
 
     def scatter(self, data: TensorLike, indices: Any, dim_size: Optional[int] = None,
-                      aggr: Literal["add", "max", "mean", "softmax", "min"] = "add", axis: int = 0) -> torch.Tensor:
+                      aggr: Literal["add", "max", "mean", "softmax", "min"] = "add", axis: int = 0) -> Any: # Changed torch.Tensor to Any
         """
         Scatter values from data into a new tensor of size dim_size along the given axis.
 

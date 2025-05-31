@@ -9,6 +9,7 @@ from typing import Union, Optional, Sequence, Any, List, Tuple, TYPE_CHECKING
 
 # Import EmberTensor for type annotations
 from ember_ml.nn.tensor.common.dtypes import EmberDType
+from ember_ml.nn.tensor.common.ember_tensor import EmberTensor
 
 # Conditionally import backend types for type checking only
 if TYPE_CHECKING:
@@ -16,23 +17,24 @@ if TYPE_CHECKING:
     from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
     from ember_ml.backend.torch.tensor import TorchTensor
     from ember_ml.backend.mlx.tensor.tensor import MLXTensor
-    from ember_ml.nn.tensor.common.ember_tensor import EmberTensor
+    # from ember_ml.nn.tensor.common.ember_tensor import EmberTensor # Moved up
 
-    type TensorTypes = Union[
-        TensorLike,
-        'mlx.core.array',
-        MLXTensor,
-        EmberTensor,
-        TorchTensor,
-        NumpyTensor
-    ]
+# Moved TensorTypes outside of TYPE_CHECKING
+TensorTypes = Union[
+    Any,  # Placeholder for TensorLike, resolved during type checking
+    Any,  # Placeholder for 'mlx.core.array'
+    Any,  # Placeholder for MLXTensor
+    Any,  # Placeholder for EmberTensor
+    Any,  # Placeholder for TorchTensor
+    Any   # Placeholder for NumpyTensor
+]
 
 # Basic type aliases
-type Numeric = Union[int, float]
+Numeric = Union[int, float]
 
 # Standard type aliases for general tensor-like inputs
 # This covers all possible input types that can be converted to a tensor
-type TensorLike = Optional[Union[
+TensorLike = Optional[Union[
     Numeric,
     bool,
     List[Any],
@@ -49,23 +51,23 @@ type TensorLike = Optional[Union[
 ]]
 
 # Dimension-specific tensor types
-type Scalar = Union[int, float, bool, EmberTensor]  # 0D tensors
-type Vector = Union[List[Union[int, float, bool]], Tuple[Union[int, float, bool], ...], EmberTensor]  # 1D tensors
-type Matrix = Union[List[List[Union[int, float, bool]]], EmberTensor]  # 2D tensors
+Scalar = Union[int, float, bool, EmberTensor]  # 0D tensors
+Vector = Union[List[Union[int, float, bool]], Tuple[Union[int, float, bool], ...], EmberTensor]  # 1D tensors
+Matrix = Union[List[List[Union[int, float, bool]]], EmberTensor]  # 2D tensors
 
 # Shape definitions
-type Shape = Union[int, Sequence[int]]
-type ShapeLike = Union[int, Tuple[int, ...], List[int]]
+Shape = Union[int, Sequence[int]]
+ShapeLike = Union[int, Tuple[int, ...], List[int]]
 
 # Dtype definitions
-type DType = Optional[Union[str, EmberDType, Any]]  # Any covers backend-specific dtype objects
-type Device = Optional[str]
+DType = Optional[Union[str, EmberDType, Any]]  # Any covers backend-specific dtype objects
+Device = Optional[str]
 
 # Dimension types
-type Axis = Optional[Union[int, Sequence[int]]]
+Axis = Optional[Union[int, Sequence[int]]]
 
 # Scalar types
-type ScalarLike = Optional[Union[
+ScalarLike = Optional[Union[
     Numeric,
     bool,
     TensorTypes

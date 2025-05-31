@@ -9,9 +9,7 @@ import torch
 from ember_ml.backend.torch.tensor import TorchDType
 from ember_ml.backend.torch.types import TensorLike
 
-
-
-def cholesky(a: TensorLike) -> torch.Tensor:
+def cholesky(a: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Compute the Cholesky decomposition of a matrix.
     
@@ -28,7 +26,7 @@ def cholesky(a: TensorLike) -> torch.Tensor:
     return torch.linalg.cholesky(tensor)
 
 
-def svd(a: TensorLike, full_matrices: bool = True, compute_uv: bool = True) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor, torch.Tensor]]:
+def svd(a: TensorLike, full_matrices: bool = True, compute_uv: bool = True) -> Union[Any, Tuple[Any, Any, Any]]: # Changed torch.Tensor to Any
     """
     Compute the singular value decomposition of a matrix.
     
@@ -54,7 +52,7 @@ def svd(a: TensorLike, full_matrices: bool = True, compute_uv: bool = True) -> U
         return torch.linalg.svdvals(tensor)
 
 
-def eig(a: TensorLike) -> Tuple[torch.Tensor, torch.Tensor]:
+def eig(a: TensorLike) -> Tuple[Any, Any]: # Changed torch.Tensor to Any
     """
     Compute the eigenvalues and eigenvectors of a square matrix.
     
@@ -77,7 +75,7 @@ def eig(a: TensorLike) -> Tuple[torch.Tensor, torch.Tensor]:
     return eigenvalues, eigenvectors
 
 
-def eigvals(a: TensorLike) -> torch.Tensor:
+def eigvals(a: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Compute the eigenvalues of a square matrix.
     
@@ -95,7 +93,7 @@ def eigvals(a: TensorLike) -> torch.Tensor:
     return torch.linalg.eigvals(tensor)
 
 
-def qr(a: TensorLike, mode: Literal['reduced', 'complete', 'r', 'raw'] = 'reduced') -> Tuple[torch.Tensor, torch.Tensor]:
+def qr(a: TensorLike, mode: Literal['reduced', 'complete', 'r', 'raw'] = 'reduced') -> Any: # Changed Tuple[torch.Tensor, torch.Tensor] to Any, as R can be returned alone
     """
     Compute the QR decomposition of a matrix.
     
@@ -134,7 +132,7 @@ def qr(a: TensorLike, mode: Literal['reduced', 'complete', 'r', 'raw'] = 'reduce
         raise ValueError(f"Invalid mode: {mode}. Expected one of ['reduced', 'complete', 'r', 'raw']")
 
 
-def eigh(matrix: TensorLike) -> tuple[torch.Tensor, torch.Tensor]:
+def eigh(matrix: TensorLike) -> Tuple[Any, Any]: # Changed tuple[torch.Tensor, torch.Tensor] to Tuple[Any, Any]
     """Compute eigenvalues and eigenvectors of a Hermitian/symmetric matrix.
     
     Args:

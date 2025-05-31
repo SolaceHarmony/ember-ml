@@ -12,12 +12,5 @@ from ember_ml.backend.numpy.config import *
 from ember_ml.backend.numpy.math_ops import *
 from ember_ml.backend.numpy.comparison_ops import *
 from ember_ml.backend.numpy.device_ops import *
-from ember_ml.backend.numpy.solver_ops import *
+from ember_ml.backend.numpy.linearalg.solvers_ops import *
 from ember_ml.backend.numpy.io_ops import *
-
-# Import NumPy Ops classes
-from ember_ml.backend.numpy.math_ops import NumpyMathOps
-from ember_ml.backend.numpy.comparison_ops import NumpyComparisonOps
-from ember_ml.backend.numpy.device_ops import NumpyDeviceOps
-from ember_ml.backend.numpy.solver_ops import NumpySolverOps
-from ember_ml.backend.numpy.io_ops import NumpyIOOps

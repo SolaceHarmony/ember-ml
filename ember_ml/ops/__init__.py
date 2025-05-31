@@ -11,9 +11,9 @@ import sys
 from typing import Optional, Any, Union, TypeVar
 
 # Import types for type annotations
-type TensorLike = Any  # Placeholder for actual tensor-like types
-type Tensor = Any  # Placeholder for actual tensor types
-type DType = Any  # Placeholder for actual data types
+TensorLike = Any  # Placeholder for actual tensor-like types
+Tensor = Any  # Placeholder for actual tensor types
+DType = Any  # Placeholder for actual data types
 
 # Define type variables for function signatures
 T = TypeVar('T', bound=TensorLike)
