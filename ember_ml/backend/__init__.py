@@ -300,9 +300,9 @@ def set_device(device_identifier: str):
             import mlx.core as mx
             # MLX uses specific device objects, map common names
             if device_identifier.lower() == "gpu":
-                mx.set_default_device(mx.gpu)
+                mx.set_default_device(mx.gpu)  # type: ignore
             elif device_identifier.lower() == "cpu":
-                mx.set_default_device(mx.cpu)
+                mx.set_default_device(mx.cpu) # type: ignore
             else:
                 # Assuming device_identifier might be a more specific MLX device string
                 # This part might need more robust parsing if MLX has complex device IDs
