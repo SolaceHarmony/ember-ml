@@ -35,7 +35,7 @@ def inv(A: TensorLike) -> Any: # Changed torch.Tensor to Any
     aug = torch.cat([A, I], dim=1)
     
     # Create a copy of the augmented matrix that we can modify
-    aug_copy = torch.tensor(aug) # Changed torch.Tensor to torch.tensor
+    aug_copy = aug.clone() # Use clone() for efficiency and clearer intent
     
     # Gauss-Jordan elimination
     for i in range(n):
