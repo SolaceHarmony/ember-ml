@@ -5,7 +5,7 @@ This module provides PyTorch implementations of matrix inverse operations.
 """
 
 import torch
-
+from typing import Any # Added Any
 # Import from tensor_ops
 from ember_ml.backend.torch.tensor import TorchDType
 from ember_ml.backend.torch.types import TensorLike
@@ -13,7 +13,7 @@ from ember_ml.backend.torch.types import TensorLike
 dtype_obj = TorchDType()
 
 
-def inv(A: TensorLike) -> torch.Tensor:
+def inv(A: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Compute the inverse of a square matrix.
     
@@ -35,7 +35,7 @@ def inv(A: TensorLike) -> torch.Tensor:
     aug = torch.cat([A, I], dim=1)
     
     # Create a copy of the augmented matrix that we can modify
-    aug_copy = torch.Tensor(aug)
+    aug_copy = aug.clone() # Use clone() for efficiency and clearer intent
     
     # Gauss-Jordan elimination
     for i in range(n):

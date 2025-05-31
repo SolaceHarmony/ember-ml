@@ -8,16 +8,23 @@ from ember_ml.backend.torch.types import TensorLike, default_int # Use TensorLik
 # Module-level variable to store the pseudo-default device
 # Initialize by determining the best available device
 
-if torch.cuda.is_available():
-    _default_device = 'cuda'
-elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
-    _default_device = 'mps'
-else:
-    _default_device = 'cpu'
+_default_device = 'cpu' # Default to CPU
+try:
+    if torch.cuda.is_available():
+        _default_device = 'cuda'
+except AttributeError:
+    pass # CUDA not available or torch.cuda doesn't have is_available
+
+try:
+    if hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+        _default_device = 'mps'
+except AttributeError:
+    pass # MPS not available or torch.backends doesn't have mps
+
 
 # Removed TorchDeviceOps class as it's redundant with standalone functions
 
-def to_device(x: TensorLike, device: str) -> torch.Tensor:
+def to_device(x: TensorLike, device: str) -> Any: # Changed torch.Tensor to Any
     """
     Move a tensor to the specified device.
     
@@ -106,10 +113,16 @@ def get_available_devices() -> List[str]:
         List of available devices
     """
     devices = ['cpu']
-    if torch.cuda.is_available():
-        devices.extend([f'cuda:{i}' for i in range(torch.cuda.device_count())])
-    if hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
-        devices.append('mps')
+    try:
+        if torch.cuda.is_available():
+            devices.extend([f'cuda:{i}' for i in range(torch.cuda.device_count())])
+    except AttributeError:
+        pass # CUDA not available
+    try:
+        if hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+            devices.append('mps')
+    except AttributeError:
+        pass # MPS not available
     return devices
 
 
@@ -159,9 +172,15 @@ def is_available(device: str) -> bool:
     if device == 'cpu':
         return True
     elif device.startswith('cuda'):
-        return torch.cuda.is_available()
+        try:
+            return torch.cuda.is_available()
+        except AttributeError:
+            return False # CUDA not available
     elif device == 'mps':
-        return hasattr(torch.backends, 'mps') and torch.backends.mps.is_available()
+        try:
+            return hasattr(torch.backends, 'mps') and torch.backends.mps.is_available()
+        except AttributeError:
+            return False # MPS not available
     return False
 
 
@@ -179,33 +198,36 @@ def memory_usage(device: Optional[str] = None) -> Dict[str, int]:
         device = _default_device
         
     if device.startswith('cuda'):
-        if torch.cuda.is_available():
-            device_idx = 0
-            if ':' in device:
-                # Use convert_to_tensor and cast instead of int()
-                device_idx_str = device.split(':')[1]
-                from ember_ml.backend.torch.tensor import TorchTensor
-                # Use convert_to_tensor to ensure the input is a tensor
-                # and cast to int32
-                device_idx_tensor = TorchTensor().convert_to_tensor(device_idx_str)
-                device_idx = device_idx_tensor.to(torch.int32).item()
-            
-            # Get memory information
-            allocated = torch.cuda.memory_allocated(device_idx)
-            reserved = torch.cuda.memory_reserved(device_idx)
-            
-            # Get total memory
-            total = torch.cuda.get_device_properties(device_idx).total_memory
-            
-            # Calculate free memory using torch.subtract instead of direct subtraction
-            free = torch.subtract(torch.tensor(total), torch.tensor(reserved)).item()
-            
-            return {
-                'allocated': allocated,
-                'reserved': reserved,
-                'free': free,
-                'total': total
-            }
+        try:
+            if torch.cuda.is_available():
+                device_idx = 0
+                if ':' in device:
+                    # Use convert_to_tensor and cast instead of int()
+                    device_idx_str = device.split(':')[1]
+                    from ember_ml.backend.torch.tensor import TorchTensor
+                    # Use convert_to_tensor to ensure the input is a tensor
+                    # and cast to int32
+                    device_idx_tensor = TorchTensor().convert_to_tensor(device_idx_str)
+                    device_idx = device_idx_tensor.to(torch.int32).item()
+
+                # Get memory information
+                allocated = torch.cuda.memory_allocated(device_idx)
+                reserved = torch.cuda.memory_reserved(device_idx)
+
+                # Get total memory
+                total = torch.cuda.get_device_properties(device_idx).total_memory
+
+                # Calculate free memory using torch.subtract instead of direct subtraction
+                free = torch.subtract(torch.tensor(total), torch.tensor(reserved)).item()
+
+                return {
+                    'allocated': allocated,
+                    'reserved': reserved,
+                    'free': free,
+                    'total': total
+                }
+        except AttributeError:
+            pass # CUDA not available
     
     # For CPU or other devices, return zeros
     return {'allocated': 0, 'reserved': 0, 'free': 0, 'total': 0}
@@ -235,14 +257,17 @@ def synchronize(device: Optional[str] = None) -> None:
         device = _default_device
         
     if device.startswith('cuda'):
-        if torch.cuda.is_available():
-            device_idx = 0
-            if ':' in device:
-                # Use convert_to_tensor and cast instead of int()
-                device_idx_str = device.split(':')[1]
-                from ember_ml.backend.torch.tensor import TorchTensor # Lazy load
-                device_idx_tensor = TorchTensor().convert_to_tensor(device_idx_str)
-                device_idx = device_idx_tensor.to(default_int).item()
-            torch.cuda.synchronize(device_idx)
+        try:
+            if torch.cuda.is_available():
+                device_idx = 0
+                if ':' in device:
+                    # Use convert_to_tensor and cast instead of int()
+                    device_idx_str = device.split(':')[1]
+                    from ember_ml.backend.torch.tensor import TorchTensor # Lazy load
+                    device_idx_tensor = TorchTensor().convert_to_tensor(device_idx_str)
+                    device_idx = device_idx_tensor.to(default_int).item()
+                torch.cuda.synchronize(device_idx)
+        except AttributeError:
+            pass # CUDA not available
 
 # Removed duplicate function definitions for get_device and set_device

@@ -27,7 +27,7 @@ from ember_ml.nn.features.generic_type_detector import GenericTypeDetector
 from ember_ml.nn.features.test_feature_extraction import test_feature_extraction
 from ember_ml.nn.features.column_feature_extraction import ColumnFeatureExtractor, ColumnPCAFeatureExtractor, TemporalColumnFeatureExtractor
 from ember_ml.nn.features.terabyte_feature_extractor import TerabyteFeatureExtractor, TerabyteTemporalStrideProcessor
-from ember_ml.nn.features.bigquery_feature_extractor import BigQueryFeatureExtractor
+# from ember_ml.nn.features.bigquery.feature_processing import BigQueryFeatureExtractor # Commented out as it's not found
 from ember_ml.nn.features.animated_feature_processor import AnimatedFeatureProcessor
 from ember_ml.nn.features.speedtest_event_processor import SpeedtestEventProcessor
 from ember_ml.nn.features.enhanced_type_detector import EnhancedTypeDetector
@@ -176,7 +176,7 @@ __all__ = [
     'TemporalColumnFeatureExtractor',
     'TerabyteFeatureExtractor',
     'TerabyteTemporalStrideProcessor',
-    'BigQueryFeatureExtractor',
+    # 'BigQueryFeatureExtractor', # Commented out as it's not found
     'AnimatedFeatureProcessor',
     'SpeedtestEventProcessor',
     'EnhancedTypeDetector',

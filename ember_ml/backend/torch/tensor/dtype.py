@@ -78,7 +78,7 @@ class TorchDType:
         """Get a data type by name."""
         return self.from_dtype_str(name)
     
-    def to_dtype_str(self, dtype: Union[torch.dtype, str, None]) -> Optional[str]:
+    def to_dtype_str(self, dtype: Union[Any, str, None]) -> Optional[str]: # Changed torch.dtype to Any
         """
         Convert a PyTorch data type to a dtype string.
         
@@ -115,7 +115,7 @@ class TorchDType:
             return dtype
         else:
             raise ValueError(f"Cannot convert {dtype} to EmberDType")
-    def validate_dtype(self, dtype: Union[Any, str, None]) -> Optional[torch.dtype]:
+    def validate_dtype(self, dtype: Union[Any, str, None]) -> Optional[Any]: # Changed torch.dtype to Any
         """
         Validate and convert dtype to Torch format.
 
@@ -173,7 +173,7 @@ class TorchDType:
 
 
     
-    def from_dtype_str(self, dtype: Union[Any, str, None]) -> Optional[torch.dtype]:
+    def from_dtype_str(self, dtype: Union[Any, str, None]) -> Optional[Any]: # Changed torch.dtype to Any
         """
         Convert a dtype string to a PyTorch data type.
         

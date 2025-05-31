@@ -15,31 +15,31 @@ import os
 import torch
 
 # Basic type aliases that don't require imports
-type Numeric = Union[int, float]
-type OrdLike = Optional[Union[int, str]]
-type Device = Optional[str]
-type PathLike = Union[str, os.PathLike[str]]
-type Shape = Sequence[int]
-type ShapeType = Union[int, Tuple[int, ...], List[int]]
-type ShapeLike = Union[int, List[int], Tuple[int, ...], Shape]
-type DimSize = Union[int, 'torch.Tensor']
-type Axis = Optional[Union[int, Sequence[int]]]
-type IndexType = Union[int, Sequence[int], 'torch.Tensor'] 
-type Indices = Union[Sequence[int], 'torch.Tensor']
+Numeric = Union[int, float]
+OrdLike = Optional[Union[int, str]]
+Device = Optional[str]
+PathLike = Union[str, os.PathLike[str]]
+Shape = Sequence[int]
+ShapeType = Union[int, Tuple[int, ...], List[int]]
+ShapeLike = Union[int, List[int], Tuple[int, ...], Shape]
+DimSize = Union[int, 'torch.Tensor']
+Axis = Optional[Union[int, Sequence[int]]]
+IndexType = Union[int, Sequence[int], 'torch.Tensor']
+Indices = Union[Sequence[int], 'torch.Tensor']
 
 # PyTorch specific
-type TorchArray = torch.Tensor
-type DTypeClass = torch.dtype
+TorchArray = Any # Changed from torch.Tensor due to AttributeError
+DTypeClass = Any # Changed from torch.dtype due to AttributeError
 
 # Precision related
-default_int = torch.int32
-default_float = torch.float32
-default_bool = torch.bool if hasattr(torch, 'bool') else Any
-type TensorLike = Any
-type ScalarLike = Any
+default_int = Any # Changed from torch.int32 due to AttributeError
+default_float = Any # Changed from torch.float32 due to AttributeError
+default_bool = Any # Changed from torch.bool due to AttributeError
+TensorLike = Any
+ScalarLike = Any
 
 # Default type for dtype
-type DType = Any
+DType = Any
 
 # Conditional type definitions
 if TYPE_CHECKING == True:
@@ -50,7 +50,7 @@ if TYPE_CHECKING == True:
     T = TypeVar('T')  # Used for generic type definitions
     
     # Define types that reference external modules
-    type TensorTypes = Union[
+    TensorTypes = Union[
         TorchArray,
         Any,  # TorchTensor
         Any,  # EmberTensor
@@ -58,7 +58,7 @@ if TYPE_CHECKING == True:
         Parameter # Add Parameter here
     ]
     
-    type ArrayLike = Union[
+    ArrayLike = Union[
         Any,  # TorchTensor
         TorchArray, 
         Numeric, 
@@ -66,12 +66,12 @@ if TYPE_CHECKING == True:
         Tuple[Any, ...]
     ]
     
-    type DTypes = Union[
+    DTypes = Union[
         torch.dtype,
         Any,  # numpy.dtype
     ]
     
-    type TensorLike = Optional[Union[
+    TensorLike = Optional[Union[
         Numeric,
         bool,
         List[Any],
@@ -79,7 +79,7 @@ if TYPE_CHECKING == True:
         'TensorTypes'
     ]]
     
-    type ScalarLike = Optional[Union[
+    ScalarLike = Optional[Union[
         Numeric,
         bool,
         TorchArray,

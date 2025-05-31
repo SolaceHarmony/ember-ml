@@ -12,7 +12,7 @@ from ember_ml.backend.torch.types import TensorLike
 # Each function will create its own instances when needed
 
 
-def equal(x: TensorLike, y: TensorLike) -> torch.Tensor:
+def equal(x: TensorLike, y: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Check if two tensors are equal element-wise.
     
@@ -33,7 +33,7 @@ def equal(x: TensorLike, y: TensorLike) -> torch.Tensor:
     return torch.eq(x_tensor, y_tensor)
 
 
-def not_equal(x: TensorLike, y: TensorLike) -> torch.Tensor:
+def not_equal(x: TensorLike, y: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Check if two tensors are not equal element-wise.
     
@@ -54,7 +54,7 @@ def not_equal(x: TensorLike, y: TensorLike) -> torch.Tensor:
     return torch.ne(x_tensor, y_tensor)
 
 
-def less(x: TensorLike, y: TensorLike) -> torch.Tensor:
+def less(x: TensorLike, y: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Check if one tensor is less than another element-wise.
     
@@ -75,7 +75,7 @@ def less(x: TensorLike, y: TensorLike) -> torch.Tensor:
     return torch.lt(x_tensor, y_tensor)
 
 
-def less_equal(x: TensorLike, y: TensorLike) -> torch.Tensor:
+def less_equal(x: TensorLike, y: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Check if one tensor is less than or equal to another element-wise.
     
@@ -96,7 +96,7 @@ def less_equal(x: TensorLike, y: TensorLike) -> torch.Tensor:
     return torch.le(x_tensor, y_tensor)
 
 
-def greater(x: TensorLike, y: TensorLike) -> torch.Tensor:
+def greater(x: TensorLike, y: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Check if one tensor is greater than another element-wise.
     
@@ -117,7 +117,7 @@ def greater(x: TensorLike, y: TensorLike) -> torch.Tensor:
     return torch.gt(x_tensor, y_tensor)
 
 
-def greater_equal(x: TensorLike, y: TensorLike) -> torch.Tensor:
+def greater_equal(x: TensorLike, y: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Check if one tensor is greater than or equal to another element-wise.
     
@@ -138,7 +138,7 @@ def greater_equal(x: TensorLike, y: TensorLike) -> torch.Tensor:
     return torch.ge(x_tensor, y_tensor)
 
 
-def logical_and(x: TensorLike, y: TensorLike) -> torch.Tensor:
+def logical_and(x: TensorLike, y: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Compute the logical AND of two tensors element-wise.
     
@@ -159,7 +159,7 @@ def logical_and(x: TensorLike, y: TensorLike) -> torch.Tensor:
     return torch.logical_and(x_tensor, y_tensor)
 
 
-def logical_or(x: TensorLike, y: TensorLike) -> torch.Tensor:
+def logical_or(x: TensorLike, y: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Compute the logical OR of two tensors element-wise.
     
@@ -180,7 +180,7 @@ def logical_or(x: TensorLike, y: TensorLike) -> torch.Tensor:
     return torch.logical_or(x_tensor, y_tensor)
 
 
-def logical_not(x: TensorLike) -> torch.Tensor:
+def logical_not(x: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Compute the logical NOT of a tensor element-wise.
     
@@ -199,7 +199,7 @@ def logical_not(x: TensorLike) -> torch.Tensor:
     return torch.logical_not(x_tensor)
 
 
-def logical_xor(x: TensorLike, y: TensorLike) -> torch.Tensor:
+def logical_xor(x: TensorLike, y: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Compute the logical XOR of two tensors element-wise.
     
@@ -220,7 +220,7 @@ def logical_xor(x: TensorLike, y: TensorLike) -> torch.Tensor:
     return torch.logical_xor(x_tensor, y_tensor)
 
 
-def allclose(x: TensorLike, y: TensorLike, rtol: float = 1e-5, atol: float = 1e-8) -> bool:
+def allclose(x: TensorLike, y: TensorLike, rtol: float = 1e-5, atol: float = 1e-8) -> Any: # Changed bool to Any
     """
     Check if all elements of two tensors are close within a tolerance.
     
@@ -242,7 +242,7 @@ def allclose(x: TensorLike, y: TensorLike, rtol: float = 1e-5, atol: float = 1e-
     
     return torch.allclose(x_tensor, y_tensor, rtol=rtol, atol=atol)
 
-def isclose(x: TensorLike, y: TensorLike, rtol: float = 1e-5, atol: float = 1e-8) -> torch.Tensor:
+def isclose(x: TensorLike, y: TensorLike, rtol: float = 1e-5, atol: float = 1e-8) -> Any: # Changed torch.Tensor to Any
     """
     Check if elements of two tensors are close within a tolerance element-wise.
     
@@ -265,7 +265,7 @@ def isclose(x: TensorLike, y: TensorLike, rtol: float = 1e-5, atol: float = 1e-8
     return torch.isclose(x_tensor, y_tensor, rtol=rtol, atol=atol)
 
 
-def all(x: TensorLike, axis: Any = None) -> Any:
+def all(x: TensorLike, axis: Any = None) -> Any: # No change needed, already Any
     """
     Check if all elements in a tensor are True.
     
@@ -291,7 +291,7 @@ def all(x: TensorLike, axis: Any = None) -> Any:
         return torch.all(x_tensor, dim=axis)
 
 
-def where(condition: TensorLike, x: TensorLike, y: TensorLike) -> torch.Tensor:
+def where(condition: TensorLike, x: TensorLike, y: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Return elements chosen from x or y depending on condition.
     
@@ -314,7 +314,7 @@ def where(condition: TensorLike, x: TensorLike, y: TensorLike) -> torch.Tensor:
     return torch.where(condition_tensor, x_tensor, y_tensor)
 
 
-def isnan(x: TensorLike) -> torch.Tensor:
+def isnan(x: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Test element-wise for NaN values.
     

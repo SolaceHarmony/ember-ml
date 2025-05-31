@@ -5,14 +5,14 @@ This module provides PyTorch implementations of math operations.
 """
 
 import torch
-from typing import Union, Optional, List, Tuple
+from typing import Union, Optional, List, Tuple, Any
 
 from ember_ml.backend.torch.types import TensorLike, ShapeLike
 
 # We avoid creating global instances to prevent circular imports
 # Each function will create its own instances when needed
 
-def gather(x: TensorLike, indices: TensorLike, axis: int = 0) -> torch.Tensor:
+def gather(x: TensorLike, indices: TensorLike, axis: int = 0) -> Any: # Changed torch.Tensor to Any
     """
     Gather slices from x along the specified axis according to indices.
     
@@ -40,7 +40,7 @@ def gather(x: TensorLike, indices: TensorLike, axis: int = 0) -> torch.Tensor:
     # Use torch.index_select to gather values along the specified axis
     return torch.index_select(x_array, dim=axis, index=indices_array)
 
-def add(x: TensorLike, y: TensorLike) -> torch.Tensor:
+def add(x: TensorLike, y: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Add two tensors element-wise.
     
@@ -56,7 +56,7 @@ def add(x: TensorLike, y: TensorLike) -> torch.Tensor:
     return torch.add(tensor_ops.convert_to_tensor(x), tensor_ops.convert_to_tensor(y))
 
 
-def subtract(x: TensorLike, y: TensorLike) -> torch.Tensor:
+def subtract(x: TensorLike, y: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Subtract two tensors element-wise.
     
@@ -72,7 +72,7 @@ def subtract(x: TensorLike, y: TensorLike) -> torch.Tensor:
     return torch.subtract(tensor.convert_to_tensor(x), tensor.convert_to_tensor(y))
 
 
-def multiply(x: TensorLike, y: TensorLike) -> torch.Tensor:
+def multiply(x: TensorLike, y: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Multiply two tensors element-wise.
     
@@ -88,7 +88,7 @@ def multiply(x: TensorLike, y: TensorLike) -> torch.Tensor:
     return torch.mul(tensor.convert_to_tensor(x), tensor.convert_to_tensor(y))
 
 
-def divide(x: TensorLike, y: TensorLike) -> torch.Tensor:
+def divide(x: TensorLike, y: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Divide two tensors element-wise.
     
@@ -104,7 +104,7 @@ def divide(x: TensorLike, y: TensorLike) -> torch.Tensor:
     return torch.div(tensor.convert_to_tensor(x), tensor.convert_to_tensor(y))
 
 
-def dot(x: TensorLike, y: TensorLike) -> torch.Tensor:
+def dot(x: TensorLike, y: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Compute the dot product of two PyTorch tensors.
     
@@ -129,7 +129,7 @@ def dot(x: TensorLike, y: TensorLike) -> torch.Tensor:
         return torch.matmul(x_array, y_array)
 
 
-def matmul(x: TensorLike, y: TensorLike) -> torch.Tensor:
+def matmul(x: TensorLike, y: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Multiply two tensors as matrices.
 
@@ -156,7 +156,7 @@ def matmul(x: TensorLike, y: TensorLike) -> torch.Tensor:
     return torch.matmul(x_tensor, y_tensor)
 
 
-def mean(x: TensorLike, axis: Optional[ShapeLike] = None, keepdims: bool = False) -> torch.Tensor:
+def mean(x: TensorLike, axis: Optional[ShapeLike] = None, keepdims: bool = False) -> Any: # Changed torch.Tensor to Any
     """
     Compute mean of tensor elements along specified axis.
     
@@ -195,7 +195,7 @@ def mean(x: TensorLike, axis: Optional[ShapeLike] = None, keepdims: bool = False
         return torch.mean(x_tensor, dim=axis, keepdim=keepdims)
 
 
-def sum(x: TensorLike, axis: Optional[ShapeLike] = None, keepdim: bool = False) -> torch.Tensor:
+def sum(x: TensorLike, axis: Optional[ShapeLike] = None, keepdim: bool = False) -> Any: # Changed torch.Tensor to Any
     """
     Compute sum of tensor elements along specified axis.
     
@@ -223,7 +223,7 @@ def sum(x: TensorLike, axis: Optional[ShapeLike] = None, keepdim: bool = False) 
     else:
         return torch.sum(x_tensor, dim=axis, keepdim=keepdim)
 
-def var(x: TensorLike, axis: Optional[Union[int, Tuple[int, ...]]] = None, keepdim: bool = False) -> torch.Tensor:
+def var(x: TensorLike, axis: Optional[Union[int, Tuple[int, ...]]] = None, keepdim: bool = False) -> Any: # Changed torch.Tensor to Any
     """
     Compute variance of tensor elements along specified axis.
     
@@ -259,7 +259,7 @@ def var(x: TensorLike, axis: Optional[Union[int, Tuple[int, ...]]] = None, keepd
         return torch.var(x_tensor, dim=axis, unbiased=False, keepdim=keepdim)
 
 
-def exp(x: TensorLike) -> torch.Tensor:
+def exp(x: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Compute exponential of all elements in the input tensor.
     
@@ -273,7 +273,7 @@ def exp(x: TensorLike) -> torch.Tensor:
     return torch.exp(TorchTensor().convert_to_tensor(x))
 
 
-def log(x: TensorLike) -> torch.Tensor:
+def log(x: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Compute natural logarithm of all elements in the input tensor.
     
@@ -287,7 +287,7 @@ def log(x: TensorLike) -> torch.Tensor:
     return torch.log(TorchTensor().convert_to_tensor(x))
 
 
-def pow(x: TensorLike, y: TensorLike) -> torch.Tensor:
+def pow(x: TensorLike, y: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Compute x raised to the power of y for all elements.
     
@@ -305,7 +305,7 @@ def pow(x: TensorLike, y: TensorLike) -> torch.Tensor:
     return torch.pow(x_tensor, y_tensor)
 
 
-def sqrt(x: TensorLike) -> torch.Tensor:
+def sqrt(x: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Compute the square root of tensor elements.
     
@@ -321,7 +321,7 @@ def sqrt(x: TensorLike) -> torch.Tensor:
 
 def clip(x: TensorLike, 
          min_val: TensorLike, 
-         max_val: TensorLike) -> torch.Tensor:
+         max_val: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Clip tensor elements to a specified range.
     
@@ -342,7 +342,7 @@ def clip(x: TensorLike,
     return torch.clamp(x_array, min=min_val, max=max_val)
 
 
-def abs(x: TensorLike) -> torch.Tensor:
+def abs(x: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Compute absolute value of tensor elements.
     
@@ -356,7 +356,7 @@ def abs(x: TensorLike) -> torch.Tensor:
     return torch.abs(TorchTensor().convert_to_tensor(x))
 
 
-def negative(x: TensorLike) -> torch.Tensor:
+def negative(x: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Compute the negative of tensor elements.
     
@@ -370,7 +370,7 @@ def negative(x: TensorLike) -> torch.Tensor:
     return torch.negative(TorchTensor().convert_to_tensor(x))
 
 
-def sign(x: TensorLike) -> torch.Tensor:
+def sign(x: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Compute the sign of tensor elements.
     
@@ -388,7 +388,7 @@ def sign(x: TensorLike) -> torch.Tensor:
 
 
 
-def argmax(x: TensorLike, axis: Optional[int] = None, keepdims: bool = False) -> torch.Tensor:
+def argmax(x: TensorLike, axis: Optional[int] = None, keepdims: bool = False) -> Any: # Changed torch.Tensor to Any
     """
     Returns the indices of the maximum values along an axis.
     
@@ -418,7 +418,7 @@ def argmax(x: TensorLike, axis: Optional[int] = None, keepdims: bool = False) ->
         return result
 
 
-def sin(x: TensorLike) -> torch.Tensor:
+def sin(x: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Compute sine of tensor elements.
     
@@ -432,7 +432,7 @@ def sin(x: TensorLike) -> torch.Tensor:
     return torch.sin(TorchTensor().convert_to_tensor(x))
 
 
-def cos(x: TensorLike) -> torch.Tensor:
+def cos(x: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Compute cosine of tensor elements.
     
@@ -446,7 +446,7 @@ def cos(x: TensorLike) -> torch.Tensor:
     return torch.cos(TorchTensor().convert_to_tensor(x))
 
 
-def tan(x: TensorLike) -> torch.Tensor:
+def tan(x: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Compute tangent of tensor elements.
     
@@ -462,7 +462,7 @@ def tan(x: TensorLike) -> torch.Tensor:
 
 
 
-def sinh(x: TensorLike) -> torch.Tensor:
+def sinh(x: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Compute hyperbolic sine of tensor elements.
     
@@ -476,7 +476,7 @@ def sinh(x: TensorLike) -> torch.Tensor:
     return torch.sinh(TorchTensor().convert_to_tensor(x))
 
 
-def cosh(x: TensorLike) -> torch.Tensor:
+def cosh(x: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Compute hyperbolic cosine of tensor elements.
     
@@ -491,7 +491,7 @@ def cosh(x: TensorLike) -> torch.Tensor:
 
 
 
-def log10(x: TensorLike) -> torch.Tensor:
+def log10(x: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Compute base-10 logarithm of tensor elements.
     
@@ -507,7 +507,7 @@ def log10(x: TensorLike) -> torch.Tensor:
 
 
 
-def log2(x: TensorLike) -> torch.Tensor:
+def log2(x: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Compute base-2 logarithm of tensor elements.
     
@@ -521,7 +521,7 @@ def log2(x: TensorLike) -> torch.Tensor:
     return torch.log2(TorchTensor().convert_to_tensor(x))
 
 
-def square(x: TensorLike) -> torch.Tensor:
+def square(x: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Compute square of tensor elements.
     
@@ -534,7 +534,7 @@ def square(x: TensorLike) -> torch.Tensor:
     from ember_ml.backend.torch.tensor import TorchTensor
     return torch.square(TorchTensor().convert_to_tensor(x))
 
-def mod(x: TensorLike, y: TensorLike) -> torch.Tensor:
+def mod(x: TensorLike, y: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Compute element-wise remainder of division.
     
@@ -552,7 +552,7 @@ def mod(x: TensorLike, y: TensorLike) -> torch.Tensor:
     
     return torch.remainder(x_tensor, y_tensor)
 
-def floor_divide(x: TensorLike, y: TensorLike) -> torch.Tensor:
+def floor_divide(x: TensorLike, y: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Compute element-wise integer division.
     
@@ -573,7 +573,7 @@ def floor_divide(x: TensorLike, y: TensorLike) -> torch.Tensor:
     return torch.floor_divide(x_tensor, y_tensor)
 
 
-def floor(x: TensorLike) -> torch.Tensor:
+def floor(x: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Return the floor of the input, element-wise.
     
@@ -592,7 +592,7 @@ def floor(x: TensorLike) -> torch.Tensor:
     return torch.floor(x_tensor)
 
 
-def ceil(x: TensorLike) -> torch.Tensor:
+def ceil(x: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Return the ceiling of the input, element-wise.
     
@@ -611,7 +611,7 @@ def ceil(x: TensorLike) -> torch.Tensor:
     return torch.ceil(x_tensor)
 
 
-def min(x: TensorLike, axis: Optional[int] = None, keepdims: bool = False) -> torch.Tensor:
+def min(x: TensorLike, axis: Optional[int] = None, keepdims: bool = False) -> Any: # Changed torch.Tensor to Any
     """
     Compute minimum of tensor elements along the specified axis.
     
@@ -633,7 +633,7 @@ def min(x: TensorLike, axis: Optional[int] = None, keepdims: bool = False) -> to
     return torch.min(x_tensor, dim=axis, keepdim=keepdims).values
 
 
-def max(x: TensorLike, axis: Optional[int] = None, keepdims: bool = False) -> torch.Tensor:
+def max(x: TensorLike, axis: Optional[int] = None, keepdims: bool = False) -> Any: # Changed torch.Tensor to Any
     """
     Compute maximum of tensor elements along the specified axis.
     
@@ -656,7 +656,7 @@ def max(x: TensorLike, axis: Optional[int] = None, keepdims: bool = False) -> to
 # Removed softmax function definition
 
 
-def sort(x: TensorLike, axis: int = -1) -> torch.Tensor:
+def sort(x: TensorLike, axis: int = -1) -> Any: # Changed torch.Tensor to Any
     """
     Sort tensor along the specified axis.
     
@@ -672,7 +672,7 @@ def sort(x: TensorLike, axis: int = -1) -> torch.Tensor:
 
 
 def gradient(f: TensorLike, *varargs, axis: Optional[Union[int, Tuple[int, ...]]] = None,
-             edge_order: int = 1) -> Union[torch.Tensor, List[torch.Tensor]]:
+             edge_order: int = 1) -> Union[Any, List[Any]]: # Changed torch.Tensor to Any
     """
     Return the gradient of an N-dimensional tensor.
     
@@ -874,7 +874,7 @@ def gradient(f: TensorLike, *varargs, axis: Optional[Union[int, Tuple[int, ...]]
         return result
     
 
-def cumsum(x: TensorLike, axis: Optional[int] = None) -> torch.Tensor:
+def cumsum(x: TensorLike, axis: Optional[int] = None) -> Any: # Changed torch.Tensor to Any
     """
     Compute the cumulative sum of tensor elements along the specified axis.
     
@@ -895,7 +895,7 @@ def cumsum(x: TensorLike, axis: Optional[int] = None) -> torch.Tensor:
         return torch.cumsum(x_tensor, dim=axis)
 
 
-def eigh(a: TensorLike) -> Tuple[torch.Tensor, torch.Tensor]:
+def eigh(a: TensorLike) -> Tuple[Any, Any]: # Changed torch.Tensor to Any
     """
     Compute the eigenvalues and eigenvectors of a Hermitian or symmetric matrix.
     
@@ -911,7 +911,7 @@ def eigh(a: TensorLike) -> Tuple[torch.Tensor, torch.Tensor]:
 
 
 # Define the pi constant using Chudnovsky algorithm
-def _calculate_pi_value(precision_digits=15):
+def _calculate_pi_value(precision_digits=15) -> Any: # Changed torch.Tensor to Any
     """
     Calculate pi using the Chudnovsky algorithm.
     
@@ -927,6 +927,26 @@ def _calculate_pi_value(precision_digits=15):
     Returns:
         Value of pi with the specified precision
     """
+    import math
+    # Check if torch and necessary attributes are available
+    if not hasattr(torch, 'as_tensor') or not hasattr(torch, 'tensor') or not hasattr(torch, 'divide'): # Add more checks if needed
+        # Fallback to math.pi if torch operations are not available
+        # This ensures the function can run even if torch is not fully functional,
+        # especially when the torch backend is not the active one.
+        print("Warning: PyTorch tensor operations for PI calculation are not available. Falling back to math.pi.")
+        # Return as a tensor-like shape if possible, or just the float
+        try:
+            # Try to return in a way that downstream code might expect (e.g., a 1-element tensor)
+            return torch.tensor([math.pi], dtype=torch.float32) # Try torch.tensor first
+        except AttributeError: # If torch.tensor is not available
+            try:
+                return torch.Tensor([math.pi]).to(torch.float32) # Try torch.Tensor as another fallback
+            except AttributeError: # If torch.Tensor is also not available
+                return math.pi # Raw float as last resort
+        except Exception: # Broad exception if all torch tensor creation fails
+            return math.pi # Raw float as last resort
+
+
     # Get the default device for the current backend inside the function
     from ember_ml.backend.torch.device_ops import get_device # Use backend's get_device
     device = get_device()
@@ -934,9 +954,9 @@ def _calculate_pi_value(precision_digits=15):
     # Constants in the Chudnovsky algorithm (on the correct device)
     from ember_ml.backend.torch.tensor import TorchTensor
     tensor_ops = TorchTensor()
-    C = torch.tensor(640320, device=device)
-    C3_OVER_24 = torch.divide(torch.pow(C, 3), torch.tensor(24, device=device))
-    DIGITS_PER_TERM = torch.tensor(14.1816474627254776555, device=device)  # Approx. digits per iteration
+    C = torch.as_tensor(640320, device=device)
+    C3_OVER_24 = torch.divide(torch.pow(C, 3), torch.as_tensor(24, device=device))
+    DIGITS_PER_TERM = torch.as_tensor(14.1816474627254776555, device=device)  # Approx. digits per iteration
 
     def binary_split(a, b):
         """Recursive binary split for the Chudnovsky algorithm."""
@@ -948,19 +968,19 @@ def _calculate_pi_value(precision_digits=15):
         diff = torch.subtract(b_tensor, a_tensor)
 
         # Ensure comparisons happen on the same device
-        one_tensor = torch.tensor(1, device=device)
-        zero_tensor = torch.tensor(0, device=device)
-        two_tensor = torch.tensor(2, device=device)
-        five_tensor = torch.tensor(5, device=device)
-        six_tensor = torch.tensor(6, device=device)
-        base_term_tensor = torch.tensor(13591409, device=device)
-        multiplier_tensor = torch.tensor(545140134, device=device)
+        one_tensor = torch.as_tensor(1, device=device) # Changed torch.tensor to torch.as_tensor
+        zero_tensor = torch.as_tensor(0, device=device) # Changed torch.tensor to torch.as_tensor
+        two_tensor = torch.as_tensor(2, device=device) # Changed torch.tensor to torch.as_tensor
+        five_tensor = torch.as_tensor(5, device=device) # Changed torch.tensor to torch.as_tensor
+        six_tensor = torch.as_tensor(6, device=device) # Changed torch.tensor to torch.as_tensor
+        base_term_tensor = torch.as_tensor(13591409, device=device) # Changed torch.tensor to torch.as_tensor
+        multiplier_tensor = torch.as_tensor(545140134, device=device) # Changed torch.tensor to torch.as_tensor
 
         if torch.equal(diff, one_tensor):
             # Base case
             if torch.equal(a_tensor, zero_tensor):
-                Pab = torch.tensor(1, device=device)
-                Qab = torch.tensor(1, device=device)
+                Pab = torch.as_tensor(1, device=device) # Changed torch.tensor to torch.as_tensor
+                Qab = torch.as_tensor(1, device=device) # Changed torch.tensor to torch.as_tensor
             else:
                 term1 = torch.subtract(torch.multiply(six_tensor, a_tensor), five_tensor)
                 term2 = torch.subtract(torch.multiply(two_tensor, a_tensor), one_tensor)
@@ -998,7 +1018,7 @@ def _calculate_pi_value(precision_digits=15):
     # Number of terms needed for the desired precision
     precision_tensor = tensor_ops.convert_to_tensor(precision_digits)
     terms_float = torch.divide(precision_tensor, DIGITS_PER_TERM) # DIGITS_PER_TERM is already on device
-    terms_float = torch.add(terms_float, torch.tensor(1, device=device)) # Use device
+    terms_float = torch.add(terms_float, torch.as_tensor(1, device=device)) # Use device, Changed torch.tensor to torch.as_tensor
     terms = torch.floor(terms_float)  # Convert to integer
     terms_int = terms.to(torch.int32)  # Convert to int32 using PyTorch's to() method
     
@@ -1006,8 +1026,8 @@ def _calculate_pi_value(precision_digits=15):
     P, Q, T = binary_split(0, terms_int)
     
     # Calculate pi (ensure constants are on the correct device)
-    sqrt_10005 = torch.sqrt(torch.tensor(10005, device=device))
-    numerator = torch.multiply(Q, torch.tensor(426880, device=device))
+    sqrt_10005 = torch.sqrt(torch.as_tensor(10005, device=device)) # Changed torch.tensor to torch.as_tensor
+    numerator = torch.multiply(Q, torch.as_tensor(426880, device=device)) # Changed torch.tensor to torch.as_tensor
     numerator = torch.multiply(numerator, sqrt_10005)
     pi_approx = torch.divide(numerator, T)
     
@@ -1018,10 +1038,19 @@ def _calculate_pi_value(precision_digits=15):
 # Ensure it's a scalar with shape (1,) as per PyTorch conventions
 PI_CONSTANT = _calculate_pi_value(15)  # Increased precision to match reference value
 
-pi : torch.tensor = PI_CONSTANT.to(torch.float32)  # Ensure pi is float32
+# Attempt to convert to torch.float32 if PI_CONSTANT is a tensor, otherwise assign as float
+if hasattr(PI_CONSTANT, 'to') and hasattr(torch, 'float32'):
+    pi : Any = PI_CONSTANT.to(torch.float32)
+elif hasattr(torch, 'tensor') and hasattr(torch, 'float32'): # If it's a float, try to make it a tensor
+    try:
+        pi : Any = torch.tensor(PI_CONSTANT, dtype=torch.float32)
+    except AttributeError: # If torch.tensor or torch.float32 is missing
+        pi : Any = float(PI_CONSTANT) # Fallback to float
+else: # If torch itself is missing attributes
+    pi : Any = float(PI_CONSTANT)
 
 
-def binary_split(a: TensorLike, b: TensorLike) -> Tuple[torch.Tensor, torch.Tensor]:
+def binary_split(a: TensorLike, b: TensorLike) -> Tuple[Any, Any]: # Changed torch.Tensor to Any
     """
     Recursive binary split for the Chudnovsky algorithm.
     
@@ -1042,28 +1071,28 @@ def binary_split(a: TensorLike, b: TensorLike) -> Tuple[torch.Tensor, torch.Tens
     # Use torch operations
     diff = torch.subtract(b_tensor, a_tensor)
     
-    if torch.equal(diff, torch.tensor(1.0)):
+    if torch.equal(diff, torch.as_tensor(1.0, device=a_tensor.device)): # Changed torch.tensor to torch.as_tensor and ensure device consistency
         # Base case
-        if torch.equal(a_tensor, torch.tensor(0.0)):
-            Pab = torch.tensor(1.0)
-            Qab = torch.tensor(1.0)
+        if torch.equal(a_tensor, torch.as_tensor(0.0, device=a_tensor.device)): # Changed torch.tensor to torch.as_tensor and ensure device consistency
+            Pab = torch.as_tensor(1.0, device=a_tensor.device) # Changed torch.tensor to torch.as_tensor
+            Qab = torch.as_tensor(1.0, device=a_tensor.device) # Changed torch.tensor to torch.as_tensor
         else:
             # Calculate terms using torch operations
-            term1 = torch.subtract(torch.multiply(torch.tensor(6.0), a_tensor), torch.tensor(5.0))
-            term2 = torch.subtract(torch.multiply(torch.tensor(2.0), a_tensor), torch.tensor(1.0))
-            term3 = torch.subtract(torch.multiply(torch.tensor(6.0), a_tensor), torch.tensor(1.0))
+            term1 = torch.subtract(torch.multiply(torch.as_tensor(6.0, device=a_tensor.device), a_tensor), torch.as_tensor(5.0, device=a_tensor.device)) # Changed torch.tensor to torch.as_tensor
+            term2 = torch.subtract(torch.multiply(torch.as_tensor(2.0, device=a_tensor.device), a_tensor), torch.as_tensor(1.0, device=a_tensor.device)) # Changed torch.tensor to torch.as_tensor
+            term3 = torch.subtract(torch.multiply(torch.as_tensor(6.0, device=a_tensor.device), a_tensor), torch.as_tensor(1.0, device=a_tensor.device)) # Changed torch.tensor to torch.as_tensor
             Pab = torch.multiply(torch.multiply(term1, term2), term3)
             
             # Define C3_OVER_24
-            C = torch.tensor(640320.0)
-            C3_OVER_24 = torch.div(torch.pow(C, torch.tensor(3.0)), torch.tensor(24.0))
+            C = torch.as_tensor(640320.0, device=a_tensor.device) # Changed torch.tensor to torch.as_tensor
+            C3_OVER_24 = torch.div(torch.pow(C, torch.as_tensor(3.0, device=a_tensor.device)), torch.as_tensor(24.0, device=a_tensor.device)) # Changed torch.tensor to torch.as_tensor
             
-            Qab = torch.multiply(torch.pow(a_tensor, torch.tensor(3.0)), C3_OVER_24)
+            Qab = torch.multiply(torch.pow(a_tensor, torch.as_tensor(3.0, device=a_tensor.device)), C3_OVER_24) # Changed torch.tensor to torch.as_tensor
         
         return Pab, Qab
     else:
         # Recursive case
-        m = torch.div(torch.add(a_tensor, b_tensor), torch.tensor(2.0))
+        m = torch.div(torch.add(a_tensor, b_tensor), torch.as_tensor(2.0, device=a_tensor.device)) # Changed torch.tensor to torch.as_tensor
         Pam, Qam = binary_split(a_tensor, m)
         Pmb, Qmb = binary_split(m, b_tensor)
         

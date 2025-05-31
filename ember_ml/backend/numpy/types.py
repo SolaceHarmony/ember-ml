@@ -16,20 +16,20 @@ import numpy as np
 
 
 # Basic type aliases that don't require imports
-type Numeric = Union[int, float]
-type OrdLike = Optional[Union[int, str]]
-type Device = Optional[str]
-type PathLike = Union[str, os.PathLike[str]]
-type Shape = Sequence[int]
-type ShapeType = Union[int, Tuple[int, ...], List[int]]
-type ShapeLike = Union[int, List[int], Tuple[int, ...], Shape]
-type DimSize = Union[int, 'np.ndarray']
-type Axis = Optional[Union[int, Sequence[int]]]
-type IndexType = Union[int, Sequence[int], 'np.ndarray'] 
-type Indices = Union[Sequence[int], 'np.ndarray']
+Numeric = Union[int, float]
+OrdLike = Optional[Union[int, str]]
+Device = Optional[str]
+PathLike = Union[str, os.PathLike[str]]
+Shape = Sequence[int]
+ShapeType = Union[int, Tuple[int, ...], List[int]]
+ShapeLike = Union[int, List[int], Tuple[int, ...], Shape]
+DimSize = Union[int, 'np.ndarray']
+Axis = Optional[Union[int, Sequence[int]]]
+IndexType = Union[int, Sequence[int], 'np.ndarray']
+Indices = Union[Sequence[int], 'np.ndarray']
 # Numpy specific
-type NumpyArray = np.ndarray
-type DTypeClass = np.dtype
+NumpyArray = np.ndarray
+DTypeClass = np.dtype
 
 # Precision related
 default_int = np.int32
@@ -38,12 +38,12 @@ default_bool = np.bool_ if hasattr(np, 'bool_') else Any
 
 
 # Runtime definitions (simplified)
-type TensorTypes = Any # type: ignore
-type ArrayLike = Any # type: ignore
-type TensorLike = Any # type: ignore
-type ScalarLike = Any # type: ignore
-type DTypes = Any # type: ignore
-type DType = Any
+TensorTypes = Any # type: ignore
+ArrayLike = Any # type: ignore
+TensorLike = Any # type: ignore
+ScalarLike = Any # type: ignore
+DTypes = Any # type: ignore
+DType = Any
 
 # Conditional type definitions
 if TYPE_CHECKING == True:
@@ -54,7 +54,7 @@ if TYPE_CHECKING == True:
     T = TypeVar('T')  # Used for generic type definitions
     
     # Define types that reference external modules
-    type TensorTypes = Union[
+    TensorTypes = Union[
         NumpyArray,
         Any,  # NumpyTensor
         Any,  # EmberTensor
@@ -62,7 +62,7 @@ if TYPE_CHECKING == True:
         Parameter # Add Parameter here
     ]
     
-    type ArrayLike = Union[
+    ArrayLike = Union[
         Any,  # NumpyTensor
         NumpyArray, 
         Numeric, 
@@ -70,12 +70,12 @@ if TYPE_CHECKING == True:
         Tuple[Any, ...]
     ]
     
-    type DTypes = Union[
+    DTypes = Union[
         np.dtype,
         Any,  # numpy.dtype
     ]
     
-    type TensorLike = Optional[Union[
+    TensorLike = Optional[Union[
         Numeric,
         bool,
         List[Any],
@@ -83,7 +83,7 @@ if TYPE_CHECKING == True:
         'TensorTypes'
     ]]
     
-    type ScalarLike = Optional[Union[
+    ScalarLike = Optional[Union[
         Numeric,
         bool,
         NumpyArray,

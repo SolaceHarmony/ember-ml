@@ -9,7 +9,7 @@ from ember_ml.backend.numpy.types import TensorLike, DType, Shape, ShapeLike
 import numpy
 
 # Basic type aliases
-type Numeric = Union[int, float]
+Numeric = Union[int, float]
 
 class NumpyTensor:
     """NumPy tensor operations."""
