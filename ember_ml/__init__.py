@@ -63,12 +63,14 @@ from ember_ml import visualization
 from ember_ml import wave
 from ember_ml import utils
 from ember_ml import asyncml
+from ember_ml.nn.tensor import set_seed
 # Version of the Ember ML package
 __version__ = '0.2.0'
 
 # List of public objects exported by this module
 __all__ = [
     'set_backend',
+    'set_seed',
     # 'auto_select_backend', # Removed - moved to ops
     'data',
     'models',

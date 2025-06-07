@@ -230,47 +230,20 @@ Ember ML includes a variety of other neural network modules, including:
 - **LTC**: Liquid Time-Constant network
 - **CFC**: Closed-form Continuous-time network
 
-### Stride-Aware Cells
+### Stride-Aware Layers
 
-Stride-aware cells are a special type of recurrent cell that can process inputs at different time scales. They are particularly useful for processing time series data with varying sampling rates.
-
-The `StrideAwareCell` class is the base class for all stride-aware cells:
+Stride-aware layers process inputs at different time scales and are useful for irregular time series.
 
 ```python
-class StrideAwareCell(Module):
-    def __init__(self, stride_length=1, **kwargs):
+class StrideAware(Module):
+    def __init__(self, input_size, hidden_size, stride_length=1, **kwargs):
         super().__init__(**kwargs)
         self.stride_length = stride_length
-        
-    def forward(self, inputs, state=None, **kwargs):
-        # Process inputs at the current time step
-        # ...
-        
-        # Update state based on stride length
-        # ...
-        
-        return output, new_state
-```
+        # initialization omitted
 
-The `StrideAwareCfC` class extends `StrideAwareCell` to implement a stride-aware version of the Closed-form Continuous-time cell:
-
-```python
-class StrideAwareCfC(Module):
-    def __init__(
-        self,
-        units_or_cell,
-        stride_length=1,
-        # ... other parameters
-    ):
-        super().__init__()
-        
-        if isinstance(units_or_cell, StrideAwareWiredCfCCell):
-            self.cell = units_or_cell
-        elif isinstance(units_or_cell, Wiring):
-            self.cell = StrideAwareWiredCfCCell(wiring=units_or_cell, **kwargs)
-        else:
-            # Create a cell with a default wiring
-            # ...
+    def forward(self, inputs, initial_state=None):
+        # apply stride-aware processing
+        return outputs, new_state
 ```
 
 ## Integration with Backend Abstraction
