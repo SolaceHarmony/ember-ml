@@ -138,9 +138,6 @@ irfft2 = ops_module.irfft2
 rfftn = ops_module.rfftn
 irfftn = ops_module.irfftn
 
-# Array manipulation
-vstack = ops_module.vstack
-hstack = ops_module.hstack
 
 # Master list of all operations for __all__
 _MASTER_OPS_LIST = [
@@ -164,8 +161,6 @@ _MASTER_OPS_LIST = [
     'normalize_vector', 'compute_energy_stability', 'compute_interference_strength', 'compute_phase_coherence',
     'partial_interference', 'euclidean_distance', 'cosine_similarity', 'exponential_decay', 'fft', 'ifft',
     'fft2', 'ifft2', 'fftn', 'ifftn', 'rfft', 'irfft', 'rfft2', 'irfft2', 'rfftn', 'irfftn',
-    # Array manipulation
-    'vstack', 'hstack',
 ]
 
 # Define __all__ to include backend controls, pi, submodules, and all operations

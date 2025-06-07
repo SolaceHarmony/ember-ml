@@ -222,6 +222,24 @@ def all(x: Any, axis: Any = None) -> Any:
     return np.all(Tensor.convert_to_tensor(x), axis=axis)
 
 
+def any(x: Any, axis: Any = None) -> Any:
+    """Check if any elements in a tensor are True.
+
+    Args:
+        x: Input tensor
+        axis: Axis or axes along which to perform the reduction.
+            If None, reduce over all dimensions.
+
+    Returns:
+        Boolean tensor with True if any elements are True, False otherwise.
+        If axis is specified, the result is a tensor with the specified
+        axes reduced.
+    """
+    from ember_ml.backend.numpy.tensor import NumpyTensor
+    Tensor = NumpyTensor()
+    return np.any(Tensor.convert_to_tensor(x), axis=axis)
+
+
 def where(condition: TensorLike, x: TensorLike, y: TensorLike) -> np.ndarray:
     """
     Return elements chosen from x or y depending on condition.

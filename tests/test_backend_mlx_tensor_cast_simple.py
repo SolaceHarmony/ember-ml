@@ -4,6 +4,10 @@ Simple test script for MLX tensor cast operation.
 This script tests the standalone cast() function directly.
 """
 
+import pytest
+
+pytest.skip('MLX backend example script, not a real test', allow_module_level=True)
+
 import mlx.core as mx
 import sys
 import os

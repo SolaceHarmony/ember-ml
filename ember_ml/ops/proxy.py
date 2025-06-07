@@ -187,10 +187,6 @@ _OPS_MAPPING = {
     'binary_wave_propagate': bitwise,
     'create_duty_cycle': bitwise,
     'generate_blocky_sin': bitwise,
-
-    # Array manipulation
-    'vstack': math_ops,
-    'hstack': math_ops,
 }
 
 # Create a class to handle dynamic attribute access for the ops module

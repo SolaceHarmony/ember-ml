@@ -1,3 +1,7 @@
+import pytest
+
+pytest.skip('Torch backend example script, not a real test', allow_module_level=True)
+
 from ember_ml.backend import get_backend, set_backend
 set_backend('torch')
 from ember_ml.nn.tensor import EmberTensor

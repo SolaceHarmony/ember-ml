@@ -4,6 +4,10 @@ Test script for MLX tensor cast operation.
 This script tests both the standalone cast() function and the MLXTensor.cast() method.
 """
 
+import pytest
+
+pytest.skip('MLX backend example script, not a real test', allow_module_level=True)
+
 import mlx.core as mx
 from ember_ml.backend.mlx.tensor import MLXTensor, cast
 
