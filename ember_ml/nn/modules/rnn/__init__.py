@@ -22,6 +22,7 @@ from ember_ml.nn.modules.rnn.gru import GRU
 from ember_ml.nn.modules.rnn.rnn import RNN
 # Removed stride_aware_cell import
 from ember_ml.nn.modules.rnn.stride_aware import StrideAware
+from ember_ml.nn.modules.rnn.stride_aware_cell import StrideAwareCell
 # Temporarily comment out to avoid circular imports
 # from ember_ml.nn.modules.rnn.stride_aware_cfc import StrideAwareWiredCfCCell
 # from ember_ml.nn.modules.rnn.stride_aware_cfc_layer import StrideAwareCfC
@@ -47,6 +48,7 @@ __all__ = [
     'LSTM',
     'GRU',
     'RNN',
+    'StrideAwareCell',
     'StrideAware',
     # 'StrideAwareWiredCfCCell',  # Temporarily commented out
     # 'StrideAwareCfC',  # Temporarily commented out

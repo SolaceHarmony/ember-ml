@@ -138,6 +138,36 @@ irfft2 = ops_module.irfft2
 rfftn = ops_module.rfftn
 irfftn = ops_module.irfftn
 
+# Provide simple random namespace for compatibility
+class _RandomNamespace:
+    def uniform(self, minval: float = 0.0, maxval: float = 1.0, shape=()):
+        from ember_ml.nn.tensor import random_uniform, squeeze
+        minval = float(getattr(minval, "item", lambda: minval)()) if not isinstance(minval, (int, float)) else minval
+        maxval = float(getattr(maxval, "item", lambda: maxval)()) if not isinstance(maxval, (int, float)) else maxval
+        if shape == ():
+            tensor = random_uniform((1,), minval=minval, maxval=maxval)
+            return float(squeeze(tensor).item())
+        return random_uniform(shape, minval=minval, maxval=maxval)
+
+    def normal(self, shape=(), mean: float = 0.0, stddev: float = 1.0):
+        from ember_ml.nn.tensor import random_normal, squeeze
+        mean = float(getattr(mean, "item", lambda: mean)()) if not isinstance(mean, (int, float)) else mean
+        stddev = float(getattr(stddev, "item", lambda: stddev)()) if not isinstance(stddev, (int, float)) else stddev
+        if shape == ():
+            tensor = random_normal((1,), mean=mean, stddev=stddev)
+            return float(squeeze(tensor).item())
+        return random_normal(shape, mean=mean, stddev=stddev)
+
+random = _RandomNamespace()
+
+# Alias tensor indexing helpers for convenience
+from ember_ml.nn import tensor as _tensor
+
+def index_update(tensor_obj, indices, value):
+    return _tensor.index_update(tensor_obj, indices, value)
+
+index = _tensor.index
+
 
 # Master list of all operations for __all__
 _MASTER_OPS_LIST = [
@@ -161,11 +191,12 @@ _MASTER_OPS_LIST = [
     'normalize_vector', 'compute_energy_stability', 'compute_interference_strength', 'compute_phase_coherence',
     'partial_interference', 'euclidean_distance', 'cosine_similarity', 'exponential_decay', 'fft', 'ifft',
     'fft2', 'ifft2', 'fftn', 'ifftn', 'rfft', 'irfft', 'rfft2', 'irfft2', 'rfftn', 'irfftn',
+    'index_update', 'index',
 ]
 
 # Define __all__ to include backend controls, pi, submodules, and all operations
 __all__ = [
     'set_backend', 'get_backend', 'auto_select_backend',  # Backend controls
     'pi',  # Constants
-    'stats', 'linearalg', 'bitwise',  # Submodules
+    'stats', 'linearalg', 'bitwise', 'random',  # Submodules
 ] + _MASTER_OPS_LIST  # All operations
