@@ -291,6 +291,30 @@ def all(x: TensorLike, axis: Any = None) -> Any: # No change needed, already Any
         return torch.all(x_tensor, dim=axis)
 
 
+def any(x: TensorLike, axis: Any = None) -> Any:
+    """Check if any elements in a tensor are True.
+
+    Args:
+        x: Input tensor
+        axis: Axis or axes along which to perform the reduction.
+            If None, reduce over all dimensions.
+
+    Returns:
+        Boolean tensor with True if any elements are True, False otherwise.
+        If axis is specified, the result is a tensor with the specified
+        axes reduced.
+    """
+    from ember_ml.backend.torch.tensor import TorchTensor
+    tensor_ops = TorchTensor()
+
+    x_tensor = tensor_ops.convert_to_tensor(x)
+
+    if axis is None:
+        return torch.any(x_tensor)
+    else:
+        return torch.any(x_tensor, dim=axis)
+
+
 def where(condition: TensorLike, x: TensorLike, y: TensorLike) -> Any: # Changed torch.Tensor to Any
     """
     Return elements chosen from x or y depending on condition.

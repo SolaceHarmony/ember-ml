@@ -1,3 +1,7 @@
+import pytest
+
+pytest.skip('MLX backend example script, not a real test', allow_module_level=True)
+
 import mlx.core as mx
 
 # Create a simple array
