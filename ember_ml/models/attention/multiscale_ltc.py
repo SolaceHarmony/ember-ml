@@ -8,8 +8,7 @@ from ember_ml.nn import tensor
 from ember_ml.nn.tensor import EmberTensor, zeros, ones, reshape, concatenate, to_numpy, convert_to_tensor
 from ember_ml.nn.tensor import float32, shape, cast, arange, stack, pad, full
 from ember_ml.nn.modules import AutoNCP # Updated import path
-from ember_ml.nn.modules.rnn.stride_aware_cell import StrideAwareCell
-from ember_ml.nn.modules.rnn.rnn import RNN
+from ember_ml.nn.modules.rnn.stride_aware import StrideAware
 from ember_ml.nn.initializers import glorot_uniform
 from ember_ml.nn.tensor import EmberTensor
 from ember_ml.nn.features import one_hot, PCA
@@ -88,26 +87,18 @@ def build_multiscale_ltc_model(input_dims: Dict[int, int], output_dim: int = 1,
         )
         
         # Create a stride-aware cell
-        ltc_cell = StrideAwareCell(
+        ltc_cell = StrideAware(
             input_size=dim,
             hidden_size=hidden_units,
             stride_length=stride,
             time_scale_factor=1.0,
-            activation="tanh"
-        )
-        
-        # Create an RNN layer with the cell
-        rnn = RNN(
-            input_size=dim,
-            hidden_size=hidden_units,
-            batch_first=True,
             return_sequences=False,
-            return_state=False,
-            dropout=dropout_rate
-        )
-        
-        # Process the input through the RNN
-        rnn_output = rnn(reshaped)
+            activation="tanh",
+            batch_first=True,
+            )
+
+        # Process the input through the layer
+        rnn_output, _ = ltc_cell(reshaped)
         
         # Store the output
         ltc_outputs.append(rnn_output)

@@ -8,9 +8,8 @@ Available Modules:
         GRUCell: Gated Recurrent Unit cell
         
     Specialized Cells:
-        StrideAware: Stride-aware cell base class
-        StrideAwareCfC: Stride-aware Closed-form Continuous-time cell
-        StrideAwareCell: Stride-aware general cell
+        StrideAware: Stride-aware recurrent layer
+        StrideAwareCfC: Stride-aware Closed-form Continuous-time layer
         
     Advanced Modules:
         CfC: Closed-form Continuous-time cell

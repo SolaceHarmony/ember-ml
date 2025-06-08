@@ -1,24 +1,21 @@
 """
 Stride-Aware Layer
 
-This module provides an implementation of the StrideAware layer,
-which wraps a StrideAwareCell to create a recurrent layer.
+This module provides an implementation of the :class:`StrideAware` layer
+for multi-timescale processing.
 """
 
 # Removed unused imports
 
 # Removed numpy import
 from ember_ml import ops
-from ember_ml.nn.modules import Module
+from ember_ml.nn.modules import Module, Parameter
 # Removed stride_aware_cell import
 from ember_ml.nn import tensor
 
 class StrideAware(Module):
     """
-    Stride-Aware RNN layer.
-    
-    This layer wraps a StrideAwareCell to create a recurrent layer
-    that can handle different timescales.
+    Stride-Aware RNN layer capable of handling different timescales.
     """
     
     def __init__(
@@ -59,7 +56,7 @@ class StrideAware(Module):
         self.return_sequences = return_sequences
         self.batch_first = batch_first
         
-        # StrideAwareCell parameters
+        # Layer parameters
         self.activation = activation
         self.bias = bias
         self.use_bias = use_bias
@@ -74,22 +71,22 @@ class StrideAware(Module):
         from ember_ml.nn.initializers import glorot_uniform
         
         # Input weights
-        self.input_kernel = tensor.Parameter(glorot_uniform((self.input_size, self.hidden_size)))
+        self.input_kernel = Parameter(glorot_uniform((self.input_size, self.hidden_size)))
         
         # Hidden weights
-        self.hidden_kernel = tensor.Parameter(glorot_uniform((self.hidden_size, self.hidden_size)))
+        self.hidden_kernel = Parameter(glorot_uniform((self.hidden_size, self.hidden_size)))
         
         # Output weights
-        self.output_kernel = tensor.Parameter(glorot_uniform((self.hidden_size, self.hidden_size)))
+        self.output_kernel = Parameter(glorot_uniform((self.hidden_size, self.hidden_size)))
         
         # Bias terms
         if self.use_bias:
-            self.input_bias = tensor.Parameter(tensor.zeros((self.hidden_size,)))
-            self.hidden_bias = tensor.Parameter(tensor.zeros((self.hidden_size,)))
-            self.output_bias = tensor.Parameter(tensor.zeros((self.hidden_size,)))
+            self.input_bias = Parameter(tensor.zeros((self.hidden_size,)))
+            self.hidden_bias = Parameter(tensor.zeros((self.hidden_size,)))
+            self.output_bias = Parameter(tensor.zeros((self.hidden_size,)))
         
         # Time constant
-        self.tau = tensor.Parameter(tensor.ones((self.hidden_size,)))
+        self.tau = Parameter(tensor.ones((self.hidden_size,)))
     
     def forward(self, inputs, initial_state=None, elapsed_time=1.0):
         """

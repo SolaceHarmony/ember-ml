@@ -30,7 +30,7 @@ Unlike traditional RNNs (like LSTMs or GRUs) that operate on discrete time steps
 
 ## Stride Awareness
 
-*   **Multi-Timescale Processing:** Stride-aware variants (e.g., `StrideAwareCfCCell`, `StrideAwareWiredCfCCell`, `StrideAware`) are designed to process input sequences at multiple temporal resolutions simultaneously.
-*   **Stride Length:** Each stride-aware cell or layer is associated with a `stride_length`. It processes inputs only at intervals defined by this stride.
+*   **Multi-Timescale Processing:** Stride-aware layers (e.g., `StrideAwareCfC`, `StrideAware`) process input sequences at multiple temporal resolutions simultaneously.
+*   **Stride Length:** Each stride-aware layer is associated with a `stride_length` and processes inputs only at intervals defined by this stride.
 *   **Time Scaling:** Often incorporates a `time_scale_factor` (potentially learnable) that interacts with the `stride_length` to adjust the effective time constant for that specific timescale.
-*   **Implementation:** Achieved either by modifying the cell's internal dynamics based on stride and time scale factors (as seen in the Keras-based `StrideAwareWiredCfCCell` in `testfile.py`) or by controlling how inputs are fed to different cells/layers in a larger network architecture (as suggested by `MultiStrideLiquidNetwork` in `stride_aware_cfc.py`).
+*   **Implementation:** This can be achieved by modifying the layer's internal dynamics based on stride and time scale factors or by controlling how inputs are fed to different layers in a larger network architecture (as in `MultiStrideLiquidNetwork`).

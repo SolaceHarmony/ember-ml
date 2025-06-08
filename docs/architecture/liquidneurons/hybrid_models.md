@@ -24,7 +24,7 @@ Hybrid models aim to leverage the strengths of different architectures. For inst
 
 ### `ember_ml.models.stride_aware_cfc` (Relevant Components)
 
-*   **`LiquidNetworkWithMotorNeuron(Module)`**: Combines a stride-aware CfC cell (`StrideAwareCfCCell`) with a `MotorNeuron`.
+*   **`LiquidNetworkWithMotorNeuron(Module)`**: Combines a stride-aware CfC layer with a `MotorNeuron`.
     *   Processes input through the CfC cell.
     *   Includes optional `mixed_memory` using a sigmoid gate applied to the cell output.
     *   Feeds the cell output to a `MotorNeuron` to generate trigger signals.
@@ -34,7 +34,7 @@ Hybrid models aim to leverage the strengths of different architectures. For inst
     *   Uses the LSTM output to compute a gate (`sigmoid` activation).
     *   Applies the gate multiplicatively to the CfC output.
     *   Concatenates the gated CfC output and the LSTM output before feeding to a final output projection layer.
-*   **`MultiStrideLiquidNetwork(Module)`**: Processes input through multiple `StrideAwareCfCCell` instances, each configured with a different stride length.
+*   **`MultiStrideLiquidNetwork(Module)`**: Processes input through multiple stride-aware CfC layers, each configured with a different stride length.
     *   Applies separate input projections for each stride.
     *   Processes input through the corresponding cell only at time steps divisible by the stride length (otherwise reuses the previous state/output).
     *   Concatenates the outputs from all stride-specific cells.

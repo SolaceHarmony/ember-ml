@@ -84,7 +84,7 @@ This section details the specific implementations of various continuous-time RNN
 
 ### `ember_ml.nn.modules.rnn.stride_aware_cfc`
 
-*   **`StrideAwareCfC(Module)`**: Implements a stride-aware CfC layer, seemingly intended to wrap a cell but currently contains the cell logic directly.
+*   **`StrideAwareCfC(Module)`**: Implements a stride-aware CfC layer that integrates multi-timescale processing directly.
     *   Inherits from `Module` (previously `ModuleWiredCell`).
     *   Includes parameters like `stride_length`, `time_scale_factor`, `mode`, `activation`, `backbone_units`, `backbone_layers`.
     *   `_initialize_weights()`: Initializes weights for input, recurrent, backbone, time gate, and gating connections. Also initializes sparsity masks.
@@ -95,6 +95,6 @@ This section details the specific implementations of various continuous-time RNN
 ### `ember_ml.models.attention.testfile` (Keras-based Implementations)
 
 *Note: These are Keras implementations found in a test file, likely prototypes or experiments.*
-*   **`StrideAwareWiredCfCCell(keras.layers.Layer)`**: A Keras Layer implementing a stride-aware CfC cell that uses a `wirings.Wiring` object for connectivity. Re-implements CfC logic with time scaling based on `stride_length` and `time_scale_factor`.
-*   **`StrideAwareCfC(keras.layers.RNN)`**: A Keras RNN layer that wraps either `StrideAwareWiredCfCCell` (if `units` is a Wiring object) or an internally defined `StrideAwareCfCCell` (if `units` is an int). Supports `mixed_memory`.
+*   **`StrideAwareWiredCfC(keras.layers.Layer)`**: Legacy Keras layer that applied stride-aware CfC dynamics using a wiring object.
+*   **`StrideAwareCfC(keras.layers.RNN)`**: Keras RNN layer that used the wired variant internally. Retained here for historical reference.
 *   **`MixedMemoryRNN(keras.layers.Layer)`**: A Keras Layer used internally by `StrideAwareCfC` when `mixed_memory` is True. It wraps an RNN cell (like the stride-aware CfC cell) and adds an LSTM-like memory gate mechanism.

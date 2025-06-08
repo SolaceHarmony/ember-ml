@@ -168,7 +168,7 @@ from ember_ml.nn.modules.rnn import StrideAwareCfC
 from ember_ml.nn import tensor
 
 # Create a NeuronMap (assuming FullyConnected for this example)
-# The StrideAwareCfC layer likely expects a NeuronMap or a pre-configured stride-aware cell
+# The StrideAwareCfC layer expects a ``NeuronMap`` instance defining its wiring
 from ember_ml.nn.modules.wiring import FullyConnectedMap
 neuron_map = FullyConnectedMap(units=20, input_dim=10, output_dim=20)
 
