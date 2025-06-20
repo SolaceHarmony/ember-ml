@@ -4,7 +4,6 @@ utilizing asynchronous neural network modules.
 """
 
 import ray
-import mlx.core as mx
 import time
 import asyncio
 from typing import Dict, List, Optional, Any
@@ -14,10 +13,7 @@ from ember_ml.nn.tensor import EmberTensor
 from ember_ml.asyncml.nn.modules.rnn.liquid_cfc_xlstm import async_liquid_cfc_xlstm
 from ember_ml.ops import stats
 from ember_ml.nn.tensor.types import TensorLike
-import ray
-import time
-import asyncio
-from typing import Dict, List, Optional, Any
+# Removed duplicate imports of ray, time, asyncio, typing
 from ember_ml import ops
 @ray.remote
 class MetalKernelActor:

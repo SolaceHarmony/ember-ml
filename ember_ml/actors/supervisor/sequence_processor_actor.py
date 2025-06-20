@@ -7,7 +7,6 @@ import asyncio
 import time
 import uuid
 from typing import Dict, List, Any, Optional
-import mlx.core as mx # Keep mlx import for now, as EmberTensor might wrap it
 
 # Import EmberTensor and ops
 from ember_ml.nn.tensor import EmberTensor

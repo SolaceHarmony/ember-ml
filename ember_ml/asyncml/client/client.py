@@ -7,8 +7,6 @@ import ray
 import asyncio
 import time
 from typing import Dict, List, Any, Optional
-import mlx.core as mx # Keep mlx import for now, as EmberTensor might wrap it
-import numpy as np
  
 # Import EmberTensor
 from ember_ml.nn.tensor import EmberTensor
