@@ -37,48 +37,51 @@ from ember_ml.nn.tensor.common import (  # noqa
     meshgrid, nonzero, index # Add nonzero here
 )
 
-# Define array function as an alias for EmberTensor constructor
-def array(data, dtype=None, device=None, requires_grad=False):
-    """
-    Create a tensor from data.
-    
-    Args:
-        data: Input data (array, list, scalar)
-        dtype: Optional data type
-        device: Optional device to place the tensor on
-        requires_grad: Whether the tensor requires gradients
-        
-    Returns:
-        EmberTensor
-    """
-    return EmberTensor(data, dtype=dtype, device=device, requires_grad=requires_grad)
-
+# Import the internal conversion function
+from ember_ml.nn.tensor.common import _convert_to_backend_tensor
 from typing import Any
- 
-def convert_to_tensor(data: Any, dtype=None, device=None, requires_grad=False):
+
+# Define array function to return a raw backend tensor
+def array(data: Any, dtype: Any = None, device: Optional[str] = None) -> Any: # Removed requires_grad
     """
-    Create a tensor from data.
+    Create a raw backend tensor from data. Alias for convert_to_tensor.
     
     Args:
-        data: Input data (array, list, scalar, or tensor)
-        dtype: Optional data type
-        device: Optional device to place the tensor on
-        requires_grad: Whether the tensor requires gradients
+        data: Input data (array, list, scalar, EmberTensor, or backend tensor)
+        dtype: Optional data type for the resulting backend tensor.
+        device: Optional device to place the backend tensor on.
         
     Returns:
-        Backend tensor (e.g., TensorLike, tensor.convert_to_tensor, TensorLike)
+        Raw backend tensor.
     """
-    # If already an EmberTensor, check if dtype/device/requires_grad match
-    if isinstance(data, EmberTensor):
-        # TODO: Add logic here to potentially re-wrap or cast if dtype/device/requires_grad differ?
-        # For now, return as is, assuming the caller handles potential mismatches if needed.
-        # A more robust implementation might create a new EmberTensor if properties differ significantly.
-        return data
+    return convert_to_tensor(data, dtype=dtype, device=device)
+ 
+def convert_to_tensor(data: Any, dtype: Any = None, device: Optional[str] = None) -> Any: # Removed requires_grad
+    """
+    Convert data to a raw backend tensor of the currently active backend.
 
-    # Create and return an EmberTensor instance.
-    # The EmberTensor.__init__ method is responsible for handling the backend conversion,
-    # dtype setting, device placement, and storing the backend tensor and EmberDType.
-    return EmberTensor(data, dtype=dtype, device=device, requires_grad=requires_grad)
+    If the input is an EmberTensor, its underlying backend tensor will be
+    extracted and potentially converted to the specified dtype and device.
+    If the input is already a backend tensor of the active backend, it might
+    be returned as is or converted if dtype/device are different.
+    Other data types (lists, scalars, NumPy arrays) will be converted.
+    
+    Args:
+        data: Input data (array, list, scalar, EmberTensor, or backend tensor).
+        dtype: Optional target data type for the backend tensor.
+        device: Optional target device for the backend tensor.
+        
+    Returns:
+        A raw backend tensor.
+    """
+    if isinstance(data, EmberTensor):
+        # If it's an EmberTensor, get its backend tensor.
+        # Then, _convert_to_backend_tensor will handle dtype/device conversion if needed.
+        # _convert_to_backend_tensor should be able to take a backend tensor as input.
+        return _convert_to_backend_tensor(data.to_backend_tensor(), dtype=dtype, device=device)
+    # For any other type of data (including raw backend tensors from a different backend,
+    # or lists, numpy arrays, scalars), _convert_to_backend_tensor handles it.
+    return _convert_to_backend_tensor(data, dtype=dtype, device=device)
 
 # Export all classes and functions
 __all__ = [

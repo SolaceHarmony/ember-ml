@@ -127,19 +127,20 @@ class EmberTensor(TensorInterface):
             return to_numpy(self._tensor).astype(dtype)
         return to_numpy(self._tensor)
     
-    def __getitem__(self, key) -> Any:
+    def __getitem__(self, key) -> Any: # Returns raw backend tensor or scalar
         """
-        Get values at specified indices.
+        Get values at specified indices. Returns a raw backend tensor or scalar.
         
         Args:
             key: Index or slice
             
         Returns:
-            Tensor with values at specified indices
+            Raw backend tensor or scalar value.
         """
-        # Use slice_update to implement indexing
-        result = slice_update(self._tensor, key, None)
-        return result
+        # common.slice_tensor is expected to return a raw backend tensor.
+        # If the result of slicing is a 0-dim tensor that should be a scalar,
+        # this will still return that 0-dim backend tensor. User can call .item() on it via EmberTensor(result).item().
+        return slice_tensor(self._tensor, key)
 
     def item(self) -> Union[int, float, bool]:
         """Get the value of a scalar tensor."""
@@ -188,754 +189,294 @@ class EmberTensor(TensorInterface):
         """Get whether the tensor requires gradients."""
         return self._requires_grad
 
-    def detach(self) -> Any:
+    def detach(self) -> Any: # Returns raw backend tensor
         """Create a new tensor detached from the computation graph."""
-        # For now, create a new tensor with requires_grad=False
-        # Don't pass dtype to avoid calling the dtype property
-        return self._tensor
+        # Assumes common.detach exists and returns a backend tensor
+        # If not, this might just return self._tensor
+        from ember_ml.nn.tensor.common import detach as common_detach
+        try:
+            return common_detach(self._tensor)
+        except (AttributeError, NotImplementedError):
+            # Fallback if common.detach is not implemented or available
+            # This means the "detach" is only conceptual at the EmberTensor wrapper level
+            # by creating a new wrapper with requires_grad=False.
+            # However, the goal is to return a backend tensor.
+            # If the backend tensor itself cannot be detached, return it as is.
+            logger.warning("common.detach not available, returning original backend tensor for detach().")
+            return self._tensor
+
 
     def to_numpy(self) -> Any:
         """Convert tensor to NumPy array."""
-        result = to_numpy(self._tensor)
+        return to_numpy(self._tensor)
 
-        return result
-    
-    def zeros(self, shape: Union[int, Sequence[int]], dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
+    @staticmethod
+    def zeros(shape: Union[int, Sequence[int]], dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Returns raw backend tensor
         """
-        Create a tensor of zeros.
-        
-        Args:
-            shape: Shape of the tensor
-            dtype: Optional data type
-            device: Optional device to place the tensor on
-            
-        Returns:
-            Tensor of zeros with the specified shape
+        Create a tensor of zeros. Returns a raw backend tensor.
         """
-        tensor = zeros(shape, dtype=dtype)
-        return tensor
-    
-    def ones(self, shape: Union[int, Sequence[int]], dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
+        final_dtype = dtype if dtype is not None else EmberDType.float32
+        final_device = device if device is not None else ops.get_device()
+        return zeros(shape, dtype=final_dtype, device=final_device)
+
+    @staticmethod
+    def ones(shape: Union[int, Sequence[int]], dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Returns raw backend tensor
         """
-        Create a tensor of ones.
-        
-        Args:
-            shape: Shape of the tensor
-            dtype: Optional data type
-            device: Optional device to place the tensor on
-            
-        Returns:
-            Tensor of ones with the specified shape
+        Create a tensor of ones. Returns a raw backend tensor.
         """
-        tensor = ones(shape, dtype=dtype)
-        return tensor
-    
-    def zeros_like(self, x: Any, dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
+        final_dtype = dtype if dtype is not None else EmberDType.float32
+        final_device = device if device is not None else ops.get_device()
+        return ones(shape, dtype=final_dtype, device=final_device)
+
+    @staticmethod
+    def zeros_like(other: Any, dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # other is backend tensor, returns backend
         """
         Create a tensor of zeros with the same shape as the input.
-        
-        Args:
-            x: Input tensor
-            dtype: Optional data type
-            device: Optional device to place the tensor on
-            
-        Returns:
-            Tensor of zeros with the same shape as x
+        Input `other` is expected to be a raw backend tensor. Returns a raw backend tensor.
         """
-        if isinstance(x, EmberTensor):
-            x = x.to_backend_tensor()
-        tensor = zeros_like(x, dtype=dtype)
-        return tensor
-    
-    def ones_like(self, x: Any, dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
+        # If 'other' could be EmberTensor, unwrap it first:
+        # other_backend = other.to_backend_tensor() if isinstance(other, EmberTensor) else other
+        # For this refactor, assuming 'other' is already a backend tensor if called from functional API.
+        # If called as EmberTensor.zeros_like(et_instance), then __init__ of other ETs would handle it.
+        # This static method on EmberTensor should expect backend tensor if it's consistent.
+        # However, the previous version took EmberTensor. Let's keep that for now for this method's direct calls.
+        other_backend = other.to_backend_tensor() if isinstance(other, EmberTensor) else other
+
+        final_dtype = dtype if dtype is not None else globals()['dtype'](other_backend) # Use global dtype common function
+        final_device = device if device is not None else globals()['ops'].get_device_of_tensor(other_backend) # Requires this op
+
+        return zeros_like(other_backend, dtype=final_dtype, device=final_device)
+
+    @staticmethod
+    def ones_like(other: Any, dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # other is backend tensor, returns backend
         """
         Create a tensor of ones with the same shape as the input.
-        
-        Args:
-            x: Input tensor
-            dtype: Optional data type
-            device: Optional device to place the tensor on
-            
-        Returns:
-            Tensor of ones with the same shape as x
+        Input `other` is expected to be a raw backend tensor. Returns a raw backend tensor.
         """
-        x = x.to_backend_tensor()
-        tensor = ones_like(x, dtype=dtype)
-        return tensor
-    
-    def eye(self, n: int, m: Optional[int] = None, dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
-        """
-        Create an identity matrix.
-        
-        Args:
-            n: Number of rows
-            m: Number of columns (default: n)
-            dtype: Optional data type
-            device: Optional device to place the tensor on
-            
-        Returns:
-            Identity matrix of shape (n, m)
-        """
+        other_backend = other.to_backend_tensor() if isinstance(other, EmberTensor) else other
+        final_dtype = dtype if dtype is not None else globals()['dtype'](other_backend)
+        final_device = device if device is not None else globals()['ops'].get_device_of_tensor(other_backend)
+        return ones_like(other_backend, dtype=final_dtype, device=final_device)
 
-        tensor = eye(n, m, dtype=dtype)
-        tensor = tensor.to_backend_tensor()
-        return tensor
+    @staticmethod
+    def eye(n: int, m: Optional[int] = None, dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Returns raw backend tensor
+        """
+        Create an identity matrix. Returns a raw backend tensor.
+        """
+        final_dtype = dtype if dtype is not None else EmberDType.float32
+        final_device = device if device is not None else ops.get_device()
+        return eye(n, m=m, dtype=final_dtype, device=final_device)
+
+    @staticmethod
+    def arange(start: int, stop: Optional[int] = None, step: int = 1, dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Returns raw backend tensor
+        """
+        Create a tensor with evenly spaced values. Returns a raw backend tensor.
+        """
+        final_dtype = dtype if dtype is not None else EmberDType.int64
+        final_device = device if device is not None else ops.get_device()
+        return arange(start, stop=stop, step=step, dtype=final_dtype, device=final_device)
+
+    @staticmethod
+    def linspace(start: float, stop: float, num: int, dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Returns raw backend tensor
+        """
+        Create a tensor with evenly spaced values. Returns a raw backend tensor.
+        """
+        final_dtype = dtype if dtype is not None else EmberDType.float32
+        final_device = device if device is not None else ops.get_device()
+        return linspace(start, stop, num, dtype=final_dtype, device=final_device)
+
+    @staticmethod
+    def full(shape: Union[int, Sequence[int]], fill_value: Union[float, int], dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Returns raw backend tensor
+        """
+        Create a tensor filled with a scalar value. Returns a raw backend tensor.
+        """
+        final_dtype = dtype
+        if final_dtype is None: # Infer from fill_value
+            if isinstance(fill_value, int): final_dtype = EmberDType.int64
+            elif isinstance(fill_value, float): final_dtype = EmberDType.float32
+            else: final_dtype = EmberDType.float32
+        final_device = device if device is not None else ops.get_device()
+        return full(shape, fill_value, dtype=final_dtype, device=final_device)
+
+    @staticmethod
+    def full_like(other: Any, fill_value: Union[float, int], dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # other is backend, returns backend
+        """
+        Create a tensor filled with a scalar value, with same shape as input.
+        Input `other` is expected to be a raw backend tensor. Returns a raw backend tensor.
+        """
+        other_backend = other.to_backend_tensor() if isinstance(other, EmberTensor) else other
+        final_dtype = dtype if dtype is not None else globals()['dtype'](other_backend)
+        final_device = device if device is not None else globals()['ops'].get_device_of_tensor(other_backend)
+        return full_like(other_backend, fill_value, dtype=final_dtype, device=final_device)
     
-    def arange(self, start: int, stop: Optional[int] = None, step: int = 1, dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
-        """
-        Create a tensor with evenly spaced values within a given interval.
-        
-        Args:
-            start: Start of interval (inclusive)
-            stop: End of interval (exclusive)
-            step: Spacing between values
-            dtype: Optional data type
-            device: Optional device to place the tensor on
-            
-        Returns:
-            Tensor with evenly spaced values
-        """
-        tensor = arange(start, stop, step, dtype=dtype)
-        return tensor
+    # --- Operational Instance Methods: To be removed or return backend tensors ---
+    # def reshape(self, shape: Union[int, Sequence[int]]) -> "EmberTensor": # REMOVE
+    # def transpose(self, axes: Optional[Sequence[int]] = None) -> "EmberTensor": # REMOVE
+    # def cast(self, dtype: Union[DType, str, Callable[[], Any]]): # REMOVE
     
-    def linspace(self, start: float, stop: float, num: int, dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
-        """
-        Create a tensor with evenly spaced values within a given interval.
-        
-        Args:
-            start: Start of interval (inclusive)
-            stop: End of interval (inclusive)
-            num: Number of values to generate
-            dtype: Optional data type
-            device: Optional device to place the tensor on
-            
-        Returns:
-            Tensor with evenly spaced values
-        """
-        tensor = linspace(start, stop, num, dtype=dtype)
-        return tensor
-    
-    def full(self, shape: Union[int, Sequence[int]], fill_value: Union[float, int], dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
-        """
-        Create a tensor filled with a scalar value.
-        
-        Args:
-            shape: Shape of the tensor
-            fill_value: Value to fill the tensor with
-            dtype: Optional data type
-            device: Optional device to place the tensor on
-            
-        Returns:
-            Tensor filled with the specified value
-        """
-        tensor = full(shape, fill_value, dtype=dtype)
-        return tensor
-    
-    def full_like(self, x: Any, fill_value: Union[float, int], dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
-        """
-        Create a tensor filled with a scalar value with the same shape as the input.
-        
-        Args:
-            x: Input tensor
-            fill_value: Value to fill the tensor with
-            dtype: Optional data type
-            device: Optional device to place the tensor on
-            
-        Returns:
-            Tensor filled with the specified value with the same shape as x
-        """
-        if isinstance(x, EmberTensor):
-            x = x.to_backend_tensor()
-        tensor = full_like(x, fill_value, dtype=dtype)
-        return tensor
-    
-    def reshape(self, x: Any, shape: Union[int, Sequence[int]]) -> Any:
-        """
-        Reshape a tensor to a new shape.
-        
-        Args:
-            x: Input tensor
-            shape: New shape
-            
-        Returns:
-            Reshaped tensor
-        """
-        if isinstance(x, EmberTensor):
-            x = x.to_backend_tensor()
-        tensor = reshape(x, shape)
-        return tensor
-    
-    def transpose(self, x: Any, axes: Optional[Sequence[int]] = None) -> Any:
-        """
-        Permute the dimensions of a tensor.
-        
-        Args:
-            x: Input tensor
-            axes: Optional permutation of dimensions
-            
-        Returns:
-            Transposed tensor
-        """
-        if isinstance(x, EmberTensor):
-            x = x.to_backend_tensor()
-        tensor = transpose(x, axes)
-        return tensor
-    
-    def concatenate(self, tensors: Sequence[Any], axis: int = 0) -> Any:
-        """
-        Concatenate tensors along a specified axis.
-        
-        Args:
-            tensors: Sequence of tensors
-            axis: Axis along which to concatenate
-            
-        Returns:
-            Concatenated tensor
-        """
+    def copy(self) -> Any: # Returns raw backend tensor
+        """ Create a copy of the underlying backend tensor. """
+        return copy(self._tensor)
+
+    # def squeeze(self, axis: Optional[Union[int, Sequence[int]]] = None): # REMOVE
+    # def expand_dims(self, axis: Union[int, Sequence[int]]): # REMOVE
+    # def tile(self, reps: Sequence[int]): # REMOVE
+    # def pad(self, paddings: Sequence[Sequence[int]], constant_values: Union[int, float] = 0): # REMOVE
+    # def sort(self, axis: int = -1, descending: bool = False): # REMOVE
+    # def argsort(self, axis: int = -1, descending: bool = False): # REMOVE
+    # def slice(self, starts: Sequence[int], sizes: Sequence[int]): # REMOVE (use __getitem__ or functional)
+    # def maximum(self, other: "EmberTensor"): # REMOVE (use functional ops.maximum)
+    # def shuffle(self) -> "EmberTensor": # REMOVE (use functional tensor.shuffle)
+
+
+    @staticmethod
+    def concatenate(tensors: Sequence[Any], axis: int = 0) -> Any: # Takes backend tensors, returns backend tensor
+        """ Concatenate backend tensors along a specified axis. """
+        if not tensors:
+            raise ValueError("Cannot concatenate empty sequence of tensors.")
+        # Assuming inputs are already backend tensors or EmberTensor.to_backend_tensor() has been called
+        # For consistency, ensure they are backend tensors
         backend_tensors = [t.to_backend_tensor() if isinstance(t, EmberTensor) else t for t in tensors]
-        tensor = concatenate(backend_tensors, axis)
-        return tensor
-    
-    def stack(self, tensors: Sequence[Any], axis: int = 0) -> Any:
-        """
-        Stack tensors along a new axis.
-        
-        Args:
-            tensors: Sequence of tensors
-            axis: Axis along which to stack
-            
-        Returns:
-            Stacked tensor
-        """
+        return concatenate(backend_tensors, axis)
+
+    @staticmethod
+    def stack(tensors: Sequence[Any], axis: int = 0) -> Any: # Takes backend tensors, returns backend tensor
+        """ Stack backend tensors along a new axis. """
+        if not tensors:
+            raise ValueError("Cannot stack empty sequence of tensors.")
         backend_tensors = [t.to_backend_tensor() if isinstance(t, EmberTensor) else t for t in tensors]
-        tensor = stack(backend_tensors, axis)
-        return tensor
+        return stack(backend_tensors, axis)
     
-    def split(self, x: Any, num_or_size_splits: Union[int, Sequence[int]], axis: int = 0) -> List[TensorInterface]:
-        """
-        Split a tensor into sub-tensors.
-        
-        Args:
-            x: Input tensor
-            num_or_size_splits: Number of splits or sizes of each split
-            axis: Axis along which to split
-            
-        Returns:
-            List of sub-tensors
-        """
-        if isinstance(x, EmberTensor):
-            x = x.to_backend_tensor()
-        tensors = split(x, num_or_size_splits, axis)
-        return [EmberTensor(t, dtype=self.dtype, device=self.device, requires_grad=self._requires_grad) for t in tensors]
+    # def split(self, num_or_size_splits: Union[int, Sequence[int]], axis: int = 0) -> List["EmberTensor"]: # REMOVE (use functional)
     
-    def expand_dims(self, x: Any, axis: Union[int, Sequence[int]]) -> Any:
-        """
-        Insert new axes into a tensor's shape.
-        
-        Args:
-            x: Input tensor
-            axis: Position(s) where new axes should be inserted
-            
-        Returns:
-            Tensor with expanded dimensions
-        """
-        if isinstance(x, EmberTensor):
-            x = x.to_backend_tensor()
-        tensor = expand_dims(x, axis)
-        return tensor
-    
-    def squeeze(self, x: Any, axis: Optional[Union[int, Sequence[int]]] = None) -> Any:
-        """
-        Remove single-dimensional entries from a tensor's shape.
-        
-        Args:
-            x: Input tensor
-            axis: Position(s) where dimensions should be removed
-            
-        Returns:
-            Tensor with squeezed dimensions
-        """
-        if isinstance(x, EmberTensor):
-            x = x.to_backend_tensor()
-        tensor = squeeze(x, axis)
-        return tensor
-    
-    def tile(self, x: Any, reps: Sequence[int]) -> Any:
-        """
-        Construct a tensor by tiling a given tensor.
-        
-        Args:
-            x: Input tensor
-            reps: Number of repetitions along each dimension
-            
-        Returns:
-            Tiled tensor
-        """
-        if isinstance(x, EmberTensor):
-            x = x.to_backend_tensor()
-        tensor = tile(x, reps)
-        return tensor
-    
-    def gather(self, x: Any, indices: Any, axis: int = 0) -> Any:
-        """
-        Gather slices from a tensor along an axis.
-        
-        Args:
-            x: Input tensor
-            indices: Indices of slices to gather
-            axis: Axis along which to gather
-            
-        Returns:
-            Gathered tensor
-        """
-        if isinstance(x, EmberTensor):
-            x = x.to_backend_tensor()
-        if isinstance(indices, EmberTensor):
-            indices = indices.to_backend_tensor()
-        tensor = gather(x, indices, axis)
-        return tensor
-    
-    def scatter(self, data: Optional[Any] = None, indices: Optional[Any] = None,
-                dim_size: Optional[Any] = None, aggr: str = 'sum', axis: int = 0) -> Any:
-        """
-        Scatter data according to indices into a new tensor.
-        
-        If data is None, the current tensor (self) is used as the data to scatter.
-        
-        Args:
-            data: The data to scatter. If None, self is used.
-            indices: The indices to scatter the data to
-            dim_size: The size of the output tensor along the specified axis
-            aggr: The aggregation method ('sum', 'mean', 'max', 'min')
-            axis: The axis along which to scatter
-            
-        Returns:
-            The scattered tensor
-        """
-        # Handle the case where the method is called as x.scatter(indices, dim_size)
-        # instead of x.scatter(None, indices, dim_size)
-        if indices is None and data is not None:
-            indices = data
-            data = None
-            
-        # Use self as the data to scatter if data is None
-        if data is None:
-            data = self._tensor
-        elif isinstance(data, EmberTensor):
-            data = data.to_backend_tensor()
-        else:
-            data = _convert_to_backend_tensor(data)
-            
-        indices = _convert_to_backend_tensor(indices)
-        if dim_size is not None:
-            dim_size = _convert_to_backend_tensor(dim_size)
-            
-        tensor = scatter(data, indices, dim_size, aggr, axis)
-        return tensor
-    
-    def convert_to_tensor(self, x: Any, dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
-        """
-        Convert input to a tensor.
-        
-        Args:
-            x: Input data (array, tensor, scalar)
-            dtype: Optional data type
-            device: Optional device to place the tensor on
-            
-        Returns:
-            Tensor representation of the input
-        """
-        tensor = _convert_to_backend_tensor(x, dtype=dtype)
-        return tensor
-    
-    def cast(self, x: Any, dtype: Union[DType, str, Callable[[], Any]]) -> Any:
-        """
-        Cast a tensor to a different data type.
-        
-        Args:
-            x: Input tensor
-            dtype: Target data type (can be a DType, string, or callable)
-            
-        Returns:
-            Tensor with the target data type
-        """
-        # Handle different dtype formats
-        processed_dtype = None
-        if dtype is not None:
-            if callable(dtype):
-                # If dtype is a callable (like the lambda functions in dtypes.py),
-                # call it to get the actual dtype
-                processed_dtype = dtype()
-            elif isinstance(dtype, str):
-                # If dtype is a string, use it directly
-                processed_dtype = dtype
-            else:
-                # Otherwise, use it as is (assuming it's a DType or compatible)
-                processed_dtype = dtype
-                
-        if isinstance(x, EmberTensor):
-            x = x.to_backend_tensor()
-        tensor = cast(x, processed_dtype)
-        return tensor
-    
-    def copy(self, x: Any) -> Any:
-        """
-        Create a copy of a tensor.
-        
-        Args:
-            x: Input tensor
-            
-        Returns:
-            Copy of the tensor
-        """
-        if isinstance(x, EmberTensor):
-            x = x.to_backend_tensor()
-        tensor = copy(x)
-        return tensor
-    
-    def sort(self, x: Any, axis: int = -1, descending: bool = False) -> Any:
-        """
-        Sort a tensor along a specified axis.
-        
-        Args:
-            x: Input tensor
-            axis: Axis along which to sort
-            descending: Whether to sort in descending order
-            
-        Returns:
-            Sorted tensor
-        """
-        if isinstance(x, EmberTensor):
-            x = x.to_backend_tensor()
-            
-        # Use the backend's sort function
-        from ember_ml.backend import get_backend_module
-        backend = get_backend_module()
-        if hasattr(backend, 'Tensor') and hasattr(backend.Tensor, 'sort'):
-            tensor_ops = backend.Tensor()
-            tensor = tensor_ops.sort(x, axis, descending)
-            return tensor
-        else:
-            # Fallback implementation
-            import numpy as np
-            x_np = to_numpy(x)
-            if descending:
-                result = np.sort(x_np, axis=axis)[::-1]
-            else:
-                result = np.sort(x_np, axis=axis)
-            return _convert_to_backend_tensor(result)
-    
-    def argsort(self, x: Any, axis: int = -1, descending: bool = False) -> Any:
-        """
-        Return the indices that would sort a tensor along a specified axis.
-        
-        Args:
-            x: Input tensor
-            axis: Axis along which to sort
-            descending: Whether to sort in descending order
-            
-        Returns:
-            Indices that would sort the tensor
-        """
-        if isinstance(x, EmberTensor):
-            x = x.to_backend_tensor()
-            
-        # Use the backend's argsort function
-        from ember_ml.backend import get_backend_module
-        backend = get_backend_module()
-        if hasattr(backend, 'Tensor') and hasattr(backend.Tensor, 'argsort'):
-            tensor_ops = backend.Tensor()
-            tensor = tensor_ops.argsort(x, axis, descending)
-            return tensor
-        else:
-            # Fallback implementation
-            import numpy as np
-            x_np = to_numpy(x)
-            if descending:
-                result = np.argsort(x_np, axis=axis)[::-1]
-            else:
-                result = np.argsort(x_np, axis=axis)
-            return _convert_to_backend_tensor(result)
-    
-    def slice_tensor(self, x: Any, starts: Sequence[int], sizes: Sequence[int]) -> Any:
-        """
-        Extract a slice from a tensor.
-        
-        Args:
-            x: Input tensor
-            starts: Starting indices for each dimension
-            sizes: Size of the slice in each dimension. A value of -1 means "all remaining elements in this dimension"
-            
-        Returns:
-            Sliced tensor
-        """
-        if isinstance(x, EmberTensor):
-            x = x.to_backend_tensor()
-        tensor = slice_tensor(x, starts, sizes)
-        return tensor
-    
-    def slice_update(self, x: Any, slices: Union[List, Tuple], updates: Any) -> Any:
-        """
-        Update a tensor at specific indices.
-        
-        Args:
-            x: Input tensor to update
-            slices: List or tuple of slice objects or indices
-            updates: Values to insert at the specified indices
-            
-        Returns:
-            Updated tensor
-        """
-        if isinstance(x, EmberTensor):
-            x = x.to_backend_tensor()
-        if isinstance(updates, EmberTensor):
-            updates = updates.to_backend_tensor()
-        tensor = slice_update(x, slices, updates)
-        return tensor
-    
-    def pad(self, x: Any, paddings: Sequence[Sequence[int]], constant_values: Union[int, float] = 0) -> Any:
-        """
-        Pad a tensor with a constant value.
-        
-        Args:
-            x: Input tensor
-            paddings: Sequence of sequences of integers specifying the padding for each dimension
-                     Each inner sequence should contain two integers: [pad_before, pad_after]
-            constant_values: Value to pad with
-            
-        Returns:
-            Padded tensor
-        """
-        if isinstance(x, EmberTensor):
-            x = x.to_backend_tensor()
-        tensor = pad(x, paddings, constant_values)
-        return tensor
-    
-    def tensor_scatter_nd_update(self, tensor: Any, indices: Any, updates: Any) -> Any:
-        """
-        Updates values of a tensor at specified indices.
+    @staticmethod
+    def gather(x: Any, indices: Any, axis: int = 0) -> Any: # Takes backend, returns backend
+        """ Gather slices from a backend tensor along an axis. """
+        x_backend = x.to_backend_tensor() if isinstance(x, EmberTensor) else x
+        indices_backend = indices.to_backend_tensor() if isinstance(indices, EmberTensor) else indices
+        return gather(x_backend, indices_backend, axis)
 
-        Args:
-            tensor: Input tensor to update
-            indices: Indices at which to update values (N-dimensional indices)
-            updates: Values to insert at the specified indices
+    @staticmethod
+    def scatter(data: Any, indices: Any,
+                dim_size: Optional[Any] = None, aggr: str = 'sum', axis: int = 0) -> Any: # Takes backend, returns backend
+        """ Scatter data according to indices into a new backend tensor. """
+        data_backend = data.to_backend_tensor() if isinstance(data, EmberTensor) else data
+        indices_backend = indices.to_backend_tensor() if isinstance(indices, EmberTensor) else indices
+        backend_dim_size = dim_size.to_backend_tensor() if isinstance(dim_size, EmberTensor) else dim_size
+        return scatter(data_backend, indices_backend, backend_dim_size, aggr, axis)
 
-        Returns:
-            Updated tensor
-        """
-        if isinstance(tensor, EmberTensor):
-            tensor = tensor.to_backend_tensor()
-        if isinstance(indices, EmberTensor):
-            indices = indices.to_backend_tensor()
-        if isinstance(updates, EmberTensor):
-            updates = updates.to_backend_tensor()
-        result = tensor_scatter_nd_update(tensor, indices, updates)
-        return result
-    
-    def maximum(self, x1: Any, x2: Any) -> Any:
-        """
-        Element-wise maximum of two tensors.
-        
-        Args:
-            x1: First input tensor
-            x2: Second input tensor
-            
-        Returns:
-            Element-wise maximum
-        """
-        if isinstance(x1, EmberTensor):
-            x1 = x1.to_backend_tensor()
-        if isinstance(x2, EmberTensor):
-            x2 = x2.to_backend_tensor()
-        tensor = maximum(x1, x2)
-        return tensor
-    
-    def random_normal(self, shape: Union[int, Sequence[int]], mean: float = 0.0, stddev: float = 1.0,
-                      dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
-        """
-        Create a tensor with random values from a normal distribution.
-        
-        Args:
-            shape: Shape of the tensor
-            mean: Mean of the normal distribution
-            stddev: Standard deviation of the normal distribution
-            dtype: Optional data type
-            device: Optional device to place the tensor on
-            
-        Returns:
-            Tensor with random normal values
-        """
-        tensor = random_normal(shape, mean, stddev, dtype, device)
-        return tensor
-    
-    def random_uniform(self, shape: Union[int, Sequence[int]], minval: float = 0.0, maxval: float = 1.0,
-                      dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
-        """
-        Create a tensor with random values from a uniform distribution.
-        
-        Args:
-            shape: Shape of the tensor
-            minval: Minimum value
-            maxval: Maximum value
-            dtype: Optional data type
-            device: Optional device to place the tensor on
-            
-        Returns:
-            Tensor with random uniform values
-        """
-        tensor = random_uniform(shape, minval, maxval, dtype, device)
-        return tensor
-    
-    def random_binomial(self, shape: Union[int, Sequence[int]], p: float = 0.5,
-                       dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
-        """
-        Create a tensor with random values from a binomial distribution.
-        
-        Args:
-            shape: Shape of the tensor
-            p: Probability of success
-            dtype: Optional data type
-            device: Optional device to place the tensor on
-            
-        Returns:
-            Tensor with random binomial values
-        """
-        tensor = random_bernoulli(shape, p, dtype, device)
-        return tensor
-    
-    def random_gamma(self, shape: Union[int, Sequence[int]], alpha: float = 1.0, beta: float = 1.0,
-                    dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
-        """
-        Generate random values from a gamma distribution.
-        
-        Args:
-            shape: Shape of the output tensor
-            alpha: Shape parameter
-            beta: Scale parameter
-            dtype: Optional data type
-            device: Optional device to place the tensor on
-        
-        Returns:
-            Tensor with random values from a gamma distribution
-        """
-        tensor = random_gamma(shape, alpha, beta, dtype, device)
-        return tensor
-    
-    def random_exponential(self, shape: Union[int, Sequence[int]], scale: float = 1.0,
-                          dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
-        """
-        Generate random values from an exponential distribution.
-        
-        Args:
-            shape: Shape of the output tensor
-            scale: Scale parameter
-            dtype: Optional data type
-            device: Optional device to place the tensor on
-        
-        Returns:
-            Tensor with random values from an exponential distribution
-        """
-        tensor = random_exponential(shape, scale, dtype, device)
-        return tensor
-    
-    def random_poisson(self, shape: Union[int, Sequence[int]], lam: float = 1.0,
-                      dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
-        """
-        Generate random values from a Poisson distribution.
-        
-        Args:
-            shape: Shape of the output tensor
-            lam: Rate parameter
-            dtype: Optional data type
-            device: Optional device to place the tensor on
-        
-        Returns:
-            Tensor with random values from a Poisson distribution
-        """
-        tensor = random_poisson(shape, lam, dtype, device)
-        return tensor
-    
-    def random_categorical(self, logits: Any, num_samples: int,
-                          dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
-        """
-        Draw samples from a categorical distribution.
-        
-        Args:
-            logits: 2D tensor with unnormalized log probabilities
-            num_samples: Number of samples to draw
-            dtype: Optional data type
-            device: Optional device to place the tensor on
-        
-        Returns:
-            Tensor with random categorical values
-        """
-        if isinstance(logits, EmberTensor):
-            logits = logits.to_backend_tensor()
-        tensor = random_categorical(logits, num_samples, dtype, device)
-        return tensor
-    
-    def random_permutation(self, x: Union[int, Any], dtype: Optional[DType] = None, device: Optional[str] = None) -> Any:
-        """
-        Randomly permute a sequence or return a permuted range.
-        
-        Args:
-            x: If x is an integer, randomly permute a range of integers from 0 to x-1.
-               If x is an array, make a copy and shuffle the elements randomly.
-            dtype: Optional data type
-            device: Optional device to place the tensor on
-            
-        Returns:
-            Permuted tensor
-        """
-        if isinstance(x, EmberTensor):
-            x = x.to_backend_tensor()
-        tensor = random_permutation(x, dtype, device)
-        return tensor
-    
-    def shuffle(self, x: Any) -> Any:
-        """
-        Randomly shuffle a tensor along the first dimension.
-        
-        Args:
-            x: Input tensor
-        
-        Returns:
-            Shuffled tensor
-        """
-        if isinstance(x, EmberTensor):
-            x = x.to_backend_tensor()
-        tensor = shuffle(x)
-        return tensor
-    
-    def set_seed(self, seed: int) -> None:
-        """
-        Set the random seed for reproducibility.
-        
-        Args:
-            seed: Random seed
-        """
+    @staticmethod
+    def convert_to_tensor(x: Any, dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Returns raw backend tensor
+        """ Convert input to a raw backend tensor for the active backend. """
+        # The requires_grad flag is for the EmberTensor wrapper, not the backend tensor itself directly usually.
+        return _convert_to_backend_tensor(x, dtype=dtype, device=device)
+
+    @staticmethod
+    def tensor_scatter_nd_update(target_tensor: Any, indices: Any, updates: Any) -> Any: # Takes backend, returns backend
+        """ Updates values of a backend tensor at specified indices. """
+        target_backend = target_tensor.to_backend_tensor() if isinstance(target_tensor, EmberTensor) else target_tensor
+        indices_backend = indices.to_backend_tensor() if isinstance(indices, EmberTensor) else indices
+        updates_backend = updates.to_backend_tensor() if isinstance(updates, EmberTensor) else updates
+        return tensor_scatter_nd_update(target_backend, indices_backend, updates_backend)
+
+    # @staticmethod # From previous refactor, static_maximum takes EmberTensors and returns EmberTensor.
+    # def static_maximum(x1: "EmberTensor", x2: "EmberTensor") -> "EmberTensor":
+    # This should be removed as per new direction. Use ops.maximum(et1.to_backend_tensor(), et2.to_backend_tensor())
+
+    @staticmethod
+    def random_normal(shape: Union[int, Sequence[int]], mean: float = 0.0, stddev: float = 1.0,
+                      dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Returns raw backend tensor
+        """ Create a backend tensor with random values from a normal distribution. """
+        final_dtype = dtype if dtype is not None else EmberDType.float32
+        final_device = device if device is not None else ops.get_device()
+        return random_normal(shape, mean, stddev, final_dtype, final_device)
+
+    @staticmethod
+    def random_uniform(shape: Union[int, Sequence[int]], minval: float = 0.0, maxval: float = 1.0,
+                      dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Returns raw backend tensor
+        """ Create a backend tensor with random values from a uniform distribution. """
+        final_dtype = dtype if dtype is not None else EmberDType.float32
+        final_device = device if device is not None else ops.get_device()
+        return random_uniform(shape, minval, maxval, final_dtype, final_device)
+
+    @staticmethod
+    def random_binomial(shape: Union[int, Sequence[int]], p: float = 0.5, # Renamed from random_bernoulli in common
+                       dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Returns raw backend tensor
+        """ Create a backend tensor with random values from a bernoulli/binomial distribution. """
+        # common.random_bernoulli is used here.
+        final_dtype = dtype if dtype is not None else EmberDType.int32
+        final_device = device if device is not None else ops.get_device()
+        return random_bernoulli(shape, p, final_dtype, final_device)
+
+    @staticmethod
+    def random_gamma(shape: Union[int, Sequence[int]], alpha: float = 1.0, beta: float = 1.0,
+                    dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Returns raw backend tensor
+        """ Generate random backend tensor values from a gamma distribution. """
+        final_dtype = dtype if dtype is not None else EmberDType.float32
+        final_device = device if device is not None else ops.get_device()
+        return random_gamma(shape, alpha, beta, final_dtype, final_device)
+
+    @staticmethod
+    def random_exponential(shape: Union[int, Sequence[int]], scale: float = 1.0,
+                          dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Returns raw backend tensor
+        """ Generate random backend tensor values from an exponential distribution. """
+        final_dtype = dtype if dtype is not None else EmberDType.float32
+        final_device = device if device is not None else ops.get_device()
+        return random_exponential(shape, scale, final_dtype, final_device)
+
+    @staticmethod
+    def random_poisson(shape: Union[int, Sequence[int]], lam: float = 1.0,
+                      dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Returns raw backend tensor
+        """ Generate random backend tensor values from a Poisson distribution. """
+        final_dtype = dtype if dtype is not None else EmberDType.int32
+        final_device = device if device is not None else ops.get_device()
+        return random_poisson(shape, lam, final_dtype, final_device)
+
+    @staticmethod
+    def random_categorical(logits: Any, num_samples: int, # logits is backend tensor
+                          dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # Returns raw backend tensor
+        """ Draw samples from a categorical distribution. Logits is a backend tensor. """
+        logits_backend = logits.to_backend_tensor() if isinstance(logits, EmberTensor) else logits
+        # Categorical results are indices, typically int
+        final_dtype = dtype if dtype is not None else EmberDType.int64
+        final_device = device if device is not None else globals()['ops'].get_device_of_tensor(logits_backend)
+        return random_categorical(logits_backend, num_samples, final_dtype, final_device)
+
+    @staticmethod
+    def random_permutation(x: Union[int, Any], dtype: Optional[DType] = None, device: Optional[str] = None) -> Any: # x can be int or backend tensor
+        """ Randomly permute a sequence or return a permuted range, as a backend tensor. """
+        backend_x_input = x.to_backend_tensor() if isinstance(x, EmberTensor) else x
+        # Determine default dtype and device more carefully
+        # If x is int, this creates a range permutation. Dtype is usually int.
+        # If x is tensor, it shuffles it. Dtype/device should match x.
+
+        # This needs to call common.random_permutation
+        return random_permutation(backend_x_input, dtype, device)
+
+    @staticmethod
+    def set_seed(seed: int) -> None:
+        """ Set the random seed for reproducibility (delegates to common.set_seed). """
         set_seed(seed)
-    
-    def get_seed(self) -> Optional[int]:
-        """
-        Get the current random seed.
-        
-        Returns:
-            Current random seed (None if not set)
-        """
+
+    @staticmethod
+    def get_seed() -> Optional[int]:
+        """ Get the current random seed (delegates to common.get_seed). """
         return get_seed()
     
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value: Union[Any, "EmberTensor"]):
         """
         Set values at specified indices.
         
         Args:
             key: Index or slice
-            value: Value to set
+            value: Value to set (can be scalar, list, numpy array, or another EmberTensor)
         """
-        if isinstance(value, EmberTensor):
-            value = value.to_backend_tensor()
-        self._tensor = slice_update(self._tensor, key, value)
+        value_backend = value.to_backend_tensor() if isinstance(value, EmberTensor) else value
+
+        # slice_update from common should handle converting 'value_backend' if it's not yet a backend tensor
+        # e.g. if user passes a Python list or scalar.
+        # The common.slice_update is expected to return a new backend tensor.
+        self._tensor = slice_update(self._tensor, key, value_backend)
         
     def __getstate__(self) -> dict:
         """

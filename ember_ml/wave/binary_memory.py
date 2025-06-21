@@ -31,8 +31,8 @@ class MemoryPattern:
         """
         # Handle both MemoryPattern objects and raw tensors
         other_pattern = other.pattern if hasattr(other, 'pattern') else other
-        from ember_ml.backend.mlx.stats import descriptive as mlx_stats
-        return 1.0 - mlx_stats.mean(ops.abs(self.pattern - other_pattern)).item()
+        # Removed direct import of mlx_stats, using ops.stats.mean instead
+        return 1.0 - ops.stats.mean(ops.abs(self.pattern - other_pattern)).item()
 
 class WaveStorage:
     """Storage mechanism for wave patterns."""
