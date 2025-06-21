@@ -13,7 +13,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from ember_ml.backend import auto_select_backend, get_backend, get_device, set_backend, set_device
-from ember_ml.nn.tensor import zeros # Import zeros directly
+from ember_ml import zeros # Import zeros directly
 
 def print_system_info():
     """Print information about the system."""

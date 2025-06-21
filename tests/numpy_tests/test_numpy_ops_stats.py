@@ -2,8 +2,7 @@ import pytest
 import numpy as np # For comparison with known correct results
 
 # Import Ember ML modules
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.ops import set_backend
 
 # Set the backend for these tests
@@ -22,9 +21,9 @@ def set_numpy_backend():
 def test_mean():
     # Test mean calculation
     x = tensor.convert_to_tensor([[1.0, 2.0], [3.0, 4.0]])
-    result_all = ops.stats.mean(x)
-    result_axis0 = ops.stats.mean(x, axis=0)
-    result_axis1 = ops.stats.mean(x, axis=1)
+    result_all = stats.mean(x)
+    result_axis0 = stats.mean(x, axis=0)
+    result_axis1 = stats.mean(x, axis=1)
 
     # Convert to numpy for assertion
     result_all_np = tensor.to_numpy(result_all)
@@ -38,7 +37,7 @@ def test_mean():
 
     # Test with different dtype
     x_int = tensor.convert_to_tensor([[1, 2], [3, 4]], dtype=tensor.int32)
-    result_int = ops.stats.mean(x_int)
+    result_int = stats.mean(x_int)
     assert ops.allclose(tensor.to_numpy(result_int), 2.5)
 
 def test_sum():
@@ -70,9 +69,9 @@ def test_sum():
 # Example structure for test_var
 # def test_var():
 #     x = tensor.convert_to_tensor([[1.0, 2.0], [3.0, 4.0]])
-#     result_all = ops.stats.var(x)
-#     result_axis0 = ops.stats.var(x, axis=0)
-#     result_axis1 = ops.stats.var(x, axis=1)
+#     result_all = stats.var(x)
+#     result_axis0 = stats.var(x, axis=0)
+#     result_axis1 = stats.var(x, axis=1)
 #
 #     result_all_np = tensor.to_numpy(result_all)
 #     result_axis0_np = tensor.to_numpy(result_axis0)
@@ -86,9 +85,9 @@ def test_sum():
 # Example structure for test_sort
 # def test_sort():
 #     x = tensor.convert_to_tensor([[3, 1, 2], [6, 5, 4]])
-#     result_default = ops.stats.sort(x)
-#     result_axis0 = ops.stats.sort(x, axis=0)
-#     result_descending = ops.stats.sort(x, descending=True)
+#     result_default = stats.sort(x)
+#     result_axis0 = stats.sort(x, axis=0)
+#     result_descending = stats.sort(x, descending=True)
 #
 #     result_default_np = tensor.to_numpy(result_default)
 #     result_axis0_np = tensor.to_numpy(result_axis0)

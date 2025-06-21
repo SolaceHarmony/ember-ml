@@ -5,8 +5,7 @@ This module provides an implementation of Restricted Boltzmann Machines
 using the ember_ml Module system.
 """
 
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.nn.modules import Module, Parameter
 
 class RBMModule(Module):
@@ -178,12 +177,13 @@ class RBMModule(Module):
             Reconstruction error (mean or per sample)
         """
         reconstructed = self.reconstruct(visible_states)
+        from ember_ml import stats
         squared_error = stats.sum(ops.square(ops.subtract(visible_states, reconstructed)), axis=1)
         
         if per_sample:
             return squared_error
         else:
-            return ops.stats.mean(squared_error)
+            return stats.mean(squared_error)
     
     def free_energy(self, visible_states):
         """
@@ -196,6 +196,7 @@ class RBMModule(Module):
             Free energy [batch_size]
         """
         visible_bias_term = ops.matmul(visible_states, self.visible_bias.data)
+        from ember_ml import stats
         hidden_term = stats.sum(
             ops.log(ops.add(1.0, ops.exp(ops.add(ops.matmul(visible_states, self.weights.data), self.hidden_bias.data)))),
             axis=1

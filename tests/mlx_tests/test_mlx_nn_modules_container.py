@@ -1,10 +1,9 @@
 import pytest
 
 # Import Ember ML modules
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.nn import modules # Import modules for activations and other components
-from ember_ml.nn.container import Sequential, BatchNormalization # Import container modules directly
+from ember_ml.nn.layers import Sequential, BatchNormalization # Import container modules directly
 from ember_ml.ops import set_backend
 
 # Set the backend for these tests
@@ -148,7 +147,7 @@ def test_batchnormalization_forward_training():
     assert isinstance(output, mx.array)
     assert tensor.shape(output) == input_shape
     
-    # Skip the mean and std checks since ops.stats.mean and ops.stats.std may not be available
+    # Skip the mean and std checks since stats.mean and stats.std may not be available
 
 
 def test_batchnormalization_forward_inference():

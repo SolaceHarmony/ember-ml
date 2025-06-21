@@ -2,8 +2,7 @@ import pytest
 import numpy as np # For comparison with known correct results
 
 # Import Ember ML modules
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.nn import features # Import features module
 from ember_ml.ops import set_backend
 
@@ -37,7 +36,7 @@ def sample_feature_data():
 # Test cases for nn.features stateful components
 
 def test_pca_fit_transform(sample_feature_data):
-    from ember_ml.ops import stats
+    from ember_ml import stats
     # Test PCA fit_transform
     data = sample_feature_data
     n_components = 3
@@ -67,7 +66,7 @@ def test_pca_inverse_transform(sample_feature_data):
     assert tensor.shape(reconstructed) == tensor.shape(data)
 
     # Check that the reconstruction error is reasonably small
-    reconstruction_error = ops.stats.mean(ops.square(ops.subtract(data, reconstructed)))
+    reconstruction_error = stats.mean(ops.square(ops.subtract(data, reconstructed)))
     assert tensor.item(reconstruction_error) < 1.0 # Error should be less than 1.0 for this data
 
 #@pytest.mark.skip(reason="Standardization tests failing with NaN on MLX backend, needs investigation.")
@@ -82,7 +81,7 @@ def test_standardize_fit_transform(sample_feature_data):
     assert tensor.shape(scaled_data) == tensor.shape(data)
 
     # Check that the mean is close to 0 and std is close to 1 for scaled data
-    from ember_ml.ops import stats
+    from ember_ml import stats
     mean_scaled = stats.mean(scaled_data, axis=0)
     std_scaled = stats.std(scaled_data, axis=0)
 
@@ -102,6 +101,6 @@ def test_standardize_inverse_transform(sample_feature_data):
     assert tensor.shape(reconstructed_data) == tensor.shape(data)
 
     # Check that the reconstructed data is close to the original data
-    reconstruction_error = ops.stats.mean(ops.square(ops.subtract(data, reconstructed_data)))
+    reconstruction_error = stats.mean(ops.square(ops.subtract(data, reconstructed_data)))
     assert tensor.item(reconstruction_error) < 1e-5 # Error should be very small
 

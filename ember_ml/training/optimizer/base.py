@@ -9,7 +9,7 @@ from typing import Dict, List, Optional, Union, Any, Callable
 
 from ember_ml import ops
 from ember_ml.nn.modules import Module
-from ember_ml.nn import tensor
+from ember_ml import tensor
 class Optimizer:
     """
     Base class for all optimizers.

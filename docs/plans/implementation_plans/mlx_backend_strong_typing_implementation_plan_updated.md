@@ -8,7 +8,7 @@ This implementation plan addresses the need to maintain GPU acceleration while e
 
 1. **Type Conversion Issues**: EmberTensor objects are being passed directly to backend functions, causing type errors
 2. **Performance Concerns**: Converting between tensor types can break GPU acceleration
-3. **Inconsistent Return Types**: Some functions return EmberTensor, others return native backend tensors
+3. **Inconsistent Return Types**: Some functions return tensor, others return native backend tensors
 
 ## Implementation Goals
 
@@ -72,12 +72,12 @@ def __init__(self, data, dtype=None, device=None, requires_grad=False):
     Initialize EmberTensor with data.
     
     Args:
-        data: Input data (can be EmberTensor, backend tensor, or Python data)
+        data: Input data (can be tensor, backend tensor, or Python data)
         dtype: Data type
         device: Device to place tensor on
         requires_grad: Whether to track gradients
     """
-    # If data is already an EmberTensor, extract its backend tensor
+    # If data is already an tensor, extract its backend tensor
     if isinstance(data, EmberTensor):
         self._tensor = data._tensor
         self._dtype = data._dtype if dtype is None else dtype
@@ -214,7 +214,7 @@ def reshape(self, shape):
 
 ```python
 # Test direct function calls from nn.tensor.__init__
-from ember_ml.nn import tensor
+from ember_ml import tensor
 x = tensor.ones((3,))
 print(type(x))  # Should be mx.array
 ```
@@ -223,7 +223,7 @@ print(type(x))  # Should be mx.array
 
 ```python
 # Test EmberTensor methods
-from ember_ml.nn import tensor
+from ember_ml import tensor
 x = tensor.EmberTensor([1, 2, 3])
 y = x.reshape((3, 1))
 print(type(y))  # Should be EmberTensor
@@ -233,7 +233,7 @@ print(type(y))  # Should be EmberTensor
 
 ```python
 # Test chained operations
-from ember_ml.nn import tensor
+from ember_ml import tensor
 x = tensor.ones((3,)).reshape((3, 1))
 print(type(x))  # Should be mx.array
 ```
@@ -242,7 +242,7 @@ print(type(x))  # Should be mx.array
 
 ```python
 # Test ops functions with EmberTensor
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml import ops
 x = tensor.EmberTensor([1, 2, 3])
 y = ops.add(x, 1)

@@ -4,14 +4,13 @@ but not exported in the public API.
 """
 
 import pytest
-from ember_ml import ops
-from ember_ml.nn.tensor import EmberTensor
+from ember_ml import ops, tensor
 
 
 def test_internal_convert_to_backend_tensor_not_exported():
     """Test that _convert_to_backend_tensor is not exported in the public API."""
     # Import the tensor module
-    import ember_ml.nn.tensor as tensor_module
+    from ember_ml import tensor_module
     
     # Check that _convert_to_backend_tensor is not in the module's __all__ list
     assert '_convert_to_backend_tensor' not in tensor_module.__all__
@@ -32,5 +31,5 @@ def test_internal_convert_to_backend_tensor_accessible_internally():
     
     # Verify it's a backend tensor by wrapping it in an EmberTensor
     # and checking properties
-    ember_tensor = EmberTensor(backend_tensor)
+    ember_tensor = tensor(backend_tensor)
     assert ember_tensor.shape == (3,)

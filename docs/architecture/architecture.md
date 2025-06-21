@@ -72,7 +72,7 @@ The frontend provides a unified interface through `ember_ml.nn.tensor`:
 - **Standalone Functions**: Functions for tensor operations that can be called directly.
 
 EmberTensor will be depreciated at some point, so doing this:
-from ember_ml.nn import tensor
+from ember_ml import tensor
 tensor.convert_to_tensor([],dtype=tensor.int32)
 
 Is the prefered way to create a tensor. All operations return *backend* tensors. This is to allow graphing optimizations on the backend.
@@ -193,7 +193,7 @@ Ember ML allows for dynamic backend selection and switching through a backend re
 
 ## Future Enhancements
 
-Planned enhancements include operator overloading for EmberTensor, static methods for common tensor operations, a registry system, Mixture of Experts (MoE), FFT Convolution, self-training and self-tuning capabilities, a block architecture, a configuration system, distributed training support, and cross-language support (Swift and Kotlin).
+Planned enhancements include operator overloading for tensor, static methods for common tensor operations, a registry system, Mixture of Experts (MoE), FFT Convolution, self-training and self-tuning capabilities, a block architecture, a configuration system, distributed training support, and cross-language support (Swift and Kotlin).
 
 ## Best Practices and Common Pitfalls
 

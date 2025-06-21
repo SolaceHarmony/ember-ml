@@ -69,7 +69,7 @@ For example, the `cast()` operation can be called in two ways:
 
 ```python
 # As a standalone function
-from ember_ml.nn.tensor import cast
+from ember_ml import cast
 result = cast(tensor, dtype)
 
 # As a method on EmberTensor
@@ -81,7 +81,7 @@ This design provides flexibility and consistency across the framework. For more 
 ## Importing
 
 ```python
-from ember_ml.nn import tensor
+from ember_ml import tensor
 ```
 
 ## Core Classes
@@ -106,7 +106,7 @@ print(x.device)  # 'cpu'
 
 ```python
 # Access data types
-from ember_ml.nn.tensor import float32, int32, bool_
+from ember_ml import float32, int32, bool_
 
 # Create a tensor with a specific data type
 x = tensor.EmberTensor([1, 2, 3], dtype=float32)
@@ -156,10 +156,10 @@ Ember ML provides two ways to index and slice tensors:
 The recommended way to index and slice tensors is using bracket notation, which is more intuitive and consistent with Python's standard indexing syntax:
 
 ```python
-from ember_ml.nn.tensor import EmberTensor
+from ember_ml import tensor
 
 # Create a tensor
-a = EmberTensor([[1, 2, 3], [4, 5, 6]])
+a = tensor([[1, 2, 3], [4, 5, 6]])
 
 # Get a single element
 element = a[0, 1]  # 2
@@ -188,10 +188,10 @@ a[:, 1] = [10, 11]  # a is now [[7, 10, 9], [4, 11, 6]]
 Alternatively, you can use the `index_update` function with the `index` object, but note that this approach requires using the `value` keyword argument:
 
 ```python
-from ember_ml.nn.tensor import EmberTensor, index, index_update
+from ember_ml import tensor, index, index_update
 
 # Create a tensor
-a = EmberTensor([[1, 2, 3], [4, 5, 6]])
+a = tensor([[1, 2, 3], [4, 5, 6]])
 
 # Update a single element
 a = index_update(a, index[0, 1], value=10)  # a is now [[1, 10, 3], [4, 5, 6]]
@@ -253,7 +253,7 @@ The following data types are available in the tensor module:
 ### Creating Tensors
 
 ```python
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Create tensors
 x = tensor.convert_to_tensor([1, 2, 3])
@@ -266,7 +266,7 @@ b = tensor.linspace(0, 1, 5)  # [0, 0.25, 0.5, 0.75, 1]
 ### Manipulating Tensors
 
 ```python
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Create a tensor
 x = tensor.convert_to_tensor([[1, 2], [3, 4]])
@@ -288,7 +288,7 @@ c = tensor.stack([x, x], axis=0)  # [[[1, 2], [3, 4]], [[1, 2], [3, 4]]]
 ### Random Operations
 
 ```python
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Set seed for reproducibility
 tensor.set_seed(42)
@@ -306,7 +306,7 @@ shuffled = tensor.shuffle(x)
 ### Working with Different Backends
 
 ```python
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml.ops import set_backend
 
 # Create a tensor with NumPy backend
@@ -331,7 +331,7 @@ The tensor module maintains backend purity by ensuring that all tensor operation
 For example, the following code will work with any backend:
 
 ```python
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml.ops import set_backend
 
 # Function that works with any backend
@@ -360,7 +360,7 @@ The tensor module supports different devices depending on the backend:
 - **MLX**: CPU, Metal (Apple Silicon)
 
 ```python
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Create a tensor on CPU
 x_cpu = tensor.convert_to_tensor([1, 2, 3], device='cpu')

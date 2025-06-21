@@ -119,14 +119,14 @@ In `ember_ml/ops/__init__.py`, identify all tensor-related imports:
 
 ```python
 # Import data types and tensor operations from nn.tensor
-from ember_ml.nn.tensor import (
+from ember_ml import (
     # Data types
     float32, float64, int32, int64, bool_,
     int8, int16, uint8, uint16, uint32, uint64, float16,
     get_dtype, to_dtype_str, from_dtype_str,
     
     # Tensor operations
-    EmberTensor, zeros, ones, eye, arange, linspace,
+    tensor, zeros, ones, eye, arange, linspace,
     zeros_like, ones_like, full, full_like,
     reshape, transpose, concatenate, stack, split,
     expand_dims, squeeze, tile, gather, tensor_scatter_nd_update,

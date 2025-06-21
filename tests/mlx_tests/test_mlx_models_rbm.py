@@ -1,11 +1,11 @@
 import pytest
 import numpy as np
 from ember_ml.ops import set_backend
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml import ops
 from ember_ml.models.rbm import RestrictedBoltzmannMachine
 from ember_ml.nn.modules import Module, Parameter # Needed for isinstance checks
-from ember_ml.nn.tensor import EmberDType # For dtype conversion
+from ember_ml import EmberDType # For dtype conversion
 
 @pytest.fixture(params=['mlx'])
 def set_backend_fixture(request):

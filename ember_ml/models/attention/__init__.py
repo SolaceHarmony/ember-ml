@@ -1,17 +1,32 @@
 """
-Attention mechanisms module.
+Specialized neurons module.
 
-This module provides implementations of attention mechanisms,
-including temporal and causal attention.
+This module provides implementations of specialized neurons,
+including attention neurons and base neurons.
 """
 
-# Import from the shared attention mechanisms package
-from ember_ml.nn.attention.mechanisms import (
-    CausalAttention,
-    AttentionState,
-)
+# Import classes now located within this package
+from ember_ml.models.attention.base import BaseAttention, AttentionLayer, MultiHeadAttention, AttentionMask, AttentionScore
+from ember_ml.models.attention.causal import CausalAttention, PredictionAttention, AttentionState # CausalAttention moved here
+from ember_ml.models.attention.temporal import TemporalAttention, PositionalEncoding
+from ember_ml.models.attention.mechanisms import CausalAttention as MechanismCausalAttention # Import mechanism if different
+from ember_ml.models.attention.attention import LTCNeuronWithAttention # Keep this if it's still relevant
 
 __all__ = [
+    # Core Attention Classes
+    "BaseAttention",
+    "AttentionLayer",
+    "MultiHeadAttention",
+    # Specific Implementations
     "CausalAttention",
-    "AttentionState"
-    ]
+    "PredictionAttention",
+    "TemporalAttention",
+    # Utilities / Supporting classes
+    "AttentionMask",
+    "AttentionScore",
+    "AttentionState",
+    "PositionalEncoding",
+    # Specialized Neuron (If still relevant)
+    "LTCNeuronWithAttention",
+    # Note: MechanismCausalAttention might be redundant if same as models.attention.causal.CausalAttention
+]

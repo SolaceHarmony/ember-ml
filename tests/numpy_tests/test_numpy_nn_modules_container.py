@@ -2,8 +2,7 @@ import pytest
 import numpy as np # For comparison with known correct results
 
 # Import Ember ML modules
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.nn import modules # Import modules for Sequential and BatchNormalization
 from ember_ml.ops import set_backend
 
@@ -130,8 +129,8 @@ def test_batchnormalization_forward_training():
     assert isinstance(output, tensor.EmberTensor)
     assert tensor.shape(output) == input_shape
     # In training, output should have mean close to 0 and std close to 1 per feature
-    mean_output = ops.stats.mean(output, axis=(0, 1)) # Mean over batch and sequence
-    std_output = ops.stats.std(output, axis=(0, 1))
+    mean_output = stats.mean(output, axis=(0, 1)) # Mean over batch and sequence
+    std_output = stats.std(output, axis=(0, 1))
 
     assert ops.all(ops.less(ops.abs(mean_output), 0.1)).item() # Allow some tolerance
     assert ops.all(ops.less(ops.abs(ops.subtract(std_output, 1.0)), 0.1)).item()

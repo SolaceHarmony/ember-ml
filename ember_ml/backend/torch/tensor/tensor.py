@@ -27,7 +27,7 @@ TensorTypes = Any
 # Conditional imports
 if TYPE_CHECKING:
     import numpy as np
-    from ember_ml.nn.tensor.common.ember_tensor import EmberTensor
+    from ember_ml import tensor
     from ember_ml.backend.torch.tensor.tensor import TorchTensor
     
     TensorTypes = Union[

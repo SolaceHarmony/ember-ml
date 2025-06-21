@@ -7,8 +7,7 @@ across different backends.
 
 import pytest
 
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 
 
 @pytest.fixture

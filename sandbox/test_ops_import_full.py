@@ -2,8 +2,7 @@
 Test script to verify the import pattern works correctly.
 """
 
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 
 # Set the backend (optional, as it should auto-select)
 ops.set_backend('numpy')  # or 'torch' or 'mlx'
@@ -16,11 +15,11 @@ try:
     print(f"Input data:\n{data}")
     
     # Calculate mean along axis 0 (columns)
-    x = ops.stats.mean(data, axis=0)
+    x = stats.mean(data, axis=0)
     print(f"Mean along axis 0: {x}")
     
     # Calculate mean along axis 1 (rows)
-    y = ops.stats.mean(data, axis=1)
+    y = stats.mean(data, axis=1)
     print(f"Mean along axis 1: {y}")
     
 except Exception as e:

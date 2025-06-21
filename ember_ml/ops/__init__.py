@@ -141,7 +141,7 @@ irfftn = ops_module.irfftn
 # Provide simple random namespace for compatibility
 class _RandomNamespace:
     def uniform(self, minval: float = 0.0, maxval: float = 1.0, shape=()):
-        from ember_ml.nn.tensor import random_uniform, squeeze
+        from ember_ml import random_uniform, squeeze
         minval = float(getattr(minval, "item", lambda: minval)()) if not isinstance(minval, (int, float)) else minval
         maxval = float(getattr(maxval, "item", lambda: maxval)()) if not isinstance(maxval, (int, float)) else maxval
         if shape == ():
@@ -150,7 +150,7 @@ class _RandomNamespace:
         return random_uniform(shape, minval=minval, maxval=maxval)
 
     def normal(self, shape=(), mean: float = 0.0, stddev: float = 1.0):
-        from ember_ml.nn.tensor import random_normal, squeeze
+        from ember_ml import random_normal, squeeze
         mean = float(getattr(mean, "item", lambda: mean)()) if not isinstance(mean, (int, float)) else mean
         stddev = float(getattr(stddev, "item", lambda: stddev)()) if not isinstance(stddev, (int, float)) else stddev
         if shape == ():
@@ -161,7 +161,7 @@ class _RandomNamespace:
 random = _RandomNamespace()
 
 # Alias tensor indexing helpers for convenience
-from ember_ml.nn import tensor as _tensor
+from ember_ml import tensor as _tensor
 
 def index_update(tensor_obj, indices, value):
     return _tensor.index_update(tensor_obj, indices, value)

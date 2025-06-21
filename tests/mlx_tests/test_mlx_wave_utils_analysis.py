@@ -2,9 +2,8 @@ import pytest
 
 
 # Import Ember ML modules
-from ember_ml.ops import stats
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import stats
+from ember_ml import ops, tensor
 from ember_ml.wave.utils import wave_analysis # Import the module
 from ember_ml.ops import set_backend
 
@@ -75,7 +74,7 @@ def test_compute_rms(sample_analysis_wave_data):
 
     assert isinstance(result, (float, tensor.floating)) # Should return a scalar float
     # Calculate expected RMS manually
-    from ember_ml.ops import stats
+    from ember_ml import stats
     expected_rms = ops.sqrt(stats.mean(ops.square(tensor.to_numpy(wave_data))))
     assert ops.less(ops.abs(ops.subtract(result, expected_rms)), 1e-6)
 
@@ -99,7 +98,7 @@ def test_compute_crest_factor(sample_analysis_wave_data):
     assert isinstance(result, (float, tensor.floating)) # Should return a scalar float
     # Calculate expected crest factor manually
     peak_amplitude = stats.max(ops.abs(tensor.to_numpy(wave_data)))
-    from ember_ml.ops import stats
+    from ember_ml import stats
     rms = ops.sqrt(stats.mean(ops.square(tensor.to_numpy(wave_data))))
     # Avoid division by zero if RMS is zero
     expected_crest_factor = peak_amplitude / rms if rms != 0 else 0.0

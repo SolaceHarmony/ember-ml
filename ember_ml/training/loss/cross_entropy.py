@@ -9,7 +9,7 @@ from typing import Dict, List, Optional, Union, Any, Callable
 
 from ember_ml import ops
 from ember_ml.training.loss.base import Loss
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 class CrossEntropyLoss(Loss):
     """

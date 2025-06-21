@@ -3,8 +3,7 @@ import numpy as np # For comparison with known correct results
 import torch # Import torch for device checks if needed
 
 # Import Ember ML modules
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 import ember_ml.wave.binary_memory as binary_memory # Import the module
 from ember_ml.ops import set_backend
 

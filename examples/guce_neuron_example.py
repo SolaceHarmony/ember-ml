@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from ember_ml.nn.modules import GUCE
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml import ops
 ops.set_backend("torch")  # Set the backend to PyTorch
 def main():
@@ -74,12 +74,12 @@ def main():
     
     # Reconstruct signal from neuron states
     # Ensure reconstructed is at least 1-dimensional
-    reconstructed = ops.stats.mean(states_tensor, axis=1)
+    reconstructed = stats.mean(states_tensor, axis=1)
     if len(tensor.shape(reconstructed)) == 0:
         reconstructed = tensor.reshape(reconstructed, (1,))
     
     # Compute reconstruction error
-    mse = ops.stats.mean(ops.square(ops.subtract(samples, reconstructed)))
+    mse = stats.mean(ops.square(ops.subtract(samples, reconstructed)))
     print(f"Reconstruction MSE: {tensor.item(mse):.4f}")
     
     # Visualize results

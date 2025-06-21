@@ -1,7 +1,6 @@
 # tests/numpy_tests/test_nn_tensor_indexing.py
 import pytest
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 
 # Note: Assumes conftest.py provides the numpy_backend fixture
 

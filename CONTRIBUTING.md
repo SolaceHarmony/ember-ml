@@ -43,8 +43,7 @@ Always use the ops abstraction layer for tensor operations:
 
 ```python
 # ✅ CORRECT
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 
 def process_data(data):
     Tensor = tensor.convert_to_tensor(data)

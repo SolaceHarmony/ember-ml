@@ -5,8 +5,7 @@ This script demonstrates how to use the Liquid Quantum Neural Network (LQNet)
 and Continuous-Time Recurrent Quantum Neural Network (CTRQNet) modules.
 """
 
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 
 # Set the backend to MLX for better performance
 ops.set_backend('mlx')

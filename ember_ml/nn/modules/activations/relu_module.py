@@ -4,7 +4,7 @@ Rectified Linear Unit (ReLU) activation module.
 """
 from ember_ml import ops
 from ember_ml.nn.modules import Module
-from ember_ml.nn import tensor # Assuming EmberTensor type hints
+from ember_ml import tensor # Assuming EmberTensor type hints
 
 class ReLU(Module):
     """

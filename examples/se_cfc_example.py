@@ -8,8 +8,7 @@ spatially embedded continuous-time neural networks.
 import numpy as np
 import matplotlib.pyplot as plt
 
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.nn.modules.wiring import EnhancedNCPMap
 from ember_ml.nn.modules.rnn import seCfC
 

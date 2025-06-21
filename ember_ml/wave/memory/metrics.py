@@ -7,9 +7,8 @@ from typing import List, Dict, Optional
 import numpy as np
 import time
 
-from ember_ml import ops
-from ember_ml.nn import tensor
-from ember_ml.nn.tensor.types import TensorLike
+from ember_ml import ops, tensor
+from ember_ml.types import TensorLike
 from ..utils.math_helpers import (
     compute_energy_stability,
     compute_interference_strength,

@@ -4,8 +4,7 @@ import matplotlib.pyplot as plt # For testing plotting functions
 import torch # Import torch for device checks if needed
 
 # Import Ember ML modules
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.wave.memory import visualizer # Import the visualizer module
 from ember_ml.wave.memory import multi_sphere # Import multi_sphere for creating a dummy model
 from ember_ml.ops import set_backend

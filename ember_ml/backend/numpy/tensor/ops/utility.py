@@ -105,7 +105,7 @@ def _convert_input(x: TensorLike, no_scalars = False) -> Any:
             raise ValueError(f"Cannot convert sequence {type(x)} to Numpy Tensor. Content: {str(x)[:100]}... Error: {e}")
 
     # For any other type, reject it with a corrected list of supported types
-    raise ValueError(f"Cannot convert {type(x)} to Numpy Tensor. Supported types: Python scalars/sequences, NumPy scalars/arrays, EmberTensor, Parameter.")
+    raise ValueError(f"Cannot convert {type(x)} to Numpy Tensor. Supported types: Python scalars/sequences, NumPy scalars/arrays, tensor, Parameter.")
 
 
 

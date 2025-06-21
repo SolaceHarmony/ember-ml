@@ -3,9 +3,8 @@ Test to check if tensor.convert_to_tensor returns an EmberTensor object.
 """
 
 import pytest
-from ember_ml import ops
-from ember_ml.nn import tensor
-from ember_ml.nn.tensor import EmberTensor
+from ember_ml import ops, tensor
+from ember_ml import tensor
 
 
 @pytest.fixture
@@ -46,6 +45,6 @@ def test_convert_to_tensor_returns_ember_tensor(backend_name, original_backend):
             print(f"Dtype: {t.dtype}")
         
         # This assertion will fail if t is not an EmberTensor
-        assert isinstance(t, EmberTensor), f"Expected EmberTensor, got {type(t)}"
+        assert isinstance(t, EmberTensor), f"Expected tensor, got {type(t)}"
     except ImportError:
         pytest.skip(f"{backend_name} backend not available")

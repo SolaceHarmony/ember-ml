@@ -6,9 +6,8 @@ Handles conversion between PCM and PWM representations.
 import numpy as np
 from typing import Tuple, Optional
 
-from ember_ml import ops
-from ember_ml.nn import tensor
-from ember_ml.nn.tensor.types import TensorLike
+from ember_ml import ops, tensor
+from ember_ml.types import TensorLike
 from .hpc_limb import HPCLimb
 
 class PWMProcessor:

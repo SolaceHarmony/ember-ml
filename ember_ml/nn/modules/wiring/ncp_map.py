@@ -7,12 +7,11 @@ which divides neurons into sensory, inter, and motor neurons.
 
 from typing import Optional, Tuple, List, Dict, Any
 
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 
 # Already imports NeuronMap correctly
 from ember_ml.nn.modules.wiring.neuron_map import NeuronMap # Explicit path
-from ember_ml.nn.tensor import EmberTensor, int32, zeros, ones, random_uniform
+from ember_ml import tensor, int32, zeros, ones, random_uniform
 
 class NCPMap(NeuronMap): # Name is already correct
     """
@@ -150,7 +149,7 @@ class NCPMap(NeuronMap): # Name is already correct
         self.motor_to_motor_sparsity = motor_to_motor_sparsity or sparsity_level
         self.motor_to_inter_sparsity = motor_to_inter_sparsity or sparsity_level
     
-    def build(self, input_dim=None) -> Tuple[EmberTensor, EmberTensor, EmberTensor]:
+    def build(self, input_dim=None) -> Tuple[EmberTensor, tensor, EmberTensor]:
         """
         Build the NCP wiring configuration.
         

@@ -8,12 +8,11 @@ import matplotlib.pyplot as plt
  
  
 # Import EmberTensor
-from ember_ml.nn.tensor import EmberTensor
+from ember_ml import tensor
  
 # Import the asynchronous client from the new structure
 from ember_ml.asyncml.client.client import NeuromorphicClient
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 async def test_client_demo():
     """
     Demonstrates creating a client, processing a sequence, and visualizing results.
@@ -27,12 +26,12 @@ async def test_client_demo():
     t = tensor.linspace(0, 4 * ops.pi, seq_len)
     sin_data = ops.sin(t)
     cos_data = ops.cos(t)
-    sequence_data_np = np.column_stack((sin_data, cos_data))
+    sequence_data_np = ops.column_stack((sin_data, cos_data))
  
     # Convert NumPy data to EmberTensor
     # If EmberTensor had async methods, this might be:
     # sequence_data = await EmberTensor.async_convert_to_tensor(sequence_data_np)
-    sequence_data = EmberTensor(sequence_data_np)
+    sequence_data = tensor(sequence_data_np)
  
  
     # Process the sequence asynchronously

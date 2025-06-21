@@ -5,9 +5,8 @@ in a backend-agnostic way using the ops abstraction layer.
 """
 from typing import Tuple, Any # Add Any for type hint
 
-from ember_ml import ops
-from ember_ml.nn.tensor import EmberTensor
-from ember_ml.nn import tensor # Importing the Ember ML neural network module
+from ember_ml import ops, tensor
+from ember_ml import tensor # Importing the Ember ML neural network module
 import ember_ml.nn as nn
 
 def create_model() -> nn.Sequential:
@@ -23,7 +22,7 @@ def create_model() -> nn.Sequential:
         nn.Linear(20, 1)
     )
 
-def train_step(model: nn.Sequential, x: EmberTensor, y: EmberTensor, learning_rate: float = 0.01) -> Any: # Change return type hint
+def train_step(model: nn.Sequential, x: tensor, y: tensor, learning_rate: float = 0.01) -> Any: # Change return type hint
     """
     Perform a single training step.
     

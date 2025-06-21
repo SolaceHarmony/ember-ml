@@ -12,13 +12,13 @@ import os
 from datetime import datetime
 
 # Import modules from ember_ml
-from ember_ml.nn.features.generic_feature_engineer import (
+from ember_ml.features.generic_feature_engineer import (
 
     GenericFeatureEngineer
 )
-from ember_ml.nn.features.generic_type_detector import GenericTypeDetector
-from ember_ml.nn.features.generic_csv_loader import GenericCSVLoader
-from ember_ml.nn.features.temporal_processor import TemporalStrideProcessor
+from ember_ml.features.generic_type_detector import GenericTypeDetector
+from ember_ml.features.generic_csv_loader import GenericCSVLoader
+from ember_ml.features.temporal_processor import TemporalStrideProcessor
 from ember_ml.models.rbm_anomaly_detector import RBMBasedAnomalyDetector
 from ember_ml.visualization.rbm_visualizer import RBMVisualizer
 
@@ -36,7 +36,7 @@ def generate_telemetry_data(n_samples=1000, n_features=10, anomaly_fraction=0.05
         DataFrame with telemetry data and anomaly labels
     """
     # Generate normal data
-    from ember_ml.nn import tensor
+    from ember_ml import tensor
     normal_data = tensor.random_normal(0, 1, (n_samples, n_features))
     
     # Add some correlations between features

@@ -6,9 +6,8 @@ Tests operate strictly through the frontend ops and tensor interfaces where poss
 
 import pytest
 
-from ember_ml import ops
-from ember_ml.nn import tensor
-from ember_ml.ops import linearalg
+from ember_ml import ops, tensor
+from ember_ml import linearalg
 # No direct backend imports in frontend test files
 
 # Note: Assumes conftest.py provides the numpy_backend fixture
@@ -46,7 +45,7 @@ def test_hpc_orthogonal_vs_standard_qr(numpy_backend):
     identity = tensor.eye(m)
 
     # Compute error
-    error_hpc = ops.stats.mean(ops.abs(q_t_q - identity))
+    error_hpc = stats.mean(ops.abs(q_t_q - identity))
 
     # Now try with standard QR (using NumPy directly for comparison)
     import numpy as np
@@ -87,7 +86,7 @@ def test_orthogonalize_nonsquare(numpy_backend):
     # Check orthogonality
     q_t_q = ops.matmul(tensor.transpose(q), q)
     identity = tensor.eye(m)
-    error = ops.stats.mean(ops.abs(q_t_q - identity)).item()
+    error = stats.mean(ops.abs(q_t_q - identity)).item()
 
     print(f"NumPy orthogonalize_nonsquare error: {error}")
 
@@ -139,12 +138,12 @@ def test_orthogonal_non_square_matrices(numpy_backend):
             # Tall matrix: Q^T * Q should be identity
             q_t_q = ops.matmul(tensor.transpose(q), q)
             identity = tensor.eye(shape[1])
-            error = ops.stats.mean(ops.abs(q_t_q - identity))
+            error = stats.mean(ops.abs(q_t_q - identity))
         else:
             # Wide matrix: Q * Q^T should be identity
             q_q_t = ops.matmul(q, tensor.transpose(q))
             identity = tensor.eye(shape[0])
-            error = ops.stats.mean(ops.abs(q_q_t - identity))
+            error = stats.mean(ops.abs(q_q_t - identity))
 
         # Error should be small
         assert ops.all(ops.less(error, tensor.convert_to_tensor(1e-5, dtype=tensor.float32))), f"Orthogonality error too large for shape {shape}: {error}"

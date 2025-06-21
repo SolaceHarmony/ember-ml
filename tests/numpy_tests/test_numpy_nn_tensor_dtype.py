@@ -1,6 +1,6 @@
 # tests/numpy_tests/test_nn_tensor_dtype.py
 import pytest
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml.nn.tensor.common.dtypes import EmberDType # Import base class
 
 # Note: Assumes conftest.py provides the numpy_backend fixture

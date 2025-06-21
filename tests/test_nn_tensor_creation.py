@@ -7,9 +7,8 @@ across different backends.
 
 import pytest
 
-from ember_ml import ops
-from ember_ml.nn import tensor
-from ember_ml.nn.tensor import (
+from ember_ml import ops, tensor
+from ember_ml import (
     float32, float64, int32, int64, bool_,
     int8, int16, uint8, uint16, uint32, uint64, float16
 )

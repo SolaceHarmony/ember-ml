@@ -1,7 +1,7 @@
 # tests/mlx_tests/test_nn_features.py
 import pytest
 # Removed mlx import - tests should use backend-agnostic API
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml.nn import features
 from ember_ml.ops import stats # Import stats needed for PCA check
 
@@ -37,7 +37,7 @@ def test_features_pca_fit_transform_mlx(mlx_backend: None): # Use fixture
 def test_features_pca_inverse_transform_mlx(mlx_backend: None): # Use fixture
     """Tests PCA inverse_transform with MLX backend."""
     from ember_ml import ops
-    from ember_ml.ops import stats
+    from ember_ml import stats
     data = _generate_pca_data()
     n_components = 3
     # Use the factory function from features module
@@ -46,7 +46,7 @@ def test_features_pca_inverse_transform_mlx(mlx_backend: None): # Use fixture
     reconstructed = pca_instance.inverse_transform(transformed)
     # assert isinstance(reconstructed, tensor.EmberTensor), "PCA inverse transform did not return EmberTensor" # Check removed
     assert tensor.shape(reconstructed) == tensor.shape(data), "PCA reconstructed shape is incorrect"
-    mean_diff = ops.stats.mean(ops.abs(ops.subtract(data, reconstructed))) # type: ignore
+    mean_diff = stats.mean(ops.abs(ops.subtract(data, reconstructed))) # type: ignore
     assert tensor.item(mean_diff) < 5.0, f"PCA reconstruction error seems too high: {tensor.item(mean_diff)}"
 def test_features_one_hot_mlx(mlx_backend: None): # Use fixture
     """Tests features.one_hot with MLX backend."""

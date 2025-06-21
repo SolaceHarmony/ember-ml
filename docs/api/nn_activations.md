@@ -24,7 +24,7 @@ from ember_ml.nn.modules.activations import get_activation
 
 ```python
 from ember_ml.nn.modules.activations import ReLU
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 relu_activation = ReLU()
 input_tensor = tensor.convert_to_tensor([-1.0, 0.0, 1.0, 2.0])
@@ -37,7 +37,7 @@ output = relu_activation(input_tensor) # Output: [0., 0., 1., 2.]
 
 ```python
 from ember_ml.nn.modules.activations import Tanh
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 tanh_activation = Tanh()
 input_tensor = tensor.convert_to_tensor([-1.0, 0.0, 1.0])
@@ -50,7 +50,7 @@ output = tanh_activation(input_tensor) # Output: [-0.76159, 0.        , 0.76159]
 
 ```python
 from ember_ml.nn.modules.activations import Sigmoid
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 sigmoid_activation = Sigmoid()
 input_tensor = tensor.convert_to_tensor([-1.0, 0.0, 1.0])
@@ -63,7 +63,7 @@ output = sigmoid_activation(input_tensor) # Output: [0.26894, 0.5      , 0.73105
 
 ```python
 from ember_ml.nn.modules.activations import Softmax
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 softmax_activation = Softmax(axis=-1)
 input_tensor = tensor.convert_to_tensor([[1.0, 2.0, 3.0], [1.0, 1.0, 1.0]])
@@ -81,7 +81,7 @@ output = softmax_activation(input_tensor)
 
 ```python
 from ember_ml.nn.modules.activations import Softplus
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 softplus_activation = Softplus()
 input_tensor = tensor.convert_to_tensor([-1.0, 0.0, 1.0])
@@ -94,7 +94,7 @@ output = softplus_activation(input_tensor) # Output: [0.31326, 0.69314, 1.31326]
 
 ```python
 from ember_ml.nn.modules.activations import LeCunTanh
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 lecun_tanh_activation = LeCunTanh()
 input_tensor = tensor.convert_to_tensor([-1.0, 0.0, 1.0])
@@ -109,7 +109,7 @@ Dropout randomly sets a fraction `rate` of input units to 0 during training upda
 
 ```python
 from ember_ml.nn.modules.activations import Dropout
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 dropout_layer = Dropout(rate=0.5, seed=42)
 input_tensor = tensor.ones((2, 2))

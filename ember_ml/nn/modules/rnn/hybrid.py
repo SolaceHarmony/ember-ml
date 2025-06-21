@@ -2,11 +2,11 @@
 Hybrid neural architectures combining LTC networks with attention mechanisms and LSTM layers.
 """
 
-from ember_ml.nn import tensor # For tensor.EmberTensor, tensor.zeros etc.
+from ember_ml import tensor # For tensor.EmberTensor, tensor.zeros etc.
 from ember_ml import ops
 from typing import Dict, Any, List # Added List for type hinting
 from ember_ml.nn.modules import Module, activations
-from ember_ml.nn.tensor.types import TensorLike
+from ember_ml.types import TensorLike
 from ember_ml.nn.modules.rnn import LSTM # Assuming this LSTM is already backend-agnostic
 
 class HybridNeuron(Module):
@@ -68,10 +68,10 @@ class HybridNeuron(Module):
         Returns:
             Updated state tensor (backend tensor) [hidden_size]
         """
-        # input_signal might be EmberTensor, ops will unwrap. Or it's already backend.
+        # input_signal might be tensor, ops will unwrap. Or it's already backend.
         # If storing EmberTensor wrappers was intended, conversion logic would be here.
         # Assuming self.memory_buffer stores backend tensors.
-        # If input_signal is EmberTensor, unwrap before append if strict about buffer type.
+        # If input_signal is tensor, unwrap before append if strict about buffer type.
         current_input_backend = input_signal.to_backend_tensor() if isinstance(input_signal, tensor.EmberTensor) else input_signal
         self.memory_buffer.append(current_input_backend)
 
@@ -152,7 +152,7 @@ class AttentionLayer(Module):
         """
         Initialize attention layer.
         """
-        from ember_ml.nn.container import Linear # Local import if not at top level
+        from ember_ml.nn.layers import Linear # Local import if not at top level
         super().__init__()
         self.query_map = Linear(query_dim, hidden_dim) # Renamed to avoid conflict with 'query' arg
         self.key_map = Linear(key_dim, hidden_dim)     # Renamed
@@ -226,7 +226,7 @@ class HybridLNNModel(Module):
             attention_hidden_dim
         )
         
-        from ember_ml.nn.container import Linear # Local import
+        from ember_ml.nn.layers import Linear # Local import
         self.output_layer = Linear(lstm_hidden_size, output_size)
         
     def forward(self,
@@ -342,7 +342,7 @@ class ImprovedLiquidTimeConstantCell(Module):
         self.input_size = input_size
         self.hidden_size = hidden_size
         
-        from ember_ml.nn.container import Linear
+        from ember_ml.nn.layers import Linear
         from ember_ml.nn.modules import Parameter
         self.W = Linear(hidden_size, hidden_size)
         self.U = Linear(input_size, hidden_size)

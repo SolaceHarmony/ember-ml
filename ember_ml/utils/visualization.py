@@ -6,9 +6,8 @@ This module provides visualization utilities for the ember_ml library.
 
 import matplotlib.pyplot as plt
 from typing import List, Optional
-from ember_ml import ops
-from ember_ml.nn import tensor
-from ember_ml.nn.tensor.types import TensorLike
+from ember_ml import ops, tensor
+from ember_ml.types import TensorLike
 import io
 from PIL import Image as PILImage
 
@@ -106,14 +105,14 @@ def plot_confusion_matrix(cm: TensorLike, class_names: Optional[List[str]] = Non
     # Loop over data dimensions and create text annotations
     # Use ops for max calculation
     # Import inside function to avoid import issues
-    from ember_ml.ops.stats import max as stats_max
+    from ember_ml.stats import max as stats_max
     thresh_tensor = stats_max(cm)
     thresh = tensor.item(thresh_tensor)
     thresh = tensor.item(ops.divide(thresh_tensor, tensor.convert_to_tensor(2.0)))
     
     cm_shape = tensor.shape(cm)
-    for i in range(cm_tensor.shape[0]):
-        for j in range(cm_tensor.shape[1]):
+    for i in range(tensor.shape[0]):
+        for j in range(tensor.shape[1]):
             value = cm_np[i, j]
             # Format as integer string without using int() cast
             ax.text(j, i, f"{value:.0f}",
@@ -274,7 +273,7 @@ def plot_to_numpy(fig: plt.Figure) -> TensorLike:
     from ember_ml.ops import get_backend
     if get_backend() in ["torch", "numpy"]:
         # For torch and numpy backends, convert to tensor
-        from ember_ml.nn import tensor
+        from ember_ml import tensor
         return tensor.convert_to_tensor(data)
     
     # For MLX backend, return the list directly as it's compatible with the tests

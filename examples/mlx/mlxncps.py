@@ -39,7 +39,7 @@ except ImportError:
 import numpy as np
 import math
 
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 if HAS_MLX:
     class ConvLSTM2DCell(nn.Module):

@@ -101,7 +101,7 @@ The MLX backend implements strong typing for tensor operations, which provides s
            
        # Handle EmberTensor and MLXTensor objects
        if hasattr(x, '__class__') and hasattr(x.__class__, '__name__') and x.__class__.__name__ in ['EmberTensor', 'MLXTensor']:
-           # For EmberTensor, extract the underlying data and convert to numpy first
+           # For tensor, extract the underlying data and convert to numpy first
            if hasattr(x, 'to_numpy'):
                return mx.array(x.to_numpy())
            # If it has a _tensor attribute, use that
@@ -193,8 +193,8 @@ This allows for intuitive, Pythonic code when working with EmberTensor objects:
 
 ```python
 # Using Python operators with EmberTensor
-x = EmberTensor([1, 2, 3])
-y = EmberTensor([4, 5, 6])
+x = tensor([1, 2, 3])
+y = tensor([4, 5, 6])
 z = x + y  # Uses __add__ which calls ops.add
 w = x * 2  # Uses __mul__ which calls ops.multiply
 element = x[0]  # Uses __getitem__ which calls ops.slice
@@ -1010,7 +1010,7 @@ from ember_ml.backend import set_backend, get_backend
 set_backend('torch')
 
 # Create a tensor using PyTorch backend
-x = EmberTensor([1, 2, 3])
+x = tensor([1, 2, 3])
 
 # Switch to MLX backend
 set_backend('mlx')

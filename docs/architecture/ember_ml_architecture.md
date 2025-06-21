@@ -303,7 +303,7 @@ from ember_ml.backend import set_backend, get_backend
 set_backend('torch')
 
 # Create a tensor using PyTorch backend
-x = EmberTensor([1, 2, 3])
+x = tensor([1, 2, 3])
 
 # Switch to MLX backend
 set_backend('mlx')
@@ -365,7 +365,7 @@ Another planned enhancement is the implementation of static methods for common t
 
 ```python
 # Current approach
-tensor_obj = EmberTensor([0])
+tensor_obj = tensor([0])
 a = tensor_obj.zeros((2, 3))
 
 # Planned approach

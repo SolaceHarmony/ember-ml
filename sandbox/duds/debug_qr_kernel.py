@@ -14,10 +14,9 @@ import mlx.core as mx
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Import Ember ML modules
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.ops import set_backend
-from ember_ml.ops import linearalg
+from ember_ml import linearalg
 
 # Import the QR function directly from the MLX backend
 from ember_ml.backend.mlx.linearalg.qr_ops import qr as mlx_qr
@@ -100,8 +99,8 @@ def debug_qr_kernel():
     # Compute error matrix
     diff = ops.subtract(q_t_q, identity)
     abs_diff = ops.abs(diff)
-    max_error = ops.stats.max(abs_diff)
-    mean_error = ops.stats.mean(abs_diff)
+    max_error = stats.max(abs_diff)
+    mean_error = stats.mean(abs_diff)
     
     print(f"\nMaximum orthogonality error: {max_error}")
     print(f"Mean orthogonality error: {mean_error}")
@@ -117,8 +116,8 @@ def debug_qr_kernel():
     # Compute reconstruction error
     recon_diff = ops.subtract(a, recon)
     recon_abs_diff = ops.abs(recon_diff)
-    recon_max_error = ops.stats.max(recon_abs_diff)
-    recon_mean_error = ops.stats.mean(recon_abs_diff)
+    recon_max_error = stats.max(recon_abs_diff)
+    recon_mean_error = stats.mean(recon_abs_diff)
     
     print(f"\nMaximum reconstruction error: {recon_max_error}")
     print(f"Mean reconstruction error: {recon_mean_error}")
@@ -188,7 +187,7 @@ def debug_qr_kernel():
     print(f"  Reconstruction error: {recon_max_error_mx}")
     
     # Check if the debug info has any non-zero values
-    if ops.stats.max(ops.abs(dbg)) > 0:
+    if stats.max(ops.abs(dbg)) > 0:
         print("\nDebug info has non-zero values:")
         for i in range(dbg.shape[0]):
             if abs(dbg[i]) > 0:

@@ -10,7 +10,7 @@ from typing import Optional, Any, Dict # Removed Union, Tuple, Callable
 from ember_ml import ops
 from ember_ml.nn.modules import Module, Parameter
 from ember_ml.nn.modules.activations import get_activation
-from ember_ml.nn import tensor
+from ember_ml import tensor
 class Dense(Module):
     # Explicitly type hint attributes for clarity and type checking
     input_dim: int

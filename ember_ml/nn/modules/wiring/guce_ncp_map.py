@@ -10,7 +10,7 @@ from typing import Dict, Any, Optional, List, Tuple, Union, Callable
 from ember_ml import ops
 from ember_ml.nn.modules.wiring import NeuronMap
 from ember_ml.nn.modules.rnn import GUCE
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 class GUCENCPMap(NeuronMap):
     """

@@ -78,14 +78,14 @@ A key architectural enhancement is the preservation of native backend tensor typ
 1. **Direct Function Calls**: Functions in `nn.tensor.__init__` return native backend tensors (e.g., `mx.array` for MLX)
    ```python
    # User code
-   from ember_ml.nn import tensor
+   from ember_ml import tensor
    x = tensor.ones((3,))  # Returns mx.array directly
    ```
 
 2. **EmberTensor Methods**: Methods on EmberTensor objects return EmberTensor objects to maintain object type consistency
    ```python
    # User code
-   from ember_ml.nn import tensor
+   from ember_ml import tensor
    x = tensor.EmberTensor([1, 2, 3])
    y = x.reshape((3, 1))  # Returns EmberTensor
    ```
@@ -235,8 +235,8 @@ This allows for intuitive, Pythonic code when working with EmberTensor objects:
 
 ```python
 # Using Python operators with EmberTensor
-x = EmberTensor([1, 2, 3])
-y = EmberTensor([4, 5, 6])
+x = tensor([1, 2, 3])
+y = tensor([4, 5, 6])
 z = x + y  # Uses __add__ which calls ops.add
 w = x * 2  # Uses __mul__ which calls ops.multiply
 element = x[0]  # Uses __getitem__ which calls ops.slice
@@ -1055,7 +1055,7 @@ from ember_ml.backend import set_backend, get_backend
 set_backend('torch')
 
 # Create a tensor using PyTorch backend
-x = EmberTensor([1, 2, 3])
+x = tensor([1, 2, 3])
 
 # Switch to MLX backend
 set_backend('mlx')

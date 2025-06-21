@@ -12,7 +12,7 @@ import numpy as np
 from ember_ml import ops
 from ember_ml.nn.modules.wiring import NCPMap # Import NCPMap instead of NCPWiring
 from ember_ml.nn.modules import NCP, AutoNCP
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 def main():
     """Run the NCP example."""
@@ -87,7 +87,7 @@ def main():
             
             # Compute loss using ops.subtract
             # y_batch is already a tensor
-            loss = ops.stats.mean(ops.square(ops.subtract(y_pred, y_batch)))
+            loss = stats.mean(ops.square(ops.subtract(y_pred, y_batch)))
             
             # Compute gradients
             params = list(model.parameters())

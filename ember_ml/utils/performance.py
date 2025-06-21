@@ -8,6 +8,7 @@ import time
 import functools
 from typing import Callable, Any, Dict, List, Optional
 import matplotlib.pyplot as plt
+from ember_ml import stats, ops
 
 def timeit(func: Callable) -> Callable:
     """
@@ -104,7 +105,7 @@ def plot_benchmark_results(results: Dict[str, Dict[str, Any]], title: str = "Ben
     stds = [results[label]['std'] for label in labels]
     
     fig, ax = plt.subplots(figsize=(10, 6))
-    x = tensor.arange(len(labels))
+    x = ops.arange(len(labels))
     ax.bar(x, means, yerr=stds, align='center', alpha=0.7, ecolor='black', capsize=10)
     ax.set_ylabel('Time (s)')
     ax.set_xticks(x)

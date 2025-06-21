@@ -12,7 +12,7 @@ from typing import List, Optional, Dict
 
 # Import backend module and set the backend to PyTorch
 from ember_ml.ops import set_backend, get_backend
-from ember_ml.nn import tensor
+from ember_ml import tensor
 # Set the backend to PyTorch and save it to the .ember/backend file
 # This ensures the backend persists across runs
 set_backend('torch')

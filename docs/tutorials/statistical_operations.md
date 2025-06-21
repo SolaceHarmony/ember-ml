@@ -11,14 +11,13 @@ Ember ML provides a comprehensive set of statistical operations through the `ops
 To use statistical operations in Ember ML, import them from the `ops.stats` module:
 
 ```python
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 
 # Create a tensor
 x = tensor.convert_to_tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
 
 # Use statistical operations
-mean_value = ops.stats.mean(x)
+mean_value = stats.mean(x)
 print(f"Mean: {mean_value}")
 ```
 
@@ -33,18 +32,18 @@ The most commonly used statistical operations are mean and sum:
 x = tensor.convert_to_tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
 
 # Compute mean
-mean_all = ops.stats.mean(x)  # Mean of all elements
-mean_rows = ops.stats.mean(x, axis=1)  # Mean of each row
-mean_cols = ops.stats.mean(x, axis=0)  # Mean of each column
+mean_all = stats.mean(x)  # Mean of all elements
+mean_rows = stats.mean(x, axis=1)  # Mean of each row
+mean_cols = stats.mean(x, axis=0)  # Mean of each column
 
 print(f"Mean (all): {mean_all}")
 print(f"Mean (rows): {mean_rows}")
 print(f"Mean (columns): {mean_cols}")
 
 # Compute sum
-sum_all = ops.stats.sum(x)  # Sum of all elements
-sum_rows = ops.stats.sum(x, axis=1)  # Sum of each row
-sum_cols = ops.stats.sum(x, axis=0)  # Sum of each column
+sum_all = stats.sum(x)  # Sum of all elements
+sum_rows = stats.sum(x, axis=1)  # Sum of each row
+sum_cols = stats.sum(x, axis=0)  # Sum of each column
 
 print(f"Sum (all): {sum_all}")
 print(f"Sum (rows): {sum_rows}")
@@ -60,18 +59,18 @@ Finding minimum and maximum values:
 x = tensor.convert_to_tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
 
 # Find minimum values
-min_all = ops.stats.min(x)  # Minimum of all elements
-min_rows = ops.stats.min(x, axis=1)  # Minimum of each row
-min_cols = ops.stats.min(x, axis=0)  # Minimum of each column
+min_all = stats.min(x)  # Minimum of all elements
+min_rows = stats.min(x, axis=1)  # Minimum of each row
+min_cols = stats.min(x, axis=0)  # Minimum of each column
 
 print(f"Min (all): {min_all}")
 print(f"Min (rows): {min_rows}")
 print(f"Min (columns): {min_cols}")
 
 # Find maximum values
-max_all = ops.stats.max(x)  # Maximum of all elements
-max_rows = ops.stats.max(x, axis=1)  # Maximum of each row
-max_cols = ops.stats.max(x, axis=0)  # Maximum of each column
+max_all = stats.max(x)  # Maximum of all elements
+max_rows = stats.max(x, axis=1)  # Maximum of each row
+max_cols = stats.max(x, axis=0)  # Maximum of each column
 
 print(f"Max (all): {max_all}")
 print(f"Max (rows): {max_rows}")
@@ -87,18 +86,18 @@ For measuring dispersion:
 x = tensor.convert_to_tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
 
 # Compute variance
-var_all = ops.stats.var(x)  # Variance of all elements
-var_rows = ops.stats.var(x, axis=1)  # Variance of each row
-var_cols = ops.stats.var(x, axis=0)  # Variance of each column
+var_all = stats.var(x)  # Variance of all elements
+var_rows = stats.var(x, axis=1)  # Variance of each row
+var_cols = stats.var(x, axis=0)  # Variance of each column
 
 print(f"Variance (all): {var_all}")
 print(f"Variance (rows): {var_rows}")
 print(f"Variance (columns): {var_cols}")
 
 # Compute standard deviation
-std_all = ops.stats.std(x)  # Standard deviation of all elements
-std_rows = ops.stats.std(x, axis=1)  # Standard deviation of each row
-std_cols = ops.stats.std(x, axis=0)  # Standard deviation of each column
+std_all = stats.std(x)  # Standard deviation of all elements
+std_rows = stats.std(x, axis=1)  # Standard deviation of each row
+std_cols = stats.std(x, axis=0)  # Standard deviation of each column
 
 print(f"Standard Deviation (all): {std_all}")
 print(f"Standard Deviation (rows): {std_rows}")
@@ -114,18 +113,18 @@ For robust statistics:
 x = tensor.convert_to_tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
 
 # Compute median
-median_all = ops.stats.median(x)  # Median of all elements
-median_rows = ops.stats.median(x, axis=1)  # Median of each row
-median_cols = ops.stats.median(x, axis=0)  # Median of each column
+median_all = stats.median(x)  # Median of all elements
+median_rows = stats.median(x, axis=1)  # Median of each row
+median_cols = stats.median(x, axis=0)  # Median of each column
 
 print(f"Median (all): {median_all}")
 print(f"Median (rows): {median_rows}")
 print(f"Median (columns): {median_cols}")
 
 # Compute percentiles
-p25 = ops.stats.percentile(x, 25)  # 25th percentile
-p50 = ops.stats.percentile(x, 50)  # 50th percentile (same as median)
-p75 = ops.stats.percentile(x, 75)  # 75th percentile
+p25 = stats.percentile(x, 25)  # 25th percentile
+p50 = stats.percentile(x, 50)  # 50th percentile (same as median)
+p75 = stats.percentile(x, 75)  # 75th percentile
 
 print(f"25th percentile: {p25}")
 print(f"50th percentile: {p50}")
@@ -143,7 +142,7 @@ For running totals:
 x = tensor.convert_to_tensor([1, 2, 3, 4, 5])
 
 # Compute cumulative sum
-cumsum_result = ops.stats.cumsum(x)
+cumsum_result = stats.cumsum(x)
 
 print(f"Input: {x}")
 print(f"Cumulative sum: {cumsum_result}")
@@ -160,9 +159,9 @@ Finding the indices of maximum values:
 x = tensor.convert_to_tensor([[1, 5, 3], [4, 2, 6], [7, 8, 0]])
 
 # Find indices of maximum values
-argmax_all = ops.stats.argmax(x)  # Index of maximum in flattened tensor
-argmax_rows = ops.stats.argmax(x, axis=1)  # Index of maximum in each row
-argmax_cols = ops.stats.argmax(x, axis=0)  # Index of maximum in each column
+argmax_all = stats.argmax(x)  # Index of maximum in flattened tensor
+argmax_rows = stats.argmax(x, axis=1)  # Index of maximum in each row
+argmax_cols = stats.argmax(x, axis=0)  # Index of maximum in each column
 
 print(f"ArgMax (all): {argmax_all}")
 print(f"ArgMax (rows): {argmax_rows}")
@@ -178,10 +177,10 @@ Sorting values and getting sort indices:
 x = tensor.convert_to_tensor([[3, 1, 2], [6, 5, 4], [9, 7, 8]])
 
 # Sort values
-sorted_all = ops.stats.sort(x)  # Sort along the last axis
-sorted_rows = ops.stats.sort(x, axis=1)  # Sort each row
-sorted_cols = ops.stats.sort(x, axis=0)  # Sort each column
-sorted_desc = ops.stats.sort(x, descending=True)  # Sort in descending order
+sorted_all = stats.sort(x)  # Sort along the last axis
+sorted_rows = stats.sort(x, axis=1)  # Sort each row
+sorted_cols = stats.sort(x, axis=0)  # Sort each column
+sorted_desc = stats.sort(x, descending=True)  # Sort in descending order
 
 print(f"Original: {x}")
 print(f"Sorted (default): {sorted_all}")
@@ -190,8 +189,8 @@ print(f"Sorted (columns): {sorted_cols}")
 print(f"Sorted (descending): {sorted_desc}")
 
 # Get sort indices
-argsort_all = ops.stats.argsort(x)  # Indices that would sort the tensor
-argsort_desc = ops.stats.argsort(x, descending=True)  # Indices for descending sort
+argsort_all = stats.argsort(x)  # Indices that would sort the tensor
+argsort_desc = stats.argsort(x, descending=True)  # Indices for descending sort
 
 print(f"ArgSort (default): {argsort_all}")
 print(f"ArgSort (descending): {argsort_desc}")
@@ -206,8 +205,8 @@ By default, reduction operations like `mean`, `sum`, `min`, `max`, etc. reduce t
 x = tensor.convert_to_tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
 
 # Compute mean with and without keeping dimensions
-mean_without_keepdims = ops.stats.mean(x, axis=1)  # Shape: (3,)
-mean_with_keepdims = ops.stats.mean(x, axis=1, keepdims=True)  # Shape: (3, 1)
+mean_without_keepdims = stats.mean(x, axis=1)  # Shape: (3,)
+mean_with_keepdims = stats.mean(x, axis=1, keepdims=True)  # Shape: (3, 1)
 
 print(f"Mean without keepdims: {mean_without_keepdims}, shape: {tensor.shape(mean_without_keepdims)}")
 print(f"Mean with keepdims: {mean_with_keepdims}, shape: {tensor.shape(mean_with_keepdims)}")
@@ -224,8 +223,8 @@ Standardizing data (z-score normalization):
 x = tensor.convert_to_tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
 
 # Standardize along each column
-mean = ops.stats.mean(x, axis=0, keepdims=True)
-std = ops.stats.std(x, axis=0, keepdims=True)
+mean = stats.mean(x, axis=0, keepdims=True)
+std = stats.std(x, axis=0, keepdims=True)
 z_scores = ops.divide(ops.subtract(x, mean), std)
 
 print(f"Original data:\n{x}")
@@ -247,7 +246,7 @@ window_size = 3
 moving_avgs = []
 for i in range(len(time_series) - window_size + 1):
     window = time_series[i:i+window_size]
-    avg = ops.stats.mean(window)
+    avg = stats.mean(window)
     moving_avgs.append(tensor.item(avg))
 
 print(f"Time series: {time_series}")
@@ -263,8 +262,8 @@ Using z-scores to detect outliers:
 data = tensor.convert_to_tensor([2, 3, 3, 2, 1, 2, 3, 20, 2, 3])
 
 # Compute z-scores
-mean = ops.stats.mean(data)
-std = ops.stats.std(data)
+mean = stats.mean(data)
+std = stats.std(data)
 z_scores = ops.divide(ops.subtract(data, mean), std)
 
 # Identify outliers (|z-score| > 2)

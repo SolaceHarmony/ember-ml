@@ -4,9 +4,8 @@ from the public API.
 """
 
 import pytest
-from ember_ml import ops
-from ember_ml.nn import tensor
-from ember_ml.nn.tensor import EmberTensor
+from ember_ml import ops, tensor
+from ember_ml import tensor
 
 
 @pytest.fixture
@@ -30,7 +29,7 @@ def test_convert_to_tensor_api_structure(backend_name, original_backend):
         ops.set_backend(backend_name)
         
         # 1. Test that _convert_to_backend_tensor is not in the public API
-        import ember_ml.nn.tensor as tensor_module
+        from ember_ml import tensor_module
         assert '_convert_to_backend_tensor' not in tensor_module.__all__
         with pytest.raises(AttributeError):
             tensor_module._convert_to_backend_tensor
@@ -58,7 +57,7 @@ def test_convert_to_tensor_api_structure(backend_name, original_backend):
         backend_tensor_direct = _convert_to_backend_tensor(data)
         # We can't directly compare backend tensors, but we can wrap it in an EmberTensor
         # and verify it has the same shape
-        wrapped = EmberTensor(backend_tensor_direct)
+        wrapped = tensor(backend_tensor_direct)
         assert wrapped.shape == (3,)
         
     except ImportError:

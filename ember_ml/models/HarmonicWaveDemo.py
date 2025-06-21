@@ -2,11 +2,11 @@ import matplotlib.pyplot as plt
 from transformers import AutoTokenizer, AutoModel
 # Removed: import torch
 # Removed: from sklearn.metrics.pairwise import cosine_similarity (unused)
-from ember_ml import ops
-# Ensure stats ops are accessible if ops.stats.mean is used later
-# from ember_ml.ops import stats # Or access via ops.stats.mean
-from ember_ml.nn import tensor # Ensure tensor is imported for tensor.EmberTensor, tensor.stack etc.
-
+from ember_ml import ops, stats
+# Ensure stats ops are accessible if stats.mean is used later
+# from ember_ml.ops import stats # Or access via stats.mean
+from ember_ml import tensor # Ensure tensor is imported for tensor.EmberTensor, tensor.stack etc.
+from typing import List, Optional
 def harmonic_wave(params: tensor.EmberTensor, t: tensor.EmberTensor, batch_size: int) -> tensor.EmberTensor:
     """
     Generate a harmonic wave based on parameters.
@@ -37,7 +37,7 @@ def harmonic_wave(params: tensor.EmberTensor, t: tensor.EmberTensor, batch_size:
         harmonic_components = ops.multiply(amp_reshaped, sin_output) # (num_harmonics, num_time_steps)
 
         # Summing over harmonics (axis=0)
-        current_harmonic = ops.stats.sum(harmonic_components, axis=0) # Ensure sum is over correct axis
+        current_harmonic = stats.sum(harmonic_components, axis=0) # Ensure sum is over correct axis
         harmonics_list.append(current_harmonic)
 
     # Stack along batch dimension (axis=0)
@@ -157,7 +157,7 @@ def loss_function(params: tensor.EmberTensor, t: tensor.EmberTensor, target_embe
 
     diff = ops.subtract(target_embedding, generated_wave)
     squared_diff = ops.square(diff)
-    loss = ops.stats.mean(squared_diff)
+    loss = stats.mean(squared_diff)
     return loss
 
 

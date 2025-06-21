@@ -5,9 +5,8 @@ This module tests the functionality of tensor operations across different backen
 """
 
 import pytest
-from ember_ml import ops
-from ember_ml.nn import tensor
-from ember_ml.nn.tensor import EmberTensor, float32, int32
+from ember_ml import ops, tensor
+from ember_ml import tensor, float32, int32
 
 
 @pytest.fixture
@@ -31,18 +30,18 @@ def test_ember_tensor_creation(backend_name, original_backend):
         ops.set_backend(backend_name)
         
         # Create a tensor from a list
-        t = EmberTensor([1, 2, 3, 4, 5])
+        t = tensor([1, 2, 3, 4, 5])
         assert t.shape == (5,)
         assert str(t.dtype).endswith('int32') or str(t.dtype).endswith('int64')
         
         # Create a tensor with a specific dtype
-        t = EmberTensor([1, 2, 3, 4, 5], dtype=float32)
+        t = tensor([1, 2, 3, 4, 5], dtype=float32)
         assert t.shape == (5,)
         assert str(t.dtype).endswith('float32')
         
         # Create a tensor from another tensor
         data = tensor.convert_to_tensor([[1, 2, 3], [4, 5, 6]])
-        t = EmberTensor(data)
+        t = tensor(data)
         assert t.shape == (2, 3)
     except ImportError:
         pytest.skip(f"{backend_name} backend not available")

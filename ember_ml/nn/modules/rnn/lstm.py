@@ -9,7 +9,7 @@ from typing import Dict, Any
 
 from ember_ml import ops
 from ember_ml.nn.modules import Module, Parameter
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml.nn.initializers import glorot_uniform, orthogonal
 from ember_ml.nn.modules.activations import get_activation
 

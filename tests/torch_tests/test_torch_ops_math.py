@@ -4,8 +4,7 @@ import math # For comparison with known correct results
 import torch # Import torch for device checks if needed
 
 # Import Ember ML modules
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.ops import set_backend
 
 # Set the backend for these tests

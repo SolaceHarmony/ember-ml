@@ -63,7 +63,7 @@ from ember_ml import visualization
 from ember_ml import wave
 from ember_ml import utils
 from ember_ml import asyncml
-from ember_ml.nn.tensor import set_seed
+from ember_ml import set_seed
 # Version of the Ember ML package
 __version__ = '0.2.0'
 

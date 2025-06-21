@@ -198,7 +198,7 @@ def _convert_input(x: TensorLike, dtype: Optional[DType]=None, device: Optional[
             raise ValueError(f"Cannot convert sequence {type(x)} with item types {item_types} to MLX array: {str(e)}")
        
     # For any other type, reject it with a corrected list of supported types
-    raise ValueError(f"Cannot convert {type(x)} to MLX array. Supported types: Python scalars/sequences, NumPy scalars/arrays, MLXTensor, EmberTensor, Parameter.")
+    raise ValueError(f"Cannot convert {type(x)} to MLX array. Supported types: Python scalars/sequences, NumPy scalars/arrays, MLXTensor, tensor, Parameter.")
 
 def _convert_to_tensor(data: TensorLike, dtype: Optional[DType] = None, device=None) -> mx.array:
     """

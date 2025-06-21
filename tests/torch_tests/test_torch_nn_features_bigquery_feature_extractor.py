@@ -5,9 +5,9 @@ import numpy as np
 import torch # Import torch for device checks if needed
 
 # Import Ember ML modules
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml import ops
-from ember_ml.nn.features.bigquery_feature_extractor import BigQueryFeatureExtractor
+from ember_ml.features.bigquery_feature_extractor import BigQueryFeatureExtractor
 from ember_ml.ops import set_backend
 
 # Set the backend for these tests

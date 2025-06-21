@@ -12,7 +12,7 @@ from typing import List
 
 from ember_ml import ops
 from ember_ml.ops import set_backend
-from ember_ml.nn import tensor
+from ember_ml import tensor
 set_backend('mlx')
 
 def benchmark_matrix_multiply(

@@ -14,7 +14,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from ember_ml.nn.modules.rnn import GUCE
 from ember_ml.nn.modules import AutoNCP
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml import ops
 
 class GUCEControlSystem:
@@ -405,7 +405,7 @@ def learning_example():
                 output = control_system.forward(X_batch[j])
                 
                 # Compute loss
-                loss = ops.stats.mean(ops.square(ops.subtract(output, Y_batch[j])))
+                loss = stats.mean(ops.square(ops.subtract(output, Y_batch[j])))
                 batch_loss += tensor.item(loss)
             
             # Average batch loss

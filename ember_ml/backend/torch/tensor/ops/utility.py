@@ -208,7 +208,7 @@ def _convert_input(x: TensorLike, dtype: Optional[DType] = None, device: Optiona
             raise ValueError(f"Cannot convert sequence {type(x)} with item types {item_types} to Torch tensor: {str(e)}")
 
     # For any other type, reject it with a corrected list of supported types
-    raise ValueError(f"Cannot convert {type(x)} to torch.Tensor. Supported types: Python scalars/sequences, NumPy scalars/arrays, TorchTensor, EmberTensor, Parameter.")
+    raise ValueError(f"Cannot convert {type(x)} to torch.Tensor. Supported types: Python scalars/sequences, NumPy scalars/arrays, TorchTensor, tensor, Parameter.")
 
 def _convert_to_tensor(data: Any, dtype: Optional[Any] = None, device: Optional[str] = None) -> torch.Tensor:
     """

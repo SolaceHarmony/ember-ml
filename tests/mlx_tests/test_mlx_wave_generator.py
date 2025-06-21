@@ -1,8 +1,7 @@
 import pytest
 
 # Import Ember ML modules
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.wave import generator # Import the generator module
 from ember_ml.ops import set_backend
 from ember_ml.backend.mlx.stats import descriptive as mlx_stats

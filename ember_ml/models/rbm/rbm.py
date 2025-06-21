@@ -7,11 +7,11 @@ This module provides a Restricted Boltzmann Machine (RBM) implementation for the
 import numpy as np
 # Import ops and stats separately
 from ember_ml import ops
-from ember_ml.ops import stats
+from ember_ml import stats
 from ember_ml.nn.modules import Module, Parameter
-from ember_ml.nn.tensor import random_uniform
-from ember_ml.nn import tensor
-from ember_ml.nn.container import Linear
+from ember_ml import random_uniform
+from ember_ml import tensor
+from ember_ml.nn.layers import Linear
 from ember_ml.nn.modules.activations import get_activation
 from typing import Optional, Tuple, List, Dict, Any, Union, Callable
 
@@ -340,7 +340,7 @@ class RestrictedBoltzmannMachine(Module):
         if per_sample:
             return error
         else:
-            return ops.stats.mean(error)
+            return stats.mean(error)
             
     def anomaly_score(self, data):
         """
@@ -457,7 +457,7 @@ def train_rbm(rbm: RestrictedBoltzmannMachine,
             
             # In a real implementation, we would update weights here
             # For now, we'll just compute the loss
-            loss = ops.stats.mean(ops.subtract(positive_free_energy, negative_free_energy))
+            loss = stats.mean(ops.subtract(positive_free_energy, negative_free_energy))
             
             epoch_loss += loss
         

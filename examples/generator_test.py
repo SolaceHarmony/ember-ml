@@ -19,7 +19,7 @@ from datetime import datetime
 
 # Import Ember ML components
 from ember_ml.ops import set_backend
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml import ops
 from ember_ml.models.rbm_anomaly_detector import RBMBasedAnomalyDetector
 from ember_ml.visualization.rbm_visualizer import RBMVisualizer
@@ -49,7 +49,7 @@ import numpy as np
 def generate_data(n_samples=1000, n_features=10, anomaly_fraction=0.05) -> pd.DataFrame:
     """Generate synthetic data with anomalies."""
     # Import necessary modules
-    from ember_ml.nn import tensor
+    from ember_ml import tensor
     from ember_ml import ops
     
     # Generate normal data

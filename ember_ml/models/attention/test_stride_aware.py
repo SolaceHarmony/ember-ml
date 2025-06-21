@@ -6,8 +6,7 @@ multi-timescale processing.
 """
 
 import numpy as np
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.nn.modules.rnn import StrideAware
 
 

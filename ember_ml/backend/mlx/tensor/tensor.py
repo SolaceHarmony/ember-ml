@@ -27,14 +27,13 @@ TensorTypes = Any
 # Conditional imports
 if TYPE_CHECKING:
     import numpy as np
-    from ember_ml.nn.tensor.common.ember_tensor import EmberTensor
+    from ember_ml import tensor
     from ember_ml.backend.mlx.tensor.tensor import MLXTensor
     
     TensorTypes = Union[
         np.ndarray,
         MLXArray,
-        MLXTensor,
-        EmberTensor
+        MLXTensor
     ]
 
 # Main type definitions

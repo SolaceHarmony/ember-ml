@@ -4,7 +4,7 @@ Softmax activation module.
 """
 from typing import Optional, Dict, Any # Added Dict, Any
 from ember_ml.nn.modules import Module
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 class Softmax(Module):
     """

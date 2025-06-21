@@ -72,7 +72,7 @@ graph TD
 ### Current API Usage
 
 ```python
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml import ops
 
 # Create tensors
@@ -315,7 +315,7 @@ graph TD
 ### Before:
 
 ```python
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml import ops
 
 x = tensor.ones((3, 3))

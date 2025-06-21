@@ -270,7 +270,7 @@ def convert_to_tensor(tensor_obj, data, dtype=None, device=None):
     
     # Handle EmberTensor objects
     if isinstance(data, object) and getattr(data.__class__, '__name__', '') == 'EmberTensor':
-        # For EmberTensor, extract the underlying PyTorch tensor
+        # For tensor, extract the underlying PyTorch tensor
         data = getattr(data, '_tensor')
     
     # Handle array-like objects

@@ -5,8 +5,7 @@ This module tests that the tensor size (number of elements) is calculated correc
 """
 
 import pytest
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 
 
 @pytest.fixture

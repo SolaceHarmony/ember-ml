@@ -92,8 +92,7 @@ The `utils/emberlint.py` tool is the definitive authority on code correctness in
 ### Examples of Proper Style:
 
 ```python
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 
 def process_data(x: tensor.EmberTensor) -> tensor.EmberTensor:
     """Process input tensor with normalization.

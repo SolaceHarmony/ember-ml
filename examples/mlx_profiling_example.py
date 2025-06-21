@@ -15,7 +15,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from ember_ml.nn.modules import CfC, LTC, ELTC, CTGRU, CTRNN
 from ember_ml.nn.modules.wiring import RandomMap, NCPMap, AutoNCP
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml import ops
 from examples.mlx_profiler import MLXProfiler, quick_profile
 

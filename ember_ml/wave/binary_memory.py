@@ -4,10 +4,9 @@ Wave-based memory storage and pattern retrieval mechanisms.
 
 from typing import Optional, List, Dict, Tuple, Any
 from dataclasses import dataclass
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.nn import modules
-from ember_ml.nn import container
+from ember_ml.nn import layers
 from ember_ml.nn.modules import activations
 from .binary_wave import WaveConfig, BinaryWave
 
@@ -31,8 +30,8 @@ class MemoryPattern:
         """
         # Handle both MemoryPattern objects and raw tensors
         other_pattern = other.pattern if hasattr(other, 'pattern') else other
-        # Removed direct import of mlx_stats, using ops.stats.mean instead
-        return 1.0 - ops.stats.mean(ops.abs(self.pattern - other_pattern)).item()
+        # Removed direct import of mlx_stats, using stats.mean instead
+        return 1.0 - stats.mean(ops.abs(self.pattern - other_pattern)).item()
 
 class WaveStorage:
     """Storage mechanism for wave patterns."""
@@ -138,13 +137,13 @@ class BinaryMemory(modules.Module):
         else:
             input_size = grid_size * grid_size
             
-        self.store_gate = container.Sequential([
-            container.Linear(input_size, input_size),
+        self.store_gate = layers.Sequential([
+            layers.Linear(input_size, input_size),
             activations.Sigmoid()
         ])
         
-        self.retrieve_gate = container.Sequential([
-            container.Linear(input_size, input_size),
+        self.retrieve_gate = layers.Sequential([
+            layers.Linear(input_size, input_size),
             activations.Sigmoid()
         ])
         

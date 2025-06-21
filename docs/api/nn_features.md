@@ -6,7 +6,7 @@ The `ember_ml.nn.features` module provides a comprehensive set of components for
 
 ```python
 from ember_ml.nn import features
-from ember_ml.nn import tensor # For creating example tensors
+from ember_ml import tensor # For creating example tensors
 ```
 
 ## Core Stateful Components
@@ -23,7 +23,7 @@ Performs Principal Component Analysis for dimensionality reduction.
 pca_instance = features.pca()
 
 # Direct instantiation
-from ember_ml.nn.features import PCA
+from ember_ml.features import PCA
 pca_instance = PCA()
 ```
 
@@ -51,7 +51,7 @@ Standardizes features by removing the mean and scaling to unit variance.
 std_scaler = features.standardize()
 
 # Direct instantiation
-from ember_ml.nn.features import Standardize
+from ember_ml.features import Standardize
 std_scaler = Standardize()
 ```
 
@@ -79,7 +79,7 @@ Normalizes features using various normalization techniques (e.g., L1, L2, max).
 normalizer = features.normalize()
 
 # Direct instantiation
-from ember_ml.nn.features import Normalize
+from ember_ml.features import Normalize
 normalizer = Normalize()
 ```
 
@@ -102,7 +102,7 @@ Processes data into multi-stride temporal representations, enabling multi-scale 
 
 **Instantiation:**
 ```python
-from ember_ml.nn.features import TemporalStrideProcessor
+from ember_ml.features import TemporalStrideProcessor
 
 processor = TemporalStrideProcessor(
     window_size=5,
@@ -131,7 +131,7 @@ Extended version of TemporalStrideProcessor designed for very large datasets.
 
 **Instantiation:**
 ```python
-from ember_ml.nn.features import TerabyteTemporalStrideProcessor
+from ember_ml.features import TerabyteTemporalStrideProcessor
 
 processor = TerabyteTemporalStrideProcessor(
     window_size=100,
@@ -148,7 +148,7 @@ Extracts features from tabular data on a column-by-column basis, handling catego
 
 **Instantiation:**
 ```python
-from ember_ml.nn.features import ColumnFeatureExtractor
+from ember_ml.features import ColumnFeatureExtractor
 
 extractor = ColumnFeatureExtractor(
     numeric_strategy='standard',
@@ -186,7 +186,7 @@ Extends ColumnFeatureExtractor with PCA dimensionality reduction.
 
 **Instantiation:**
 ```python
-from ember_ml.nn.features import ColumnPCAFeatureExtractor
+from ember_ml.features import ColumnPCAFeatureExtractor
 
 extractor = ColumnPCAFeatureExtractor(
     n_components=10,
@@ -200,7 +200,7 @@ Extends ColumnFeatureExtractor with temporal feature extraction capabilities.
 
 **Instantiation:**
 ```python
-from ember_ml.nn.features import TemporalColumnFeatureExtractor
+from ember_ml.features import TemporalColumnFeatureExtractor
 
 extractor = TemporalColumnFeatureExtractor(
     window_size=5,
@@ -216,7 +216,7 @@ Feature extractor for Google BigQuery data sources.
 
 **Instantiation:**
 ```python
-from ember_ml.nn.features import BigQueryFeatureExtractor
+from ember_ml.features import BigQueryFeatureExtractor
 
 extractor = BigQueryFeatureExtractor(
     project_id="your-gcp-project",
@@ -250,7 +250,7 @@ Designed for extracting features from very large datasets, often involving chunk
 
 **Instantiation:**
 ```python
-from ember_ml.nn.features import TerabyteFeatureExtractor
+from ember_ml.features import TerabyteFeatureExtractor
 
 extractor = TerabyteFeatureExtractor(
     window_size=100,
@@ -268,7 +268,7 @@ Feature processor with animated visualization and sample tables for different da
 
 **Instantiation:**
 ```python
-from ember_ml.nn.features import AnimatedFeatureProcessor
+from ember_ml.features import AnimatedFeatureProcessor
 
 processor = AnimatedFeatureProcessor(
     visualization_enabled=True,
@@ -318,7 +318,7 @@ Loads and preprocesses CSV files for feature extraction.
 
 **Instantiation:**
 ```python
-from ember_ml.nn.features import GenericCSVLoader
+from ember_ml.features import GenericCSVLoader
 
 loader = GenericCSVLoader(
     delimiter=',',
@@ -333,7 +333,7 @@ Detects column types in tabular data.
 
 **Instantiation:**
 ```python
-from ember_ml.nn.features import GenericTypeDetector
+from ember_ml.features import GenericTypeDetector
 
 detector = GenericTypeDetector()
 ```
@@ -359,7 +359,7 @@ Enhanced version of GenericTypeDetector with additional type detection capabilit
 
 **Instantiation:**
 ```python
-from ember_ml.nn.features import EnhancedTypeDetector
+from ember_ml.features import EnhancedTypeDetector
 
 detector = EnhancedTypeDetector()
 ```
@@ -370,7 +370,7 @@ Generic feature engineering component for tabular data.
 
 **Instantiation:**
 ```python
-from ember_ml.nn.features import GenericFeatureEngineer
+from ember_ml.features import GenericFeatureEngineer
 
 engineer = GenericFeatureEngineer()
 ```
@@ -381,7 +381,7 @@ Specialized processor for speedtest event data.
 
 **Instantiation:**
 ```python
-from ember_ml.nn.features import SpeedtestEventProcessor
+from ember_ml.features import SpeedtestEventProcessor
 
 processor = SpeedtestEventProcessor()
 ```

@@ -6,10 +6,9 @@ import ray
 import asyncio
 import time
 import uuid
-from typing import Dict, List, Any, Optional
-
+from ember_ml.types import TensorLike
 # Import EmberTensor and ops
-from ember_ml.nn.tensor import EmberTensor
+from ember_ml import tensor
 from ember_ml import ops
 
 # Import the MetalKernelActor from its new location
@@ -33,7 +32,7 @@ class SequenceProcessorActor:
         self.sequences = {}
         print(f"[SequenceProcessorActor] Initialized")
 
-    async def process_sequence(self, sequence_data: EmberTensor):
+    async def process_sequence(self, sequence_data: TensorLike):
         """
         Process a sequence through the Metal kernel.
 

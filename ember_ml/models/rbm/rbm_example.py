@@ -12,7 +12,7 @@ import time
 from datetime import datetime
 
 # Import our modules
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml.models.rbm import RBMModule, train_rbm, save_rbm, load_rbm
 from ember_ml.visualization.rbm_visualizer import RBMVisualizer
 
@@ -37,6 +37,7 @@ def generate_toy_data(n_samples=500, n_features=100, pattern_size=10, n_patterns
     patterns = []
     for i in range(n_patterns):
         # Create a random binary pattern
+        from ember_ml import ops
         pattern = ops.random_choice([0, 1], size=pattern_size, p=[0.7, 0.3])
         # Scale to [0.7, 1.0] for more pronounced patterns
         pattern = pattern * 0.3 + 0.7
@@ -129,6 +130,7 @@ def generate_image_data(n_samples=500, width=10, height=10, n_patterns=3):
         
         # Add some noise to the pattern
         noisy_pattern = pattern + tensor.random_normal(0, 0.05, n_pixels)
+        from ember_ml import ops
         noisy_pattern = ops.clip(noisy_pattern, 0, 1)
         
         # Embed the pattern with some random background
@@ -177,7 +179,7 @@ def main():
     def data_generator(data, batch_size=10):
         """Convert data to a generator yielding batches."""
         import numpy as np
-        from ember_ml.nn import tensor
+        from ember_ml import tensor
         n_samples = len(data)
         indices = tensor.random_permutation(n_samples)
         for i in range(0, n_samples, batch_size):

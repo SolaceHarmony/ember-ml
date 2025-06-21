@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from typing import Optional, Tuple, List, Union
-from ember_ml.nn import tensor # Added import
+from ember_ml import tensor # Added import
 
 class WaveGRUCell(nn.Module):
     """

@@ -7,8 +7,7 @@ the interface for all cell types in ember_ml.
 
 from typing import Optional, List, Dict, Any, Union, Tuple, TypeVar
 
-from ember_ml import ops
-import ember_ml.nn.tensor as tensor
+from ember_ml import ops, tensor
 from ember_ml.nn.modules import Module, Parameter
 
 # Type variable for state size

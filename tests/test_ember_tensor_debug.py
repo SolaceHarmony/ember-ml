@@ -2,7 +2,7 @@
 Debug script to print EmberTensor properties for all backends.
 """
 
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml import ops
 from ember_ml.backend import set_backend
 

@@ -16,12 +16,11 @@ from typing import List, Optional, Tuple, Dict, Union
 import time
 import pandas as pd
 # Import the RBM class and tensor module
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.models.rbm.rbm_module import RBMModule
 # Import stats module directly
-from ember_ml.nn.tensor.types import TensorLike
-from ember_ml.ops import stats
+from ember_ml.types import TensorLike
+from ember_ml import stats
 
 
 class RBMVisualizer:
@@ -119,7 +118,7 @@ class RBMVisualizer:
                 if hasattr(training_errors, 'numpy'):
                     final_error = training_errors.numpy()[-1]
                 else:
-                    from ember_ml.nn import tensor
+                    from ember_ml import tensor
                     numpy_errors = tensor.to_numpy(training_errors)
                     final_error = numpy_errors[-1] if len(numpy_errors) > 0 else "N/A"
             else:
@@ -205,7 +204,7 @@ class RBMVisualizer:
             return fig
         
         # Convert training errors to numpy
-        from ember_ml.nn import tensor
+        from ember_ml import tensor
         if hasattr(rbm.training_errors, 'numpy'):
             train_errors = rbm.training_errors.numpy()
         else:
@@ -398,7 +397,7 @@ class RBMVisualizer:
                     weights = rbm.weights.data.numpy()
                 else:
                     # Try to convert using tensor.to_numpy
-                    from ember_ml.nn import tensor
+                    from ember_ml import tensor
                     weights = tensor.to_numpy(rbm.weights)
                 
                 weight_img = weights[:, h].reshape(n_vis_rows, n_vis_cols)
@@ -431,12 +430,12 @@ class RBMVisualizer:
             if hasattr(rbm.weights, 'numpy'):
                 weights = rbm.weights.numpy()
             elif hasattr(rbm.weights, 'data') and hasattr(rbm.weights.data, 'numpy'):
-                from ember_ml.nn import tensor
+                from ember_ml import tensor
                 weights = tensor.convert_to_tensor(rbm.weights)
                 weights = tensor.to_numpy(weights)
             else:
                 # Try to convert using tensor.to_numpy
-                from ember_ml.nn import tensor
+                from ember_ml import tensor
                 weights = tensor.to_numpy(rbm.weights)
             
             # Plot the weight matrix
@@ -513,7 +512,7 @@ class RBMVisualizer:
         samples = data[indices]
         
         # Reconstruct samples - make sure to convert to the right dtype
-        from ember_ml.nn import tensor
+        from ember_ml import tensor
         samples_tensor = tensor.convert_to_tensor(samples, dtype=tensor.float32)
         reconstructions = rbm.reconstruct(samples_tensor)
         # Convert back to numpy
@@ -611,7 +610,7 @@ class RBMVisualizer:
         samples = data[indices]
         
         # Compute hidden activations - make sure to convert to the right dtype
-        from ember_ml.nn import tensor
+        from ember_ml import tensor
         samples_tensor = tensor.convert_to_tensor(samples, dtype=tensor.float32)
         hidden_probs = rbm.compute_hidden_probabilities(samples_tensor)
         # Convert back to numpy
@@ -696,7 +695,7 @@ class RBMVisualizer:
             Matplotlib figure
         """
         # Compute anomaly scores - convert to tensor with correct dtype
-        from ember_ml.nn import tensor
+        from ember_ml import tensor
         normal_data_tensor = tensor.convert_to_tensor(normal_data, dtype=tensor.float32)
         normal_scores_tensor = rbm.anomaly_score(normal_data_tensor, method)
         # Convert back to numpy
@@ -815,7 +814,7 @@ class RBMVisualizer:
                 weights = rbm.weights.data.numpy()
             else:
                 # Try to convert using tensor.to_numpy
-                from ember_ml.nn import tensor
+                from ember_ml import tensor
                 weights = tensor.to_numpy(rbm.weights)
             # Create real training states based on the actual weights
             # This is more accurate than using fake states with random noise
@@ -1257,7 +1256,7 @@ class RBMVisualizer:
         current_samples = samples.copy()
         
         # Convert samples to tensor with correct dtype
-        from ember_ml.nn import tensor
+        from ember_ml import tensor
         current_samples_tensor = tensor.convert_to_tensor(current_samples, dtype=tensor.float32)
         
         for step in range(n_steps):
@@ -1358,7 +1357,7 @@ class RBMVisualizer:
             List of visible states at each step
         """
         import numpy as np
-        from ember_ml.nn import tensor
+        from ember_ml import tensor
         from ember_ml import ops
         
         # Initialize visible states
@@ -1466,7 +1465,7 @@ class RBMVisualizer:
             Dictionary of pandas DataFrames with statistics for each category
         """
         # Import necessary modules
-        from ember_ml.nn import tensor
+        from ember_ml import tensor
         from ember_ml import ops
         
         # Convert inputs to numpy for processing if they're tensors
@@ -1507,14 +1506,14 @@ class RBMVisualizer:
         
         # Use ops functions for calculations
         normal_stats = {
-            'mean': tensor.to_numpy(ops.stats.mean(normal_tensor, axis=0)),
-            'std': tensor.to_numpy(ops.stats.std(normal_tensor, axis=0)),
+            'mean': tensor.to_numpy(stats.mean(normal_tensor, axis=0)),
+            'std': tensor.to_numpy(stats.std(normal_tensor, axis=0)),
             'min': tensor.to_numpy(stats.min(normal_tensor, axis=0)),
             'max': tensor.to_numpy(stats.max(normal_tensor, axis=0)),
             # Now using ops.stats for percentiles
-            '25%': tensor.to_numpy(ops.stats.percentile(normal_tensor, 25, axis=0)),
-            'median': tensor.to_numpy(ops.stats.median(normal_tensor, axis=0)),
-            '75%': tensor.to_numpy(ops.stats.percentile(normal_tensor, 75, axis=0))
+            '25%': tensor.to_numpy(stats.percentile(normal_tensor, 25, axis=0)),
+            'median': tensor.to_numpy(stats.median(normal_tensor, axis=0)),
+            '75%': tensor.to_numpy(stats.percentile(normal_tensor, 75, axis=0))
         }
         
         # Store DataFrames for each category
@@ -1535,13 +1534,13 @@ class RBMVisualizer:
             # Create a DataFrame for this category's statistics using ops
             cat_stats = {
                 'Feature': feature_names,
-                'Category_Mean': tensor.to_numpy(ops.stats.mean(category_tensor, axis=0)),
-                'Category_Std': tensor.to_numpy(ops.stats.std(category_tensor, axis=0)),
+                'Category_Mean': tensor.to_numpy(stats.mean(category_tensor, axis=0)),
+                'Category_Std': tensor.to_numpy(stats.std(category_tensor, axis=0)),
                 'Category_Min': tensor.to_numpy(stats.min(category_tensor, axis=0)),
                 'Category_Max': tensor.to_numpy(stats.max(category_tensor, axis=0)),
-                'Category_25%': tensor.to_numpy(ops.stats.percentile(category_tensor, 25, axis=0)),
-                'Category_Median': tensor.to_numpy(ops.stats.median(category_tensor, axis=0)),
-                'Category_75%': tensor.to_numpy(ops.stats.percentile(category_tensor, 75, axis=0)),
+                'Category_25%': tensor.to_numpy(stats.percentile(category_tensor, 25, axis=0)),
+                'Category_Median': tensor.to_numpy(stats.median(category_tensor, axis=0)),
+                'Category_75%': tensor.to_numpy(stats.percentile(category_tensor, 75, axis=0)),
                 'Normal_Mean': normal_stats['mean'],
                 'Normal_Std': normal_stats['std'],
                 'Normal_Min': normal_stats['min'],
@@ -1655,7 +1654,7 @@ class RBMVisualizer:
             Matplotlib figure
         """
         # Import necessary modules
-        from ember_ml.nn import tensor
+        from ember_ml import tensor
         from ember_ml import ops
         
         # Convert inputs to numpy for visualization if they're tensors
@@ -1737,16 +1736,16 @@ class RBMVisualizer:
                 feat_tensor = tensor.convert_to_tensor(feature_values)
                 normal_feat_tensor = tensor.convert_to_tensor(normal_feature_values)
                 # Calculate statistics using ops.stats
-                mean = float(tensor.to_numpy(ops.stats.mean(feat_tensor)))
-                std = float(tensor.to_numpy(ops.stats.std(feat_tensor)))
+                mean = float(tensor.to_numpy(stats.mean(feat_tensor)))
+                std = float(tensor.to_numpy(stats.std(feat_tensor)))
                 min_val = float(tensor.to_numpy(stats.min(feat_tensor)))
                 max_val = float(tensor.to_numpy(stats.max(feat_tensor)))
                 
                 
                 # Calculate Z-score compared to normal data
-                normal_mean = float(tensor.to_numpy(ops.stats.mean(normal_feat_tensor)))
-                # Use ops.stats.var instead of tensor.var
-                normal_variance = ops.stats.var(normal_feat_tensor)
+                normal_mean = float(tensor.to_numpy(stats.mean(normal_feat_tensor)))
+                # Use stats.var instead of tensor.var
+                normal_variance = stats.var(normal_feat_tensor)
                 normal_std = float(tensor.to_numpy(ops.sqrt(normal_variance)))
                 
                 # Calculate Z-score using ops
@@ -1817,11 +1816,11 @@ class RBMVisualizer:
                 normal_feat_tensor = tensor.convert_to_tensor(normal_values)
                 cat_feat_tensor = tensor.convert_to_tensor(category_values)
                 
-                normal_mean = float(tensor.to_numpy(ops.stats.mean(normal_feat_tensor)))
-                normal_std = float(tensor.to_numpy(ops.stats.std(normal_feat_tensor)))
+                normal_mean = float(tensor.to_numpy(stats.mean(normal_feat_tensor)))
+                normal_std = float(tensor.to_numpy(stats.std(normal_feat_tensor)))
                 
-                category_mean = float(tensor.to_numpy(ops.stats.mean(cat_feat_tensor)))
-                category_std = float(tensor.to_numpy(ops.stats.std(cat_feat_tensor)))
+                category_mean = float(tensor.to_numpy(stats.mean(cat_feat_tensor)))
+                category_std = float(tensor.to_numpy(stats.std(cat_feat_tensor)))
                 
                 # Calculate Z-score using ops
                 epsilon = tensor.convert_to_tensor(1e-10)
@@ -1916,7 +1915,7 @@ class RBMVisualizer:
             feature_names = [f"Feature {i+1}" for i in range(data.shape[1])]
         
         # Convert data to tensor for getting hidden activations
-        from ember_ml.nn import tensor
+        from ember_ml import tensor
         
         # Plot each category
         for i, category_id in enumerate(unique_categories):
@@ -2012,7 +2011,7 @@ class RBMVisualizer:
         Returns:
             Matplotlib figure
         """
-        from ember_ml.nn import tensor
+        from ember_ml import tensor
         
         # Convert data to tensor
         data_tensor = tensor.convert_to_tensor(data, dtype=tensor.float32)

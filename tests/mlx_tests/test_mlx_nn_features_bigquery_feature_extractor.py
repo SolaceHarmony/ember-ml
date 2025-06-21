@@ -2,8 +2,8 @@ import pytest
 from unittest.mock import MagicMock
 import pandas as pd
 
-from ember_ml.nn import tensor
-from ember_ml.nn.features.bigquery_feature_extractor import BigQueryFeatureExtractor
+from ember_ml import tensor
+from ember_ml.features.bigquery_feature_extractor import BigQueryFeatureExtractor
 
 @pytest.fixture
 def bigquery_extractor_setup(mocker):

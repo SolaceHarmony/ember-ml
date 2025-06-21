@@ -3,9 +3,8 @@ import pytest
 import matplotlib.pyplot as plt # For testing plotting functions
 
 # Import Ember ML modules
-from ember_ml import ops
-from ember_ml.nn import tensor
-from ember_ml.nn.tensor.types import TensorLike
+from ember_ml import ops, tensor
+from ember_ml.types import TensorLike
 from ember_ml.utils import visualization # Import visualization utilities
 from ember_ml.ops import set_backend
 

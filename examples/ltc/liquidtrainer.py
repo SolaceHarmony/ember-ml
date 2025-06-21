@@ -7,7 +7,7 @@ from sklearn.preprocessing import StandardScaler
 from ember_ml import ops
 from ember_ml.nn.modules import AutoNCP # Updated import path
 from ember_ml.nn.modules.rnn import CfC
-from ember_ml.nn import Module, Sequential, container
+from ember_ml.nn import Module, Sequential, layers
 
 # --------------------------
 # 📊 Telemetry Data Pipeline

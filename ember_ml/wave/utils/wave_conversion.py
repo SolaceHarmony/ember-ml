@@ -4,11 +4,9 @@ Wave conversion utilities.
 This module provides utilities for converting between different wave representations.
 """
 from typing import Union, List, Tuple, Optional
-from ember_ml.nn.tensor.types import TensorLike # Added import
-from ember_ml.ops import linearalg
-from ember_ml import ops # Moved import to top level
+from ember_ml.types import TensorLike # Added import
+from ember_ml import linearalg, stats, ops, tensor
 from typing import Any
-from ember_ml.nn import tensor # Moved import to top level
 # Define TensorLike as a type alias for better readability
 DType = Any
 def pcm_to_float(pcm_data: TensorLike, dtype: Any = tensor.float32) -> Any:
@@ -163,7 +161,7 @@ def phase_to_pcm(phase_data: TensorLike, magnitude: Optional[TensorLike] = None,
     """
     if magnitude is None:
         # Need to import tensor here if not already imported
-        from ember_ml.nn import tensor
+        from ember_ml import tensor
         magnitude = tensor.ones_like(phase_data)
 
     complex_data = magnitude * ops.exp(1j * phase_data)

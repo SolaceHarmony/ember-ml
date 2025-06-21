@@ -1,8 +1,7 @@
 # tests/torch_tests/test_nn_features.py
 import pytest
 # Removed torch import - tests should use backend-agnostic API
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.nn import features
 from ember_ml.ops import stats # Import stats needed for PCA check
 

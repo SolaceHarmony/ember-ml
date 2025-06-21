@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     # These imports are only used for type checking and not at runtime
     import numpy
     from torch import Tensor
-    from ember_ml.nn.tensor.common.ember_tensor import EmberTensor
+    from ember_ml import tensor
     from ember_ml.nn.tensor.common.dtypes import EmberDType
     from ember_ml.backend.torch.tensor.tensor import TorchTensor
 

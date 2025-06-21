@@ -69,7 +69,7 @@ For example, the `cast()` operation can be called in two ways:
 
 ```python
 # As a standalone function
-from ember_ml.nn.tensor import cast
+from ember_ml import cast
 result = cast(tensor, dtype)
 
 # As a method on EmberTensor
@@ -85,20 +85,20 @@ The `EmberTensor` class is a backend-agnostic tensor implementation that delegat
 ### Creating Tensors
 
 ```python
-from ember_ml.nn.tensor import EmberTensor
+from ember_ml import tensor
 
 # Create a tensor from a list
-tensor = EmberTensor([[1, 2, 3], [4, 5, 6]])
+tensor = tensor([[1, 2, 3], [4, 5, 6]])
 
 # Create a tensor with a specific data type
-from ember_ml.nn.tensor import float32
-tensor = EmberTensor([[1, 2, 3], [4, 5, 6]], dtype=float32)
+from ember_ml import float32
+tensor = tensor([[1, 2, 3], [4, 5, 6]], dtype=float32)
 
 # Create a tensor on a specific device
-tensor = EmberTensor([[1, 2, 3], [4, 5, 6]], device='cuda')
+tensor = tensor([[1, 2, 3], [4, 5, 6]], device='cuda')
 
 # Create a tensor that requires gradients
-tensor = EmberTensor([[1, 2, 3], [4, 5, 6]], requires_grad=True)
+tensor = tensor([[1, 2, 3], [4, 5, 6]], requires_grad=True)
 ```
 
 ### Tensor Properties
@@ -149,10 +149,10 @@ The `EmberDType` class is a backend-agnostic data type class that represents dat
 ### Available Data Types
 
 ```python
-from ember_ml.nn.tensor import float32, float64, int32, int64, bool_
+from ember_ml import float32, float64, int32, int64, bool_
 
 # Create a tensor with a specific data type
-tensor = EmberTensor([[1, 2, 3], [4, 5, 6]], dtype=float32)
+tensor = tensor([[1, 2, 3], [4, 5, 6]], dtype=float32)
 
 # Cast a tensor to a different data type
 float_tensor = tensor.cast(tensor, float32)
@@ -168,8 +168,8 @@ The tensor module supports different devices depending on the backend:
 
 ```python
 # Create a tensor on a specific device
-tensor = EmberTensor([[1, 2, 3], [4, 5, 6]], device='cuda')  # NVIDIA GPU
-tensor = EmberTensor([[1, 2, 3], [4, 5, 6]], device='mps')   # Apple Silicon GPU
+tensor = tensor([[1, 2, 3], [4, 5, 6]], device='cuda')  # NVIDIA GPU
+tensor = tensor([[1, 2, 3], [4, 5, 6]], device='mps')   # Apple Silicon GPU
 ```
 
 ## Backend Selection
@@ -196,10 +196,10 @@ The tensor module maintains backend purity by ensuring that all tensor operation
 For example, the following code will work with any backend:
 
 ```python
-from ember_ml.nn.tensor import EmberTensor
+from ember_ml import tensor
 
 # Create a tensor
-tensor = EmberTensor([[1, 2, 3], [4, 5, 6]])
+tensor = tensor([[1, 2, 3], [4, 5, 6]])
 
 # Reshape the tensor
 reshaped = tensor.reshape(tensor, (3, 2))

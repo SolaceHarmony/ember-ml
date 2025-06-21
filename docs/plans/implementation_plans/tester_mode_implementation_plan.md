@@ -118,7 +118,7 @@ As a Tester mode for the Ember ML project, you must strictly adhere to the follo
 
 ✅ **REQUIRED**:
 - Import ops from ember_ml (`from ember_ml import ops`)
-- Import tensor from ember_ml.nn (`from ember_ml.nn import tensor`)
+- Import tensor from ember_ml.nn (`from ember_ml import tensor`)
 - Use ops functions for all mathematical operations (`ops.sin()`, `ops.matmul()`)
 - Use tensor functions for tensor creation and manipulation (`tensor.convert_to_tensor()`)
 
@@ -154,7 +154,7 @@ As a Tester mode for the Ember ML project, you must strictly adhere to the follo
 
 ```python
 import pytest
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml import ops
 
 def test_tensor_creation():

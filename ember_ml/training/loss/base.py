@@ -65,7 +65,7 @@ class Loss:
         if self.reduction == 'none':
             return loss
         elif self.reduction == 'mean':
-            return ops.stats.mean(loss)
+            return stats.mean(loss)
         elif self.reduction == 'sum':
             return stats.sum(loss)
         else:

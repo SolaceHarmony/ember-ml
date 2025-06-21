@@ -182,7 +182,7 @@ Components that interact with other parts of the system must have integration te
 
 ✅ **REQUIRED**:
 - Import ops from ember_ml (`from ember_ml import ops`)
-- Import tensor from ember_ml.nn (`from ember_ml.nn import tensor`)
+- Import tensor from ember_ml.nn (`from ember_ml import tensor`)
 - Use ops functions for all mathematical, comparison, device, I/O, loss, and vector operations (`ops.sin()`, `ops.matmul()`, `ops.equal()`, `ops.to_device()`, etc.) in frontend code.
 - Use tensor functions for tensor creation, manipulation, and random operations (`tensor.convert_to_tensor()`, `tensor.reshape()`, `tensor.random_normal()`, etc.) in frontend code.
 
@@ -220,7 +220,7 @@ Components that interact with other parts of the system must have integration te
 
 ## Strong Typing and Tensor Creation
 
--   **Frontend Tensor Creation**: The primary way to create tensors on the frontend is by using `from ember_ml.nn import tensor` and then calling `tensor.convert_to_tensor(data)`, where `data` can be a Python list, NumPy array, etc.
+-   **Frontend Tensor Creation**: The primary way to create tensors on the frontend is by using `from ember_ml import tensor` and then calling `tensor.convert_to_tensor(data)`, where `data` can be a Python list, NumPy array, etc.
 -   **Backend Tensor Creation**: Within backend implementations, get the backend-specific tensor operations object (e.g., `MLXTensor()`) and use its `convert_to_tensor(data)` method to create the native backend tensor.
 -   **Type Aliases**: Type aliases like `TensorLike` are used in both frontend and backend type hints to indicate that a function can accept a variety of input types that can be converted to a tensor.
 -   **Type Stubs (`.pyi`)**: `.pyi` files provide static type hints for dynamically aliased functions and other components, aiding static analysis tools. Note that not all modules currently have `.pyi` files.
@@ -408,7 +408,7 @@ def new_function(x: np.ndarray, y: np.ndarray) -> np.ndarray:
 
 1.  Create a simple test that uses the ops abstraction layer (NOT direct backend calls):
     ```python
-    from ember_ml.nn import tensor
+    from ember_ml import tensor
     from ember_ml import ops
     result = ops.new_function(tensor.convert_to_tensor([1, 2, 3]), tensor.convert_to_tensor([4, 5, 6]))
     print(result)

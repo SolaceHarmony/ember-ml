@@ -1,7 +1,6 @@
 # tests/torch_tests/test_nn_tensor_dtype.py
 import pytest
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.nn.tensor.common.dtypes import EmberDType
 
 # Note: Assumes conftest.py provides the torch_backend fixture

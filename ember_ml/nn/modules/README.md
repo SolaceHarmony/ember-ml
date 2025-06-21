@@ -142,7 +142,7 @@ for epoch in range(epochs):
         y_pred = model(tensor.convert_to_tensor(X_batch))
         
         # Compute loss
-        loss = ops.stats.mean(ops.square(y_pred - tensor.convert_to_tensor(y_batch)))
+        loss = stats.mean(ops.square(y_pred - tensor.convert_to_tensor(y_batch)))
         
         # Compute gradients
         params = list(model.parameters())

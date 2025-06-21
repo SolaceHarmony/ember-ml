@@ -11,10 +11,9 @@ from datetime import datetime
 import os
 import logging
 from typing import Dict, List, Optional, Tuple, Union, Any, Generator
-from ember_ml.ops import stats
-from ember_ml import ops
-from ember_ml.nn import tensor
-from ember_ml.nn.tensor.types import TensorLike
+from ember_ml import stats
+from ember_ml import ops, tensor
+from ember_ml.types import TensorLike
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
@@ -116,18 +115,18 @@ class OptimizedRBM:
         """Ensure data is a backend tensor on the RBM's device."""
         # tensor.convert_to_tensor now returns a backend tensor.
         # ops.to_device also returns a backend tensor.
-        # If data is EmberTensor, unwrap it first.
+        # If data is tensor, unwrap it first.
         if isinstance(data, tensor.EmberTensor): # Check if it's the wrapper
             backend_data = data.to_backend_tensor()
             # Check device of the underlying backend tensor
             # This needs a robust way to get device from backend tensor via common ops
-            # For now, assume if it was an EmberTensor, its device was managed by the wrapper
+            # For now, assume if it was an tensor, its device was managed by the wrapper
             # or we just proceed to convert/move it.
             if ops.get_device_of_tensor(backend_data) != self.device_str:
                 return ops.to_device(backend_data, self.device_str)
             return backend_data # Already correct device
 
-        # If not EmberTensor, it could be numpy, list, or already a backend tensor.
+        # If not tensor, it could be numpy, list, or already a backend tensor.
         # tensor.convert_to_tensor handles these cases and places on self.device_str.
         # It also handles if 'data' is already a backend tensor on the correct device.
         return tensor.convert_to_tensor(data, dtype=tensor.EmberDType.float32, device=self.device_str)
@@ -229,8 +228,8 @@ class OptimizedRBM:
         # Compute gradients
         # Dividing by float current_batch_size
         weights_gradient = ops.divide(ops.subtract(pos_associations, neg_associations), float(current_batch_size))
-        visible_bias_gradient = ops.stats.mean(ops.subtract(batch_data_t, neg_visible_states), axis=0)
-        hidden_bias_gradient = ops.stats.mean(ops.subtract(pos_hidden_probs, neg_hidden_probs), axis=0)
+        visible_bias_gradient = stats.mean(ops.subtract(batch_data_t, neg_visible_states), axis=0)
+        hidden_bias_gradient = stats.mean(ops.subtract(pos_hidden_probs, neg_hidden_probs), axis=0)
 
         # Update with momentum and weight decay (operating on EmberTensors)
         self.weights_momentum = ops.add(ops.multiply(self.momentum, self.weights_momentum), weights_gradient)
@@ -247,8 +246,8 @@ class OptimizedRBM:
 
         # Compute reconstruction error
         squared_diff = ops.square(ops.subtract(batch_data_t, neg_visible_probs)) # Use neg_visible_probs for error
-        sum_squared_diff_per_sample = ops.stats.sum(squared_diff, axis=1) # backend tensor
-        reconstruction_error_scalar_tensor = ops.stats.mean(sum_squared_diff_per_sample) # backend tensor (scalar)
+        sum_squared_diff_per_sample = stats.sum(squared_diff, axis=1) # backend tensor
+        reconstruction_error_scalar_tensor = stats.mean(sum_squared_diff_per_sample) # backend tensor (scalar)
         reconstruction_error = tensor.item(reconstruction_error_scalar_tensor) # Convert to Python float
         
         self.last_batch_error = reconstruction_error
@@ -375,8 +374,8 @@ class OptimizedRBM:
                 errors_tensor = tensor.convert_to_tensor(errors_list, device=self.device_str)
                 energies_tensor = tensor.convert_to_tensor(energies_list, device=self.device_str)
 
-                self.reconstruction_error_threshold = tensor.item(ops.stats.percentile(errors_tensor, 95))
-                self.free_energy_threshold = tensor.item(ops.stats.percentile(energies_tensor, 5))
+                self.reconstruction_error_threshold = tensor.item(stats.percentile(errors_tensor, 95))
+                self.free_energy_threshold = tensor.item(stats.percentile(energies_tensor, 5))
             
                 logger.info(f"Reconstruction error threshold: {self.reconstruction_error_threshold:.4f}")
                 logger.info(f"Free energy threshold: {self.free_energy_threshold:.4f}")
@@ -439,13 +438,13 @@ class OptimizedRBM:
         reconstructed_t = self.reconstruct(data_t)
 
         squared_error = ops.square(ops.subtract(data_t, reconstructed_t))
-        sum_squared_error_per_sample = ops.stats.sum(squared_error, axis=1) # backend tensor
+        sum_squared_error_per_sample = stats.sum(squared_error, axis=1) # backend tensor
             
         if per_sample:
             return sum_squared_error_per_sample
         else:
-            # ops.stats.mean returns scalar backend tensor, tensor.item converts to Python float
-            return tensor.item(ops.stats.mean(sum_squared_error_per_sample))
+            # stats.mean returns scalar backend tensor, tensor.item converts to Python float
+            return tensor.item(stats.mean(sum_squared_error_per_sample))
     
     def free_energy(self, data: TensorLike) -> TensorLike: # Returns backend tensor
         """
@@ -463,7 +462,7 @@ class OptimizedRBM:
         # This is equivalent to sum(data_t * self.visible_bias, axis=1) if self.visible_bias is broadcasted.
         # Or if matmul is (N,D) @ (D,1) -> (N,1) then squeeze.
         # For now, assuming direct element-wise product then sum for the bias term if it's not a matmul.
-        # visible_bias_term = ops.stats.sum(ops.multiply(data_t, self.visible_bias), axis=1) # If bias applied element-wise
+        # visible_bias_term = stats.sum(ops.multiply(data_t, self.visible_bias), axis=1) # If bias applied element-wise
 
         # The previous version used: ops.matmul(data_t, tensor.reshape(self.visible_bias, (-1,1))) and then squeeze.
         # This is fine if visible_bias_term should be (N,).
@@ -476,7 +475,7 @@ class OptimizedRBM:
         one_like_linear = tensor.ones_like(linear_term)
         exp_linear_term = ops.exp(linear_term)
         log_term = ops.log(ops.add(one_like_linear, exp_linear_term))
-        hidden_term_sum = ops.stats.sum(log_term, axis=1)
+        hidden_term_sum = stats.sum(log_term, axis=1)
 
         return ops.negative(ops.add(hidden_term_sum, visible_bias_term))
     

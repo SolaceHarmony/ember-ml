@@ -7,11 +7,10 @@ circuit policies, where connections are randomly generated.
 
 from typing import Optional, Tuple
 
-from ember_ml import ops
-from ember_ml.nn.tensor import EmberTensor, int32, random_uniform, cast
+from ember_ml import ops, tensor, int32, random_uniform, cast
 # Use explicit path for clarity now it's moved
 from ember_ml.nn.modules.wiring.neuron_map import NeuronMap
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 class RandomMap(NeuronMap): # Name is already correct
     """
@@ -41,7 +40,7 @@ class RandomMap(NeuronMap): # Name is already correct
         """
         super().__init__(units, output_dim, input_dim, sparsity_level, seed)
     
-    def build(self, input_dim=None) -> Tuple[EmberTensor, EmberTensor, EmberTensor]:
+    def build(self, input_dim=None) -> Tuple[EmberTensor, tensor, EmberTensor]:
         """
         Build the random wiring configuration.
         

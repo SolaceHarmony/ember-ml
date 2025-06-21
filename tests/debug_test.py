@@ -19,7 +19,7 @@ print("Python path:", sys.path)
 
 try:
     print("Importing EmberTensor...")
-    from ember_ml.nn.tensor import EmberTensor
+    from ember_ml import tensor
     print("EmberTensor imported successfully.")
     
     print("Importing ops...")
@@ -32,7 +32,7 @@ try:
     
     print("Creating EmberTensor...")
     data = [[1, 2, 3], [4, 5, 6]]
-    tensor = EmberTensor(data)
+    tensor = tensor(data)
     print("EmberTensor created successfully.")
     
     print(f"Tensor shape: {tensor.shape}")

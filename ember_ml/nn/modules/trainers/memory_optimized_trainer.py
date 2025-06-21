@@ -11,7 +11,7 @@ import time
 
 from ember_ml import ops
 from ember_ml.nn.modules import Module, Parameter
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 class MemoryOptimizedTrainer:
     """
@@ -52,7 +52,7 @@ class MemoryOptimizedTrainer:
         
         # Default loss function (MSE)
         if loss_fn is None:
-            self.loss_fn = lambda model, x, y: ops.stats.mean(ops.square(ops.subtract(model(x), y)))
+            self.loss_fn = lambda model, x, y: stats.mean(ops.square(ops.subtract(model(x), y)))
         else:
             self.loss_fn = loss_fn
         

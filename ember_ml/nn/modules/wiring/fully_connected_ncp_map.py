@@ -8,7 +8,7 @@ with the enhanced cell-specific parameters from NCPMap.
 
 from typing import Optional, Tuple, Dict, Any
 
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml.nn.modules.wiring.ncp_map import NCPMap
 
 class FullyConnectedNCPMap(NCPMap):

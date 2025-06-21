@@ -15,19 +15,19 @@ During refactoring of tests to maintain backend purity, we identified that the c
 1. **Operator Overloading**: Implement operator overloading for EmberTensor to enable intuitive arithmetic and comparison operations:
    ```python
    # Arithmetic operations
-   c = EmberTensor([1, 2]) + EmberTensor([2, 3])  # [3, 5]
-   c = EmberTensor([5, 6]) - EmberTensor([2, 3])  # [3, 3]
-   c = EmberTensor([1, 2]) * EmberTensor([2, 3])  # [2, 6]
-   c = EmberTensor([4, 6]) / EmberTensor([2, 3])  # [2, 2]
+   c = tensor([1, 2]) + EmberTensor([2, 3])  # [3, 5]
+   c = tensor([5, 6]) - EmberTensor([2, 3])  # [3, 3]
+   c = tensor([1, 2]) * EmberTensor([2, 3])  # [2, 6]
+   c = tensor([4, 6]) / EmberTensor([2, 3])  # [2, 2]
    
    # Comparison operations
-   result = EmberTensor([1, 1]) == EmberTensor([1, 1])  # [True, True]
-   result = EmberTensor([1, 2]) != EmberTensor([1, 1])  # [False, True]
-   result = EmberTensor([1, 2]) > EmberTensor([2, 1])   # [False, True]
-   result = EmberTensor([1, 2]) < EmberTensor([2, 1])   # [True, False]
+   result = tensor([1, 1]) == tensor([1, 1])  # [True, True]
+   result = tensor([1, 2]) != tensor([1, 1])  # [False, True]
+   result = tensor([1, 2]) > EmberTensor([2, 1])   # [False, True]
+   result = tensor([1, 2]) < EmberTensor([2, 1])   # [True, False]
    
    # Scalar operations
-   c = EmberTensor([1, 2]) + 2  # [3, 4]
+   c = tensor([1, 2]) + 2  # [3, 4]
    c = 3 * EmberTensor([1, 2])  # [3, 6]
    ```
 
@@ -48,7 +48,7 @@ During refactoring of tests to maintain backend purity, we identified that the c
 1. **Static Methods**: Implement static methods on the EmberTensor class for common operations to avoid needing temporary tensor objects:
    ```python
    # Current approach
-   tensor_obj = EmberTensor([0])
+   tensor_obj = tensor([0])
    a = tensor_obj.zeros((2, 3))
    
    # Proposed approach
@@ -58,7 +58,7 @@ During refactoring of tests to maintain backend purity, we identified that the c
 2. **Comparison Utilities**: Add intuitive array comparison functions directly in the tensor module:
    ```python
    # Proposed utilities
-   from ember_ml.nn.tensor import array_equal, allclose
+   from ember_ml import array_equal, allclose
    
    assert array_equal(tensor1, tensor2)
    assert allclose(tensor1, tensor2, rtol=1e-5, atol=1e-8)
@@ -95,7 +95,7 @@ During refactoring of tests to maintain backend purity, we identified that the c
 2. **DType Conversion**: Add utilities for converting between different dtype representations:
    ```python
    # Proposed utilities
-   from ember_ml.nn.tensor import convert_dtype
+   from ember_ml import convert_dtype
    
    numpy_dtype = convert_dtype('float32', target='numpy')
    torch_dtype = convert_dtype('float32', target='torch')
@@ -104,7 +104,7 @@ During refactoring of tests to maintain backend purity, we identified that the c
 3. **DType Compatibility**: Add utilities for checking dtype compatibility:
    ```python
    # Proposed utilities
-   from ember_ml.nn.tensor import is_compatible_dtype, get_common_dtype
+   from ember_ml import is_compatible_dtype, get_common_dtype
    
    if is_compatible_dtype(dtype1, dtype2):
        # Do something
@@ -115,7 +115,7 @@ During refactoring of tests to maintain backend purity, we identified that the c
 4. **DType Registry**: Implement a registry for custom dtypes:
    ```python
    # Proposed registry
-   from ember_ml.nn.tensor import register_dtype
+   from ember_ml import register_dtype
    
    register_dtype('custom_float', backend_mappings={
        'numpy': np.float32,

@@ -8,7 +8,7 @@ for all wiring configurations.
 from typing import Optional, Tuple, Dict, Any
 from ember_ml import ops
 from ember_ml.ops import stats  # Import stats module for sum operation
-from ember_ml.nn.tensor import EmberTensor, int32, convert_to_tensor
+from ember_ml import tensor, int32, convert_to_tensor
 from ember_ml.nn.tensor.common import zeros, copy
 
 class NeuronMap: # Renamed from Wiring
@@ -55,7 +55,7 @@ class NeuronMap: # Renamed from Wiring
         self.sensory_adjacency_matrix = None
         self._built = False # Track build status
         
-    def build(self, input_dim=None) -> Tuple[EmberTensor, EmberTensor, EmberTensor]:
+    def build(self, input_dim=None) -> Tuple[EmberTensor, tensor, EmberTensor]:
         """
         Build the wiring configuration.
         

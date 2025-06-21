@@ -51,10 +51,10 @@ You can switch backends at runtime, and tensors will be automatically converted 
 
 ```python
 import ember_ml
-from ember_ml.nn.tensor import EmberTensor
+from ember_ml import tensor
 
 # Create a tensor using the current backend
-x = EmberTensor([1, 2, 3])
+x = tensor([1, 2, 3])
 
 # Switch to a different backend
 set_backend('torch')
@@ -70,16 +70,16 @@ y = x + 1  # Uses PyTorch operations
 You can create tensors in several ways:
 
 ```python
-from ember_ml.nn.tensor import EmberTensor, float32, zeros, ones, arange, linspace
+from ember_ml import tensor, float32, zeros, ones, arange, linspace
 
 # Create a tensor from a list
-tensor1 = EmberTensor([[1, 2, 3], [4, 5, 6]])
+tensor1 = tensor([[1, 2, 3], [4, 5, 6]])
 
 # Create a tensor with a specific data type
-tensor2 = EmberTensor([[1, 2, 3], [4, 5, 6]], dtype=float32)
+tensor2 = tensor([[1, 2, 3], [4, 5, 6]], dtype=float32)
 
 # Create a tensor on a specific device
-tensor3 = EmberTensor([[1, 2, 3], [4, 5, 6]], device='cuda')  # For PyTorch backend
+tensor3 = tensor([[1, 2, 3], [4, 5, 6]], device='cuda')  # For PyTorch backend
 
 # Create a tensor of zeros
 zeros_tensor = zeros((2, 3))
@@ -117,12 +117,12 @@ requires_grad = tensor1.requires_grad  # False
 Ember ML supports a wide range of tensor operations:
 
 ```python
-from ember_ml.nn.tensor import EmberTensor
+from ember_ml import tensor
 from ember_ml import ops
 
 # Create tensors
-a = EmberTensor([1, 2, 3])
-b = EmberTensor([4, 5, 6])
+a = tensor([1, 2, 3])
+b = tensor([4, 5, 6])
 
 # Addition
 c = ops.add(a, b)  # [5, 7, 9]
@@ -140,10 +140,10 @@ f = ops.divide(a, b)  # [0.25, 0.4, 0.5]
 g = ops.matmul(EmberTensor([[1, 2], [3, 4]]), EmberTensor([[5, 6], [7, 8]]))  # [[19, 22], [43, 50]]
 
 # Reduction operations
-sum_a = ops.stats.sum(a)  # 6
-mean_a = ops.stats.mean(a)  # 2.0
-max_a = ops.stats.max(a)  # 3
-min_a = ops.stats.min(a)  # 1
+sum_a = stats.sum(a)  # 6
+mean_a = stats.mean(a)  # 2.0
+max_a = stats.max(a)  # 3
+min_a = stats.min(a)  # 1
 ```
 
 ### Reshaping and Manipulation
@@ -151,10 +151,10 @@ min_a = ops.stats.min(a)  # 1
 You can reshape and manipulate tensors in various ways:
 
 ```python
-from ember_ml.nn.tensor import EmberTensor, reshape, transpose, concatenate, stack, split
+from ember_ml import tensor, reshape, transpose, concatenate, stack, split
 
 # Create a tensor
-a = EmberTensor([[1, 2, 3], [4, 5, 6]])
+a = tensor([[1, 2, 3], [4, 5, 6]])
 
 # Reshape a tensor
 b = reshape(a, (3, 2))  # [[1, 2], [3, 4], [5, 6]]
@@ -182,10 +182,10 @@ f = a.split(a, 3, axis=1)  # Same as above
 You can index and slice tensors:
 
 ```python
-from ember_ml.nn.tensor import EmberTensor
+from ember_ml import tensor
 
 # Create a tensor
-a = EmberTensor([[1, 2, 3], [4, 5, 6]])
+a = tensor([[1, 2, 3], [4, 5, 6]])
 
 # Get a single element
 element = a[0, 1]  # 2
@@ -208,7 +208,7 @@ a[0, 1] = 10  # a is now [[1, 10, 3], [4, 5, 6]]
 Ember ML provides various random tensor operations:
 
 ```python
-from ember_ml.nn.tensor import random_normal, random_uniform, random_binomial, set_seed
+from ember_ml import random_normal, random_uniform, random_binomial, set_seed
 
 # Set random seed for reproducibility
 set_seed(42)
@@ -367,7 +367,7 @@ You can create custom modules by extending the `Module` class:
 
 ```python
 from ember_ml.nn.modules import Module
-from ember_ml.nn.tensor import EmberTensor
+from ember_ml import tensor
 from ember_ml import ops
 
 class CustomModule(Module):
@@ -423,7 +423,7 @@ elif backend == 'numpy':
 Ember ML is designed to minimize memory usage through its function-first design pattern. Here are some tips for managing memory:
 
 ```python
-from ember_ml.nn.tensor import EmberTensor
+from ember_ml import tensor
 
 # Create a tensor
 a = EmberTensor.random_normal((1000, 1000))
@@ -449,19 +449,19 @@ In a future release, Ember ML will support operator overloading for EmberTensor 
 
 ```python
 # Arithmetic operations
-c = EmberTensor([1, 2]) + EmberTensor([2, 3])  # [3, 5]
-c = EmberTensor([5, 6]) - EmberTensor([2, 3])  # [3, 3]
-c = EmberTensor([1, 2]) * EmberTensor([2, 3])  # [2, 6]
-c = EmberTensor([4, 6]) / EmberTensor([2, 3])  # [2, 2]
+c = tensor([1, 2]) + EmberTensor([2, 3])  # [3, 5]
+c = tensor([5, 6]) - EmberTensor([2, 3])  # [3, 3]
+c = tensor([1, 2]) * EmberTensor([2, 3])  # [2, 6]
+c = tensor([4, 6]) / EmberTensor([2, 3])  # [2, 2]
 
 # Comparison operations
-result = EmberTensor([1, 1]) == EmberTensor([1, 1])  # [True, True]
-result = EmberTensor([1, 2]) != EmberTensor([1, 1])  # [False, True]
-result = EmberTensor([1, 2]) > EmberTensor([2, 1])   # [False, True]
-result = EmberTensor([1, 2]) < EmberTensor([2, 1])   # [True, False]
+result = tensor([1, 1]) == tensor([1, 1])  # [True, True]
+result = tensor([1, 2]) != tensor([1, 1])  # [False, True]
+result = tensor([1, 2]) > EmberTensor([2, 1])   # [False, True]
+result = tensor([1, 2]) < EmberTensor([2, 1])   # [True, False]
 
 # Scalar operations
-c = EmberTensor([1, 2]) + 2  # [3, 4]
+c = tensor([1, 2]) + 2  # [3, 4]
 c = 3 * EmberTensor([1, 2])  # [3, 6]
 ```
 
@@ -483,7 +483,7 @@ Future releases will include static methods on the EmberTensor class for common 
 
 ```python
 # Current approach
-tensor_obj = EmberTensor([0])
+tensor_obj = tensor([0])
 a = tensor_obj.zeros((2, 3))
 
 # Future approach
@@ -498,7 +498,7 @@ Future releases will include intuitive array comparison functions:
 
 ```python
 # Future utilities
-from ember_ml.nn.tensor import array_equal, allclose
+from ember_ml import array_equal, allclose
 
 assert array_equal(tensor1, tensor2)
 assert allclose(tensor1, tensor2, rtol=1e-5, atol=1e-8)
@@ -516,7 +516,7 @@ Here's a complete example of building and training a model:
 
 ```python
 import ember_ml
-from ember_ml.nn.tensor import EmberTensor
+from ember_ml import tensor
 from ember_ml.nn.modules import Linear, Activation, Sequential
 from ember_ml import ops
 
@@ -574,7 +574,7 @@ for epoch in range(epochs):
 # Evaluate on test set
 test_predictions = model(test_X)
 test_loss = ops.binary_cross_entropy(test_predictions, test_y).item()
-test_accuracy = ops.stats.mean(tensor.cast(ops.round(test_predictions) == test_y, 'float32')).item()
+test_accuracy = stats.mean(tensor.cast(ops.round(test_predictions) == test_y, 'float32')).item()
 print(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.4f}")
 ```
 

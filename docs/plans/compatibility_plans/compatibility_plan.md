@@ -101,7 +101,7 @@ The current implementation of the wiring module has several issues related to th
 
 1. It tries to use EmberTensor methods as static methods, which is not supported
 2. It imports EmberTensor from the wrong location (`ember_ml.ops.tensor` instead of `ember_ml.nn.tensor`)
-3. It uses a `data` property on EmberTensor, which doesn't exist in the new implementation
+3. It uses a `data` property on tensor, which doesn't exist in the new implementation
 4. It specifies dtypes as strings (e.g., `'int32'`) instead of using dtype objects (e.g., `int32`)
 
 ### 2.2 Proposed Solution
@@ -135,7 +135,7 @@ class Wiring:
 
 ```python
 # After
-from ember_ml.nn.tensor import zeros, convert_to_tensor, int32
+from ember_ml import zeros, convert_to_tensor, int32
 
 class Wiring:
     # ...
@@ -152,8 +152,7 @@ Update the imports and method calls:
 
 ```python
 # Before
-from ember_ml import ops
-from ember_ml.nn.tensor import EmberTensor
+from ember_ml import ops, tensor
 from ember_ml.ops.dtypes import EmberDtype
 from ember_ml.nn.wirings.wiring import Wiring
 
@@ -175,7 +174,7 @@ class RandomWiring(Wiring):
 
 ```python
 # After
-from ember_ml.nn.tensor import zeros, random_uniform, cast, array, int32
+from ember_ml import zeros, random_uniform, cast, array, int32
 from ember_ml.nn.wirings.wiring import Wiring
 
 class RandomWiring(Wiring):
@@ -211,14 +210,14 @@ With the new tensor API, we can use dtype objects directly instead of strings. T
 tensor = zeros([3, 4], dtype='int32')
 
 # New way (using dtype objects)
-from ember_ml.nn.tensor import int32
+from ember_ml import int32
 tensor = zeros([3, 4], dtype=int32)
 ```
 
 The dtype objects are imported directly from `ember_ml.nn.tensor`:
 
 ```python
-from ember_ml.nn.tensor import (
+from ember_ml import (
     float32, float64, int32, int64, bool_,
     int8, int16, uint8, uint16, uint32, uint64, float16
 )

@@ -11,7 +11,7 @@ import os
 # Add the parent directory to the path so we can import ember_ml
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml import ops
 from ember_ml.backend import set_backend, get_backend
 

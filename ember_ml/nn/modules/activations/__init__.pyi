@@ -7,7 +7,7 @@ allowing type checkers to recognize the proper signatures of activation function
 
 from typing import Optional, Callable, Any, Union, Tuple, List
 
-from ember_ml.nn.tensor.types import TensorLike
+from ember_ml.types import TensorLike
 
 # Type alias for Tensor (similar to ops/__init__.pyi)
 type Tensor = Any

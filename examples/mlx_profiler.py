@@ -11,7 +11,7 @@ import gc
 
 from ember_ml import ops
 from ember_ml.nn.modules import Module
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 class MLXProfiler:
     """
@@ -107,8 +107,8 @@ class MLXProfiler:
             times.append(end_time - start_time)
         
         # Calculate statistics
-        time_mean = ops.stats.mean(tensor.convert_to_tensor(times))
-        time_std = ops.stats.std(tensor.convert_to_tensor(times))
+        time_mean = stats.mean(tensor.convert_to_tensor(times))
+        time_std = stats.std(tensor.convert_to_tensor(times))
         time_min = ops.reduce_min(tensor.convert_to_tensor(times))
         time_max = ops.reduce_max(tensor.convert_to_tensor(times))
         

@@ -2,16 +2,15 @@ import matplotlib.pyplot as plt
 from typing import List, Dict, Any
 import pandas as pd
 import numpy as np
-from ember_ml.ops import stats
-from ember_ml import ops
-from ember_ml.nn import tensor
-from ember_ml.nn.tensor import EmberTensor, zeros, ones, reshape, concatenate, to_numpy, convert_to_tensor
-from ember_ml.nn.tensor import float32, shape, cast, arange, stack, pad, full
+from ember_ml import stats
+from ember_ml import ops, tensor
+from ember_ml import tensor, zeros, ones, reshape, concatenate, to_numpy, convert_to_tensor
+from ember_ml import float32, shape, cast, arange, stack, pad, full
 from ember_ml.nn.modules import AutoNCP # Updated import path
 from ember_ml.nn.modules.rnn.stride_aware import StrideAware
 from ember_ml.nn.initializers import glorot_uniform
-from ember_ml.nn.tensor import EmberTensor
-from ember_ml.nn.features import one_hot, PCA
+from ember_ml import tensor
+from ember_ml.features import one_hot, PCA
 
 # The prepare_bigquery_data_bf function would be imported here in a real implementation
 # from data_utils import prepare_bigquery_data_bf
@@ -273,7 +272,7 @@ def visualize_multiscale_dynamics(model, test_inputs, test_y, stride_perspective
     ax2 = fig.add_subplot(2, 2, 2)
     for stride, output in intermediate_outputs:
         # Take the mean activation across samples
-        mean_activation = ops.stats.mean(output, axis=0)
+        mean_activation = stats.mean(output, axis=0)
         ax2.plot(to_numpy(mean_activation), label=f"Stride {stride}")
     ax2.set_title("Mean Activation Patterns Across Strides")
     ax2.set_xlabel("Neuron Index")
@@ -379,14 +378,14 @@ def integrate_liquid_neurons_with_visualization(
             raise ValueError("❌ No valid target column found. Please specify `target_column` manually.")
 
     # Extract features & targets using EmberTensor
-    train_X = EmberTensor(train_df[train_features].values)
-    val_X = EmberTensor(val_df[val_features].values)
-    test_X = EmberTensor(test_df[test_features].values)
+    train_X = tensor(train_df[train_features].values)
+    val_X = tensor(val_df[val_features].values)
+    test_X = tensor(test_df[test_features].values)
     
     # Convert pandas Series to EmberTensor
-    train_y = EmberTensor(train_df[target_column].values)
-    val_y = EmberTensor(val_df[target_column].values)
-    test_y = EmberTensor(test_df[target_column].values)
+    train_y = tensor(train_df[target_column].values)
+    val_y = tensor(val_df[target_column].values)
+    test_y = tensor(test_df[target_column].values)
 
     # Detect if the target is categorical (string-based)
     if train_df[target_column].dtype == "object":
@@ -640,7 +639,7 @@ if __name__ == "__main__":
     print("This module provides classes and functions for multi-scale liquid neural networks.")
     print("To use it, import the module and call the integrate_liquid_neurons_with_visualization function.")
     print("Example:")
-    print("  from ember_ml.attention.multiscale_ltc import integrate_liquid_neurons_with_visualization")
+    print("  from ember_ml.models.attention.multiscale_ltc import integrate_liquid_neurons_with_visualization")
     print("  history = integrate_liquid_neurons_with_visualization(")
     print("      project_id='your-project-id',")
     print("      table_id='your-dataset.your-table',")

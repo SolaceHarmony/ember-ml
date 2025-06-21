@@ -6,8 +6,7 @@ with any backend using the frontend abstraction layer.
 """
 
 from typing import Any, List, Optional, Union, Tuple, Dict, Set
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.nn.modules import Parameter
 
 class GradientTape:

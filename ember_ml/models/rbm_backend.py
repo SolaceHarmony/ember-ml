@@ -10,8 +10,7 @@ from datetime import datetime
 import os
 from typing import Dict, List, Optional, Tuple, Union, Any
 
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, stats, tensor
 
 class RBM:
     """
@@ -212,8 +211,8 @@ class RBM:
         
         # Compute gradients
         weights_gradient = ops.divide(ops.subtract(pos_associations, neg_associations), batch_size)
-        visible_bias_gradient = ops.stats.mean(ops.subtract(batch_data, neg_visible_states), axis=0)
-        hidden_bias_gradient = ops.stats.mean(ops.subtract(pos_hidden_probs, neg_hidden_probs), axis=0)
+        visible_bias_gradient = stats.mean(ops.subtract(batch_data, neg_visible_states), axis=0)
+        hidden_bias_gradient = stats.mean(ops.subtract(pos_hidden_probs, neg_hidden_probs), axis=0)
         
         # Update with momentum and weight decay
         self.weights_momentum = ops.add(
@@ -247,7 +246,7 @@ class RBM:
         )
         
         # Compute reconstruction error
-        reconstruction_error = ops.stats.mean(
+        reconstruction_error = stats.mean(
             stats.sum(ops.pow(ops.subtract(batch_data, neg_visible_probs), 2), axis=1)
         )
         
@@ -410,7 +409,7 @@ class RBM:
         if per_sample:
             return squared_error
         
-        return ops.stats.mean(squared_error)
+        return stats.mean(squared_error)
     
     def free_energy(self, data):
         """

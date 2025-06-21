@@ -3,8 +3,7 @@ import numpy as np # For comparison with known correct results
 import torch # Import torch for device checks if needed
 
 # Import Ember ML modules
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 # from ember_ml.nn import initializers # Removed incorrect import
 from ember_ml.ops import set_backend
 
@@ -82,8 +81,8 @@ def test_random_uniform_initializer():
     assert np.all(result_np >= minval) # Use np.all for numpy comparison
     assert np.all(result_np < maxval) # Use np.all for numpy comparison
     # Check mean and std (should be close to expected for a large sample)
-    assert ops.less(ops.abs(ops.subtract(ops.stats.mean(result), (minval + maxval) / 2.0)), 0.05).item()
-    assert ops.less(ops.abs(ops.subtract(ops.stats.std(result), tensor.convert_to_tensor(ops.sqrt((maxval - minval)**2 / 12.0)))), 0.05).item()
+    assert ops.less(ops.abs(ops.subtract(stats.mean(result), (minval + maxval) / 2.0)), 0.05).item()
+    assert ops.less(ops.abs(ops.subtract(stats.std(result), tensor.convert_to_tensor(ops.sqrt((maxval - minval)**2 / 12.0)))), 0.05).item()
 
 def test_random_normal_initializer():
     # Test random_normal initializer
@@ -101,8 +100,8 @@ def test_random_normal_initializer():
     # assert isinstance(result, tensor.EmberTensor) # Removed incorrect type check
     assert tensor.shape(result) == shape
     # Check mean and std (should be close to expected for a large sample)
-    assert ops.less(ops.abs(ops.subtract(ops.stats.mean(result), mean)), 0.05).item()
-    assert ops.less(ops.abs(ops.subtract(ops.stats.std(result), tensor.convert_to_tensor(stddev))), 0.05).item()
+    assert ops.less(ops.abs(ops.subtract(stats.mean(result), mean)), 0.05).item()
+    assert ops.less(ops.abs(ops.subtract(stats.std(result), tensor.convert_to_tensor(stddev))), 0.05).item()
 
 # Add more test functions for other initializers:
 # test_truncated_normal_initializer(), test_variance_scaling_initializer(),
@@ -126,5 +125,5 @@ def test_random_normal_initializer():
 #     assert tensor.shape(result) == shape
 #     assert ops.all(result_np >= -limit)
 #     assert ops.all(result_np <= limit)
-#     assert ops.less(ops.abs(ops.stats.mean(result)), 0.05).item()
+#     assert ops.less(ops.abs(stats.mean(result)), 0.05).item()
 #     # Variance check might be more complex depending on exact implementation

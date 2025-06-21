@@ -1,8 +1,7 @@
 import matplotlib.pyplot as plt
 import ember_ml as nl
-from ember_ml import ops
-from ember_ml.nn import tensor
-from ember_ml.attention.multiscale_ltc import (
+from ember_ml import ops, tensor
+from ember_ml.models.attention.multiscale_ltc import (
     TemporalStrideProcessor,
     build_multiscale_ltc_model,
     visualize_feature_extraction,

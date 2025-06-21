@@ -7,18 +7,17 @@ The `ops.stats` module provides a comprehensive set of statistical operations fo
 ## Importing
 
 ```python
-from ember_ml import ops
-from ember_ml.nn import tensor # For creating example tensors
+from ember_ml import ops, tensor # For creating example tensors
 
 # Access stats functions via ops.stats
-# e.g., ops.stats.mean(...)
+# e.g., stats.mean(...)
 ```
 
 ## Available Functions
 
 ### Basic Statistics
 
-#### `ops.stats.mean(x, axis=None, keepdims=False)`
+#### `stats.mean(x, axis=None, keepdims=False)`
 
 Compute the mean of a tensor along specified axes.
 
@@ -33,12 +32,12 @@ Compute the mean of a tensor along specified axes.
 **Example:**
 ```python
 x = tensor.convert_to_tensor([[1, 2, 3], [4, 5, 6]])
-mean_all = ops.stats.mean(x)  # Mean of all elements
-mean_rows = ops.stats.mean(x, axis=1)  # Mean of each row
-mean_cols = ops.stats.mean(x, axis=0)  # Mean of each column
+mean_all = stats.mean(x)  # Mean of all elements
+mean_rows = stats.mean(x, axis=1)  # Mean of each row
+mean_cols = stats.mean(x, axis=0)  # Mean of each column
 ```
 
-#### `ops.stats.sum(x, axis=None, keepdims=False)`
+#### `stats.sum(x, axis=None, keepdims=False)`
 
 Compute the sum along the specified axis.
 
@@ -53,12 +52,12 @@ Compute the sum along the specified axis.
 **Example:**
 ```python
 x = tensor.convert_to_tensor([[1, 2, 3], [4, 5, 6]])
-sum_all = ops.stats.sum(x)  # Sum of all elements
-sum_rows = ops.stats.sum(x, axis=1)  # Sum of each row
-sum_cols = ops.stats.sum(x, axis=0)  # Sum of each column
+sum_all = stats.sum(x)  # Sum of all elements
+sum_rows = stats.sum(x, axis=1)  # Sum of each row
+sum_cols = stats.sum(x, axis=0)  # Sum of each column
 ```
 
-#### `ops.stats.var(x, axis=None, keepdims=False, ddof=0)`
+#### `stats.var(x, axis=None, keepdims=False, ddof=0)`
 
 Compute the variance along the specified axis.
 
@@ -74,12 +73,12 @@ Compute the variance along the specified axis.
 **Example:**
 ```python
 x = tensor.convert_to_tensor([[1, 2, 3], [4, 5, 6]])
-var_all = ops.stats.var(x)  # Variance of all elements
-var_rows = ops.stats.var(x, axis=1)  # Variance of each row
-var_cols = ops.stats.var(x, axis=0)  # Variance of each column
+var_all = stats.var(x)  # Variance of all elements
+var_rows = stats.var(x, axis=1)  # Variance of each row
+var_cols = stats.var(x, axis=0)  # Variance of each column
 ```
 
-#### `ops.stats.std(x, axis=None, keepdims=False, ddof=0)`
+#### `stats.std(x, axis=None, keepdims=False, ddof=0)`
 
 Compute the standard deviation along the specified axis.
 
@@ -95,12 +94,12 @@ Compute the standard deviation along the specified axis.
 **Example:**
 ```python
 x = tensor.convert_to_tensor([[1, 2, 3], [4, 5, 6]])
-std_all = ops.stats.std(x)  # Standard deviation of all elements
-std_rows = ops.stats.std(x, axis=1)  # Standard deviation of each row
-std_cols = ops.stats.std(x, axis=0)  # Standard deviation of each column
+std_all = stats.std(x)  # Standard deviation of all elements
+std_rows = stats.std(x, axis=1)  # Standard deviation of each row
+std_cols = stats.std(x, axis=0)  # Standard deviation of each column
 ```
 
-#### `ops.stats.median(x, axis=None, keepdims=False)`
+#### `stats.median(x, axis=None, keepdims=False)`
 
 Compute the median along the specified axis.
 
@@ -115,12 +114,12 @@ Compute the median along the specified axis.
 **Example:**
 ```python
 x = tensor.convert_to_tensor([[1, 2, 3], [4, 5, 6]])
-median_all = ops.stats.median(x)  # Median of all elements
-median_rows = ops.stats.median(x, axis=1)  # Median of each row
-median_cols = ops.stats.median(x, axis=0)  # Median of each column
+median_all = stats.median(x)  # Median of all elements
+median_rows = stats.median(x, axis=1)  # Median of each row
+median_cols = stats.median(x, axis=0)  # Median of each column
 ```
 
-#### `ops.stats.percentile(x, q, axis=None, keepdims=False)`
+#### `stats.percentile(x, q, axis=None, keepdims=False)`
 
 Compute the q-th percentile along the specified axis.
 
@@ -136,12 +135,12 @@ Compute the q-th percentile along the specified axis.
 **Example:**
 ```python
 x = tensor.convert_to_tensor([[1, 2, 3], [4, 5, 6]])
-p25 = ops.stats.percentile(x, 25)  # 25th percentile
-p50 = ops.stats.percentile(x, 50)  # 50th percentile (same as median)
-p75 = ops.stats.percentile(x, 75)  # 75th percentile
+p25 = stats.percentile(x, 25)  # 25th percentile
+p50 = stats.percentile(x, 50)  # 50th percentile (same as median)
+p75 = stats.percentile(x, 75)  # 75th percentile
 ```
 
-#### `ops.stats.min(x, axis=None, keepdims=False)`
+#### `stats.min(x, axis=None, keepdims=False)`
 
 Compute the minimum value along the specified axis.
 
@@ -156,12 +155,12 @@ Compute the minimum value along the specified axis.
 **Example:**
 ```python
 x = tensor.convert_to_tensor([[1, 2, 3], [4, 5, 6]])
-min_all = ops.stats.min(x)  # Minimum of all elements
-min_rows = ops.stats.min(x, axis=1)  # Minimum of each row
-min_cols = ops.stats.min(x, axis=0)  # Minimum of each column
+min_all = stats.min(x)  # Minimum of all elements
+min_rows = stats.min(x, axis=1)  # Minimum of each row
+min_cols = stats.min(x, axis=0)  # Minimum of each column
 ```
 
-#### `ops.stats.max(x, axis=None, keepdims=False)`
+#### `stats.max(x, axis=None, keepdims=False)`
 
 Compute the maximum value along the specified axis.
 
@@ -176,14 +175,14 @@ Compute the maximum value along the specified axis.
 **Example:**
 ```python
 x = tensor.convert_to_tensor([[1, 2, 3], [4, 5, 6]])
-max_all = ops.stats.max(x)  # Maximum of all elements
-max_rows = ops.stats.max(x, axis=1)  # Maximum of each row
-max_cols = ops.stats.max(x, axis=0)  # Maximum of each column
+max_all = stats.max(x)  # Maximum of all elements
+max_rows = stats.max(x, axis=1)  # Maximum of each row
+max_cols = stats.max(x, axis=0)  # Maximum of each column
 ```
 
 ### Cumulative Operations
 
-#### `ops.stats.cumsum(x, axis=None)`
+#### `stats.cumsum(x, axis=None)`
 
 Compute the cumulative sum along the specified axis.
 
@@ -197,12 +196,12 @@ Compute the cumulative sum along the specified axis.
 **Example:**
 ```python
 x = tensor.convert_to_tensor([1, 2, 3, 4, 5])
-cumsum_result = ops.stats.cumsum(x)  # [1, 3, 6, 10, 15]
+cumsum_result = stats.cumsum(x)  # [1, 3, 6, 10, 15]
 ```
 
 ### Indices and Sorting
 
-#### `ops.stats.argmax(x, axis=None, keepdims=False)`
+#### `stats.argmax(x, axis=None, keepdims=False)`
 
 Returns the indices of the maximum values along an axis.
 
@@ -217,12 +216,12 @@ Returns the indices of the maximum values along an axis.
 **Example:**
 ```python
 x = tensor.convert_to_tensor([[1, 5, 3], [4, 2, 6]])
-argmax_all = ops.stats.argmax(x)  # Index of maximum in flattened tensor
-argmax_rows = ops.stats.argmax(x, axis=1)  # Index of maximum in each row
-argmax_cols = ops.stats.argmax(x, axis=0)  # Index of maximum in each column
+argmax_all = stats.argmax(x)  # Index of maximum in flattened tensor
+argmax_rows = stats.argmax(x, axis=1)  # Index of maximum in each row
+argmax_cols = stats.argmax(x, axis=0)  # Index of maximum in each column
 ```
 
-#### `ops.stats.sort(x, axis=-1, descending=False)`
+#### `stats.sort(x, axis=-1, descending=False)`
 
 Sort a tensor along the specified axis.
 
@@ -237,11 +236,11 @@ Sort a tensor along the specified axis.
 **Example:**
 ```python
 x = tensor.convert_to_tensor([[3, 1, 2], [6, 5, 4]])
-sorted_rows = ops.stats.sort(x, axis=1)  # Sort each row
-sorted_desc = ops.stats.sort(x, descending=True)  # Sort in descending order
+sorted_rows = stats.sort(x, axis=1)  # Sort each row
+sorted_desc = stats.sort(x, descending=True)  # Sort in descending order
 ```
 
-#### `ops.stats.argsort(x, axis=-1, descending=False)`
+#### `stats.argsort(x, axis=-1, descending=False)`
 
 Returns the indices that would sort a tensor along the specified axis.
 
@@ -256,13 +255,13 @@ Returns the indices that would sort a tensor along the specified axis.
 **Example:**
 ```python
 x = tensor.convert_to_tensor([[3, 1, 2], [6, 5, 4]])
-argsort_rows = ops.stats.argsort(x, axis=1)  # Indices to sort each row
-argsort_desc = ops.stats.argsort(x, descending=True)  # Indices for descending sort
+argsort_rows = stats.argsort(x, axis=1)  # Indices to sort each row
+argsort_desc = stats.argsort(x, descending=True)  # Indices for descending sort
 ```
 
 ### Other
 
-#### `ops.stats.gaussian(x, mean=0.0, std=1.0)`
+#### `stats.gaussian(x, mean=0.0, std=1.0)`
 
 Apply Gaussian function element-wise to a tensor. Note: This is often categorized under vector operations but is aliased here.
 

@@ -95,7 +95,7 @@ def convert_to_tensor(data, dtype=None, device=None, requires_grad=False):
     Returns:
         EmberTensor
     """
-    # If already an EmberTensor, return it directly (reference passing)
+    # If already an tensor, return it directly (reference passing)
     if isinstance(data, EmberTensor):
         return data
     

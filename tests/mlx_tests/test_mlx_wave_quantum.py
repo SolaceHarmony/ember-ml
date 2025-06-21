@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 from ember_ml.ops import set_backend
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml import ops
 from ember_ml.wave.quantum import WaveFunction, QuantumState, QuantumWave
 

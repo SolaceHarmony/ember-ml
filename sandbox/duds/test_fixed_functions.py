@@ -10,10 +10,9 @@ import time
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Import Ember ML modules
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.ops import set_backend
-from ember_ml.ops import linearalg
+from ember_ml import linearalg
 
 def test_eye_function():
     """Test the fixed eye function."""
@@ -130,8 +129,8 @@ def test_qr_numerical_stability():
         
         # Compute error matrix and maximum absolute error
         diff = ops.subtract(q_t_q, identity)
-        max_error = ops.stats.max(ops.abs(diff))
-        mean_error = ops.stats.mean(ops.abs(diff))
+        max_error = stats.max(ops.abs(diff))
+        mean_error = stats.mean(ops.abs(diff))
         
         print(f"\nQR Orthogonality:")
         print(f"Maximum absolute error: {max_error}")

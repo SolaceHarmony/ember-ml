@@ -8,7 +8,7 @@ common operations in a backend-agnostic way.
 
 import logging
 from typing import Any, List, Optional, Tuple, Union, Dict
-from ember_ml.nn import tensor
+from ember_ml import tensor
 # Set up logging
 logger = logging.getLogger('ember_ml.utils.backend')
 

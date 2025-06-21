@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 import matplotlib.pyplot as plt
 from ember_ml.ops import set_backend
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml.utils import visualization
 
 # Attempt to import optional dependencies
@@ -88,7 +88,7 @@ def test_plot_confusion_matrix(set_backend_fixture):
     """Test plot_confusion_matrix function."""
     y_true, y_pred = create_dummy_classification_data()
     # Need to compute confusion matrix first (assuming a function exists or using numpy)
-    # Using numpy for confusion matrix for now, as ops.stats.confusion_matrix is not yet implemented
+    # Using numpy for confusion matrix for now, as stats.confusion_matrix is not yet implemented
     from sklearn.metrics import confusion_matrix as sk_confusion_matrix
     cm = sk_confusion_matrix(y_true, y_pred)
     class_names = ['Class 0', 'Class 1', 'Class 2']
@@ -167,4 +167,4 @@ def test_plot_to_numpy(set_backend_fixture):
 # TODO: Add tests for specific plot content and correctness where possible.
 # TODO: Add tests for edge cases and invalid inputs for plotting functions.
 # TODO: Update tests for plot_confusion_matrix, plot_roc_curve, plot_precision_recall_curve
-#       once corresponding metric functions are fully implemented in ops.stats.
+#       once corresponding metric functions are fully implemented in stats.

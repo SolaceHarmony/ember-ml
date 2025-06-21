@@ -7,11 +7,12 @@ which can process data with different stride lengths.
 
 from typing import Dict, List, Optional, Tuple, Union, Any, Callable
 
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.nn.modules import Module, Dense # Add Dense import
 from ember_ml.nn.modules.rnn import CfC, LSTM
 from ember_ml.nn.modules import AutoNCP # Updated import path
+from ember_ml.nn.initializers import Constant
+from ember_ml import ops
 
 def create_liquid_network_with_motor_neuron(
     input_dim: int,
@@ -176,8 +177,7 @@ class StrideAwareCfCCell(CfC):
         self.stride_scale = self.add_weight(
             shape=(self.units,),
             name="stride_scale",
-            initializer="constant", #(float(self.stride_length)),
-            constraint=lambda x: clip_by_value(x, 0.1, 100.0)
+            constraint=lambda x: ops.clip(x, 0.1, 100.0)
         )
         
         # Time scale parameter (learnable)
@@ -185,7 +185,7 @@ class StrideAwareCfCCell(CfC):
             shape=(self.units,),
             name="time_scale",
             initializer=Constant(float(self.time_scale_factor)),
-            constraint=lambda x: clip_by_value(x, 0.1, 100.0)
+            constraint=lambda x: ops.clip(x, 0.1, 100.0)
         )
     
     def call(self, inputs, states, training=None):

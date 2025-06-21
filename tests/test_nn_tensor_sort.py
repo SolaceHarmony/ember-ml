@@ -7,9 +7,8 @@ to ensure they work correctly across different backends.
 
 import pytest
 
-from ember_ml import ops
-from ember_ml.nn import tensor
-from ember_ml.nn.tensor import convert_to_tensor
+from ember_ml import ops, tensor
+from ember_ml import convert_to_tensor
 
 
 @pytest.fixture

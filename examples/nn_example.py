@@ -9,7 +9,7 @@ import numpy as np
 import ember_ml as nl # Correct library name (though alias 'nl' is kept for minimal changes)
 import ember_ml.nn as nn # Correct library name
 from ember_ml import ops # Add ops import
-from ember_ml.nn import tensor # Add tensor import
+from ember_ml import tensor # Add tensor import
 
 def create_model():
     """

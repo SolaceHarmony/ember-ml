@@ -9,7 +9,7 @@ from typing import Dict, Any, Optional, List, Tuple, Union, Callable
 
 from ember_ml import ops
 from ember_ml.nn.modules import Module, Parameter
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 class ExpectationSolver(Module):
     """
@@ -113,7 +113,7 @@ class ExpectationSolver(Module):
         data = tensor.concat([X, y], axis=1)
         
         # Compute data statistics
-        self.data_mean = ops.stats.mean(data, axis=0, keepdims=True)
+        self.data_mean = stats.mean(data, axis=0, keepdims=True)
         self.data_cov = self._compute_covariance(data)
         
         # Compute inverse of covariance matrix

@@ -26,7 +26,7 @@ The Ember ML API has been reorganized to provide a more intuitive experience:
 
 **Before:**
 ```python
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Create tensors
 x = tensor.array([1, 2, 3])
@@ -48,7 +48,7 @@ ones = em.ones_like(x)
 
 **Before:**
 ```python
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Manipulate tensors
 x = tensor.array([[1, 2], [3, 4]])
@@ -72,7 +72,7 @@ transposed = em.transpose(x)
 
 **Before:**
 ```python
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml import ops
 
 # Mixed imports for operations
@@ -97,7 +97,7 @@ multiplied = em.multiply(x, y)
 
 **Before:**
 ```python
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml import ops
 
 # Create matrices
@@ -123,8 +123,7 @@ c = em.matmul(a, b)
 
 **Before:**
 ```python
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 
 # Create a matrix
 a = tensor.array([[1, 2], [3, 4]])
@@ -153,14 +152,13 @@ u, s, v = em.svd(a)
 
 **Before:**
 ```python
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 
 # Create data
 data = tensor.array([1, 2, 3, 4, 5])
 # Calculate statistics
-mean = ops.stats.mean(data)
-std = ops.stats.std(data)
+mean = stats.mean(data)
+std = stats.std(data)
 ```
 
 **After:**
@@ -183,7 +181,7 @@ std = em.std(data)
 **Before:**
 ```python
 from ember_ml.nn.modules.activations import relu, sigmoid
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Create data
 x = tensor.array([-1, 0, 1, 2])
@@ -313,7 +311,7 @@ To help with migration, we provide:
 1. Replace imports:
    ```python
    # Before
-   from ember_ml.nn import tensor
+   from ember_ml import tensor
    from ember_ml import ops
    
    # After

@@ -7,8 +7,7 @@ which are specialized recurrent neural network components for multi-timescale pr
 
 from typing import Union, Optional, Dict, Any # Added Dict, Any
 
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.nn.modules import Parameter # Module removed, inheriting from ModuleWiredCell instead
 from ember_ml.nn.modules.wiring import NeuronMap # Use renamed base class
 from ember_ml.nn.modules import Module # Import parent class
