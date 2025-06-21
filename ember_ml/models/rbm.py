@@ -695,12 +695,12 @@ class RBM:
         
         return -hidden_term - vbias_term
     
-    def contrastive_divergence(self, v_pos, k=1, learning_rate=0.1):
+    def contrastive_divergence(self, v_pos: tensor.EmberTensor, k: int = 1, learning_rate: float = 0.1):
         """
         Perform k-step contrastive divergence.
         
         Args:
-            v_pos: Positive phase visible units
+            v_pos: Positive phase visible units (EmberTensor)
             k: Number of Gibbs sampling steps
             learning_rate: Learning rate
             
@@ -708,31 +708,43 @@ class RBM:
             None
         """
         # Positive phase
-        h_pos_probs, h_pos = self.forward(v_pos)
+        h_pos_probs, h_pos = self.forward(v_pos) # h_pos is EmberTensor
         
         # Negative phase
-        h_neg = h_pos.clone()
-        v_neg = v_pos.clone()
+        h_neg = tensor.copy(h_pos) # Use tensor.copy
+        # v_neg = tensor.copy(v_pos) # v_neg is updated in loop, so initial copy not strictly needed if overwritten first
         
+        current_v_neg = v_pos # Start Gibbs chain from data
         for _ in range(k):
-            v_neg_probs, v_neg = self.backward(h_neg)
-            h_neg_probs, h_neg = self.forward(v_neg)
+            v_neg_probs, current_v_neg = self.backward(h_neg) # current_v_neg updated
+            h_neg_probs, h_neg = self.forward(current_v_neg) # h_neg updated
         
         # Compute gradients
-        pos_associations = ops.matmul(v_pos.t(), h_pos_probs)
-        neg_associations = ops.matmul(v_neg.t(), h_neg_probs)
+        # ops.transpose needs axes, assuming v_pos is (batch, features) -> (features, batch)
+        pos_associations = ops.matmul(ops.transpose(v_pos, axes=(1,0)), h_pos_probs)
+        neg_associations = ops.matmul(ops.transpose(current_v_neg, axes=(1,0)), h_neg_probs) # use current_v_neg
         
-        # Update parameters
-        self.weights += learning_rate * (pos_associations - neg_associations) / v_pos.size(0)
-        self.visible_bias += learning_rate * stats.mean(v_pos - v_neg, dim=0)
-        self.hidden_bias += learning_rate * stats.mean(h_pos_probs - h_neg_probs, dim=0)
-    
-    def train(self, data, epochs=10, batch_size=10, learning_rate=0.1, k=1):
+        batch_size_float = tensor.convert_to_tensor(tensor.shape(v_pos)[0], dtype=tensor.EmberDType.float32, device=self.device)
+
+        # Update parameters (self.weights, self.visible_bias, self.hidden_bias are EmberTensors)
+        # dw = lr * ( (v_pos.T @ h_pos_probs) - (v_neg.T @ h_neg_probs) ) / batch_size
+        grad_weights = ops.divide(ops.subtract(pos_associations, neg_associations), batch_size_float)
+        self.weights = ops.add(self.weights, ops.multiply(learning_rate, grad_weights))
+
+        # dv_bias = lr * mean(v_pos - v_neg, axis=0)
+        grad_v_bias = ops.stats.mean(ops.subtract(v_pos, current_v_neg), axis=0) # use current_v_neg
+        self.visible_bias = ops.add(self.visible_bias, ops.multiply(learning_rate, grad_v_bias))
+
+        # dh_bias = lr * mean(h_pos_probs - h_neg_probs, axis=0)
+        grad_h_bias = ops.stats.mean(ops.subtract(h_pos_probs, h_neg_probs), axis=0)
+        self.hidden_bias = ops.add(self.hidden_bias, ops.multiply(learning_rate, grad_h_bias))
+
+    def train(self, data: TensorLike, epochs: int = 10, batch_size: int = 10, learning_rate: float = 0.1, k: int = 1):
         """
         Train the RBM.
         
         Args:
-            data: Training data
+            data: Training data (TensorLike, will be converted to EmberTensor)
             epochs: Number of training epochs
             batch_size: Batch size
             learning_rate: Learning rate
@@ -741,31 +753,55 @@ class RBM:
         Returns:
             List of reconstruction errors
         """
-        data = tensor.convert_to_tensor(data, device=self.device)
-        n_samples = data.size(0)
-        n_batches = n_samples // batch_size
+        data_tensor = tensor.convert_to_tensor(data, device=self.device, dtype=tensor.EmberDType.float32)
+        n_samples = tensor.shape(data_tensor)[0]
         
+        # Ensure n_batches is at least 1, even if n_samples < batch_size
+        n_batches = max(n_samples // batch_size, 1)
+        if n_samples == 0:
+             n_batches = 0
+
         errors = []
         
         for epoch in range(epochs):
-            epoch_error = 0
+            epoch_error_sum = 0.0 # Accumulate as float
             
             # Shuffle data
-            indices = torch.randperm(n_samples)
-            data = data[indices]
+            indices = tensor.random_permutation(n_samples, device=self.device) # Create permutation on device
+            shuffled_data = tensor.gather(data_tensor, indices, axis=0) # Gather rows
             
+            actual_batches_processed = 0
             for i in range(n_batches):
-                batch = data[i*batch_size:(i+1)*batch_size]
+                batch_start = i * batch_size
+                # Correctly calculate batch_end to avoid going out of bounds
+                batch_end = min(batch_start + batch_size, n_samples)
+
+                # Slice the batch
+                # Assuming data is 2D: (n_samples, n_features)
+                # starts=[batch_start, 0], sizes=[num_elements_in_batch, num_features]
+                num_elements_in_batch = batch_end - batch_start
+                if num_elements_in_batch == 0:
+                    continue
+
+                batch = tensor.slice_tensor(shuffled_data,
+                                            starts=[batch_start, 0],
+                                            sizes=[num_elements_in_batch, tensor.shape(shuffled_data)[1]])
+
                 self.contrastive_divergence(batch, k, learning_rate)
+                actual_batches_processed +=1
                 
-                # Compute reconstruction error
+                # Compute reconstruction error for this batch
                 h_probs, h_states = self.forward(batch)
-                v_probs, v_states = self.backward(h_states)
-                batch_error = stats.mean(stats.sum((batch - v_probs) ** 2, dim=1))
-                epoch_error += batch_error.item()
+                v_probs, v_states = self.backward(h_states) # v_probs is used for error
+
+                # (batch - v_probs)^2
+                recon_error_sq = ops.square(ops.subtract(batch, v_probs))
+                # sum over features, then mean over batch
+                sum_recon_error_sq = ops.stats.sum(recon_error_sq, axis=1)
+                batch_mean_error = ops.stats.mean(sum_recon_error_sq) # Scalar EmberTensor
+                epoch_error_sum += batch_mean_error.item() # Add Python float
             
-            # Average error over batches
-            avg_error = epoch_error / n_batches
+            avg_error = epoch_error_sum / actual_batches_processed if actual_batches_processed > 0 else 0.0
             errors.append(avg_error)
             
             print(f"Epoch {epoch+1}/{epochs}: error = {avg_error:.4f}")

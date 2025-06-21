@@ -2,12 +2,13 @@
 Harmonic wave processing components.
 """
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
 import math
 import numpy as np
 from typing import List, Dict, Optional, Tuple, Union
+
+from ember_ml import ops
+from ember_ml.nn import tensor # For tensor.EmberTensor, tensor.zeros etc.
+from ember_ml.nn.tensor.types import TensorLike # For type hinting
 
 class FrequencyAnalyzer:
     """Analyzer for frequency components of signals."""
@@ -25,25 +26,44 @@ class FrequencyAnalyzer:
         self.window_size = window_size
         self.overlap = overlap
         
-    def compute_spectrum(self, signal: tensor.convert_to_tensor) -> tensor.convert_to_tensor:
+    def compute_spectrum(self, signal: tensor.EmberTensor) -> TensorLike: # Return backend tensor
         """
         Compute frequency spectrum.
 
         Args:
-            signal: Input signal tensor
+            signal: Input signal tensor (EmberTensor wrapper)
 
         Returns:
-            Frequency spectrum tensor
+            Frequency spectrum (raw backend tensor)
         """
         # Apply Hann window
-        window = torch.hann_window(self.window_size)
-        padded_signal = F.pad(signal, (0, self.window_size - signal.size(-1) % self.window_size))
+        # ops.signal.hann_window returns a backend tensor
+        window = ops.signal.hann_window(self.window_size, dtype=tensor.EmberDType.float32, device=signal.device)
+
+        # Calculate padding amount
+        # signal.shape is a tuple, get last dim
+        padding_amount = self.window_size - (tensor.shape(signal)[-1] % self.window_size)
+        if padding_amount == self.window_size: # if signal length is a multiple of window_size
+             padding_amount = 0
         
+        # F.pad equivalent: tensor.pad. PyTorch F.pad(signal, (pad_left, pad_right))
+        # tensor.pad expects paddings as [[before, after], [before, after], ...]
+        # For 1D signal, it would be [[0, padding_amount]]
+        # Ensure signal is at least 1D for tensor.pad
+        if len(tensor.shape(signal)) == 0: # scalar
+            padded_signal = tensor.pad(tensor.reshape(signal, (1,)), [[0, padding_amount]])
+        else:
+            paddings = [[0,0]] * (len(tensor.shape(signal)) -1) + [[0, padding_amount]]
+            padded_signal = tensor.pad(signal, paddings)
+
         # Compute FFT
-        spectrum = torch.fft.rfft(padded_signal * window)
-        return torch.abs(spectrum)
+        # Assuming window is compatible for multiplication (broadcast or same shape)
+        # ops.multiply might be needed if '*' is not overloaded for EmberTensor with backend tensor
+        product = ops.multiply(padded_signal, window)
+        spectrum_complex = ops.fft.rfft(product)
+        return ops.abs(spectrum_complex)
         
-    def find_peaks(self, signal: tensor.convert_to_tensor, threshold: float = 0.1, tolerance: float = 0.01) -> List[Dict[str, float]]:
+    def find_peaks(self, signal: tensor.EmberTensor, threshold: float = 0.1, tolerance: float = 0.01) -> List[Dict[str, float]]:
         """
         Find peak frequencies.
 
@@ -56,20 +76,31 @@ class FrequencyAnalyzer:
             List of peak information dictionaries
         """
         spectrum = self.compute_spectrum(signal)
-        freqs = torch.fft.rfftfreq(self.window_size, 1/self.sampling_rate)
-        
+        # Assuming self.window_size is correct for rfftfreq and spectrum length
+        # And assuming 1/self.sampling_rate is correct for 'd' parameter
+        # spectrum is a backend tensor. tensor.shape works on backend tensors too via common.shape
+        n_for_rfftfreq = tensor.shape(spectrum)[-1] * 2 - 2 if tensor.shape(spectrum)[-1] > 1 else self.window_size
+        freqs = ops.fft.rfftfreq(n_for_rfftfreq, d=1.0/self.sampling_rate, device=ops.get_device_of_tensor(spectrum)) # Get device from backend tensor
+
         # Find peaks
         peaks = []
-        for i in range(1, len(spectrum)-1):
-            if spectrum[i] > spectrum[i-1] and spectrum[i] > spectrum[i+1]:
-                if spectrum[i] > threshold * torch.max(spectrum):
-                    # Find closest frequency bin
+        spectrum_max = ops.stats.max(spectrum) # spectrum_max is a backend tensor (scalar)
+
+        for i in range(1, tensor.shape(spectrum)[-1]-1): # Iterate over the last dimension
+            # spectrum and freqs are backend tensors. Indexing them returns backend tensors.
+            current_val = spectrum[i]
+            prev_val = spectrum[i-1]
+            next_val = spectrum[i+1]
+
+            # ops.greater and ops.multiply work on backend tensors
+            if tensor.item(ops.greater(current_val, prev_val)) and \
+               tensor.item(ops.greater(current_val, next_val)): # Convert boolean tensor to Python bool
+                if tensor.item(ops.greater(current_val, ops.multiply(threshold, spectrum_max))):
                     freq = freqs[i]
-                    # Round to nearest integer frequency
-                    rounded_freq = round(freq.item())
+                    rounded_freq = round(tensor.item(freq)) # Use tensor.item()
                     peaks.append({
                         'frequency': rounded_freq,
-                        'amplitude': spectrum[i].item() / torch.max(spectrum).item()
+                        'amplitude': tensor.item(ops.divide(current_val, spectrum_max)) # Use tensor.item()
                     })
         
         # Merge peaks within tolerance
@@ -107,9 +138,12 @@ class FrequencyAnalyzer:
             
         # Sum peak amplitudes
         peak_sum = sum(p['amplitude'] for p in peaks)
-        total_sum = stats.sum(spectrum).item()
+        # Assuming spectrum is 1D for this logic
+        total_sum = ops.stats.sum(spectrum) # total_sum is a backend tensor (scalar)
         
-        return peak_sum / total_sum if total_sum > 0 else 0.0
+        # ops.greater returns backend boolean tensor, convert to Python bool with tensor.item()
+        return tensor.item(ops.divide(peak_sum, tensor.item(total_sum))) if tensor.item(ops.greater(total_sum, 0.0)) else 0.0
+
 
 class WaveSynthesizer:
     """Synthesizer for harmonic wave generation."""
@@ -127,7 +161,7 @@ class WaveSynthesizer:
                  frequency: float,
                  duration: float,
                  amplitude: float = 1.0,
-                 phase: float = 0.0) -> tensor.convert_to_tensor:
+                 phase: float = 0.0) -> TensorLike: # Return backend tensor
         """
         Generate sine wave.
 
@@ -138,15 +172,21 @@ class WaveSynthesizer:
             phase: Initial phase in radians
 
         Returns:
-            Sine wave tensor
+            Sine wave (raw backend tensor)
         """
-        t = torch.linspace(0, duration, int(duration * self.sampling_rate))
-        return amplitude * torch.sin(2 * math.pi * frequency * t + phase)
+        num_samples = int(duration * self.sampling_rate)
+        # tensor.linspace returns backend tensor
+        t = tensor.linspace(0, duration, num_samples, dtype=tensor.EmberDType.float32)
+
+        term1 = ops.multiply(t, 2 * math.pi * frequency) # ops.* returns backend tensor
+        term2 = ops.add(term1, phase)
+        sin_wave = ops.sin(term2)
+        return ops.multiply(amplitude, sin_wave) # Returns backend tensor
         
     def harmonic_wave(self,
                      frequencies: List[float],
                      amplitudes: List[float],
-                     duration: float) -> tensor.convert_to_tensor:
+                     duration: float) -> TensorLike: # Return backend tensor
         """
         Generate wave with harmonics.
 
@@ -156,52 +196,74 @@ class WaveSynthesizer:
             duration: Signal duration in seconds
 
         Returns:
-            Harmonic wave tensor
+            Harmonic wave (raw backend tensor)
         """
-        # Normalize amplitudes to ensure sum is at most 1
         total_amp = sum(abs(a) for a in amplitudes)
         if total_amp > 0:
             norm_amplitudes = [a / total_amp for a in amplitudes]
         else:
             norm_amplitudes = amplitudes
             
-        wave = torch.zeros(int(duration * self.sampling_rate))
+        num_samples = int(duration * self.sampling_rate)
+        # tensor.zeros returns backend tensor
+        wave = tensor.zeros((num_samples,), dtype=tensor.EmberDType.float32)
+
         for freq, amp in zip(frequencies, norm_amplitudes):
-            wave += self.sine_wave(freq, duration, amp)
+            # self.sine_wave now returns backend tensor
+            sine_component = self.sine_wave(freq, duration, amp)
+            wave = ops.add(wave, sine_component) # ops.add returns backend tensor
             
-        return wave
+        return wave # Returns backend tensor
         
     def apply_envelope(self,
-                      wave: tensor.convert_to_tensor,
-                      envelope: tensor.convert_to_tensor) -> tensor.convert_to_tensor:
+                      wave: TensorLike, # Expect backend tensor
+                      envelope: TensorLike) -> TensorLike: # Return backend tensor
         """
         Apply amplitude envelope.
 
         Args:
-            wave: Input wave tensor
-            envelope: Amplitude envelope tensor
+            wave: Input wave (raw backend tensor)
+            envelope: Amplitude envelope (raw backend tensor)
 
         Returns:
-            Modulated wave tensor
+            Modulated wave (raw backend tensor)
         """
-        if len(envelope) != len(wave):
-            envelope = F.interpolate(
-                envelope.view(1, 1, -1),
-                size=len(wave),
-                mode='linear'
-            ).squeeze()
-            
-        # Ensure envelope is positive and normalized
-        envelope = torch.abs(envelope)
-        envelope = envelope / torch.max(envelope)
+        # tensor.shape works on backend tensors
+        wave_len = tensor.shape(wave)[-1]
+        env_len = tensor.shape(envelope)[-1]
+
+        processed_envelope = envelope # backend tensor
+        if env_len != wave_len:
+            # tensor.reshape returns backend tensor
+            envelope_reshaped = tensor.reshape(envelope, (1, 1, env_len))
+            try:
+                # ops.image.resize returns backend tensor
+                resized_envelope_squeezable = ops.image.resize(envelope_reshaped,
+                                                              size=(1, wave_len),
+                                                              mode='linear')
+                # tensor.squeeze returns backend tensor
+                processed_envelope = tensor.squeeze(resized_envelope_squeezable)
+            except AttributeError:
+                print("Warning: ops.image.resize with linear mode for 1D not found. Envelope may not be applied correctly.")
+
+        abs_envelope = ops.abs(processed_envelope) # backend tensor
+        max_abs_env = ops.stats.max(abs_envelope)   # backend tensor (scalar)
+
+        # tensor.item(ops.greater(...)) for Python bool condition
+        if tensor.item(ops.greater(max_abs_env, 0.0)):
+            normalized_envelope = ops.divide(abs_envelope, max_abs_env)
+        else:
+            normalized_envelope = abs_envelope
         
-        # Apply envelope while preserving wave sign
-        modulated = wave * envelope
+        modulated = ops.multiply(wave, normalized_envelope)
         
-        # Ensure modulated signal doesn't exceed original in absolute terms
-        modulated = torch.sign(wave) * torch.minimum(torch.abs(modulated), torch.abs(wave))
+        signed_wave = ops.sign(wave)
+        abs_modulated = ops.abs(modulated)
+        abs_wave = ops.abs(wave)
+        min_abs = ops.minimum(abs_modulated, abs_wave)
+        final_modulated = ops.multiply(signed_wave, min_abs)
             
-        return modulated
+        return final_modulated # Returns backend tensor
 
 class HarmonicProcessor:
     """Processor for harmonic signal analysis and manipulation."""
@@ -217,7 +279,7 @@ class HarmonicProcessor:
         self.analyzer = FrequencyAnalyzer(sampling_rate)
         self.synthesizer = WaveSynthesizer(sampling_rate)
         
-    def decompose(self, signal: tensor.convert_to_tensor) -> Dict[str, List[float]]:
+    def decompose(self, signal: tensor.EmberTensor) -> Dict[str, List[float]]:
         """
         Decompose signal into harmonic components.
 
@@ -236,7 +298,7 @@ class HarmonicProcessor:
     def reconstruct(self,
                    frequencies: List[float],
                    amplitudes: List[float],
-                   duration: float) -> tensor.convert_to_tensor:
+                   duration: float) -> TensorLike: # Return backend tensor
         """
         Reconstruct signal from components.
 
@@ -246,51 +308,51 @@ class HarmonicProcessor:
             duration: Signal duration in seconds
 
         Returns:
-            Reconstructed signal tensor
+            Reconstructed signal (raw backend tensor)
         """
-        # Sort by frequency to maintain phase relationships
         freq_amp = sorted(zip(frequencies, amplitudes), key=lambda x: x[0])
         frequencies = [f for f, _ in freq_amp]
         amplitudes = [a for _, a in freq_amp]
         
-        # Generate signal
+        # self.synthesizer.harmonic_wave returns backend tensor
         signal = self.synthesizer.harmonic_wave(frequencies, amplitudes, duration)
         
-        # Scale to match original signal amplitude
         max_amp = max(abs(a) for a in amplitudes) if amplitudes else 1.0
         if max_amp > 0:
-            signal = signal * max_amp
+            # ops.multiply with scalar and backend tensor
+            signal = ops.multiply(signal, max_amp)
             
-        return signal
+        return signal # Returns backend tensor
         
     def filter_harmonics(self,
-                        signal: tensor.convert_to_tensor,
+                        signal: TensorLike, # Expect backend tensor
                         keep_frequencies: List[float],
-                        tolerance: float = 0.1) -> tensor.convert_to_tensor:
+                        tolerance: float = 0.1) -> TensorLike: # Return backend tensor
         """
         Filter specific harmonics.
 
         Args:
-            signal: Input signal tensor
+            signal: Input signal (raw backend tensor)
             keep_frequencies: Frequencies to keep
             tolerance: Frequency matching tolerance
 
         Returns:
-            Filtered signal tensor
+            Filtered signal (raw backend tensor)
         """
-        # Get original signal amplitude
-        original_max = torch.max(torch.abs(signal))
+        # ops.abs and ops.stats.max operate on and return backend tensors
+        original_max = ops.stats.max(ops.abs(signal)) # original_max is backend scalar tensor
         
-        # Generate filtered signal
-        duration = len(signal) / self.sampling_rate
-        filtered = torch.zeros_like(signal)
+        duration = tensor.shape(signal)[-1] / self.sampling_rate
+        # tensor.zeros_like returns backend tensor
+        filtered_signal = tensor.zeros_like(signal)
         
-        # Keep only matching frequencies
-        for freq in keep_frequencies:
-            # Scale amplitude to match original signal
-            filtered += self.synthesizer.sine_wave(freq, duration, original_max)
+        if keep_frequencies:
+            for freq in keep_frequencies:
+                # self.synthesizer.sine_wave returns backend tensor
+                # tensor.item(original_max) to use scalar float value
+                sine_component = self.synthesizer.sine_wave(freq, duration, tensor.item(original_max))
+                filtered_signal = ops.add(filtered_signal, sine_component)
             
-        # Scale to match original signal
-        filtered = filtered / len(keep_frequencies)
+            filtered_signal = ops.divide(filtered_signal, float(len(keep_frequencies)))
             
-        return filtered
+        return filtered_signal # Returns backend tensor

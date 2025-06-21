@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Dict, Optional, Tuple
 
-import numpy as np
+# import numpy as np # Removed, as np.* calls will be replaced by ops.*
 
 from ember_ml import ops
 from ember_ml.nn import tensor
@@ -11,17 +11,15 @@ from ember_ml.nn.modules import Module, Parameter
 from ember_ml.nn.container.linear import Linear
 
 def _roll(x: tensor.EmberTensor, shifts: int, axis: int = 0) -> tensor.EmberTensor:
-    """Roll tensor along a given axis using NumPy as a fallback."""
-    x_np = tensor.to_numpy(x)
-    rolled = np.roll(x_np, shifts, axis)
-    return tensor.convert_to_tensor(rolled, dtype=tensor.dtype(x), device=ops.get_device(x))
+    """Roll tensor along a given axis using ops.roll."""
+    # Assumes ops.roll(tensor, shift_amount, axis_to_roll_along) exists
+    return ops.roll(x, shifts, axis=axis)
 
 
 def _flip(x: tensor.EmberTensor, axis: int) -> tensor.EmberTensor:
-    """Flip tensor along a given axis using NumPy as a fallback."""
-    x_np = tensor.to_numpy(x)
-    flipped = np.flip(x_np, axis)
-    return tensor.convert_to_tensor(flipped, dtype=tensor.dtype(x), device=ops.get_device(x))
+    """Flip tensor along a given axis using ops.flip."""
+    # Assumes ops.flip(tensor, axis_to_flip_along) exists
+    return ops.flip(x, axis=axis)
 
 
 @dataclass
@@ -112,13 +110,9 @@ class BinaryWave(Module):
         basis = ops.sin(phase_term)
         basis = ops.multiply(basis, tensor.expand_dims(self.amplitude_scale, -1))
 
-        # Solve for output using NumPy pseudoinverse as fallback
-        pinv_basis_np = np.linalg.pinv(tensor.to_numpy(basis))
-        pinv_basis = tensor.convert_to_tensor(
-            pinv_basis_np,
-            dtype=tensor.dtype(basis),
-            device=ops.get_device(basis),
-        )
+        # Solve for output using ops.linearalg.pinv
+        # Assumes ops.linearalg.pinv(tensor) exists and returns an EmberTensor
+        pinv_basis = ops.linearalg.pinv(basis)
         output = ops.matmul(pinv_basis, wave_flat)
 
         

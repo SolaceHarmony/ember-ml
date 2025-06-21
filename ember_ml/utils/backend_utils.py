@@ -88,20 +88,36 @@ def sin_cos_transform(values: Any, period: float = 1.0) -> Tuple[Any, Any]:
     Apply sine and cosine transformations for cyclical features.
     
     Args:
-        values: Input values to transform
-        period: Period for the transformation
+        values: Input values to transform (TensorLike)
+        period: Period for the transformation (float)
         
     Returns:
-        Tuple of (sin_values, cos_values) in the current backend format
+        Tuple of (sin_values, cos_values) as EmberTensors
     """
-    values_tensor = values 
+    values_tensor = tensor.convert_to_tensor(values) # Ensure it's an EmberTensor
     
-    sin_values = ops.sin(2 * ops.pi * values_tensor / period)
-    cos_values = ops.cos(2 * ops.pi * values_tensor / period)
+    # Ensure constants are tensors of the same dtype and device for ops
+    # ops.pi is likely a float, ensure it's converted correctly
+    # The ops functions (multiply, divide, sin, cos) should handle broadcasting of scalar constants
+    # if values_tensor is an EmberTensor. However, explicit conversion is safer for backend purity.
+
+    two_pi_val = 2 * ops.pi # Python float
+
+    # Let ops handle scalar broadcasting if possible, assuming period is float
+    # arg = ops.divide(ops.multiply(two_pi_val, values_tensor), period)
+    # For stricter backend purity, convert all scalars to tensors:
+    two_pi_tensor = tensor.convert_to_tensor(two_pi_val, dtype=values_tensor.dtype, device=values_tensor.device)
+    period_tensor = tensor.convert_to_tensor(period, dtype=values_tensor.dtype, device=values_tensor.device)
+
+    term_mul = ops.multiply(two_pi_tensor, values_tensor)
+    arg = ops.divide(term_mul, period_tensor)
+
+    sin_values = ops.sin(arg)
+    cos_values = ops.cos(arg)
     
     return sin_values, cos_values
 
-def vstack_safe(arrays: List[Any]) -> Any:
+def vstack_safe(arrays: List[Any]) -> Optional[tensor.EmberTensor]: # Return type updated
     """
     Safely stack arrays vertically using the current backend.
     
@@ -112,22 +128,55 @@ def vstack_safe(arrays: List[Any]) -> Any:
         Stacked array in the current backend format
     """
     if not arrays:
-        return None
-    
-    # Convert all arrays to the same format
-    converted_arrays = [arr for arr in arrays]
-    
+        return None # Or return an empty tensor: tensor.zeros((0,)) etc.
+
+    # Convert all arrays in the list to EmberTensors
+    # Assume a default dtype if not specified and items are not already EmberTensors
+    # For safety, let's try to infer dtype from the first tensor if possible, or use float32
+    first_item_device = ops.get_device() # Default device
+    first_item_dtype = tensor.EmberDType.float32 # Default dtype
+
+    if arrays and isinstance(arrays[0], tensor.EmberTensor):
+        first_item_device = arrays[0].device
+        first_item_dtype = arrays[0].dtype
+    elif arrays and hasattr(arrays[0], 'dtype') and hasattr(arrays[0], 'device'): # For backend tensors
+        # This part is tricky as backend tensor device/dtype access isn't standardized here
+        # For now, we'll rely on convert_to_tensor to handle it or use defaults.
+        pass
+
+    ember_tensors = [
+        tensor.convert_to_tensor(arr, dtype=first_item_dtype, device=first_item_device)
+        if not isinstance(arr, tensor.EmberTensor) else arr
+        for arr in arrays
+    ]
+
+    # Ensure all tensors are now on the same device (e.g., device of the first tensor)
+    # This step might be important if convert_to_tensor doesn't unify devices.
+    # For now, assume convert_to_tensor handles device placement or they are already compatible.
+    # A more robust version would explicitly move tensors to a common device.
+
     # Check if all arrays have the same shape except for the first dimension
-    shapes = [tensor.shape(arr)[1:] for arr in converted_arrays]
-    same_shape = all(shape == shapes[0] for shape in shapes)
-    
-    if same_shape:
-        # Use tensor.concatenate for vertical stacking (equivalent to vstack)
-        return tensor.concatenate(converted_arrays, axis=0)
+    if not ember_tensors: # Should have been caught by `if not arrays:`
+        return None
+
+    first_shape_rest = tensor.shape(ember_tensors[0])[1:]
+    # shapes_match = True # Initialize to True
+    # for arr_et in ember_tensors[1:]:
+    #     if tensor.shape(arr_et)[1:] != first_shape_rest:
+    #         shapes_match = False
+    #         break
+    # A more Pythonic way using all()
+    shapes_match = all(tensor.shape(arr_et)[1:] == first_shape_rest for arr_et in ember_tensors[1:])
+
+    if shapes_match:
+        return tensor.concatenate(ember_tensors, axis=0)
     else:
-        # If shapes are different, log a warning and return the first array
-        logger.warning(f"Arrays have different shapes: {shapes}. Cannot stack.")
-        return converted_arrays[0]
+        # Log the actual shapes for better debugging
+        all_shapes = [tensor.shape(arr_et) for arr_et in ember_tensors]
+        logger.warning(f"Arrays have incompatible trailing shapes: {all_shapes}. Cannot vstack.")
+        # Returning None or raising an error might be better than returning the first element.
+        # For now, returning None as per original behavior for empty arrays.
+        return None
 
 def get_backend_info() -> Dict[str, Any]:
     """

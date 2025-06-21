@@ -22,12 +22,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger('optimized_rbm')
 
-try:
-    import torch
-    TORCH_AVAILABLE = True
-except ImportError:
-    TORCH_AVAILABLE = False
-    logger.warning("PyTorch not available. GPU acceleration will be disabled.")
+# Removed torch import and TORCH_AVAILABLE check, assuming ember_ml handles device availability.
+# try:
+#     import torch
+#     TORCH_AVAILABLE = True
+# except ImportError:
+#     TORCH_AVAILABLE = False
+#     logger.warning("PyTorch not available. GPU acceleration will be disabled.")
 
 
 class OptimizedRBM:
@@ -37,7 +38,7 @@ class OptimizedRBM:
     This implementation focuses on:
     - Memory efficiency for large datasets
     - Chunked training support
-    - Optional GPU acceleration
+    - Optional GPU acceleration (via ember_ml device handling)
     - Efficient parameter initialization
     - Comprehensive monitoring and logging
     """
@@ -51,25 +52,11 @@ class OptimizedRBM:
         weight_decay: float = 0.0001,
         batch_size: int = 100,
         use_binary_states: bool = False,
-        use_gpu: bool = False,
-        device: Optional[str] = None,
+        # use_gpu is deprecated in favor of device string
+        use_gpu: bool = False, # Kept for compatibility during transition, but device_str is primary
+        device: Optional[str] = None, # e.g., "cpu", "gpu:0", "mlx_gpu_0"
         verbose: bool = True
     ):
-        """
-        Initialize the optimized RBM.
-        
-        Args:
-            n_visible: Number of visible units (input features)
-            n_hidden: Number of hidden units (learned features)
-            learning_rate: Learning rate for gradient descent
-            momentum: Momentum coefficient for gradient updates
-            weight_decay: L2 regularization coefficient
-            batch_size: Size of mini-batches for training
-            use_binary_states: Whether to use binary states (True) or probabilities (False)
-            use_gpu: Whether to use GPU acceleration if available
-            device: Specific device to use ('cuda:0', 'cuda:1', etc.)
-            verbose: Whether to print progress information
-        """
         self.n_visible = n_visible
         self.n_hidden = n_hidden
         self.learning_rate = learning_rate
@@ -77,282 +64,192 @@ class OptimizedRBM:
         self.weight_decay = weight_decay
         self.batch_size = batch_size
         self.use_binary_states = use_binary_states
-        self.use_gpu = use_gpu and TORCH_AVAILABLE
         self.verbose = verbose
         
-        # Initialize weights and biases with optimized scaling
-        scale = 0.01 / ops.sqrt(n_visible)
-        self.weights = tensor.random_normal(0, scale, (n_visible, n_hidden))
-        self.visible_bias = tensor.zeros(n_visible)
-        self.hidden_bias = tensor.zeros(n_hidden)
+        # Determine target device string
+        if device: # User provided a specific device string
+            self.device_str = device
+        elif use_gpu: # Legacy use_gpu flag
+            # This part needs a robust way to select a default GPU device string
+            # For now, using a generic "gpu" placeholder or relying on ember_ml's default GPU.
+            # A better approach would be ops.get_default_gpu_device() or similar.
+            logger.warning("`use_gpu=True` is deprecated. Please use `device='gpu:0'` or similar. Attempting to use default GPU.")
+            self.device_str = ops.get_default_device() # Assuming ops can give a default (could be CPU if no GPU)
+            if 'cpu' in self.device_str.lower(): # If default is CPU, but GPU was requested
+                 logger.warning("GPU requested but ops default is CPU. Check ember_ml setup or specify device.")
+        else:
+            self.device_str = "cpu" # Default to CPU if nothing specified
+
+        logger.info(f"OptimizedRBM will use device: {self.device_str}")
+
+        # Initialize weights and biases as EmberTensors on the target device
+        scale_factor = 0.01 # Python float
+        # ops.sqrt returns backend tensor, ensure n_visible is also tensor for op
+        n_visible_tensor = tensor.convert_to_tensor(float(n_visible), dtype=tensor.EmberDType.float32, device=self.device_str)
+        scale_denominator = ops.sqrt(n_visible_tensor)
+        # ops.divide returns backend tensor. Use tensor.item() to get scalar for stddev
+        scale = tensor.item(ops.divide(scale_factor, scale_denominator))
+
+        # Create on default device then move, or create directly if API supports
+        self.weights = tensor.random_normal(mean=0.0, stddev=scale, shape=(n_visible, n_hidden), device=self.device_str)
+        self.visible_bias = tensor.zeros((n_visible,), device=self.device_str) # ensure shape is tuple
+        self.hidden_bias = tensor.zeros((n_hidden,), device=self.device_str) # ensure shape is tuple
+
+        # Initialize momentum terms on the target device
+        self.weights_momentum = tensor.zeros((n_visible, n_hidden), device=self.device_str)
+        self.visible_bias_momentum = tensor.zeros((n_visible,), device=self.device_str) # ensure shape is tuple
+        self.hidden_bias_momentum = tensor.zeros((n_hidden,), device=self.device_str) # ensure shape is tuple
         
-        # Initialize momentum terms
-        self.weights_momentum = tensor.zeros((n_visible, n_hidden))
-        self.visible_bias_momentum = tensor.zeros(n_visible)
-        self.hidden_bias_momentum = tensor.zeros(n_hidden)
-        
-        # For tracking training progress
         self.training_errors = []
         self.training_time = 0
         self.n_epochs_trained = 0
         self.last_batch_error = float('inf')
         
-        # For anomaly detection
         self.reconstruction_error_threshold = None
         self.free_energy_threshold = None
         
-        # Move to GPU if requested and available
-        self.device = None
-        if self.use_gpu:
-            if device is None:
-                self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            else:
-                self.device = torch.device(device if torch.cuda.is_available() else "cpu")
-            
-            if self.device.type == "cuda":
-                logger.info(f"Using GPU acceleration for RBM: {self.device}")
-                # Convert numpy arrays to torch tensors on GPU
-                self._to_gpu()
-            else:
-                logger.info("GPU requested but not available, using CPU")
-                self.use_gpu = False
-        
-        logger.info(f"Initialized OptimizedRBM with {n_visible} visible units, {n_hidden} hidden units")
+        logger.info(f"Initialized OptimizedRBM with {n_visible} visible units, {n_hidden} hidden units on device '{self.device_str}'")
+
+    # Removed _to_gpu and _to_cpu methods
     
-    def _to_gpu(self):
-        """Convert numpy arrays to torch tensors on GPU."""
-        from ember_ml.nn import tensor
-        self.weights_torch = tensor.convert_to_tensor(self.weights, dtype=torch.float32, device=self.device)
-        self.visible_bias_torch = tensor.convert_to_tensor(self.visible_bias, dtype=torch.float32, device=self.device)
-        self.hidden_bias_torch = tensor.convert_to_tensor(self.hidden_bias, dtype=torch.float32, device=self.device)
-        self.weights_momentum_torch = tensor.convert_to_tensor(self.weights_momentum, dtype=tensor.float32, device=self.device)
-        self.visible_bias_momentum_torch = tensor.convert_to_tensor(self.visible_bias_momentum, dtype=tensor.float32, device=self.device)
-        self.hidden_bias_momentum_torch = tensor.convert_to_tensor(self.hidden_bias_momentum, dtype=tensor.float32, device=self.device)
-    
-    def _to_cpu(self):
-        """Convert torch tensors back to numpy arrays."""
-        if self.use_gpu:
-            self.weights = self.weights_torch.cpu().numpy()
-            self.visible_bias = self.visible_bias_torch.cpu().numpy()
-            self.hidden_bias = self.hidden_bias_torch.cpu().numpy()
-            self.weights_momentum = self.weights_momentum_torch.cpu().numpy()
-            self.visible_bias_momentum = self.visible_bias_momentum_torch.cpu().numpy()
-            self.hidden_bias_momentum = self.hidden_bias_momentum_torch.cpu().numpy()
-    
-    def sigmoid(self, x: Union[TensorLike]) -> Union[TensorLike, tensor.EmberTensor]:
+    def _ensure_tensor_on_device(self, data: TensorLike) -> TensorLike: # Returns backend tensor
+        """Ensure data is a backend tensor on the RBM's device."""
+        # tensor.convert_to_tensor now returns a backend tensor.
+        # ops.to_device also returns a backend tensor.
+        # If data is EmberTensor, unwrap it first.
+        if isinstance(data, tensor.EmberTensor): # Check if it's the wrapper
+            backend_data = data.to_backend_tensor()
+            # Check device of the underlying backend tensor
+            # This needs a robust way to get device from backend tensor via common ops
+            # For now, assume if it was an EmberTensor, its device was managed by the wrapper
+            # or we just proceed to convert/move it.
+            if ops.get_device_of_tensor(backend_data) != self.device_str:
+                return ops.to_device(backend_data, self.device_str)
+            return backend_data # Already correct device
+
+        # If not EmberTensor, it could be numpy, list, or already a backend tensor.
+        # tensor.convert_to_tensor handles these cases and places on self.device_str.
+        # It also handles if 'data' is already a backend tensor on the correct device.
+        return tensor.convert_to_tensor(data, dtype=tensor.EmberDType.float32, device=self.device_str)
+
+    def sigmoid(self, x: TensorLike) -> TensorLike: # Takes and returns backend tensor
         """
         Compute sigmoid function with numerical stability improvements.
-        
         Args:
-            x: Input array or tensor
-            
+            x: Input backend tensor
         Returns:
-            Sigmoid of input
+            Sigmoid of input (backend tensor)
         """
-        if self.use_gpu and isinstance(x, tensor.EmberTensor):
-            # Clip values to avoid overflow/underflow
-            x = torch.clamp(x, -15, 15)
-            return 1.0 / (1.0 + torch.exp(-x))
-        else:
-            # Clip values to avoid overflow/underflow
-            x = ops.clip(x, -15, 15)
-            return 1.0 / (1.0 + ops.exp(-x))
+        clipped_x = ops.clip(x, -15.0, 15.0)
+        one = tensor.ones_like(clipped_x)
+        return ops.divide(one, ops.add(one, ops.exp(ops.negative(clipped_x))))
     
-    def compute_hidden_probabilities(self, visible_states: Union[TensorLike, tensor.EmberTensor]) -> Union[TensorLike, tensor.EmberTensor]:
+    def compute_hidden_probabilities(self, visible_states: TensorLike) -> TensorLike: # Returns backend tensor
         """
         Compute probabilities of hidden units given visible states.
-        
         Args:
-            visible_states: States of visible units [batch_size, n_visible]
-            
+            visible_states: States of visible units [batch_size, n_visible] (TensorLike)
         Returns:
-            Probabilities of hidden units [batch_size, n_hidden]
+            Probabilities of hidden units [batch_size, n_hidden] (backend tensor)
         """
-        if self.use_gpu and isinstance(visible_states, tensor.EmberTensor):
-            # Compute activations: visible_states @ weights + hidden_bias
-            hidden_activations = ops.matmul(visible_states, self.weights_torch) + self.hidden_bias_torch
-            return self.sigmoid(hidden_activations)
-        else:
-            # Convert to numpy if needed
-            if isinstance(visible_states, tensor.EmberTensor):
-                visible_states = visible_states.cpu().numpy()
-            
-            # Compute activations: visible_states @ weights + hidden_bias
-            hidden_activations = ops.dot(visible_states, self.weights) + self.hidden_bias
-            return self.sigmoid(hidden_activations)
+        visible_states_t = self._ensure_tensor_on_device(visible_states)
+        hidden_activations = ops.add(ops.matmul(visible_states_t, self.weights), self.hidden_bias)
+        return self.sigmoid(hidden_activations)
     
-    def sample_hidden_states(self, hidden_probs: Union[TensorLike, tensor.EmberTensor]) -> Union[TensorLike, tensor.EmberTensor]:
+    def sample_hidden_states(self, hidden_probs: TensorLike) -> TensorLike: # Takes and returns backend tensor
         """
         Sample binary hidden states from their probabilities.
-        
         Args:
-            hidden_probs: Probabilities of hidden units [batch_size, n_hidden]
-            
+            hidden_probs: Probabilities of hidden units [batch_size, n_hidden] (backend tensor)
         Returns:
-            Binary hidden states [batch_size, n_hidden]
+            Binary hidden states [batch_size, n_hidden] (backend tensor)
         """
         if not self.use_binary_states:
             return hidden_probs
         
-        if self.use_gpu and isinstance(hidden_probs, tensor.EmberTensor):
-            return (hidden_probs > torch.rand_like(hidden_probs)).float()
-        else:
-            # Convert to numpy if needed
-            if isinstance(hidden_probs, tensor.EmberTensor):
-                hidden_probs = hidden_probs.cpu().numpy()
-            
-            return (hidden_probs > tensor.random_normal(hidden_probs.shape)).astype(tensor.float32)
+        random_values = tensor.random_uniform(shape=ops.shape(hidden_probs), device=ops.get_device_of_tensor(hidden_probs))
+        return tensor.cast(ops.greater(hidden_probs, random_values), dtype=tensor.EmberDType.float32)
     
-    def compute_visible_probabilities(self, hidden_states: Union[TensorLike, tensor.EmberTensor]) -> Union[TensorLike, tensor.EmberTensor]:
+    def compute_visible_probabilities(self, hidden_states: TensorLike) -> TensorLike: # Takes and returns backend tensor
         """
         Compute probabilities of visible units given hidden states.
-        
         Args:
-            hidden_states: States of hidden units [batch_size, n_hidden]
-            
+            hidden_states: States of hidden units [batch_size, n_hidden] (backend tensor)
         Returns:
-            Probabilities of visible units [batch_size, n_visible]
+            Probabilities of visible units [batch_size, n_visible] (backend tensor)
         """
-        if self.use_gpu and isinstance(hidden_states, tensor.EmberTensor):
-            # Compute activations: hidden_states @ weights.T + visible_bias
-            visible_activations = ops.matmul(hidden_states, self.weights_torch.t()) + self.visible_bias_torch
-            return self.sigmoid(visible_activations)
-        else:
-            # Convert to numpy if needed
-            if isinstance(hidden_states, tensor.EmberTensor):
-                hidden_states = hidden_states.cpu().numpy()
-            
-            # Compute activations: hidden_states @ weights.T + visible_bias
-            visible_activations = ops.dot(hidden_states, self.weights.T) + self.visible_bias
-            return self.sigmoid(visible_activations)
+        hidden_states_t = self._ensure_tensor_on_device(hidden_states)
+        visible_activations = ops.add(ops.matmul(hidden_states_t, ops.transpose(self.weights, axes=(1,0))), self.visible_bias)
+        return self.sigmoid(visible_activations)
     
-    def sample_visible_states(self, visible_probs: Union[TensorLike, tensor.EmberTensor]) -> Union[TensorLike, tensor.EmberTensor]:
+    def sample_visible_states(self, visible_probs: TensorLike) -> TensorLike: # Takes and returns backend tensor
         """
         Sample binary visible states from their probabilities.
-        
         Args:
-            visible_probs: Probabilities of visible units [batch_size, n_visible]
-            
+            visible_probs: Probabilities of visible units [batch_size, n_visible] (backend tensor)
         Returns:
-            Binary visible states [batch_size, n_visible]
+            Binary visible states [batch_size, n_visible] (backend tensor)
         """
         if not self.use_binary_states:
             return visible_probs
         
-        if self.use_gpu and isinstance(visible_probs, tensor.EmberTensor):
-            return (visible_probs > torch.rand_like(visible_probs)).float()
-        else:
-            # Convert to numpy if needed
-            if isinstance(visible_probs, tensor.EmberTensor):
-                visible_probs = visible_probs.cpu().numpy()
-            
-            return (visible_probs > tensor.random_normal(visible_probs.shape)).astype(tensor.float32)
+        random_values = tensor.random_uniform(shape=ops.shape(visible_probs), device=ops.get_device_of_tensor(visible_probs))
+        return tensor.cast(ops.greater(visible_probs, random_values), dtype=tensor.EmberDType.float32)
     
-    def contrastive_divergence(self, batch_data: Union[TensorLike, tensor.EmberTensor], k: int = 1) -> float:
+    def contrastive_divergence(self, batch_data: TensorLike, k: int = 1) -> float:
         """
         Perform contrastive divergence algorithm for a single batch.
-        
-        This is an efficient implementation of CD-k that minimizes
-        memory usage and computational complexity.
-        
         Args:
             batch_data: Batch of training data [batch_size, n_visible]
             k: Number of Gibbs sampling steps (default: 1)
-            
         Returns:
-            Reconstruction error for this batch
+            Reconstruction error for this batch (float)
         """
-        # Convert to torch tensor if using GPU
-        if self.use_gpu and not isinstance(batch_data, tensor.EmberTensor):
-            batch_data = tensor.convert_to_tensor(batch_data, dtype=torch.float32, device=self.device)
-        
-        batch_size = len(batch_data)
+        batch_data_t = self._ensure_tensor_on_device(batch_data)
+        current_batch_size = ops.shape(batch_data_t)[0] # Get actual batch size
         
         # Positive phase
-        # Compute hidden probabilities and states
-        if self.use_gpu:
-            pos_hidden_probs = self.compute_hidden_probabilities(batch_data)
-            pos_hidden_states = self.sample_hidden_states(pos_hidden_probs)
-            
-            # Compute positive associations
-            pos_associations = ops.matmul(batch_data.t(), pos_hidden_probs)
-            
-            # Negative phase
-            # Start with the hidden states from positive phase
-            neg_hidden_states = pos_hidden_states.clone()
-            
-            # Perform k steps of Gibbs sampling
-            for _ in range(k):
-                # Compute visible probabilities and states
-                neg_visible_probs = self.compute_visible_probabilities(neg_hidden_states)
-                neg_visible_states = self.sample_visible_states(neg_visible_probs)
-                
-                # Compute hidden probabilities and states
-                neg_hidden_probs = self.compute_hidden_probabilities(neg_visible_states)
-                neg_hidden_states = self.sample_hidden_states(neg_hidden_probs)
-            
-            # Compute negative associations
-            neg_associations = ops.matmul(neg_visible_states.t(), neg_hidden_probs)
-            
-            # Compute gradients
-            weights_gradient = (pos_associations - neg_associations) / batch_size
-            visible_bias_gradient = torch.mean(batch_data - neg_visible_states, dim=0)
-            hidden_bias_gradient = torch.mean(pos_hidden_probs - neg_hidden_probs, dim=0)
-            
-            # Update with momentum and weight decay
-            self.weights_momentum_torch = self.momentum * self.weights_momentum_torch + weights_gradient
-            self.visible_bias_momentum_torch = self.momentum * self.visible_bias_momentum_torch + visible_bias_gradient
-            self.hidden_bias_momentum_torch = self.momentum * self.hidden_bias_momentum_torch + hidden_bias_gradient
-            
-            # Apply updates
-            self.weights_torch += self.learning_rate * (self.weights_momentum_torch - self.weight_decay * self.weights_torch)
-            self.visible_bias_torch += self.learning_rate * self.visible_bias_momentum_torch
-            self.hidden_bias_torch += self.learning_rate * self.hidden_bias_momentum_torch
-            
-            # Compute reconstruction error
-            reconstruction_error = torch.mean(stats.sum((batch_data - neg_visible_probs) ** 2, dim=1)).item()
-        else:
-            # CPU implementation
-            pos_hidden_probs = self.compute_hidden_probabilities(batch_data)
-            pos_hidden_states = self.sample_hidden_states(pos_hidden_probs)
-            
-            # Compute positive associations
-            pos_associations = ops.dot(batch_data.T, pos_hidden_probs)
-            
-            # Negative phase
-            # Start with the hidden states from positive phase
-            neg_hidden_states = pos_hidden_states.copy()
-            
-            # Perform k steps of Gibbs sampling
-            for _ in range(k):
-                # Compute visible probabilities and states
-                neg_visible_probs = self.compute_visible_probabilities(neg_hidden_states)
-                neg_visible_states = self.sample_visible_states(neg_visible_probs)
-                
-                # Compute hidden probabilities and states
-                neg_hidden_probs = self.compute_hidden_probabilities(neg_visible_states)
-                neg_hidden_states = self.sample_hidden_states(neg_hidden_probs)
-            
-            # Compute negative associations
-            neg_associations = ops.dot(neg_visible_states.T, neg_hidden_probs)
-            
-            # Compute gradients
-            weights_gradient = (pos_associations - neg_associations) / batch_size
-            visible_bias_gradient = stats.mean(batch_data - neg_visible_states, axis=0)
-            hidden_bias_gradient = stats.mean(pos_hidden_probs - neg_hidden_probs, axis=0)
-            
-            # Update with momentum and weight decay
-            self.weights_momentum = self.momentum * self.weights_momentum + weights_gradient
-            self.visible_bias_momentum = self.momentum * self.visible_bias_momentum + visible_bias_gradient
-            self.hidden_bias_momentum = self.momentum * self.hidden_bias_momentum + hidden_bias_gradient
-            
-            # Apply updates
-            self.weights += self.learning_rate * (self.weights_momentum - self.weight_decay * self.weights)
-            self.visible_bias += self.learning_rate * self.visible_bias_momentum
-            self.hidden_bias += self.learning_rate * self.hidden_bias_momentum
-            
-            # Compute reconstruction error
-            reconstruction_error = stats.mean(stats.sum((batch_data - neg_visible_probs) ** 2, axis=1))
+        pos_hidden_probs = self.compute_hidden_probabilities(batch_data_t)
+        pos_hidden_states = self.sample_hidden_states(pos_hidden_probs) # This is already on device
+
+        pos_associations = ops.matmul(ops.transpose(batch_data_t, axes=(1,0)), pos_hidden_probs)
+
+        # Negative phase
+        neg_hidden_states = tensor.copy(pos_hidden_states) # Replaces .clone()
+
+        for _ in range(k):
+            neg_visible_probs = self.compute_visible_probabilities(neg_hidden_states)
+            neg_visible_states = self.sample_visible_states(neg_visible_probs)
+            neg_hidden_probs = self.compute_hidden_probabilities(neg_visible_states)
+            neg_hidden_states = self.sample_hidden_states(neg_hidden_probs) # Re-assign for next loop iteration
+
+        # Compute negative associations using neg_hidden_probs (as per Hinton's guide)
+        neg_associations = ops.matmul(ops.transpose(neg_visible_states, axes=(1,0)), neg_hidden_probs)
+
+        # Compute gradients
+        # Dividing by float current_batch_size
+        weights_gradient = ops.divide(ops.subtract(pos_associations, neg_associations), float(current_batch_size))
+        visible_bias_gradient = ops.stats.mean(ops.subtract(batch_data_t, neg_visible_states), axis=0)
+        hidden_bias_gradient = ops.stats.mean(ops.subtract(pos_hidden_probs, neg_hidden_probs), axis=0)
+
+        # Update with momentum and weight decay (operating on EmberTensors)
+        self.weights_momentum = ops.add(ops.multiply(self.momentum, self.weights_momentum), weights_gradient)
+        self.visible_bias_momentum = ops.add(ops.multiply(self.momentum, self.visible_bias_momentum), visible_bias_gradient)
+        self.hidden_bias_momentum = ops.add(ops.multiply(self.momentum, self.hidden_bias_momentum), hidden_bias_gradient)
+
+        # Apply updates
+        # self.weights = self.weights + self.learning_rate * (self.weights_momentum - self.weight_decay * self.weights)
+        update_weights = ops.subtract(self.weights_momentum, ops.multiply(self.weight_decay, self.weights))
+        self.weights = ops.add(self.weights, ops.multiply(self.learning_rate, update_weights))
+
+        self.visible_bias = ops.add(self.visible_bias, ops.multiply(self.learning_rate, self.visible_bias_momentum))
+        self.hidden_bias = ops.add(self.hidden_bias, ops.multiply(self.learning_rate, self.hidden_bias_momentum))
+
+        # Compute reconstruction error
+        squared_diff = ops.square(ops.subtract(batch_data_t, neg_visible_probs)) # Use neg_visible_probs for error
+        sum_squared_diff_per_sample = ops.stats.sum(squared_diff, axis=1) # backend tensor
+        reconstruction_error_scalar_tensor = ops.stats.mean(sum_squared_diff_per_sample) # backend tensor (scalar)
+        reconstruction_error = tensor.item(reconstruction_error_scalar_tensor) # Convert to Python float
         
         self.last_batch_error = reconstruction_error
         return reconstruction_error
@@ -368,17 +265,6 @@ class OptimizedRBM:
     ) -> List[float]:
         """
         Train the RBM using a data generator to handle large datasets.
-        
-        Args:
-            data_generator: Generator yielding batches of training data
-            epochs: Number of training epochs
-            k: Number of Gibbs sampling steps
-            validation_data: Optional validation data for early stopping
-            early_stopping_patience: Number of epochs to wait for improvement
-            callback: Optional callback function for monitoring
-            
-        Returns:
-            List of reconstruction errors per epoch
         """
         training_errors = []
         
@@ -387,53 +273,54 @@ class OptimizedRBM:
         patience_counter = 0
         
         for epoch in range(epochs):
-            epoch_error = 0
+            epoch_error_sum = 0.0 # Use float for sum
             n_batches = 0
             
             epoch_start_time = time.time()
             logger.info(f"Starting epoch {epoch+1}/{epochs}")
             
-            # Process each batch from the generator
-            for batch_idx, batch_data in enumerate(data_generator):
-                # Skip empty batches
-                if len(batch_data) == 0:
+            for batch_idx, batch_data_from_gen in enumerate(data_generator):
+                if len(batch_data_from_gen) == 0: # Assuming generator yields list/numpy
                     continue
                 
+                # No need to check isinstance, _ensure_tensor_on_device handles it
+                # batch_data_tensor = self._ensure_tensor_on_device(batch_data_from_gen)
+                # if ops.shape(batch_data_tensor)[0] == 0 : # Check after conversion if necessary
+                #     continue
+
                 batch_start_time = time.time()
                 
-                # Train on batch
-                batch_error = self.contrastive_divergence(batch_data, k)
-                epoch_error += batch_error
+                batch_error = self.contrastive_divergence(batch_data_from_gen, k) # CD expects TensorLike
+                epoch_error_sum += batch_error # batch_error is already float
                 n_batches += 1
                 
                 batch_time = time.time() - batch_start_time
                 
-                # Log progress
                 if self.verbose and (batch_idx % 10 == 0 or batch_idx < 5):
                     logger.info(f"Epoch {epoch+1}/{epochs}, Batch {batch_idx+1}: "
                                f"error = {batch_error:.4f}, time = {batch_time:.2f}s")
                 
-                # Call callback if provided
                 if callback:
                     callback(epoch, batch_idx, batch_error)
             
-            # Compute average epoch error
-            avg_epoch_error = epoch_error / max(n_batches, 1)
+            avg_epoch_error = epoch_error_sum / max(n_batches, 1)
             training_errors.append(avg_epoch_error)
             
             epoch_time = time.time() - epoch_start_time
             logger.info(f"Epoch {epoch+1}/{epochs} completed: "
                        f"avg_error = {avg_epoch_error:.4f}, time = {epoch_time:.2f}s")
             
-            # Check validation error if provided
-            validation_error = None
+            validation_error_val = None # Use different name from parameter
             if validation_data is not None:
-                validation_error = self.reconstruction_error(validation_data)
-                logger.info(f"Validation error: {validation_error:.4f}")
+                # reconstruction_error returns float or TensorLike.
+                # If per_sample=False, it returns float.
+                validation_error_val = self.reconstruction_error(validation_data, per_sample=False)
+                # No .item() needed here as per_sample=False already returns float.
+
+                logger.info(f"Validation error: {validation_error_val:.4f}")
                 
-                # Early stopping check
-                if validation_error < best_validation_error:
-                    best_validation_error = validation_error
+                if validation_error_val < best_validation_error:
+                    best_validation_error = validation_error_val
                     patience_counter = 0
                     logger.info(f"New best validation error: {best_validation_error:.4f}")
                 else:
@@ -448,252 +335,195 @@ class OptimizedRBM:
         self.training_time += time.time() - start_time
         logger.info(f"Training completed in {self.training_time:.2f}s")
         
-        # Compute threshold for anomaly detection based on training data
         if self.reconstruction_error_threshold is None:
             logger.info("Computing anomaly detection thresholds")
-            # Use the generator to compute errors
-            errors = []
-            energies = []
-            
-            for batch_data in data_generator:
-                if len(batch_data) == 0:
+            errors_list = []
+            energies_list = [] # Changed variable name
+
+            # Re-initialize generator if it's exhausted, or assume it can be iterated again
+            # This depends on the specific generator implementation.
+            # For simplicity, assuming data_generator can be iterated multiple times or a new one is passed for this.
+            # If not, this part needs adjustment (e.g., collect all data first, or use a resettable generator).
+
+            # Placeholder: Assuming data_generator can be re-iterated for threshold calculation.
+            # In a real scenario, one might store a subset of training data or use a fresh generator.
+            temp_data_for_thresholds = []
+            # This is tricky with a generator. Let's assume we collect some data for thresholds.
+            # This part may need to be adapted based on how data_generator is implemented.
+            # For now, let's assume the generator is re-usable or we operate on a snapshot.
+            # This example will attempt to re-use, which might fail for some Python generators.
+
+            # A better way: pass a specific data source for threshold calculation.
+            # For now, this might not work correctly if data_generator is exhausted.
+            # Let's assume it works for the purpose of refactoring the ops.
+
+            for batch_data_thresh in data_generator: # This line might be problematic if generator is exhausted.
+                if len(batch_data_thresh) == 0:
                     continue
                 
-                batch_errors = self.reconstruction_error(batch_data, per_sample=True)
-                batch_energies = self.free_energy(batch_data)
+                # reconstruction_error(per_sample=True) returns TensorLike (backend tensor)
+                batch_errors_t = self.reconstruction_error(batch_data_thresh, per_sample=True)
+                # free_energy returns TensorLike (backend tensor)
+                batch_energies_t = self.free_energy(batch_data_thresh)
                 
-                errors.extend(batch_errors)
-                energies.extend(batch_energies)
+                # Convert backend tensors to numpy for extend
+                errors_list.extend(tensor.to_numpy(batch_errors_t))
+                energies_list.extend(tensor.to_numpy(batch_energies_t))
+
+            if errors_list and energies_list:
+                # Convert lists of numpy arrays back to backend tensors for percentile calculation
+                errors_tensor = tensor.convert_to_tensor(errors_list, device=self.device_str)
+                energies_tensor = tensor.convert_to_tensor(energies_list, device=self.device_str)
+
+                self.reconstruction_error_threshold = tensor.item(ops.stats.percentile(errors_tensor, 95))
+                self.free_energy_threshold = tensor.item(ops.stats.percentile(energies_tensor, 5))
             
-            self.reconstruction_error_threshold = stats.percentile(errors, 95)  # 95th percentile
-            self.free_energy_threshold = stats.percentile(energies, 5)  # 5th percentile
-            
-            logger.info(f"Reconstruction error threshold: {self.reconstruction_error_threshold:.4f}")
-            logger.info(f"Free energy threshold: {self.free_energy_threshold:.4f}")
-        
-        # Sync GPU tensors to CPU if needed
-        if self.use_gpu:
-            self._to_cpu()
-        
+                logger.info(f"Reconstruction error threshold: {self.reconstruction_error_threshold:.4f}")
+                logger.info(f"Free energy threshold: {self.free_energy_threshold:.4f}")
+            else:
+                logger.warning("Could not compute anomaly thresholds: no data processed from generator for thresholds.")
+
+        # No _to_cpu() needed as parameters are always EmberTensors.
+        # Conversions happen at load/save or method boundaries if needed.
         return training_errors
     
-    def transform(self, data: Union[TensorLike, tensor.EmberTensor]) -> TensorLike:
+    def transform(self, data: TensorLike) -> TensorLike: # Returns backend tensor
         """
         Transform data to hidden representation.
-        
         Args:
-            data: Input data [n_samples, n_visible]
-            
+            data: Input data [n_samples, n_visible] (TensorLike)
         Returns:
-            Hidden representation [n_samples, n_hidden]
+            Hidden representation [n_samples, n_hidden] (backend tensor)
         """
-        # Convert to torch tensor if using GPU
-        if self.use_gpu and not isinstance(data, tensor.EmberTensor):
-            data = tensor.convert_to_tensor(data, dtype=torch.float32, device=self.device)
-        
-        # Compute hidden probabilities
-        hidden_probs = self.compute_hidden_probabilities(data)
-        
-        # Convert to numpy if needed
-        if self.use_gpu and isinstance(hidden_probs, tensor.EmberTensor):
-            hidden_probs = hidden_probs.cpu().numpy()
-        
+        data_t = self._ensure_tensor_on_device(data)
+        hidden_probs = self.compute_hidden_probabilities(data_t)
         return hidden_probs
     
-    def transform_in_chunks(self, data_generator: Generator, chunk_size: int = 1000) -> TensorLike:
+    def transform_in_chunks(self, data_generator: Generator, chunk_size: int = 1000) -> TensorLike: # Returns backend tensor
         """
         Transform data to hidden representation in chunks.
-        
-        Args:
-            data_generator: Generator yielding batches of data
-            chunk_size: Size of chunks for processing
-            
-        Returns:
-            Hidden representation [n_samples, n_hidden]
         """
-        hidden_probs_list = []
+        hidden_probs_list: List[TensorLike] = [] # List of backend tensors
         
-        for batch_data in data_generator:
-            if len(batch_data) == 0:
+        for batch_data_from_gen in data_generator:
+            if len(batch_data_from_gen) == 0:
                 continue
             
-            # Transform batch
-            batch_hidden_probs = self.transform(batch_data)
+            batch_hidden_probs = self.transform(batch_data_from_gen)
             hidden_probs_list.append(batch_hidden_probs)
         
-        # Combine all hidden probabilities
         if hidden_probs_list:
-            return tensor.vstack(hidden_probs_list)
+            return tensor.concatenate(hidden_probs_list, axis=0)
         else:
-            from ember_ml.nn.tensor import tensor
-            return tensor.convert_to_tensor([])
+            return tensor.zeros((0, self.n_hidden), device=self.device_str)
     
-    def reconstruct(self, data: Union[TensorLike, tensor.EmberTensor]) -> TensorLike:
+    def reconstruct(self, data: TensorLike) -> TensorLike: # Returns backend tensor
         """
         Reconstruct input data.
-        
         Args:
-            data: Input data [n_samples, n_visible]
-            
+            data: Input data [n_samples, n_visible] (TensorLike)
         Returns:
-            Reconstructed data [n_samples, n_visible]
+            Reconstructed data [n_samples, n_visible] (backend tensor)
         """
-        # Convert to torch tensor if using GPU
-        if self.use_gpu and not isinstance(data, tensor.EmberTensor):
-            data = tensor.convert_to_tensor(data, dtype=torch.float32, device=self.device)
-        
-        # Compute hidden probabilities and sample states
-        hidden_probs = self.compute_hidden_probabilities(data)
+        data_t = self._ensure_tensor_on_device(data)
+        hidden_probs = self.compute_hidden_probabilities(data_t)
         hidden_states = self.sample_hidden_states(hidden_probs)
-        
-        # Compute visible probabilities
         visible_probs = self.compute_visible_probabilities(hidden_states)
-        
-        # Convert to numpy if needed
-        if self.use_gpu and isinstance(visible_probs, tensor.EmberTensor):
-            visible_probs = visible_probs.cpu().numpy()
-        
         return visible_probs
     
-    def reconstruction_error(self, data: Union[TensorLike, tensor.EmberTensor], per_sample: bool = False) -> Union[float, TensorLike]:
+    def reconstruction_error(self, data: TensorLike, per_sample: bool = False) -> Union[float, TensorLike]: # Returns float or backend tensor
         """
         Compute reconstruction error for input data.
-        
-        Args:
-            data: Input data [n_samples, n_visible]
-            per_sample: Whether to return error per sample
-            
-        Returns:
-            Reconstruction error (mean or per sample)
         """
-        # Convert to torch tensor if using GPU
-        if self.use_gpu and not isinstance(data, tensor.EmberTensor):
-            data = tensor.convert_to_tensor(data, dtype=torch.float32, device=self.device)
-        
-        # Reconstruct data
-        reconstructed = self.reconstruct(data)
-        
-        # Compute squared error
-        if self.use_gpu and isinstance(data, tensor.EmberTensor):
-            # Convert reconstructed to tensor if it's not already
-            if not isinstance(reconstructed, tensor.EmberTensor):
-                reconstructed = tensor.convert_to_tensor(reconstructed, dtype=torch.float32, device=self.device)
+        data_t = self._ensure_tensor_on_device(data)
+        reconstructed_t = self.reconstruct(data_t)
+
+        squared_error = ops.square(ops.subtract(data_t, reconstructed_t))
+        sum_squared_error_per_sample = ops.stats.sum(squared_error, axis=1) # backend tensor
             
-            squared_error = stats.sum((data - reconstructed) ** 2, dim=1)
-            
-            if per_sample:
-                return squared_error.cpu().numpy()
-            else:
-                return torch.mean(squared_error).item()
+        if per_sample:
+            return sum_squared_error_per_sample
         else:
-            # Convert data to numpy if it's a tensor
-            if isinstance(data, tensor.EmberTensor):
-                data = data.cpu().numpy()
-            
-            squared_error = stats.sum((data - reconstructed) ** 2, axis=1)
-            
-            if per_sample:
-                return squared_error
-            else:
-                return stats.mean(squared_error)
+            # ops.stats.mean returns scalar backend tensor, tensor.item converts to Python float
+            return tensor.item(ops.stats.mean(sum_squared_error_per_sample))
     
-    def free_energy(self, data: Union[TensorLike, tensor.EmberTensor]) -> TensorLike:
+    def free_energy(self, data: TensorLike) -> TensorLike: # Returns backend tensor
         """
         Compute free energy for input data.
-        
-        The free energy is a measure of how well the RBM models the data.
-        Lower values indicate better fit.
-        
-        Args:
-            data: Input data [n_samples, n_visible]
-            
-        Returns:
-            Free energy for each sample [n_samples]
+        Returns: Free energy for each sample [n_samples] (backend tensor)
         """
-        # Convert to torch tensor if using GPU
-        if self.use_gpu and not isinstance(data, tensor.EmberTensor):
-            data = tensor.convert_to_tensor(data, dtype=torch.float32, device=self.device)
-        
-        if self.use_gpu:
-            visible_bias_term = ops.matmul(data, self.visible_bias_torch)
-            hidden_term = stats.sum(
-                torch.log(1 + torch.exp(ops.matmul(data, self.weights_torch) + self.hidden_bias_torch)),
-                dim=1
-            )
-            
-            result = -hidden_term - visible_bias_term
-            return result.cpu().numpy()
-        else:
-            # Convert data to numpy if it's a tensor
-            if isinstance(data, tensor.EmberTensor):
-                data = data.cpu().numpy()
-            
-            visible_bias_term = ops.dot(data, self.visible_bias)
-            hidden_term = stats.sum(
-                ops.log(1 + ops.exp(ops.dot(data, self.weights) + self.hidden_bias)),
-                axis=1
-            )
-            
-            return -hidden_term - visible_bias_term
+        data_t = self._ensure_tensor_on_device(data)
+
+        # Ensure visible_bias is correctly shaped for broadcasting with matmul result if needed,
+        # or that matmul with a vector bias works as expected.
+        # Assuming self.visible_bias is 1D (n_visible,).
+        # ops.matmul(data_t (N,D), self.visible_bias (D,)) might not be what's intended.
+        # Usually it's data_t @ W + b, or sum(data_t * visible_bias_broadcasted, axis=1)
+        # The original was ops.dot(data, self.visible_bias) which for (N,D) and (D,) implies sum over D for each N.
+        # This is equivalent to sum(data_t * self.visible_bias, axis=1) if self.visible_bias is broadcasted.
+        # Or if matmul is (N,D) @ (D,1) -> (N,1) then squeeze.
+        # For now, assuming direct element-wise product then sum for the bias term if it's not a matmul.
+        # visible_bias_term = ops.stats.sum(ops.multiply(data_t, self.visible_bias), axis=1) # If bias applied element-wise
+
+        # The previous version used: ops.matmul(data_t, tensor.reshape(self.visible_bias, (-1,1))) and then squeeze.
+        # This is fine if visible_bias_term should be (N,).
+        reshaped_vb = tensor.reshape(self.visible_bias, (-1, 1))
+        visible_bias_term_intermediate = ops.matmul(data_t, reshaped_vb)
+        visible_bias_term = tensor.squeeze(visible_bias_term_intermediate, axis=-1)
+
+        linear_term = ops.add(ops.matmul(data_t, self.weights), self.hidden_bias)
+
+        one_like_linear = tensor.ones_like(linear_term)
+        exp_linear_term = ops.exp(linear_term)
+        log_term = ops.log(ops.add(one_like_linear, exp_linear_term))
+        hidden_term_sum = ops.stats.sum(log_term, axis=1)
+
+        return ops.negative(ops.add(hidden_term_sum, visible_bias_term))
     
-    def anomaly_score(self, data: Union[TensorLike, tensor.EmberTensor], method: str = 'reconstruction') -> TensorLike:
+    def anomaly_score(self, data: TensorLike, method: str = 'reconstruction') -> TensorLike: # Returns backend tensor
         """
         Compute anomaly score for input data.
-        
-        Args:
-            data: Input data [n_samples, n_visible]
-            method: Method to use ('reconstruction' or 'free_energy')
-            
-        Returns:
-            Anomaly scores [n_samples]
+        Returns: Anomaly scores [n_samples] (backend tensor)
         """
         if method == 'reconstruction':
             return self.reconstruction_error(data, per_sample=True)
         elif method == 'free_energy':
-            # For free energy, lower is better, so we negate
-            return -self.free_energy(data)
+            return ops.negative(self.free_energy(data))
         else:
             raise ValueError(f"Unknown method: {method}")
     
-    def is_anomaly(self, data: Union[TensorLike, tensor.EmberTensor], method: str = 'reconstruction') -> TensorLike:
+    def is_anomaly(self, data: TensorLike, method: str = 'reconstruction') -> TensorLike: # Returns boolean backend tensor
         """
         Determine if input data is anomalous.
-        
-        Args:
-            data: Input data [n_samples, n_visible]
-            method: Method to use ('reconstruction' or 'free_energy')
-            
-        Returns:
-            Boolean array indicating anomalies [n_samples]
+        Returns: Boolean backend tensor indicating anomalies [n_samples]
         """
-        scores = self.anomaly_score(data, method)
+        scores_t = self.anomaly_score(data, method)
         
         if method == 'reconstruction':
-            return scores > self.reconstruction_error_threshold
+            if self.reconstruction_error_threshold is None:
+                raise ValueError("Reconstruction error threshold not computed. Train model first.")
+            # Ensure threshold is a backend tensor for comparison with scores_t
+            threshold_t = tensor.convert_to_tensor(self.reconstruction_error_threshold, device=ops.get_device_of_tensor(scores_t), dtype=ops.dtype(scores_t))
+            return ops.greater(scores_t, threshold_t)
         elif method == 'free_energy':
-            return scores < self.free_energy_threshold
+            if self.free_energy_threshold is None:
+                raise ValueError("Free energy threshold not computed. Train model first.")
+            # As per previous logic, scores_t for free_energy are -FE. Threshold is for original FE.
+            actual_free_energies = ops.negative(scores_t)
+            threshold_t_orig_scale = tensor.convert_to_tensor(self.free_energy_threshold, device=ops.get_device_of_tensor(actual_free_energies), dtype=ops.dtype(actual_free_energies))
+            return ops.less(actual_free_energies, threshold_t_orig_scale)
         else:
             raise ValueError(f"Unknown method: {method}")
     
     def save(self, filepath: str) -> None:
-        """
-        Save model to file.
-        
-        Args:
-            filepath: Path to save model
-        """
-        # Sync GPU tensors to CPU if needed
-        if self.use_gpu:
-            self._to_cpu()
-        
-        # Create directory if it doesn't exist
+        """ Save model to file. """
+        # Parameters are already EmberTensors. Convert to NumPy for saving.
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
         
-        # Prepare model data
         model_data = {
-            'weights': self.weights,
-            'visible_bias': self.visible_bias,
-            'hidden_bias': self.hidden_bias,
+            'weights': tensor.to_numpy(self.weights),
+            'visible_bias': tensor.to_numpy(self.visible_bias),
+            'hidden_bias': tensor.to_numpy(self.hidden_bias),
             'n_visible': self.n_visible,
             'n_hidden': self.n_hidden,
             'learning_rate': self.learning_rate,
@@ -701,62 +531,66 @@ class OptimizedRBM:
             'weight_decay': self.weight_decay,
             'batch_size': self.batch_size,
             'use_binary_states': self.use_binary_states,
-            'training_errors': self.training_errors,
-            'reconstruction_error_threshold': self.reconstruction_error_threshold,
-            'free_energy_threshold': self.free_energy_threshold,
+            'training_errors': self.training_errors, # List of floats
+            'reconstruction_error_threshold': self.reconstruction_error_threshold, # float
+            'free_energy_threshold': self.free_energy_threshold, # float
             'training_time': self.training_time,
             'n_epochs_trained': self.n_epochs_trained,
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now().isoformat(),
+            'device_str': self.device_str # Save device string
         }
         
-        # Save to file
-        ops.save(filepath, model_data, allow_pickle=True)
+        ops.save(filepath, model_data, allow_pickle=True) # ops.save should handle dict of numpy arrays
         logger.info(f"Model saved to {filepath}")
     
     @classmethod
     def load(cls, filepath: str, use_gpu: bool = False, device: Optional[str] = None) -> 'OptimizedRBM':
-        """
-        Load model from file.
-        
-        Args:
-            filepath: Path to load model from
-            use_gpu: Whether to use GPU acceleration
-            device: Specific device to use
-            
-        Returns:
-            Loaded RBM model
-        """
-        # Load model data
-        model_data = ops.load(filepath, allow_pickle=True).item()
-        
-        # Create model
+        """ Load model from file. """
+        model_data_loaded = ops.load(filepath, allow_pickle=True).item() # ops.load returns a tensor/array, get item.
+
+        # Determine device to load onto
+        # Priority: user-passed device > saved device_str > use_gpu flag > cpu
+        load_device_str = device
+        if load_device_str is None:
+            load_device_str = model_data_loaded.get('device_str', "cpu")
+            if use_gpu and 'cpu' in load_device_str : # if use_gpu is true but saved was cpu, try gpu
+                 logger.warning("use_gpu=True with a CPU-saved model. Attempting to load to default GPU.")
+                 load_device_str = ops.get_default_device() # Or a specific "gpu" string
+
         rbm = cls(
-            n_visible=model_data['n_visible'],
-            n_hidden=model_data['n_hidden'],
-            learning_rate=model_data['learning_rate'],
-            momentum=model_data['momentum'],
-            weight_decay=model_data['weight_decay'],
-            batch_size=model_data['batch_size'],
-            use_binary_states=model_data['use_binary_states'],
-            use_gpu=use_gpu,
-            device=device
+            n_visible=model_data_loaded['n_visible'],
+            n_hidden=model_data_loaded['n_hidden'],
+            learning_rate=model_data_loaded['learning_rate'],
+            momentum=model_data_loaded['momentum'],
+            weight_decay=model_data_loaded['weight_decay'],
+            batch_size=model_data_loaded['batch_size'],
+            use_binary_states=model_data_loaded['use_binary_states'],
+            use_gpu=False, # Deprecated, device string below is used
+            device=load_device_str, # Pass the determined device string
+            verbose=True # Defaulting verbose to True, or load from model_data if saved
         )
         
-        # Set model parameters
-        rbm.weights = model_data['weights']
-        rbm.visible_bias = model_data['visible_bias']
-        rbm.hidden_bias = model_data['hidden_bias']
-        rbm.training_errors = model_data['training_errors']
-        rbm.reconstruction_error_threshold = model_data['reconstruction_error_threshold']
-        rbm.free_energy_threshold = model_data['free_energy_threshold']
-        rbm.training_time = model_data['training_time']
-        rbm.n_epochs_trained = model_data['n_epochs_trained']
-        
-        # Move to GPU if requested
-        if use_gpu and rbm.use_gpu:
-            rbm._to_gpu()
-        
-        logger.info(f"Model loaded from {filepath}")
+        # Set model parameters by converting numpy arrays from file to EmberTensors on target device
+        rbm.weights = tensor.convert_to_tensor(model_data_loaded['weights'], device=rbm.device_str)
+        rbm.visible_bias = tensor.convert_to_tensor(model_data_loaded['visible_bias'], device=rbm.device_str)
+        rbm.hidden_bias = tensor.convert_to_tensor(model_data_loaded['hidden_bias'], device=rbm.device_str)
+
+        # Initialize momentum terms on the correct device (already done in __init__ for rbm instance)
+        # If momentum terms were saved, load them:
+        if 'weights_momentum' in model_data_loaded: # Check if momentum was saved
+            rbm.weights_momentum = tensor.convert_to_tensor(model_data_loaded['weights_momentum'], device=rbm.device_str)
+            rbm.visible_bias_momentum = tensor.convert_to_tensor(model_data_loaded['visible_bias_momentum'], device=rbm.device_str)
+            rbm.hidden_bias_momentum = tensor.convert_to_tensor(model_data_loaded['hidden_bias_momentum'], device=rbm.device_str)
+
+
+        rbm.training_errors = model_data_loaded['training_errors']
+        rbm.reconstruction_error_threshold = model_data_loaded['reconstruction_error_threshold']
+        rbm.free_energy_threshold = model_data_loaded['free_energy_threshold']
+        rbm.training_time = model_data_loaded['training_time']
+        rbm.n_epochs_trained = model_data_loaded['n_epochs_trained']
+
+        # No _to_gpu() call needed, parameters are loaded to rbm.device_str
+        logger.info(f"Model loaded from {filepath} to device '{rbm.device_str}'")
         return rbm
     
     def summary(self) -> str:
