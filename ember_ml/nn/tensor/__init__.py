@@ -39,7 +39,7 @@ from ember_ml.nn.tensor.common import (  # noqa
 
 # Import the internal conversion function
 from ember_ml.nn.tensor.common import _convert_to_backend_tensor
-from typing import Any
+from typing import Any, Optional
 
 # Define array function to return a raw backend tensor
 def array(data: Any, dtype: Any = None, device: Optional[str] = None) -> Any: # Removed requires_grad
