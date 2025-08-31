@@ -8,11 +8,10 @@ that works with any backend (NumPy, PyTorch, MLX).
 from typing import Optional, Union, Tuple, Any, Dict, List, Sequence
 
 # Import necessary layer modules for from_config reconstruction
-import linear
-from ember_ml.nn import activations
-from typing import Dict, Any, List # Ensure these are imported if not already
-from ember_ml.nn.modules import Module
-from ember_ml import tensor
+from . import linear
+from ..modules import Module, activations
+from typing import Dict, Any, List  # Ensure these are imported if not already
+from ... import tensor
 class Sequential(Module):
     """
     A sequential container.
@@ -226,7 +225,7 @@ class Sequential(Module):
     def __len__(self) -> int:
         """
         Get the number of layers in the container.
-        
+
         Returns:
             Number of layers
         """
