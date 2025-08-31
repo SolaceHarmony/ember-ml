@@ -8,7 +8,7 @@ import pytest
 import os
 import sys
 import logging
-from ember_ml import tensor
+import ember_ml.tensor as tensor
 from ember_ml import set_seed
 
 # Add parent directory to path to import ember_ml

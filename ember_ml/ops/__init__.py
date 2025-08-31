@@ -161,7 +161,7 @@ class _RandomNamespace:
 random = _RandomNamespace()
 
 # Alias tensor indexing helpers for convenience
-from ember_ml import tensor as _tensor
+import ember_ml.tensor as _tensor
 
 def index_update(tensor_obj, indices, value):
     return _tensor.index_update(tensor_obj, indices, value)
