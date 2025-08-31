@@ -13,7 +13,7 @@ Provides utility functions for working with Ember ML's backend system.
 *   **`tensor_to_numpy_safe(tensor)`**: Safely converts a tensor from any backend to a NumPy array, handling different backend tensor types and devices (like PyTorch MPS).
 *   **`random_uniform(shape, low, high)`**: Generates uniform random values using the current backend.
 *   **`sin_cos_transform(values, period)`**: Applies sine and cosine transformations for cyclical features using `ops`.
-*   **`vstack_safe(arrays)`**: Safely stacks a list of arrays vertically using the current backend, handling potential shape mismatches.
+*   **`vstack_safe(arrays)`**: Safely stacks a list of arrays vertically using the current backend, handling potential shape mismatches and defaulting to `tensor.float32` when a dtype isn't provided.
 *   **`get_backend_info()`**: Gets information about the current backend (name, device).
 *   **`print_backend_info()`**: Prints information about the current backend and performs a simple test operation.
 
