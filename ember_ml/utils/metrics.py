@@ -8,6 +8,7 @@ from typing import Union, List, Tuple, Optional, Dict, Any
 from ember_ml.nn import tensor
 from ember_ml.nn.tensor.types import TensorLike
 from ember_ml import ops
+from ember_ml.ops import stats
 
 # Import sklearn metrics that we haven't implemented yet
 from sklearn.metrics import (
