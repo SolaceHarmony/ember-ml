@@ -131,21 +131,23 @@ def sin_cos_transform(values: Any, period: float = 1.0) -> Tuple[Any, Any]:
 def vstack_safe(arrays: List[Any]) -> Optional[tensor.EmberTensor]: # Return type updated
     """
     Safely stack arrays vertically using the current backend.
-    
+
     Args:
         arrays: List of arrays to stack
-        
+
     Returns:
-        Stacked array in the current backend format
+        Stacked array in the current backend format. When input items are not
+        already tensors, they are converted using :func:`tensor.convert_to_tensor`
+        with :data:`tensor.float32` as the default ``dtype``.
     """
     if not arrays:
         return None # Or return an empty tensor: tensor.zeros((0,)) etc.
 
     # Convert all arrays in the list to EmberTensors
     # Assume a default dtype if not specified and items are not already EmberTensors
-    # For safety, let's try to infer dtype from the first tensor if possible, or use float32
-    first_item_device = ops.get_device() # Default device
-    first_item_dtype = tensor.EmberDType.float32 # Default dtype
+    # For safety, try to infer dtype from the first tensor; otherwise use tensor.float32
+    first_item_device = ops.get_device()  # Default device
+    first_item_dtype = tensor.float32  # Backend-agnostic default dtype
 
     if arrays and isinstance(arrays[0], tensor.EmberTensor):
         first_item_device = arrays[0].device
@@ -219,5 +221,5 @@ def print_backend_info() -> None:
     a = tensor.ones((2, 2))
     b = tensor.ones((2, 2))
     c = ops.matmul(a, b)
-    
+
     print(f"Test operation: {a} @ {b} = {c}")
