@@ -94,6 +94,7 @@ _OPS_MAPPING = {
     # Device operations
     'to_device': device_ops,
     'get_device': device_ops,
+    'get_device_of_tensor': device_ops,
     'get_available_devices': device_ops,
     'memory_usage': device_ops,
     'memory_info': device_ops,

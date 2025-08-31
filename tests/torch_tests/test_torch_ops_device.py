@@ -56,6 +56,18 @@ def test_get_device():
     default_device = ops.get_default_device()
     assert ops.get_device(y) == default_device
 
+def test_get_device_of_tensor():
+    x_cpu = tensor.convert_to_tensor([1.0, 2.0], device="cpu")
+    assert ops.get_device_of_tensor(x_cpu) == "cpu"
+
+    available_devices = ops.get_available_devices()
+    if "cuda" in available_devices:
+        x_gpu = tensor.convert_to_tensor([1.0, 2.0], device="cuda")
+        assert ops.get_device_of_tensor(x_gpu) == "cuda"
+    if "mps" in available_devices:
+        x_mps = tensor.convert_to_tensor([1.0, 2.0], device="mps")
+        assert ops.get_device_of_tensor(x_mps) == "mps"
+
 def test_get_available_devices():
     # Test getting the list of available devices
     available_devices = ops.get_available_devices()

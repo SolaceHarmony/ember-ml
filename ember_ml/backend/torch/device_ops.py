@@ -105,6 +105,25 @@ def get_device(tensor: Optional[Any] = None) -> str: # Changed x to tensor, make
         return get_default_device()
 
 
+def get_device_of_tensor(tensor: Any) -> str:
+    """Get the device string for a provided tensor-like object."""
+    if tensor is None:
+        return get_default_device()
+    # If the object already has a device attribute, prefer that
+    if hasattr(tensor, 'device'):
+        dev = getattr(tensor, 'device')
+        if isinstance(dev, str):
+            return dev
+        return str(dev)
+    # Fallback: attempt to convert and query
+    try:
+        from ember_ml.backend.torch.tensor import TorchTensor
+        x_tensor = tensor if isinstance(tensor, torch.Tensor) else TorchTensor().convert_to_tensor(data=tensor)
+        return str(x_tensor.device)
+    except Exception:
+        return get_default_device()
+
+
 def get_available_devices() -> List[str]:
     """
     Get a list of available devices.
