@@ -22,6 +22,29 @@ def get_device(tensor: Optional[Any] = None) -> str:
     """
     return 'cpu'
 
+def get_device_of_tensor(tensor: Any) -> str:
+    """Return the device of a given tensor.
+
+    NumPy tensors always reside on the CPU.  If the provided tensor has a
+    ``device`` attribute (e.g., an :class:`~ember_ml.nn.tensor.common.EmberTensor`
+    instance), that value is returned; otherwise ``"cpu"`` is returned.
+
+    Args:
+        tensor: Tensor-like object whose device should be reported.
+
+    Returns:
+        The device string, which for NumPy is always ``"cpu"``.
+    """
+    if tensor is not None and hasattr(tensor, 'device'):
+        dev = getattr(tensor, 'device')
+        if isinstance(dev, str):
+            return dev
+        try:
+            return str(dev)
+        except Exception:
+            pass
+    return 'cpu'
+
 def set_device(device: Any) -> None:
     """
     Set the device (ignored for NumPy).
