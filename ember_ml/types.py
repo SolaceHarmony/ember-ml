@@ -13,6 +13,9 @@ from ember_ml.dtypes import EmberDType
 # Conditionally import backend types for type checking only
 if TYPE_CHECKING:
     # These imports are only used for type checking and not at runtime
+    import numpy as np
+    import torch
+
     from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
     from ember_ml.backend.torch.tensor import TorchTensor
     from ember_ml.backend.mlx.tensor.tensor import MLXTensor
@@ -33,19 +36,16 @@ Numeric = Union[int, float]
 
 # Standard type aliases for general tensor-like inputs
 # This covers all possible input types that can be converted to a tensor
-type TensorLike = Optional[Union[
+TensorLike = Optional[Union[
     Numeric,
     bool,
     List[Any],
     Tuple[Any, ...],
-    'TensorLike',
-    'mlx.core.array',  # MLX array type
-    'np.ndarray',      # NumPy array type
-    'torch.Tensor',    # PyTorch tensor type
-    'NumpyTensor',
-    'TorchTensor',
-    'MLXTensor',
-    'torch.Tensor',
+    np.ndarray if TYPE_CHECKING else Any,
+    torch.Tensor if TYPE_CHECKING else Any,
+    NumpyTensor if TYPE_CHECKING else Any,
+    TorchTensor if TYPE_CHECKING else Any,
+    MLXTensor if TYPE_CHECKING else Any,
 ]]
 
 # Dimension-specific tensor types
