@@ -94,20 +94,31 @@ def sin_cos_transform(values: Any, period: float = 1.0) -> Tuple[Any, Any]:
     Returns:
         Tuple of (sin_values, cos_values) as EmberTensors
     """
-    values_tensor = tensor.convert_to_tensor(values) # Ensure it's an EmberTensor
-    
+    values_tensor = tensor.convert_to_tensor(values)  # Ensure it's an EmberTensor
+
+    # Determine dtype and device safely without direct attribute access
+    try:
+        device = ops.get_device(values_tensor)
+    except Exception:
+        device = getattr(values_tensor, "device", None)
+
+    try:
+        dtype = ops.dtype(values_tensor)
+    except Exception:
+        dtype = getattr(values_tensor, "dtype", None)
+
     # Ensure constants are tensors of the same dtype and device for ops
     # ops.pi is likely a float, ensure it's converted correctly
     # The ops functions (multiply, divide, sin, cos) should handle broadcasting of scalar constants
     # if values_tensor is an EmberTensor. However, explicit conversion is safer for backend purity.
 
-    two_pi_val = 2 * ops.pi # Python float
+    two_pi_val = 2 * ops.pi  # Python float
 
     # Let ops handle scalar broadcasting if possible, assuming period is float
     # arg = ops.divide(ops.multiply(two_pi_val, values_tensor), period)
     # For stricter backend purity, convert all scalars to tensors:
-    two_pi_tensor = tensor.convert_to_tensor(two_pi_val, dtype=values_tensor.dtype, device=values_tensor.device)
-    period_tensor = tensor.convert_to_tensor(period, dtype=values_tensor.dtype, device=values_tensor.device)
+    two_pi_tensor = tensor.convert_to_tensor(two_pi_val, dtype=dtype, device=device)
+    period_tensor = tensor.convert_to_tensor(period, dtype=dtype, device=device)
 
     term_mul = ops.multiply(two_pi_tensor, values_tensor)
     arg = ops.divide(term_mul, period_tensor)
