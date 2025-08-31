@@ -139,10 +139,28 @@ class Index:
 # Create a singleton instance of the Index class
 index = Index()
 
-# Import EmberTensor class for use in __all__ but don't import it directly
-# This avoids the unused import warning
-from ember_ml.nn.tensor.common import ember_tensor
-EmberTensor = ember_tensor.EmberTensor
+# Simple EmberTensor wrapper around backend tensors
+class EmberTensor:
+    """Backend-agnostic tensor wrapper."""
+
+    def __init__(self, data, dtype=None, device=None):
+        # Store the backend-specific tensor
+        self._tensor = _convert_to_backend_tensor(data, dtype=dtype, device=device)
+        self._dtype = dtype
+
+    def to_backend_tensor(self):
+        """Return the underlying backend tensor."""
+        return self._tensor
+
+    @property
+    def backend(self):
+        """Return the name of the current backend."""
+        return get_backend()
+
+    @property
+    def dtype(self):
+        """Return the data type of the tensor."""
+        return dtype(self._tensor)
 
 __all__ = [
     # Implementations
