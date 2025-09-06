@@ -26,6 +26,10 @@ from ember_ml.tensor import (
     transpose,
     zeros,
 )
+from ember_ml import training
+from ember_ml import visualization
+from ember_ml import wave
+from ember_ml import utils
 
 # Lazily select a backend on import if none has been chosen yet.
 if get_backend() is None:
@@ -43,6 +47,20 @@ def set_seed(seed: int) -> None:
 
 
 tensor = convert_to_tensor
+
+# Use lazy import for asyncml to avoid importing ray until it's needed
+asyncml = None
+def __getattr__(name):
+    global asyncml
+    if name == 'asyncml':
+        if asyncml is None:
+            try:
+                import ember_ml.asyncml as _asyncml
+                asyncml = _asyncml
+            except ImportError:
+                raise ImportError("Could not import ember_ml.asyncml. Make sure 'ray' is installed.")
+        return asyncml
+    raise AttributeError(f"module 'ember_ml' has no attribute '{name}'")
 
 __all__ = [
     "auto_select_backend",

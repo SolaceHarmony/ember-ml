@@ -7,6 +7,7 @@ This module provides NumPy implementations of math operations.
 import numpy as np
 from typing import Optional, Union, List, Literal, Tuple
 from ember_ml.backend.numpy.types import TensorLike, ShapeLike
+from ember_ml.backend.numpy.tensor.ops.manipulation import vstack, hstack
 
 # We avoid creating global instances to prevent circular imports
 # Each function will create its own instances when needed
@@ -314,13 +315,13 @@ def sign(x: TensorLike) -> np.ndarray:
 def argmax(x: TensorLike, axis: Optional[int] = None, keepdims: bool = False) -> np.ndarray:
     """
     Return the indices of the maximum values along the specified axis.
-    
+
     Args:
         x: Input array
         axis: Axis along which to find maximum values. If None, the argmax of
             the flattened array is returned.
         keepdims: If True, the reduced axes are kept as dimensions with size one.
-            
+
     Returns:
         Indices of the maximum values along the specified axis.
     """
@@ -442,13 +443,13 @@ def mod(x: TensorLike, y: TensorLike) -> np.ndarray:
 def floor_divide(x: TensorLike, y: TensorLike) -> np.ndarray:
     """
     Element-wise integer division.
-    
+
     If either array is a floating point type then it is equivalent to calling floor() after divide().
-    
+
     Args:
         x: First array
         y: Second array
-        
+
     Returns:
         Element-wise integer quotient (a // b)
     """
@@ -460,12 +461,12 @@ def floor_divide(x: TensorLike, y: TensorLike) -> np.ndarray:
 def floor(x: TensorLike) -> np.ndarray:
     """
     Return the floor of the input, element-wise.
-    
+
     The floor of the scalar x is the largest integer i, such that i <= x.
-    
+
     Args:
         x: Input array
-        
+
     Returns:
         Element-wise floor of the input
     """
@@ -477,12 +478,12 @@ def floor(x: TensorLike) -> np.ndarray:
 def ceil(x: TensorLike) -> np.ndarray:
     """
     Return the ceiling of the input, element-wise.
-    
+
     The ceiling of the scalar x is the smallest integer i, such that i >= x.
-    
+
     Args:
         x: Input array
-        
+
     Returns:
         Element-wise ceiling of the input
     """
@@ -495,11 +496,11 @@ def gradient(f: TensorLike, *varargs, axis: Optional[ShapeLike] = None,
             edge_order: Literal[1, 2] = 1) -> Union[np.ndarray, List[np.ndarray]]:
     """
     Return the gradient of an N-dimensional array.
-    
+
     The gradient is computed using second order accurate central differences in the interior
     points and either first or second order accurate one-sides (forward or backwards)
     differences at the boundaries. The returned gradient hence has the same shape as the input array.
-    
+
     Args:
         f: An N-dimensional array containing samples of a scalar function.
         *varargs: Spacing between f values. Default unitary spacing for all dimensions.
@@ -507,7 +508,7 @@ def gradient(f: TensorLike, *varargs, axis: Optional[ShapeLike] = None,
             The default (axis = None) is to calculate the gradient for all the axes of the input array.
         edge_order: Gradient is calculated using N-th order accurate differences at the boundaries.
             Must be 1 or 2.
-            
+
     Returns:
         A tensor or tuple of tensors corresponding to the derivatives of f with respect to each dimension.
         Each derivative has the same shape as f.

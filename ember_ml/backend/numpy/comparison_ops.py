@@ -12,11 +12,11 @@ from ember_ml.backend.numpy.types import TensorLike
 def equal(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     """
     Check if two tensors are equal element-wise.
-    
+
     Args:
         x: First tensor
         y: Second tensor
-        
+
     Returns:
         Boolean NumPy array with True where x == y
     """
@@ -28,11 +28,11 @@ def equal(x: np.ndarray, y: np.ndarray) -> np.ndarray:
 def not_equal(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     """
     Check if two tensors are not equal element-wise.
-    
+
     Args:
         x: First tensor
         y: Second tensor
-        
+
     Returns:
         Boolean NumPy array with True where x != y
     """
@@ -44,11 +44,11 @@ def not_equal(x: np.ndarray, y: np.ndarray) -> np.ndarray:
 def less(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     """
     Check if one tensor is less than another element-wise.
-    
+
     Args:
         x: First tensor
         y: Second tensor
-        
+
     Returns:
         Boolean NumPy array with True where x < y
     """
@@ -60,11 +60,11 @@ def less(x: np.ndarray, y: np.ndarray) -> np.ndarray:
 def less_equal(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     """
     Check if one tensor is less than or equal to another element-wise.
-    
+
     Args:
         x: First tensor
         y: Second tensor
-        
+
     Returns:
         Boolean NumPy array with True where x <= y
     """
@@ -76,11 +76,11 @@ def less_equal(x: np.ndarray, y: np.ndarray) -> np.ndarray:
 def greater(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     """
     Check if one tensor is greater than another element-wise.
-    
+
     Args:
         x: First tensor
         y: Second tensor
-        
+
     Returns:
         Boolean NumPy array with True where x > y
     """
@@ -92,11 +92,11 @@ def greater(x: np.ndarray, y: np.ndarray) -> np.ndarray:
 def greater_equal(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     """
     Check if one tensor is greater than or equal to another element-wise.
-    
+
     Args:
         x: First tensor
         y: Second tensor
-        
+
     Returns:
         Boolean NumPy array with True where x >= y
     """
@@ -108,11 +108,11 @@ def greater_equal(x: np.ndarray, y: np.ndarray) -> np.ndarray:
 def logical_and(x: Any, y: Any) -> np.ndarray:
     """
     Compute the logical AND of two tensors element-wise.
-    
+
     Args:
         x: First tensor
         y: Second tensor
-        
+
     Returns:
         Boolean NumPy array with True where x AND y
     """
@@ -124,11 +124,11 @@ def logical_and(x: Any, y: Any) -> np.ndarray:
 def logical_or(x: Any, y: Any) -> np.ndarray:
     """
     Compute the logical OR of two tensors element-wise.
-    
+
     Args:
         x: First tensor
         y: Second tensor
-        
+
     Returns:
         Boolean NumPy array with True where x OR y
     """
@@ -140,10 +140,10 @@ def logical_or(x: Any, y: Any) -> np.ndarray:
 def logical_not(x: Any) -> np.ndarray:
     """
     Compute the logical NOT of a tensor element-wise.
-    
+
     Args:
         x: Input tensor
-        
+
     Returns:
         Boolean NumPy array with True where NOT x
     """
@@ -155,11 +155,11 @@ def logical_not(x: Any) -> np.ndarray:
 def logical_xor(x: Any, y: Any) -> np.ndarray:
     """
     Compute the logical XOR of two tensors element-wise.
-    
+
     Args:
         x: First tensor
         y: Second tensor
-        
+
     Returns:
         Boolean NumPy array with True where x XOR y
     """
@@ -171,13 +171,13 @@ def logical_xor(x: Any, y: Any) -> np.ndarray:
 def allclose(x: Any, y: Any, rtol: float = 1e-5, atol: float = 1e-8) -> bool:
     """
     Check if all elements of two tensors are close within a tolerance.
-    
+
     Args:
         x: First tensor
         y: Second tensor
         rtol: Relative tolerance
         atol: Absolute tolerance
-        
+
     Returns:
         Boolean indicating if all elements are close
     """
@@ -188,13 +188,13 @@ def allclose(x: Any, y: Any, rtol: float = 1e-5, atol: float = 1e-8) -> bool:
 def isclose(x: Any, y: Any, rtol: float = 1e-5, atol: float = 1e-8) -> np.ndarray:
     """
     Check if elements of two tensors are close within a tolerance element-wise.
-    
+
     Args:
         x: First tensor
         y: Second tensor
         rtol: Relative tolerance
         atol: Absolute tolerance
-        
+
     Returns:
         Boolean NumPy array with True where elements are close
     """
@@ -206,12 +206,12 @@ def isclose(x: Any, y: Any, rtol: float = 1e-5, atol: float = 1e-8) -> np.ndarra
 def all(x: Any, axis: Any = None) -> Any:
     """
     Check if all elements in a tensor are True.
-    
+
     Args:
         x: Input tensor
         axis: Axis or axes along which to perform the reduction.
             If None, reduce over all dimensions.
-            
+
     Returns:
         Boolean tensor with True if all elements are True, False otherwise.
         If axis is specified, the result is a tensor with the specified
@@ -223,7 +223,8 @@ def all(x: Any, axis: Any = None) -> Any:
 
 
 def any(x: Any, axis: Any = None) -> Any:
-    """Check if any elements in a tensor are True.
+    """
+    Check if any elements in a tensor are True.
 
     Args:
         x: Input tensor
@@ -243,12 +244,12 @@ def any(x: Any, axis: Any = None) -> Any:
 def where(condition: TensorLike, x: TensorLike, y: TensorLike) -> np.ndarray:
     """
     Return elements chosen from x or y depending on condition.
-    
+
     Args:
         condition: Boolean tensor
         x: Tensor with values to use where condition is True
         y: Tensor with values to use where condition is False
-        
+
     Returns:
         Tensor with values from x where condition is True, and values from y elsewhere
     """
@@ -263,10 +264,10 @@ def where(condition: TensorLike, x: TensorLike, y: TensorLike) -> np.ndarray:
 def isnan(x: TensorLike) -> np.ndarray:
     """
     Test element-wise for NaN values.
-    
+
     Args:
         x: Input tensor
-        
+
     Returns:
         Boolean tensor with True where x is NaN, False otherwise
     """

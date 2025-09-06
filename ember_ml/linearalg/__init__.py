@@ -14,7 +14,6 @@ solve = linearalg_proxy.solve
 inv = linearalg_proxy.inv
 svd = linearalg_proxy.svd
 eig = linearalg_proxy.eig
-eigh = linearalg_proxy.eigh
 eigvals = linearalg_proxy.eigvals
 det = linearalg_proxy.det
 norm = linearalg_proxy.norm
@@ -24,6 +23,19 @@ lstsq = linearalg_proxy.lstsq
 diag = linearalg_proxy.diag
 diagonal = linearalg_proxy.diagonal
 orthogonal = linearalg_proxy.orthogonal
+
+# Try to import optional functions if available in the backend
+try:
+    eigh = linearalg_proxy.eigh
+except AttributeError:
+    # eigh is not available in the backend, so we'll define it as None
+    eigh = None
+
+try:
+    HPC16x8 = linearalg_proxy.HPC16x8
+except AttributeError:
+    # HPC16x8 is not available in the backend, so we'll define it as None
+    HPC16x8 = None
 
 # Define __all__ to include all operations
 __all__ = [
