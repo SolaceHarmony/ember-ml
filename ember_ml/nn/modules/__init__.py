@@ -39,12 +39,6 @@ Available Modules:
         FrequencyWiring: Wiring for frequency analysis
         VisionWiring: Wiring for computer vision tasks
         
-    Anomaly Detection:
-        LiquidAutoencoder: Autoencoder using liquid neural networks for anomaly detection
-        
-    Forecasting:
-        LiquidForecaster: Forecasting model using liquid neural networks with uncertainty estimation
-        
     Trainers:
         MemoryOptimizedTrainer: Memory-optimized trainer for Apple Silicon hardware
         
@@ -76,10 +70,6 @@ from ember_ml.nn.modules.activations import ReLU, Tanh, Sigmoid, Softmax, Softpl
 # Import solver modules
 from ember_ml.nn.modules.solvers import ExpectationSolver
 # Import anomaly detection modules
-from ember_ml.nn.modules.anomaly import LiquidAutoencoder
-# Import forecasting modules
-from ember_ml.nn.modules.forecasting import LiquidForecaster
-# Import trainer modules
 from ember_ml.nn.modules.trainers import MemoryOptimizedTrainer
 
 __all__ = [
@@ -134,12 +124,6 @@ __all__ = [
     
     # Solvers
     'ExpectationSolver',
-    
-    # Anomaly Detection
-    'LiquidAutoencoder',
-    
-    # Forecasting
-    'LiquidForecaster',
     
     # Trainers
     'MemoryOptimizedTrainer',

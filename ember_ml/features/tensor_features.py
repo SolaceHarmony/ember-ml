@@ -68,11 +68,14 @@ def one_hot(
     # Stack coordinates along the last axis -> shape (N, rank+1)
     # Use numpy stack temporarily if tensor.stack has issues or different signature
     try:
-         final_coords_tensor = tensor.stack(final_coords_list, axis=-1)
+        final_coords_tensor = tensor.stack(final_coords_list, axis=-1)
     except Exception:
-         # Fallback or alternative stacking method if tensor.stack fails/differs
-         np_coords = [tensor.to_numpy(c) for c in final_coords_list]
-         final_coords_tensor = tensor.convert_to_tensor(tensor.stack(np_coords, axis=-1))
+        # Fallback or alternative stacking method if tensor.stack fails/differs
+        np_coords = [tensor.to_numpy(c) for c in final_coords_list]
+        final_coords_tensor = tensor.convert_to_tensor(tensor.stack(np_coords, axis=-1))
+
+    # Ensure coordinates are integer type for indexing
+    final_coords_tensor = tensor.cast(final_coords_tensor, tensor.int32)
 
 
     # Create the updates tensor (all ones)

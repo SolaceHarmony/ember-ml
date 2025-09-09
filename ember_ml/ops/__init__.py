@@ -8,6 +8,7 @@ explicit alias updates.
 """
 
 import logging
+import builtins
 from typing import Optional, Any, Union, TypeVar, Protocol, runtime_checkable, List
 
 # Setup basic logging configuration if not already configured
@@ -40,6 +41,7 @@ pi = ops_module.pi
 
 # Import submodules from the ops module
 stats = ops_module.stats
+builtins.stats = stats
 linearalg = ops_module.linearalg
 bitwise = ops_module.bitwise
 
