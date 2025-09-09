@@ -6,10 +6,9 @@ for all wiring configurations.
 """
 
 from typing import Optional, Tuple, Dict, Any
-from ember_ml import ops
+from ember_ml import ops, tensor
 from ember_ml.ops import stats  # Import stats module for sum operation
-from ember_ml import tensor, int32, convert_to_tensor
-from ember_ml.nn.tensor.common import zeros, copy
+from ember_ml.tensor import EmberTensor
 
 class NeuronMap: # Renamed from Wiring
     """
@@ -51,7 +50,7 @@ class NeuronMap: # Renamed from Wiring
         self._output_mask: Optional[EmberTensor] = None
         
         # Initialize adjacency matrices
-        self.adjacency_matrix = zeros([units, units], dtype=int32)
+        self.adjacency_matrix = tensor.zeros([units, units], dtype=tensor.int32)
         self.sensory_adjacency_matrix = None
         self._built = False # Track build status
         
@@ -82,7 +81,7 @@ class NeuronMap: # Renamed from Wiring
             input_dim: Input dimension
         """
         self.input_dim = input_dim
-        self.sensory_adjacency_matrix = zeros([input_dim, self.units], dtype=int32)
+        self.sensory_adjacency_matrix = tensor.zeros([input_dim, self.units], dtype=tensor.int32)
     
     def is_built(self):
         """
@@ -106,7 +105,11 @@ class NeuronMap: # Renamed from Wiring
         if self._input_mask is None:
             self._input_mask, self._recurrent_mask, self._output_mask = self.build()
         
-        return convert_to_tensor(self._input_mask) if not isinstance(self._input_mask, EmberTensor) else self._input_mask
+        return (
+            tensor.convert_to_tensor(self._input_mask)
+            if not isinstance(self._input_mask, EmberTensor)
+            else self._input_mask
+        )
     def get_recurrent_mask(self) -> Optional[EmberTensor]:
         """
         Get the recurrent mask.
@@ -166,7 +169,7 @@ class NeuronMap: # Renamed from Wiring
         Returns:
             Adjacency matrix
         """
-        return copy(self.adjacency_matrix)
+        return tensor.copy(self.adjacency_matrix)
     
     def sensory_erev_initializer(self, shape=None, dtype=None):
         """
@@ -180,7 +183,7 @@ class NeuronMap: # Renamed from Wiring
             Sensory adjacency matrix
         """
         if self.sensory_adjacency_matrix is not None:
-            return copy(self.sensory_adjacency_matrix)
+            return tensor.copy(self.sensory_adjacency_matrix)
         return None
     
     @property

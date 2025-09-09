@@ -7,10 +7,10 @@ circuit policies, where connections are randomly generated.
 
 from typing import Optional, Tuple
 
-from ember_ml import ops, tensor, int32, random_uniform, cast
+from ember_ml import ops, tensor
+from ember_ml.tensor import EmberTensor
 # Use explicit path for clarity now it's moved
 from ember_ml.nn.modules.wiring.neuron_map import NeuronMap
-from ember_ml import tensor
 
 class RandomMap(NeuronMap): # Name is already correct
     """
@@ -40,7 +40,7 @@ class RandomMap(NeuronMap): # Name is already correct
         """
         super().__init__(units, output_dim, input_dim, sparsity_level, seed)
     
-    def build(self, input_dim=None) -> Tuple[EmberTensor, tensor, EmberTensor]:
+    def build(self, input_dim=None) -> Tuple[EmberTensor, EmberTensor, EmberTensor]:
         """
         Build the random wiring configuration.
         
@@ -59,18 +59,18 @@ class RandomMap(NeuronMap): # Name is already correct
             tensor.set_seed(self.seed)
         
         # Create random masks
-        input_mask = cast(
-            random_uniform((self.input_dim,)) >= self.sparsity_level,
-            dtype=int32
+        input_mask = tensor.cast(
+            tensor.random_uniform((self.input_dim,)) >= self.sparsity_level,
+            dtype=tensor.int32,
         )
-        recurrent_mask = cast(
-            random_uniform((self.units, self.units)) >= self.sparsity_level,
-            dtype=int32
+        recurrent_mask = tensor.cast(
+            tensor.random_uniform((self.units, self.units)) >= self.sparsity_level,
+            dtype=tensor.int32,
         )
-        output_mask = cast(
-            random_uniform((self.units,)) >= self.sparsity_level,
-            dtype=int32
+        output_mask = tensor.cast(
+            tensor.random_uniform((self.units,)) >= self.sparsity_level,
+            dtype=tensor.int32,
         )
 
-        self._built = True # Mark map as built
+        self._built = True  # Mark map as built
         return input_mask, recurrent_mask, output_mask

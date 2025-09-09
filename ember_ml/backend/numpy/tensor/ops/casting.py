@@ -23,7 +23,7 @@ def _validate_dtype(dtype: DType) -> Optional[Any]:
     if (hasattr(dtype, '__class__') and
         hasattr(dtype.__class__, '__name__') and
         dtype.__class__.__name__ == 'EmberDType'):
-        from ember_ml.nn.tensor.common.dtypes import EmberDType
+        from ember_ml.dtypes import EmberDType
         if isinstance(dtype, EmberDType):
             dtype_from_ember = dtype._backend_dtype
             if dtype_from_ember is not None:

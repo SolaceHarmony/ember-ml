@@ -9,7 +9,6 @@ import numpy as np
 from ember_ml import ops
 from ember_ml import stats
 from ember_ml.nn.modules import Module, Parameter
-from ember_ml import random_uniform
 from ember_ml import tensor
 from ember_ml.nn.layers import Linear
 from ember_ml.nn.modules.activations import get_activation

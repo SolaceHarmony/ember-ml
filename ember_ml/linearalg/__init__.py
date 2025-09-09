@@ -24,7 +24,6 @@ lstsq = linearalg_proxy.lstsq
 diag = linearalg_proxy.diag
 diagonal = linearalg_proxy.diagonal
 orthogonal = linearalg_proxy.orthogonal
-HPC16x8 = linearalg_proxy.HPC16x8
 
 # Define __all__ to include all operations
 __all__ = [
@@ -42,5 +41,5 @@ __all__ = [
     'diag',
     'diagonal',
     'orthogonal',
-    'HPC16x8'
+    # HPC16x8 removed from exports due to missing backend support
 ]
