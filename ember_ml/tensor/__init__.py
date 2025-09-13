@@ -285,12 +285,19 @@ def convert_to_tensor(
     return _convert_to_backend_tensor(data, dtype=dtype, device=device)
 
 
+def tensor(data: Any, dtype: Any = None, device: Optional[str] = None) -> Any:
+    """Create a tensor from data, mirroring ``torch.tensor`` semantics."""
+
+    return convert_to_tensor(data, dtype=dtype, device=device)
+
+
 __all__ = [
     "EmberTensor",
     "EmberDType",
     "DType",
     "dtype",
     "array",
+    "tensor",
     "convert_to_tensor",
     "zeros",
     "ones",
