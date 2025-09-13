@@ -64,6 +64,22 @@ from ember_ml import utils
 from ember_ml import asyncml
 
 
+class _TensorProxy:
+    """Callable wrapper around :mod:`ember_ml.tensor` mimicking ``torch.tensor``."""
+
+    def __init__(self):
+        self._module = importlib.import_module("ember_ml.tensor")
+
+    def __getattr__(self, name):  # pragma: no cover - simple delegation
+        return getattr(self._module, name)
+
+    def __call__(self, *args, **kwargs):
+        return self._module.convert_to_tensor(*args, **kwargs)
+
+
+tensor = _TensorProxy()
+
+
 def set_seed(seed):
     """Set the random seed for all backends."""
     from ember_ml import tensor
@@ -85,5 +101,6 @@ __all__ = [
     'visualization',
     'utils',
     'asyncml',
+    'tensor',
     '__version__'
 ]
