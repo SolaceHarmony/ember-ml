@@ -44,7 +44,7 @@ _MASTER_OPS_LIST = [
     'equal', 'not_equal', 'less', 'less_equal', 'greater', 'greater_equal', 'logical_and', 'logical_or',
     'logical_not', 'logical_xor', 'allclose', 'isclose', 'all', 'where', 'isnan',
     # Device
-    'to_device', 'get_device', 'get_available_devices', 'memory_usage', 'memory_info', 'synchronize',
+    'to_device', 'get_device', 'get_device_of_tensor', 'get_available_devices', 'memory_usage', 'memory_info', 'synchronize',
     'set_default_device', 'get_default_device', 'is_available',
     # IO
     'save', 'load',

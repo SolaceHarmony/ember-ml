@@ -33,6 +33,20 @@ def get_device(tensor: Optional[Any] = None) -> str:
     # Return the default MLX device type as a string
     return str(mx.default_device().type).lower()
 
+def get_device_of_tensor(tensor: Any) -> str:
+    """Return the device string for a provided tensor-like object."""
+    if tensor is None:
+        return get_device()
+    if hasattr(tensor, 'device'):
+        dev = getattr(tensor, 'device')
+        if isinstance(dev, str):
+            return dev.lower()
+        try:
+            return str(dev.type).lower()
+        except Exception:
+            return str(dev).lower()
+    return get_device()
+
 def set_device(device: Any) -> None:
     """
     Set the default device for MLX operations.

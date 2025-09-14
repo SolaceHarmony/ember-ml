@@ -5,9 +5,9 @@ from transformers import AutoTokenizer, AutoModel
 from ember_ml import ops, stats
 # Ensure stats ops are accessible if stats.mean is used later
 # from ember_ml.ops import stats # Or access via stats.mean
-from ember_ml import tensor # Ensure tensor is imported for tensor.EmberTensor, tensor.stack etc.
+from ember_ml import tensor
 from typing import List, Optional
-def harmonic_wave(params: tensor.EmberTensor, t: tensor.EmberTensor, batch_size: int) -> tensor.EmberTensor:
+def harmonic_wave(params, t, batch_size: int):
     """
     Generate a harmonic wave based on parameters.
     Handles batch processing for multiple embeddings.
@@ -50,7 +50,7 @@ model_name = "bert-base-uncased"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 hf_model = AutoModel.from_pretrained(model_name) # Renamed to avoid conflict if 'model' is used elsewhere
 
-def generate_embeddings(texts: List[str]) -> Optional[tensor.EmberTensor]:
+def generate_embeddings(texts: List[str]):
     """
     Generate embeddings for a list of texts using a pretrained transformer.
     Output is an EmberTensor.
@@ -113,7 +113,7 @@ texts = [
 # Generate embeddings (now returns EmberTensor or None)
 embeddings = generate_embeddings(texts)
 
-def map_embeddings_to_harmonics(embeddings: tensor.EmberTensor) -> tensor.EmberTensor:
+def map_embeddings_to_harmonics(embeddings):
     """
     Initialize harmonic parameters for all embeddings in a batch.
     """
@@ -130,7 +130,7 @@ def map_embeddings_to_harmonics(embeddings: tensor.EmberTensor) -> tensor.EmberT
         params_list.append(tensor.random_normal(shape=(num_params,), dtype=embeddings.dtype, device=embeddings.device))
     return tensor.stack(params_list, axis=0) # Use tensor.stack
 
-def loss_function(params: tensor.EmberTensor, t: tensor.EmberTensor, target_embedding: tensor.EmberTensor) -> tensor.EmberTensor:
+def loss_function(params, t, target_embedding):
     """
     Compute the loss between the target embedding and the generated harmonic wave.
     Uses Mean Squared Error (MSE) as the metric.
@@ -161,7 +161,7 @@ def loss_function(params: tensor.EmberTensor, t: tensor.EmberTensor, target_embe
     return loss
 
 
-def compute_gradients(params: tensor.EmberTensor, t: tensor.EmberTensor, target_embedding: tensor.EmberTensor, epsilon: float =1e-5) -> tensor.EmberTensor:
+def compute_gradients(params, t, target_embedding, epsilon: float =1e-5):
     """
     Compute numerical gradients for the harmonic parameters using finite differences.
     """
@@ -192,7 +192,7 @@ def compute_gradients(params: tensor.EmberTensor, t: tensor.EmberTensor, target_
     return gradients
 
 
-def train_harmonic_embeddings(embeddings: tensor.EmberTensor, t: tensor.EmberTensor, batch_size: int, learning_rate: float =0.01, epochs: int =100) -> tensor.EmberTensor:
+def train_harmonic_embeddings(embeddings, t, batch_size: int, learning_rate: float =0.01, epochs: int =100):
     """
     Train harmonic wave parameters to match transformer embeddings.
     Handles multiple embeddings in batch.

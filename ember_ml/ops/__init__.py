@@ -97,6 +97,7 @@ isnan = ops_module.isnan
 # Device operations
 to_device = ops_module.to_device
 get_device = ops_module.get_device
+get_device_of_tensor = ops_module.get_device_of_tensor
 get_available_devices = ops_module.get_available_devices
 memory_usage = ops_module.memory_usage
 memory_info = ops_module.memory_info
@@ -182,7 +183,7 @@ _MASTER_OPS_LIST = [
     'equal', 'not_equal', 'less', 'less_equal', 'greater', 'greater_equal', 'logical_and', 'logical_or',
     'logical_not', 'logical_xor', 'allclose', 'isclose', 'all', 'any', 'where', 'isnan',
     # Device operations
-    'to_device', 'get_device', 'get_available_devices', 'memory_usage', 'memory_info', 'synchronize',
+    'to_device', 'get_device', 'get_device_of_tensor', 'get_available_devices', 'memory_usage', 'memory_info', 'synchronize',
     'set_default_device', 'get_default_device', 'is_available',
     # IO operations
     'save', 'load',

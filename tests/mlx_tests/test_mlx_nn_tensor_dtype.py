@@ -1,7 +1,6 @@
 # tests/mlx_tests/test_nn_tensor_dtype.py
 import pytest
 from ember_ml import tensor
-from ember_ml.nn.tensor.common.dtypes import EmberDType
 
 # Note: Assumes conftest.py provides the mlx_backend fixture
 
@@ -52,7 +51,7 @@ def test_dtype_str_conversion_mlx(mlx_backend, dtype_obj): # Use fixture
         dtype_str = tensor.to_dtype_str(dtype_obj)
         assert isinstance(dtype_str, str), f"to_dtype_str failed for {dtype_obj}"
         retrieved_dtype_obj = tensor.from_dtype_str(dtype_str)
-        assert isinstance(retrieved_dtype_obj, EmberDType), f"from_dtype_str failed for '{dtype_str}'"
+    # Ensure round trip preserved identifier
         assert retrieved_dtype_obj == dtype_obj, f"Round trip failed for {dtype_obj} ('{dtype_str}')"
     except Exception as e:
          pytest.skip(f"Skipping dtype {dtype_obj} for mlx due to error: {e}")

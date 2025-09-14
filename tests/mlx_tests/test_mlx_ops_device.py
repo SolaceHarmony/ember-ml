@@ -46,6 +46,14 @@ def test_get_device():
     default_device = ops.get_default_device()
     assert ops.get_device(y) == default_device
 
+def test_get_device_of_tensor():
+    x = tensor.convert_to_tensor([1.0, 2.0], device="cpu")
+    assert ops.get_device_of_tensor(x) == "cpu"
+
+    y = tensor.convert_to_tensor([3.0, 4.0])
+    default_device = ops.get_default_device()
+    assert ops.get_device_of_tensor(y) == default_device
+
 def test_get_available_devices():
     # Test getting the list of available devices
     available_devices = ops.get_available_devices()

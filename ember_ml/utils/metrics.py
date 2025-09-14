@@ -5,9 +5,9 @@ This module provides metrics utilities for the ember_ml library.
 """
 
 from typing import Union, List, Tuple, Optional, Dict, Any
-from ember_ml import tensor
+from ember_ml import tensor, ops
 from ember_ml.types import TensorLike
-from ember_ml import ops, stats
+from ember_ml import stats
 
 # Import sklearn metrics that we haven't implemented yet
 from sklearn.metrics import (

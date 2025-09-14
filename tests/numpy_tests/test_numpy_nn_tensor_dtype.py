@@ -1,7 +1,6 @@
 # tests/numpy_tests/test_nn_tensor_dtype.py
 import pytest
 from ember_ml import tensor
-from ember_ml.nn.tensor.common.dtypes import EmberDType # Import base class
 
 # Note: Assumes conftest.py provides the numpy_backend fixture
 
@@ -17,14 +16,18 @@ AVAILABLE_DTYPES = [dt for dt in EXPECTED_DTYPES if dt is not None]
 # Backend-independent test
 @pytest.mark.parametrize("expected_dtype", AVAILABLE_DTYPES)
 def test_dtype_objects_exist(expected_dtype):
-    """Tests that the standard dtype objects exist and have the correct type."""
-    assert isinstance(expected_dtype, EmberDType), f"{expected_dtype} is not an EmberDType instance"
+    """Tests that the standard dtype identifiers exist.
+
+    Dtypes are now represented as canonical strings (e.g. 'float32').
+    """
+    assert isinstance(expected_dtype, str), f"{expected_dtype} is not a string identifier"
 
 # Backend-independent test
 def test_from_dtype_str_invalid():
-    """Tests tensor.from_dtype_str with an invalid string."""
-    with pytest.raises(ValueError):
-        tensor.from_dtype_str("invalid_dtype_string")
+    """Tests tensor.from_dtype_str with an invalid string now returns the input string."""
+    invalid = "invalid_dtype_string"
+    result = tensor.from_dtype_str(invalid)
+    assert result == invalid
 
 # --- NumPy Tests ---
 
@@ -48,7 +51,7 @@ def test_dtype_str_conversion_numpy(numpy_backend, dtype_obj): # Use fixture
         dtype_str = tensor.to_dtype_str(dtype_obj)
         assert isinstance(dtype_str, str), f"to_dtype_str failed for {dtype_obj}"
         retrieved_dtype_obj = tensor.from_dtype_str(dtype_str)
-        assert isinstance(retrieved_dtype_obj, EmberDType), f"from_dtype_str failed for '{dtype_str}'"
+    # Retrieved dtype object should round-trip to same string identifier
         assert retrieved_dtype_obj == dtype_obj, f"Round trip failed for {dtype_obj} ('{dtype_str}')"
     except Exception as e:
          pytest.skip(f"Skipping dtype {dtype_obj} for numpy due to error: {e}")

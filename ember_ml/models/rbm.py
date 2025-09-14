@@ -693,12 +693,12 @@ class RBM:
         
         return -hidden_term - vbias_term
     
-    def contrastive_divergence(self, v_pos: tensor.EmberTensor, k: int = 1, learning_rate: float = 0.1):
+    def contrastive_divergence(self, v_pos, k: int = 1, learning_rate: float = 0.1):
         """
         Perform k-step contrastive divergence.
         
         Args:
-            v_pos: Positive phase visible units (EmberTensor)
+            v_pos: Positive phase visible units (tensor-like)
             k: Number of Gibbs sampling steps
             learning_rate: Learning rate
             

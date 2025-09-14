@@ -10,6 +10,7 @@ import os
 import platform
 from pathlib import Path
 import json
+from contextlib import contextmanager
 from typing import Optional, Any, Dict, List, Tuple
 
 # Import the registry module
@@ -114,6 +115,11 @@ def _initialize_backends():
 _initialize_backends() # Initialize backends when the module is loaded
 
 
+def get_available_backends() -> List[str]:
+    """Return a list of available and enabled backend names."""
+    return list(_AVAILABLE_BACKENDS)
+
+
 def _get_backend_from_file():
     """Get the backend from the .ember/backend file."""
     if EMBER_BACKEND_FILE.exists():
@@ -179,8 +185,10 @@ def get_backend():
 def set_backend(backend: str):
     """Set the current backend."""
     global _CURRENT_BACKEND, _CURRENT_BACKEND_MODULE
+    if backend == _CURRENT_BACKEND:
+        return
 
-    if backend not in _BACKENDS: # Check against successfully loaded backends
+    if backend not in _BACKENDS:  # Check against successfully loaded backends
         # Try to load it if it was missed by initial load but is in config
         config = load_backend_config()
         potential_backends = {
@@ -196,16 +204,15 @@ def set_backend(backend: str):
                     _AVAILABLE_BACKENDS.append(backend)
                 print(f"Info: Late loading of backend '{backend}' successful.")
             except ImportError:
-                raise ValueError(f"Backend '{backend}' is enabled but failed to import. Cannot set as current backend.")
+                raise ValueError(
+                    f"Backend '{backend}' is enabled but failed to import. Cannot set as current backend.")
         else:
-            raise ValueError(f"Invalid backend: {backend}. Available and enabled backends: {_AVAILABLE_BACKENDS}")
-
-    if backend == _CURRENT_BACKEND:
-        return
+            raise ValueError(
+                f"Invalid backend: {backend}. Available and enabled backends: {_AVAILABLE_BACKENDS}")
 
     _CURRENT_BACKEND = backend
     _save_backend_to_file(backend)
-    os.environ['EMBER_ML_BACKEND'] = backend # Keep env var in sync
+    os.environ['EMBER_ML_BACKEND'] = backend  # Keep env var in sync
     _CURRENT_BACKEND_MODULE = None  # Force reload of module on next get_backend_module()
 
     # Get the backend module
@@ -217,6 +224,19 @@ def set_backend(backend: str):
 
     print(f"Info: Backend set to '{backend}'.")
     _reload_ops_module()
+
+
+@contextmanager
+def using_backend(backend: str):
+    """Context manager to temporarily switch the backend."""
+    original = get_backend()
+    if backend != original:
+        set_backend(backend)
+    try:
+        yield
+    finally:
+        if original is not None and original != backend:
+            set_backend(original)
 
 
 def get_backend_module():
