@@ -8,8 +8,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from typing import Optional, Tuple, List, Dict, Any
-from ember_ml.nn import tensor # Added import
-from ember_ml.nn.tensor.types import TensorLike # Added import
+from ember_ml import tensor # Added import
+from ember_ml.types import TensorLike # Added import
 
 class WaveEncoder(nn.Module):
     """

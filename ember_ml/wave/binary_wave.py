@@ -5,10 +5,9 @@ from typing import Dict, Optional, Tuple
 
 # import numpy as np # Removed, as np.* calls will be replaced by ops.*
 
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.nn.modules import Module, Parameter
-from ember_ml.nn.container.linear import Linear
+from ember_ml.nn.layers.linear import Linear
 
 def _roll(x: tensor.EmberTensor, shifts: int, axis: int = 0) -> tensor.EmberTensor:
     """Roll tensor along a given axis using ops.roll."""

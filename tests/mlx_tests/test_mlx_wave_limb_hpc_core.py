@@ -185,9 +185,9 @@ def test_hpc_limb_arithmetic_precision(mlx_backend):
     can represent numbers more precisely than standard floating point.
     """
     # Import necessary modules
-    from ember_ml.nn import tensor
+    from ember_ml import tensor
     import ember_ml.ops as ops
-    from ember_ml.ops import linearalg
+    from ember_ml import linearalg
     
     # Skip test if HPC16x8 is not available in the frontend API
     try:
@@ -266,9 +266,9 @@ def test_hpc16x8_limb_operations():
     for basic arithmetic operations compared to standard floating point.
     """
     # Import necessary modules
-    from ember_ml.nn import tensor
+    from ember_ml import tensor
     import ember_ml.ops as ops
-    from ember_ml.ops import linearalg
+    from ember_ml import linearalg
     
     # Skip test if HPC16x8 is not available in the frontend API
     try:

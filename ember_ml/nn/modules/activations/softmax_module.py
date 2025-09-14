@@ -4,7 +4,8 @@ Softmax activation module.
 """
 from typing import Optional, Dict, Any # Added Dict, Any
 from ember_ml.nn.modules import Module
-from ember_ml.nn import tensor
+from ember_ml import tensor
+from ember_ml.types import TensorLike
 
 class Softmax(Module):
     """
@@ -19,7 +20,7 @@ class Softmax(Module):
         super().__init__()
         self.axis = axis
 
-    def forward(self, x: tensor.EmberTensor) -> tensor.EmberTensor:
+    def forward(self, x: TensorLike) -> TensorLike:
         """Forward pass of Softmax."""
         # Import lazily and call the backend-agnostic activation op
         from ember_ml.nn.modules.activations import softmax # Import from parent __init__

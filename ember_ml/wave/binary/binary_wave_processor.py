@@ -3,9 +3,8 @@ from typing import List, Tuple, Optional
 from dataclasses import dataclass
 import struct
 
-from ember_ml import ops
-from ember_ml.nn import tensor
-from ember_ml.nn.tensor.types import TensorLike
+from ember_ml import ops, tensor
+from ember_ml.types import TensorLike
 # Assuming fft, signal processing ops are under ops.fft and ops.signal respectively
 # from ember_ml.ops import fft as ops_fft
 # from ember_ml.ops import signal as ops_signal
@@ -177,7 +176,7 @@ class BinaryWaveProcessor:
         # phase = np.angle(analytic_signal)
         phase = ops.angle(analytic_signal) # phase is real EmberTensor
         
-        mean_phase_tensor = ops.stats.mean(phase) # Returns scalar EmberTensor
+        mean_phase_tensor = stats.mean(phase) # Returns scalar EmberTensor
         mean_phase_scalar = mean_phase_tensor.item() % (2 * ops.pi) # Python float
         
         return binary_data_et, mean_phase_scalar
@@ -269,7 +268,7 @@ class BinaryWaveProcessor:
         window = ops.signal.hamming_window(tensor.shape(sinc)[0], dtype=tensor.EmberDType.float32, device=sinc.device)
 
         filter_kernel = ops.multiply(sinc, window)
-        sum_kernel = ops.stats.sum(filter_kernel)
+        sum_kernel = stats.sum(filter_kernel)
         # Avoid division by zero if sum_kernel is zero
         if ops.greater(ops.abs(sum_kernel), 1e-9).item():
             filter_kernel = ops.divide(filter_kernel, sum_kernel)
@@ -339,7 +338,7 @@ class BinaryWaveNeuron:
             # Compute weighted contribution with temporal integration
             # wave_energy = stats.sum(wave) / len(wave)
             # Assuming wave_et is 1D here
-            wave_energy = ops.divide(ops.stats.sum(wave_et), float(tensor.shape(wave_et)[0])) # Scalar EmberTensor
+            wave_energy = ops.divide(stats.sum(wave_et), float(tensor.shape(wave_et)[0])) # Scalar EmberTensor
 
             # interference[i] = wave_energy * self.weights[i] * phase_factor
             term_prod = ops.multiply(ops.multiply(wave_energy, self.weights[i]), phase_factor)

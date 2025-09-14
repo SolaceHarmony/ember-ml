@@ -2,11 +2,10 @@ import pytest
 import numpy as np # For comparison with known correct results
 
 # Import Ember ML modules
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.wave.binary import binary_wave_processor # Import the module
 from ember_ml.ops import set_backend
-from ember_ml.nn.tensor.types import TensorLike
+from ember_ml.types import TensorLike
 # Set the backend for these tests
 set_backend("mlx")
 

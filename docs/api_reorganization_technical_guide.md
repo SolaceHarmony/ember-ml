@@ -135,36 +135,36 @@ Create a module for tensor operations:
 
 from ember_ml.backend import get_backend_module
 
-def _get_tensor_module():
-    """Get the tensor module from the current backend."""
+def _get_tensor_ops_module():
+    """Get the tensor ops module from the current backend."""
     backend = get_backend_module()
     return backend.tensor_ops
 
 def array(data, dtype=None):
     """Create a tensor array.
-    
+
     Args:
         data: Input data
         dtype: Optional data type
-        
+
     Returns:
         Backend tensor
     """
-    tensor_module = _get_tensor_module()
-    return tensor_module.array(data, dtype)
+    tensor_ops = _get_tensor_ops_module()
+    return tensor_ops.array(data, dtype)
 
 def ones(shape, dtype=None):
     """Create a tensor of ones.
-    
+
     Args:
         shape: Shape of the tensor
         dtype: Optional data type
-        
+
     Returns:
         Backend tensor of ones
     """
-    tensor_module = _get_tensor_module()
-    return tensor_module.ones(shape, dtype)
+    tensor_ops = _get_tensor_ops_module()
+    return tensor_ops.ones(shape, dtype)
 
 # Additional tensor creation functions...
 ```

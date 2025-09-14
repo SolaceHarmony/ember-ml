@@ -8,7 +8,7 @@ common operations in a backend-agnostic way.
 
 import logging
 from typing import Any, List, Optional, Tuple, Union, Dict
-from ember_ml.nn import tensor
+from ember_ml import tensor
 # Set up logging
 logger = logging.getLogger('ember_ml.utils.backend')
 
@@ -94,20 +94,31 @@ def sin_cos_transform(values: Any, period: float = 1.0) -> Tuple[Any, Any]:
     Returns:
         Tuple of (sin_values, cos_values) as EmberTensors
     """
-    values_tensor = tensor.convert_to_tensor(values) # Ensure it's an EmberTensor
-    
+    values_tensor = tensor.convert_to_tensor(values)  # Ensure it's an EmberTensor
+
+    # Determine dtype and device safely without direct attribute access
+    try:
+        device = ops.get_device(values_tensor)
+    except Exception:
+        device = getattr(values_tensor, "device", None)
+
+    try:
+        dtype = ops.dtype(values_tensor)
+    except Exception:
+        dtype = getattr(values_tensor, "dtype", None)
+
     # Ensure constants are tensors of the same dtype and device for ops
     # ops.pi is likely a float, ensure it's converted correctly
     # The ops functions (multiply, divide, sin, cos) should handle broadcasting of scalar constants
     # if values_tensor is an EmberTensor. However, explicit conversion is safer for backend purity.
 
-    two_pi_val = 2 * ops.pi # Python float
+    two_pi_val = 2 * ops.pi  # Python float
 
     # Let ops handle scalar broadcasting if possible, assuming period is float
     # arg = ops.divide(ops.multiply(two_pi_val, values_tensor), period)
     # For stricter backend purity, convert all scalars to tensors:
-    two_pi_tensor = tensor.convert_to_tensor(two_pi_val, dtype=values_tensor.dtype, device=values_tensor.device)
-    period_tensor = tensor.convert_to_tensor(period, dtype=values_tensor.dtype, device=values_tensor.device)
+    two_pi_tensor = tensor.convert_to_tensor(two_pi_val, dtype=dtype, device=device)
+    period_tensor = tensor.convert_to_tensor(period, dtype=dtype, device=device)
 
     term_mul = ops.multiply(two_pi_tensor, values_tensor)
     arg = ops.divide(term_mul, period_tensor)
@@ -117,38 +128,37 @@ def sin_cos_transform(values: Any, period: float = 1.0) -> Tuple[Any, Any]:
     
     return sin_values, cos_values
 
-def vstack_safe(arrays: List[Any]) -> Optional[tensor.EmberTensor]: # Return type updated
+def vstack_safe(arrays: List[Any]) -> Optional[Any]:
     """
     Safely stack arrays vertically using the current backend.
-    
+
     Args:
         arrays: List of arrays to stack
-        
+
     Returns:
-        Stacked array in the current backend format
+        Stacked array in the current backend format. When input items are not
+        already tensors, they are converted using :func:`tensor.convert_to_tensor`
+        with :data:`tensor.float32` as the default ``dtype``.
     """
     if not arrays:
         return None # Or return an empty tensor: tensor.zeros((0,)) etc.
 
-    # Convert all arrays in the list to EmberTensors
-    # Assume a default dtype if not specified and items are not already EmberTensors
-    # For safety, let's try to infer dtype from the first tensor if possible, or use float32
-    first_item_device = ops.get_device() # Default device
-    first_item_dtype = tensor.EmberDType.float32 # Default dtype
+    # Infer common dtype/device from first element when possible
+    first_item_device = ops.get_device()
+    first_item_dtype = tensor.float32
+    first = arrays[0]
+    if hasattr(first, "dtype"):
+        try:
+            first_item_dtype = tensor.dtype(first)
+        except Exception:
+            pass
+    if hasattr(first, "device"):
+        try:
+            first_item_device = first.device  # type: ignore
+        except Exception:
+            pass
 
-    if arrays and isinstance(arrays[0], tensor.EmberTensor):
-        first_item_device = arrays[0].device
-        first_item_dtype = arrays[0].dtype
-    elif arrays and hasattr(arrays[0], 'dtype') and hasattr(arrays[0], 'device'): # For backend tensors
-        # This part is tricky as backend tensor device/dtype access isn't standardized here
-        # For now, we'll rely on convert_to_tensor to handle it or use defaults.
-        pass
-
-    ember_tensors = [
-        tensor.convert_to_tensor(arr, dtype=first_item_dtype, device=first_item_device)
-        if not isinstance(arr, tensor.EmberTensor) else arr
-        for arr in arrays
-    ]
+    ember_tensors = [tensor.convert_to_tensor(arr, dtype=first_item_dtype, device=first_item_device) for arr in arrays]
 
     # Ensure all tensors are now on the same device (e.g., device of the first tensor)
     # This step might be important if convert_to_tensor doesn't unify devices.
@@ -208,5 +218,5 @@ def print_backend_info() -> None:
     a = tensor.ones((2, 2))
     b = tensor.ones((2, 2))
     c = ops.matmul(a, b)
-    
+
     print(f"Test operation: {a} @ {b} = {c}")

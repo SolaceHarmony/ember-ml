@@ -9,7 +9,7 @@ import numpy as np
 import mlx.core as mx
 import torch
 
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml import ops
 from ember_ml.backend import get_backend, set_backend
 

@@ -12,7 +12,7 @@ from sklearn import datasets
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 import importlib.util
-
+from ember_ml import tensor
 # Import our neural library
 import ember_ml as nl
 from ember_ml.models.rbm_backend import RBM

@@ -7,12 +7,11 @@ which divides neurons into sensory, inter, and motor neurons.
 
 from typing import Optional, Tuple, List, Dict, Any
 
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
+from ember_ml.types import TensorLike
 
 # Already imports NeuronMap correctly
-from ember_ml.nn.modules.wiring.neuron_map import NeuronMap # Explicit path
-from ember_ml.nn.tensor import EmberTensor, int32, zeros, ones, random_uniform
+from ember_ml.nn.modules.wiring.neuron_map import NeuronMap  # Explicit path
 
 class NCPMap(NeuronMap): # Name is already correct
     """
@@ -150,7 +149,7 @@ class NCPMap(NeuronMap): # Name is already correct
         self.motor_to_motor_sparsity = motor_to_motor_sparsity or sparsity_level
         self.motor_to_inter_sparsity = motor_to_inter_sparsity or sparsity_level
     
-    def build(self, input_dim=None) -> Tuple[EmberTensor, EmberTensor, EmberTensor]:
+    def build(self, input_dim=None) -> Tuple[TensorLike, TensorLike, TensorLike]:
         """
         Build the NCP wiring configuration.
         
@@ -168,7 +167,7 @@ class NCPMap(NeuronMap): # Name is already correct
             tensor.set_seed(self.seed)
         
         # Create masks
-        input_mask = ones((self.input_dim,), dtype=int32)
+        input_mask = tensor.ones((self.input_dim,), dtype=tensor.int32)
         
         # Define neuron group indices based on diagram and original source structure
         sensory_start = 0
@@ -182,14 +181,14 @@ class NCPMap(NeuronMap): # Name is already correct
         
         # Create output mask (only motor neurons contribute to output)
         # Initialize with zeros
-        output_mask = zeros((self.units,), dtype=int32)
+        output_mask = tensor.zeros((self.units,), dtype=tensor.int32)
         
         # Set motor neurons to 1
         # Create a range of indices for motor neurons
         motor_indices = tensor.arange(motor_start, motor_end)
         
         # Create a tensor of ones with the same shape as motor_indices
-        motor_values = ones((motor_end - motor_start,), dtype=int32)
+        motor_values = tensor.ones((motor_end - motor_start,), dtype=tensor.int32)
         
         # Use scatter update to set motor neurons to 1
         output_mask = tensor.tensor_scatter_nd_update(
@@ -199,7 +198,7 @@ class NCPMap(NeuronMap): # Name is already correct
         )
         
         # Initialize recurrent mask with zeros
-        recurrent_mask = zeros((self.units, self.units), dtype=int32)
+        recurrent_mask = tensor.zeros((self.units, self.units), dtype=tensor.int32)
         
         # Helper function to create random connections between neuron groups
         def create_random_connections(from_start, from_end, to_start, to_end, sparsity):
@@ -211,7 +210,7 @@ class NCPMap(NeuronMap): # Name is already correct
             to_size = to_end - to_start
             
             # Create a random mask for connections
-            random_mask = random_uniform((from_size, to_size))
+            random_mask = tensor.random_uniform((from_size, to_size))
             connection_mask = ops.greater_equal(random_mask, sparsity)
             
             # Create indices for the connections
@@ -226,7 +225,7 @@ class NCPMap(NeuronMap): # Name is already correct
                 
                 # Create update indices and values
                 update_indices = tensor.stack([from_idx, to_idx], axis=1)
-                update_values = ones((tensor.shape(update_indices)[0],), dtype=int32)
+                update_values = tensor.ones((tensor.shape(update_indices)[0],), dtype=tensor.int32)
                 
                 # Update the recurrent mask
                 nonlocal recurrent_mask
@@ -370,6 +369,6 @@ class NCPMap(NeuronMap): # Name is already correct
         return {
             "sensory": sensory_idx,
             "inter": inter_idx,
-            "command": command_idx, # Add command group
-            "motor": motor_idx
+            "command": command_idx,  # Add command group
+            "motor": motor_idx,
         }

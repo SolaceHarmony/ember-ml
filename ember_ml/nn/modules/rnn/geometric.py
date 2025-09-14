@@ -3,8 +3,7 @@ Base geometric neural implementations for non-Euclidean manifolds.
 """
 
 from typing import Dict, Any
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.nn.modules import Module
 
 def normalize_sphere(vec):

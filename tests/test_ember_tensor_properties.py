@@ -3,7 +3,7 @@ Test EmberTensor properties to ensure proper storage and access of dtype and bac
 """
 
 import pytest
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml.backend import set_backend, get_backend
 
 

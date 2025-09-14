@@ -25,7 +25,7 @@ Interfaces in Ember ML serve as blueprints for functionality. They specify the m
         *   `diagonal(x, offset, axis1, axis2)`: Return specified diagonals.
         *   `eigvals(a)`: Compute eigenvalues.
 
-### Statistical Operations (`ember_ml.ops.stats.stats_ops`)
+### Statistical Operations (`ember_ml.stats.stats_ops`)
 
 *   **`StatsOps(ABC)`**: The abstract base class for statistical operations.
     *   Includes abstract methods for:

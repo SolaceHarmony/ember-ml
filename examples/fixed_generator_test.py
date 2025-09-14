@@ -21,7 +21,7 @@ import numpy as np
 
 # Import Ember ML components
 from ember_ml.ops import set_backend
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml import ops
 from ember_ml.models.rbm_anomaly_detector import RBMBasedAnomalyDetector
 from ember_ml.visualization.rbm_visualizer import RBMVisualizer
@@ -49,7 +49,7 @@ os.makedirs('outputs/models', exist_ok=True)
 def generate_data(n_samples=1000, n_features=10, anomaly_fraction=0.05) -> pd.DataFrame:
     """Generate synthetic data with anomalies."""
     # Import necessary modules
-    from ember_ml.nn import tensor
+    from ember_ml import tensor
     from ember_ml import ops
 
     # Generate normal data using Ember ML tensor operations
@@ -136,7 +136,7 @@ def generate_data(n_samples=1000, n_features=10, anomaly_fraction=0.05) -> pd.Da
     df = pd.DataFrame(data, columns=columns)
 
     # Add anomaly label
-    # anomaly_indices is an EmberTensor, convert to numpy for pandas indexing
+    # anomaly_indices is an tensor, convert to numpy for pandas indexing
     df['anomaly'] = 0
     df.loc[tensor.to_numpy(anomaly_indices), 'anomaly'] = 1
 

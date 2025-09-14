@@ -7,7 +7,7 @@ allowing type checkers to recognize the proper signatures of async ops functions
 
 from typing import List, Optional, Any, Union, Tuple, Dict, Set, TypeVar, overload, Awaitable
 
-from ember_ml.nn.tensor.types import TensorLike
+from ember_ml.types import TensorLike
 type Tensor = Any
 # Constants
 

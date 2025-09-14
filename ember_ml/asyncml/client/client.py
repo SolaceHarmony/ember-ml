@@ -7,9 +7,10 @@ import ray
 import asyncio
 import time
 from typing import Dict, List, Any, Optional
- 
+from ember_ml.types import TensorLike
+
 # Import EmberTensor
-from ember_ml.nn.tensor import EmberTensor
+from ember_ml import tensor
  
 # Assuming actors will be moved/adapted to this new structure
 # from .actors.ray_metal_kernel import MetalKernelActor
@@ -59,7 +60,7 @@ class NeuromorphicClient:
  
         print(f"[NeuromorphicClient] Initialized with hidden_dim={hidden_dim}, input_dim={input_dim}")
  
-    async def process_sequence(self, sequence_data: EmberTensor):
+    async def process_sequence(self, sequence_data: TensorLike):
         """
         Process a sequence through the system.
  
@@ -69,7 +70,7 @@ class NeuromorphicClient:
         Returns:
             Processing result
         """
-        # Input is expected to be EmberTensor, no conversion from TensorLike needed here.
+        # Input is expected to be tensor, no conversion from TensorLike needed here.
         # If conversion is needed, it should happen before calling this method.
  
         # Check dimensions using .shape on EmberTensor

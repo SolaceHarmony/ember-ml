@@ -1,6 +1,5 @@
 # tests/mlx_tests/test_nn_rnn.py
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 # from ember_ml.nn import modules # Removed old import
 from ember_ml.nn.modules import rnn # Import rnn submodule
 from ember_ml.nn.modules.wiring import NCPMap, FullyConnectedNCPMap

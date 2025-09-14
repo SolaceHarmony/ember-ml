@@ -4,17 +4,16 @@ Wave visualization utilities.
 This module provides utilities for visualizing wave signals.
 """
 
-import numpy as np
 import matplotlib.pyplot as plt
 from typing import Union, List, Tuple, Optional, Dict
 from matplotlib.figure import Figure
-from ember_ml.nn.tensor.types import TensorLike # Added import
+from ember_ml.types import TensorLike # Added import
 from .wave_analysis import compute_fft, compute_stft
-from ember_ml import ops
+from ember_ml import ops, stats
 # Try to import librosa, but don't fail if it's not available
 try:
-    import librosa
-    import librosa.display
+    import librosa # type: ignore
+    import librosa.display # type: ignore
     LIBROSA_AVAILABLE = True
 except ImportError:
     LIBROSA_AVAILABLE = False
@@ -32,7 +31,7 @@ def plot_waveform(wave: TensorLike, sample_rate: int = 44100, title: str = "Wave
         Matplotlib figure
     """
     fig, ax = plt.subplots(figsize=(10, 4))
-    time = tensor.arange(len(wave)) / sample_rate
+    time = ops.arange(len(wave)) / sample_rate
     ax.plot(time, wave)
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Amplitude")
@@ -242,7 +241,7 @@ def plot_wave_comparison(waves: List[TensorLike], labels: List[str],
         axes = [axes]
     
     for i, (wave, label) in enumerate(zip(waves, labels)):
-        time = tensor.arange(len(wave)) / sample_rate
+        time = ops.arange(len(wave)) / sample_rate
         axes[i].plot(time, wave)
         axes[i].set_ylabel("Amplitude")
         axes[i].set_title(label)

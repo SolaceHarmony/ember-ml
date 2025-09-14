@@ -27,7 +27,7 @@ These networks use stochastic-quantum mapping to emulate quantum effects and b-s
 ```python
 from ember_ml.nn.modules.wiring import NCPMap, EnhancedNCPMap # Import relevant map types
 from ember_ml.nn.modules.rnn import LQNet
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Create a neuron map for connectivity (can be any NeuronMap derivative)
 # Example using NCPMap:
@@ -108,7 +108,7 @@ The viscosity of the system is modulated by a Boltzmann factor based on the ener
 ```python
 from ember_ml.nn.modules.wiring import NCPMap, EnhancedNCPMap # Import relevant map types
 from ember_ml.nn.modules.rnn import CTRQNet
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Create a neuron map for connectivity (can be any NeuronMap derivative)
 # Example using NCPMap:
@@ -217,8 +217,7 @@ lqnet_enhanced = LQNet(neuron_map=enhanced_ncp_map)
 ## Example: Time Series Prediction
 
 ```python
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.nn.modules.wiring import NCPMap
 from ember_ml.nn.modules.rnn import CTRQNet
 

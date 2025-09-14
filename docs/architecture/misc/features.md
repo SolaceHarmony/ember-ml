@@ -60,7 +60,7 @@ Feature engineering is a critical step in preparing data for machine learning mo
     *   `inverse_transform(X)`: Scales data back to original representation using `ops`.
 *   **`ember_ml.nn.features.normalize_features.Normalize`**: Backend-agnostic normalization (scales to unit norm).
     *   `__init__()`: Initializes internal state (norm type, axis).
-    *   `fit(X, norm, axis)`: Computes the norm of the data using `ops.stats.sum`, `ops.sqrt`, `ops.stats.max`.
+    *   `fit(X, norm, axis)`: Computes the norm of the data using `stats.sum`, `ops.sqrt`, `stats.max`.
     *   `transform(X)`: Divides by the computed norm using `ops`.
     *   `fit_transform(X, ...)`: Fits and then transforms.
 
@@ -68,10 +68,10 @@ Feature engineering is a critical step in preparing data for machine learning mo
 
 *   **`ember_ml.nn.features.pca_features.PCA`**: Backend-agnostic Principal Component Analysis.
     *   `__init__()`: Initializes internal state (components, explained variance, mean, etc.).
-    *   `fit(X, n_components, whiten, center, svd_solver)`: Fits the PCA model. Centers data using `ops.stats.mean`, performs SVD using `ops.svd` (or `_randomized_svd` or `ops.eigh` for covariance method), determines number of components (`_find_ncomponents`, `_infer_dimensions`), and stores results. Uses `_svd_flip` for sign correction.
-    *   `_svd_flip(u, v)`: Helper for sign correction of SVD results using `ops.abs`, `ops.sign`, `ops.stats.argmax`, `tensor.stack`, `tensor.reshape`.
-    *   `_find_ncomponents(...)`: Helper to determine the number of components based on user input or explained variance using `ops.cumsum`, `ops.less`, `ops.stats.sum`, `ops.add`, `ops.stats.argmax`.
-    *   `_infer_dimensions(...)`: Helper for Minka's MLE for dimensionality selection using `ops.stats.mean`, `ops.stats.sum`, `ops.log`, `ops.multiply`, `ops.add`, `ops.divide`, `tensor.tensor_scatter_nd_update`.
+    *   `fit(X, n_components, whiten, center, svd_solver)`: Fits the PCA model. Centers data using `stats.mean`, performs SVD using `ops.svd` (or `_randomized_svd` or `ops.eigh` for covariance method), determines number of components (`_find_ncomponents`, `_infer_dimensions`), and stores results. Uses `_svd_flip` for sign correction.
+    *   `_svd_flip(u, v)`: Helper for sign correction of SVD results using `ops.abs`, `ops.sign`, `stats.argmax`, `tensor.stack`, `tensor.reshape`.
+    *   `_find_ncomponents(...)`: Helper to determine the number of components based on user input or explained variance using `ops.cumsum`, `ops.less`, `stats.sum`, `ops.add`, `stats.argmax`.
+    *   `_infer_dimensions(...)`: Helper for Minka's MLE for dimensionality selection using `stats.mean`, `stats.sum`, `ops.log`, `ops.multiply`, `ops.add`, `ops.divide`, `tensor.tensor_scatter_nd_update`.
     *   `_randomized_svd(...)`: Helper for randomized SVD using `ops.matmul`, `ops.qr`, `tensor.random_normal`, `tensor.transpose`.
     *   `transform(X)`: Applies centering and matrix multiplication with components using `ops.subtract`, `ops.matmul`, `tensor.transpose`. Applies whitening if enabled using `ops.sqrt`, `ops.clip`, `ops.divide`.
     *   `fit_transform(X, ...)`: Fits and then transforms.

@@ -14,8 +14,7 @@ from matplotlib.gridspec import GridSpec
 import importlib # Added importlib for potential dynamic imports if needed
 
 # Corrected imports based on our refactoring
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.nn.modules.rnn.stride_aware_cfc import StrideAwareWiredCfCCell
 from ember_ml.nn.modules.auto_ncp import AutoNCP # Assuming AutoNCP is the wiring used
 

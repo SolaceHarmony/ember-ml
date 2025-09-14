@@ -4,7 +4,7 @@ from typing import List, Optional, Tuple
 # Ember ML imports
 from ember_ml import ops
 from ember_ml.nn import modules as nn_modules
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml import initializers
 from ember_ml.nn.modules import activations # For functional activations
 

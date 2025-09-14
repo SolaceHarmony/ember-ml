@@ -33,7 +33,7 @@ class MyModule(Module):
 
 ```python
 from ember_ml.nn.modules import Module, Parameter
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 class Linear(Module):
     def __init__(self, in_features, out_features):
@@ -74,7 +74,7 @@ This pattern allows for flexible module creation where input dimensions don't ne
 
 ```python
 from ember_ml.nn.modules import Dense
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Create a dense layer
 layer = Dense(in_features=10, out_features=5, activation='relu')
@@ -118,7 +118,7 @@ Note: The `neuron_map` parameter can accept any derivative of `NeuronMap`, allow
 
 ```python
 from ember_ml.nn.modules import Sequential, Dense, ReLU, Dropout
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Create a sequential model
 model = Sequential([
@@ -141,7 +141,7 @@ output = model(x, training=True) # Shape: (32, 1)
 
 ```python
 from ember_ml.nn.modules import BatchNormalization, Dense, Sequential
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Example usage within a Sequential model
 model = Sequential([
@@ -199,7 +199,7 @@ The following activation functions are available:
 
 ```python
 from ember_ml.nn.modules import Dense, ReLU, Dropout
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Create a dense layer with ReLU activation
 layer1 = Dense(in_features=10, out_features=5)
@@ -282,7 +282,7 @@ The `modules` package provides various recurrent neural network implementations.
 
 ```python
 from ember_ml.nn.modules import RNN
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Create an RNN
 rnn = RNN(
@@ -302,7 +302,7 @@ y, h = rnn(x)  # y: (32, 5, 20), h: (32, 20)
 
 ```python
 from ember_ml.nn.modules import LSTM
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Create an LSTM
 lstm = LSTM(
@@ -321,7 +321,7 @@ y, (h, c) = lstm(x)  # y: (32, 5, 20), h: (32, 20), c: (32, 20)
 
 ```python
 from ember_ml.nn.modules import GRU
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Create a GRU
 gru = GRU(
@@ -341,7 +341,7 @@ y, h = gru(x)  # y: (32, 5, 20), h: (32, 20)
 ```python
 from ember_ml.nn.modules import CfC
 from ember_ml.nn.modules.wiring import NCPMap
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Create a NeuronMap
 neuron_map = NCPMap(
@@ -367,7 +367,7 @@ y, h = cfc(x)  # y: (32, 5, 5), h: (32, 20)
 ```python
 from ember_ml.nn.modules import LTC
 from ember_ml.nn.modules.wiring import NCPMap
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Create a NeuronMap
 neuron_map = NCPMap(
@@ -401,7 +401,7 @@ Stride-aware modules are specialized for processing temporal data with variable 
 
 ```python
 from ember_ml.nn.modules import StrideAwareCfC
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Create a StrideAwareCfC
 # Create a NeuronMap first for the StrideAwareCfC layer
@@ -424,7 +424,7 @@ You can combine these modules to build complex neural network architectures:
 
 ```python
 from ember_ml.nn.modules import Module, Dense, LSTM, Dropout
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 class SequenceClassifier(Module):
     def __init__(self, input_size, hidden_size, num_classes):

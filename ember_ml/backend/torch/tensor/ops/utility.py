@@ -12,14 +12,14 @@ def _validate_and_get_torch_dtype(dtype: Optional[Any]) -> Optional[torch.dtype]
     Validate and convert input dtype to a torch.dtype.
 
     Args:
-        dtype: Input dtype (string, EmberDType, torch.dtype, None)
+        dtype: Input dtype (canonical dtype string, torch.dtype, or None)
 
     Returns:
         Validated torch.dtype or None
     """
     if dtype is None:
         return None
-
+        dtype: Input dtype to validate (canonical dtype string, torch.dtype, or None).
     # If it's already a torch.dtype, return it
     if isinstance(dtype, torch.dtype):
         return dtype
@@ -28,7 +28,7 @@ def _validate_and_get_torch_dtype(dtype: Optional[Any]) -> Optional[torch.dtype]
     dtype_name = None
     if isinstance(dtype, str):
         dtype_name = dtype
-    elif hasattr(dtype, 'name'): # Handles EmberDType
+    elif hasattr(dtype, 'name'):
         dtype_name = str(dtype.name)
 
     if dtype_name:
@@ -66,7 +66,7 @@ def _validate_and_get_torch_dtype(dtype: Optional[Any]) -> Optional[torch.dtype]
         else:
             raise ValueError(f"Unknown data type name: {dtype_name}")
 
-    # If it's not a string, EmberDType, or torch.dtype, it's invalid
+    # If it's not a string or torch.dtype, it's invalid
     raise ValueError(f"Invalid dtype: {dtype} of type {type(dtype)}")
 
 def _convert_input(x: TensorLike, dtype: Optional[DType] = None, device: Optional[Union[None,torch.device]]=None) -> Any:
@@ -208,7 +208,7 @@ def _convert_input(x: TensorLike, dtype: Optional[DType] = None, device: Optiona
             raise ValueError(f"Cannot convert sequence {type(x)} with item types {item_types} to Torch tensor: {str(e)}")
 
     # For any other type, reject it with a corrected list of supported types
-    raise ValueError(f"Cannot convert {type(x)} to torch.Tensor. Supported types: Python scalars/sequences, NumPy scalars/arrays, TorchTensor, EmberTensor, Parameter.")
+    raise ValueError(f"Cannot convert {type(x)} to torch.Tensor. Supported types: Python scalars/sequences, NumPy scalars/arrays, TorchTensor, tensor, Parameter.")
 
 def _convert_to_tensor(data: Any, dtype: Optional[Any] = None, device: Optional[str] = None) -> torch.Tensor:
     """
@@ -216,7 +216,7 @@ def _convert_to_tensor(data: Any, dtype: Optional[Any] = None, device: Optional[
 
     Args:
         data: Input data
-        dtype: Optional desired data type (string, EmberDType, Torch Dtype).
+    dtype: Optional desired data type (canonical string or Torch Dtype).
         device: GPU or cpu type
 
     Returns:

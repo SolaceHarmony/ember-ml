@@ -5,8 +5,8 @@ This module tests the diag and diagonal functions in the Ember ML framework.
 """
 
 import pytest
-from ember_ml.ops import linearalg
-from ember_ml.nn import tensor
+from ember_ml import linearalg
+from ember_ml import tensor
 from ember_ml.backend import set_backend, get_backend
 from ember_ml import ops
 

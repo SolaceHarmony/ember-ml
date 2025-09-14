@@ -5,8 +5,7 @@ import matplotlib.pyplot as plt # For plotting tests (if any)
 import torch # Import torch for device checks if needed
 
 # Import Ember ML modules
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.utils import performance # Import performance utilities
 from ember_ml.ops import set_backend
 
@@ -52,7 +51,7 @@ def test_benchmark():
         data = tensor.random_normal((size, size))
         result = ops.matmul(data, tensor.transpose(data))
         ops.eval(result) # Ensure computation is complete
-        return tensor.item(ops.stats.mean(result)) # Return a scalar
+        return tensor.item(stats.mean(result)) # Return a scalar
 
     size = 100
     num_runs = 5
@@ -76,13 +75,13 @@ def test_compare_functions():
         data = tensor.random_normal((size, size))
         result = ops.add(data, data)
         ops.eval(result)
-        return tensor.item(ops.stats.mean(result))
+        return tensor.item(stats.mean(result))
 
     def task2(size):
         data = tensor.random_normal((size, size))
         result = ops.multiply(data, 2.0)
         ops.eval(result)
-        return tensor.item(ops.stats.mean(result))
+        return tensor.item(stats.mean(result))
 
     funcs = [task1, task2]
     args_list = [(100,), (100,)]
@@ -133,7 +132,7 @@ def test_profile_function():
         data = tensor.random_normal((size, size))
         result = ops.add(data, 1.0)
         ops.eval(result)
-        return tensor.item(ops.stats.mean(result))
+        return tensor.item(stats.mean(result))
 
     size = 50
     try:

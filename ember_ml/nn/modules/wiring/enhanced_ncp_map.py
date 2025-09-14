@@ -6,12 +6,12 @@ arbitrary neuron types and dynamics, with a focus on spatial embedding.
 """
 
 from typing import Optional, List, Dict, Any, Union, Tuple
-from ember_ml.nn.tensor.types import TensorLike # Added import
+from ember_ml.types import TensorLike # Added import
 import numpy as np
 import scipy.spatial.distance
 
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, stats
+from ember_ml import tensor
 from ember_ml.nn.modules.wiring.enhanced_neuron_map import EnhancedNeuronMap
 
 class EnhancedNCPMap(EnhancedNeuronMap):
@@ -296,7 +296,7 @@ class EnhancedNCPMap(EnhancedNeuronMap):
         row_sums_eps = ops.add(row_sums, tensor.convert_to_tensor(1e-8))
         
         # Create diagonal matrices using ops.linearalg.diag
-        from ember_ml.ops.linearalg import diag
+        from ember_ml.linearalg import diag
         D_tensor = diag(row_sums_eps)
         
         # Calculate inverse square root

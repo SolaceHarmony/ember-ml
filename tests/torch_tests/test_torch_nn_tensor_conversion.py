@@ -1,8 +1,7 @@
 # tests/torch_tests/test_nn_tensor_conversion.py
 import pytest
-from ember_ml import ops
-from ember_ml.nn import tensor
-from ember_ml.nn.tensor.common.ember_tensor import EmberTensor
+from ember_ml import ops, tensor
+from ember_ml import tensor
 import numpy as np
 from ember_ml.backend.torch.types import TensorLike # Import TensorLike
 

@@ -2,7 +2,7 @@
 Visual confirmation test for EmberTensor properties.
 """
 
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml import ops
 
 

@@ -57,7 +57,7 @@ class Sigmoid(ActivationInterface):
     Sigmoid(x) = 1 / (1 + exp(-x))
     """
     
-    def forward(self, x: EmberTensor) -> EmberTensor:
+    def forward(self, x: TensorLike) -> EmberTensor:
         """
         Forward pass of the Sigmoid activation.
         

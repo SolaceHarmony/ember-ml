@@ -4,7 +4,8 @@ LeCun Tanh activation module.
 """
 from ember_ml import ops
 from ember_ml.nn.modules import Module
-from ember_ml.nn import tensor
+from ember_ml import tensor
+from ember_ml.types import TensorLike
 
 class LeCunTanh(Module):
     """
@@ -17,7 +18,7 @@ class LeCunTanh(Module):
         self.scale_factor = tensor.convert_to_tensor(0.66666667)
         self.amplitude = tensor.convert_to_tensor(1.7159)
 
-    def forward(self, x: tensor.EmberTensor) -> tensor.EmberTensor:
+    def forward(self, x: TensorLike) -> TensorLike:
         """Forward pass of LeCunTanh."""
         scaled_x = ops.multiply(self.scale_factor, x)
         from ember_ml.nn.modules.activations import tanh

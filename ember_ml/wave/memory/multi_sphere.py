@@ -5,8 +5,8 @@ Multi-sphere wave model implementation for wave memory systems.
 from typing import List, Optional, Tuple
 import numpy as np
 from dataclasses import dataclass
-from ember_ml.nn import tensor # Added import
-from ember_ml.nn.tensor.types import TensorLike # Added import
+from ember_ml import tensor # Added import
+from ember_ml.types import TensorLike # Added import
 from .sphere_overlap import SphereState, SphereOverlap, OverlapNetwork
 from ..utils.math_helpers import normalize_vector, partial_interference
 

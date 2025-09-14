@@ -9,10 +9,8 @@ import time
 from datetime import datetime
 import os
 from typing import Dict, List, Optional, Tuple, Union, Any
-from ember_ml.ops import stats
-from ember_ml import ops
-from ember_ml.nn import tensor
-from ember_ml.nn.tensor.types import TensorLike # Corrected import for TensorLike
+from ember_ml import stats, ops, tensor
+from ember_ml.types import TensorLike # Corrected import for TensorLike
 from ember_ml.nn.modules.activations import sigmoid as sigmoid_activation
 class RestrictedBoltzmannMachine:
     """
@@ -354,12 +352,12 @@ class RestrictedBoltzmannMachine:
         # Compute threshold for anomaly detection based on training data
         if self.reconstruction_error_threshold is None:
             errors = self.reconstruction_error(data, per_sample=True)
-            # Use ops.stats.percentile when available, for now use a simple threshold
+            # Use stats.percentile when available, for now use a simple threshold
             self.reconstruction_error_threshold = stats.mean(errors) + 2 * stats.std(errors)
         
         if self.free_energy_threshold is None:
             energies = self.free_energy(data)
-            # Use ops.stats.percentile when available, for now use a simple threshold
+            # Use stats.percentile when available, for now use a simple threshold
             self.free_energy_threshold = stats.mean(energies) - 2 * stats.std(energies)
         
         return self.training_errors
@@ -695,12 +693,12 @@ class RBM:
         
         return -hidden_term - vbias_term
     
-    def contrastive_divergence(self, v_pos: tensor.EmberTensor, k: int = 1, learning_rate: float = 0.1):
+    def contrastive_divergence(self, v_pos, k: int = 1, learning_rate: float = 0.1):
         """
         Perform k-step contrastive divergence.
         
         Args:
-            v_pos: Positive phase visible units (EmberTensor)
+            v_pos: Positive phase visible units (tensor-like)
             k: Number of Gibbs sampling steps
             learning_rate: Learning rate
             
@@ -732,11 +730,11 @@ class RBM:
         self.weights = ops.add(self.weights, ops.multiply(learning_rate, grad_weights))
 
         # dv_bias = lr * mean(v_pos - v_neg, axis=0)
-        grad_v_bias = ops.stats.mean(ops.subtract(v_pos, current_v_neg), axis=0) # use current_v_neg
+        grad_v_bias = stats.mean(ops.subtract(v_pos, current_v_neg), axis=0) # use current_v_neg
         self.visible_bias = ops.add(self.visible_bias, ops.multiply(learning_rate, grad_v_bias))
 
         # dh_bias = lr * mean(h_pos_probs - h_neg_probs, axis=0)
-        grad_h_bias = ops.stats.mean(ops.subtract(h_pos_probs, h_neg_probs), axis=0)
+        grad_h_bias = stats.mean(ops.subtract(h_pos_probs, h_neg_probs), axis=0)
         self.hidden_bias = ops.add(self.hidden_bias, ops.multiply(learning_rate, grad_h_bias))
 
     def train(self, data: TensorLike, epochs: int = 10, batch_size: int = 10, learning_rate: float = 0.1, k: int = 1):
@@ -797,8 +795,8 @@ class RBM:
                 # (batch - v_probs)^2
                 recon_error_sq = ops.square(ops.subtract(batch, v_probs))
                 # sum over features, then mean over batch
-                sum_recon_error_sq = ops.stats.sum(recon_error_sq, axis=1)
-                batch_mean_error = ops.stats.mean(sum_recon_error_sq) # Scalar EmberTensor
+                sum_recon_error_sq = stats.sum(recon_error_sq, axis=1)
+                batch_mean_error = stats.mean(sum_recon_error_sq) # Scalar EmberTensor
                 epoch_error_sum += batch_mean_error.item() # Add Python float
             
             avg_error = epoch_error_sum / actual_batches_processed if actual_batches_processed > 0 else 0.0

@@ -87,7 +87,7 @@ output = neuron.forward(input_signal)
 
 ### 2. Attention Mechanisms
 ```python
-from ember_ml.attention.temporal import TemporalAttention
+from ember_ml.models.attention.temporal import TemporalAttention
 
 # Create attention mechanism
 attention = TemporalAttention(decay_rate=0.1)

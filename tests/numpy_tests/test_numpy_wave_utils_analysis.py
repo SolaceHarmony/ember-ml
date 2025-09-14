@@ -4,8 +4,7 @@ import math # For comparison with known correct results
 
 # Import Ember ML modules
 from ember_ml.backend.numpy.types import TensorLike # Import TensorLike
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.wave.utils import wave_analysis # Import the module
 from ember_ml.ops import set_backend
 

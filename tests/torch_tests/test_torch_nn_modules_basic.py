@@ -1,7 +1,6 @@
 # tests/torch_tests/test_nn_modules.py
 import pytest
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.nn import modules
 from ember_ml.ops import stats # Import stats needed for Dense activation check
 

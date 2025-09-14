@@ -11,7 +11,7 @@ from typing import List, Optional, Dict
 
 from ember_ml import ops
 from ember_ml.ops import set_backend, auto_select_backend
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 def benchmark_matrix_multiply(
     backend: str, 

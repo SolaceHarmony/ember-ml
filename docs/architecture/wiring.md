@@ -31,7 +31,7 @@ The `BaseModule` class serves as the fundamental building block for all neural n
 Ember ML provides implementations of common neural network layers.
 
 -   **`Linear` (`ember_ml.nn.container.linear.Linear`)**: Implements a standard fully connected layer (`y = x @ W.T + b`). It initializes weights (using Kaiming initialization by default) and biases and performs the linear transformation using `ops.matmul` and `ops.add`.
--   **`BatchNormalization` (`ember_ml.nn.container.batch_normalization.BatchNormalization`)**: Normalizes activations across a batch. It tracks moving mean and variance during training and uses these statistics during evaluation. It utilizes `ops.stats.mean`, `tensor.var`, `ops.subtract`, `ops.divide`, `ops.sqrt`, `ops.multiply`, and `ops.add`.
+-   **`BatchNormalization` (`ember_ml.nn.container.batch_normalization.BatchNormalization`)**: Normalizes activations across a batch. It tracks moving mean and variance during training and uses these statistics during evaluation. It utilizes `stats.mean`, `tensor.var`, `ops.subtract`, `ops.divide`, `ops.sqrt`, `ops.multiply`, and `ops.add`.
 -   **`Dropout` (`ember_ml.nn.container.dropout.Dropout`)**: Randomly sets a fraction of input units to zero during training to prevent overfitting. It uses `tensor.random_uniform`, `ops.greater_equal`, `tensor.cast`, and `ops.multiply`.
 
 ### Containers (`ember_ml.nn.container.sequential`)

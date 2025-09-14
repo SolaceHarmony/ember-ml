@@ -91,7 +91,7 @@ class NumpyDType:
         if isinstance(dtype, str):
             return dtype
             
-        # Map standard NumPy dtype names (strings) to EmberDType names (strings)
+    # Map standard NumPy dtype names (strings) to canonical dtype names
         # This avoids issues with comparing type objects directly.
         dtype_name_map = {
             'float16': 'float16',
@@ -143,8 +143,8 @@ class NumpyDType:
         if isinstance(dtype, str):
             return self.from_dtype_str(dtype)
             
-        # Handle EmberDType objects
-        if hasattr(dtype, 'name'):
+        # Handle generic objects exposing a name attribute
+        if hasattr(dtype, 'name') and isinstance(dtype.name, str):
             return self.from_dtype_str(str(dtype.name))
             
         # If it's already a NumPy dtype, return as is
@@ -156,15 +156,7 @@ class NumpyDType:
         raise ValueError(f"Invalid dtype: {dtype}")
     
     def from_dtype_str(self, dtype: Union[Any, str, None]) -> Optional[np.dtype]: # Ensure return type is native NumPy dtype object
-        """
-        Convert a dtype string or EmberDType object to a native NumPy data type object.
-
-        Args:
-            dtype: The dtype string or EmberDType object to convert
-
-        Returns:
-            The corresponding native NumPy data type object (e.g., np.float32, np.int64)
-        """
+        """Convert a dtype spec (string/object) to a native NumPy dtype object."""
         if dtype is None:
             return None
 
@@ -180,9 +172,6 @@ class NumpyDType:
         # If it's a string, use it directly
         if isinstance(dtype, str):
             dtype_name_str = dtype
-        # If it's an EmberDType instance, get its name attribute
-        elif hasattr(dtype, '__class__') and dtype.__class__.__name__ == 'EmberDType' and hasattr(dtype, 'name'):
-             dtype_name_str = dtype.name
         else:
             # If it's some other object that might represent a dtype (like directly passing np.float32 class)
             # try getting its name, otherwise raise error

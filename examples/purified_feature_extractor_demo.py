@@ -10,7 +10,7 @@ import os
 import sys
 import logging
 import pandas as pd
-from ember_ml.nn import tensor  # Import tensor from ember_ml.nn for backend-agnostic operations
+from ember_ml import tensor  # Import tensor from ember_ml.nn for backend-agnostic operations
 # Add parent directory to path to import ember_ml
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -26,7 +26,7 @@ from ember_ml.utils import backend_utils
 from ember_ml import ops
 
 # Import the TerabyteFeatureExtractor (now using the purified backend-agnostic implementation)
-from ember_ml.nn.features.terabyte_feature_extractor import TerabyteFeatureExtractor
+from ember_ml.features.terabyte_feature_extractor import TerabyteFeatureExtractor
 
 def create_sample_data(num_rows=1000):
     """Create sample data for demonstration."""
@@ -141,7 +141,7 @@ def run_demo():
                     train_tensor = backend_utils.convert_to_tensor_safe(train_df[train_features].values)
                     
                     # Perform operations using ops abstraction layer
-                    mean = backend_utils.tensor_to_numpy_safe(ops.stats.mean(train_tensor, axis=0))
+                    mean = backend_utils.tensor_to_numpy_safe(stats.mean(train_tensor, axis=0))
                     std = backend_utils.tensor_to_numpy_safe(ops.std(train_tensor, axis=0))
                     
                     logger.info(f"Mean of first 5 features: {mean[:5]}")

@@ -15,7 +15,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from ember_ml.nn.modules import GUCENCP, AutoGUCENCP
 from ember_ml.nn.modules.wiring import NCPMap
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml import ops
 
 def main():
@@ -278,7 +278,7 @@ def learning_example():
     
     # Define loss function
     def mse_loss(y_true, y_pred):
-        return ops.stats.mean(ops.square(ops.subtract(y_true, y_pred)))
+        return stats.mean(ops.square(ops.subtract(y_true, y_pred)))
     
     # Simple SGD optimizer
     class SGDOptimizer:

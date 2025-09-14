@@ -8,8 +8,7 @@ import pytest
 from typing import List, Tuple, Any
 
 # Import the necessary frontend modules
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.ops import bitwise # Import the specific submodule
 
 # Note: Assumes conftest.py provides the mlx_backend fixture

@@ -3,8 +3,7 @@ import numpy as np # For comparison with known correct results
 import math # For comparison with known correct results
 
 # Import Ember ML modules
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.wave.memory import math_helpers # Import the module
 from ember_ml.ops import set_backend
 

@@ -5,13 +5,13 @@ This module tests the usage of the int32 dtype with tensors.
 """
 
 import pytest
-from ember_ml.nn.tensor import EmberTensor, int32
+from ember_ml import tensor, int32
 
 
 def test_int32_dtype_usage():
     """Test using int32 dtype with tensors."""
     # Create a tensor with int32 dtype
-    tensor = EmberTensor([1, 2, 3], dtype=int32)
+    tensor = tensor([1, 2, 3], dtype=int32)
     
     # Check tensor properties
     assert tensor.shape == (3,)
@@ -19,7 +19,7 @@ def test_int32_dtype_usage():
     assert str(tensor.dtype).endswith('int32')
     
     # Create another tensor with the same dtype
-    tensor2 = EmberTensor([4, 5, 6], dtype=int32)
+    tensor2 = tensor([4, 5, 6], dtype=int32)
     assert str(tensor2.dtype).endswith('int32')
     
     # Check that int32 has the expected attributes

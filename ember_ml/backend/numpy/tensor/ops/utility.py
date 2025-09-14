@@ -105,7 +105,7 @@ def _convert_input(x: TensorLike, no_scalars = False) -> Any:
             raise ValueError(f"Cannot convert sequence {type(x)} to Numpy Tensor. Content: {str(x)[:100]}... Error: {e}")
 
     # For any other type, reject it with a corrected list of supported types
-    raise ValueError(f"Cannot convert {type(x)} to Numpy Tensor. Supported types: Python scalars/sequences, NumPy scalars/arrays, EmberTensor, Parameter.")
+    raise ValueError(f"Cannot convert {type(x)} to Numpy Tensor. Supported types: Python scalars/sequences, NumPy scalars/arrays, tensor, Parameter.")
 
 
 
@@ -356,7 +356,7 @@ def _create_new_tensor(creation_func: Callable, dtype: Optional[Any] = None, dev
 
     Args:
         creation_func: The underlying NumPy creation function (e.g., np.zeros, np.eye, np.random.uniform).
-        dtype: Optional desired dtype (EmberDType, string, np.dtype, None).
+    dtype: Optional desired dtype (canonical string, np.dtype, None).
         device: Ignored for NumPy.
         **kwargs: Function-specific arguments (e.g., shape, N, M, start, stop, num, fill_value).
 

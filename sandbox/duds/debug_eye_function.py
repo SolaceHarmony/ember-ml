@@ -6,8 +6,8 @@ of the resulting matrix to help diagnose the issue.
 """
 
 from ember_ml.ops import set_backend
-from ember_ml.nn import tensor
-from ember_ml.ops import linearalg
+from ember_ml import tensor
+from ember_ml import linearalg
 import sys
 
 # Set the backend to MLX

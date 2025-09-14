@@ -3,7 +3,7 @@ import numpy as np # For comparison with known correct results
 
 # Import Ember ML modules
 from ember_ml import ops, set_backend # Import set_backend
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml.nn import modules
 from ember_ml.nn.modules.wiring import NCPMap # Import NCPMap for NCP test
 from ember_ml.nn import initializers # Import initializers

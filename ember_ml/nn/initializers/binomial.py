@@ -6,10 +6,8 @@ This module provides a binomial initializer for neural network weights and biase
 
 from typing import Tuple, Optional, Any
 
-from ember_ml import ops
-from ember_ml.nn import tensor
-from ember_ml.nn.tensor import EmberTensor
-
+from ember_ml import ops, tensor
+from ember_ml.types import TensorLike
 class BinomialInitializer:
     """
     Initializer that generates a binary mask with given probability.
@@ -29,7 +27,7 @@ class BinomialInitializer:
         self.probability = probability
         self.seed = seed
     
-    def __call__(self, shape: Tuple[int, ...], dtype: Any = None) -> EmberTensor:
+    def __call__(self, shape: Tuple[int, ...], dtype: Any = None) -> TensorLike:
         """
         Generate a binary mask.
         
@@ -64,7 +62,7 @@ class BinomialInitializer:
         """
         return {"probability": self.probability, "seed": self.seed}
 
-def binomial(shape: Tuple[int, ...], probability: float = 0.5, seed: Optional[int] = None, dtype: Any = None) -> EmberTensor:
+def binomial(shape: Tuple[int, ...], probability: float = 0.5, seed: Optional[int] = None, dtype: Any = None) -> TensorLike:
     """
     Generate a binary mask with given probability.
     

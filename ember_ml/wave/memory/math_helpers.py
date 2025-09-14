@@ -6,9 +6,8 @@ Provides core operations for vector manipulation and wave calculations.
 import numpy as np
 from typing import List, Tuple, Union, Optional
 
-from ember_ml import ops
-from ember_ml.nn import tensor
-from ember_ml.nn.tensor.types import TensorLike
+from ember_ml import ops, tensor
+from ember_ml.types import TensorLike
 
 def normalize_vector(vec: TensorLike, epsilon: float = 1e-12) -> TensorLike:
     """

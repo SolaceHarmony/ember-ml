@@ -64,7 +64,7 @@ The project is organized into the following main components:
 
 ```python
 import ember_ml
-from ember_ml.nn.tensor import zeros, ones, cast, float32
+from ember_ml import zeros, ones, cast, float32
 
 # Set the backend
 ember_ml.backend.set_backend('numpy')  # or 'torch', 'mlx'
@@ -81,14 +81,14 @@ z = cast(z, float32)
 ### 3.2 Creating Models
 
 ```python
-from ember_ml.nn.tensor import EmberTensor
+from ember_ml import tensor
 from ember_ml.models import LSTM
 
 # Create a model
 model = LSTM(units=64, return_sequences=True)
 
 # Process input
-x = EmberTensor(...)  # Input tensor
+x = tensor(...)  # Input tensor
 output = model(x)
 ```
 

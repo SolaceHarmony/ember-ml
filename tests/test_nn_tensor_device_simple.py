@@ -6,7 +6,7 @@ This module provides a simple test for the device property of tensors.
 
 import pytest
 from ember_ml.backend import get_backend, set_backend
-from ember_ml.nn.tensor import EmberTensor
+from ember_ml import tensor
 
 
 def test_tensor_device_simple():
@@ -19,7 +19,7 @@ def test_tensor_device_simple():
         set_backend('mlx')
         
         # Create a tensor
-        t = EmberTensor([[1, 2, 3], [4, 5, 6]])
+        t = tensor([[1, 2, 3], [4, 5, 6]])
         
         # Check tensor properties
         assert t.shape == (2, 3)

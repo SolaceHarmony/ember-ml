@@ -10,8 +10,7 @@ The BaseModule class is the base class for all neural network modules in ember_m
 from collections import OrderedDict
 from typing import Dict, Iterator, Optional, Set, Tuple, Union, Any, List
 
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 
 class Parameter:
     """
@@ -28,7 +27,7 @@ class Parameter:
             data: Initial data for the parameter
             requires_grad: Whether the parameter requires gradients
         """
-        from ember_ml.nn import tensor # Use lazy import
+        from ember_ml import tensor # Use lazy import
 
         # Convert data to EmberTensor first
         ember_tensor = tensor.convert_to_tensor(data)
@@ -46,7 +45,7 @@ class Parameter:
         # when repr is called (e.g., during debugging or errors in __init__)
         try:
             # Attempt to get shape using lazy imported tensor object
-            from ember_ml.nn import tensor
+            from ember_ml import tensor
             shape_val = tensor.shape(self.data)
         except AttributeError:
             shape_val = "[AttributeError: data not found]" # Provide informative fallback
@@ -54,7 +53,7 @@ class Parameter:
             shape_val = f"[Error getting shape: {e}]"
         try:
             # Attempt to get dtype using lazy imported tensor object
-            from ember_ml.nn import tensor
+            from ember_ml import tensor
             dtype_val = tensor.dtype(self.data)
             return f"Parameter(shape={shape_val}, dtype={dtype_val})"
         except AttributeError:

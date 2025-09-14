@@ -26,7 +26,7 @@ Neuron maps define how neurons in a neural network are connected to each other. 
 
 ```python
 from ember_ml.nn.modules.wiring import NeuronMap
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 class CustomNeuronMap(NeuronMap):
     def __init__(self, units, output_size, input_size=None):
@@ -53,7 +53,7 @@ class CustomNeuronMap(NeuronMap):
 
 ```python
 from ember_ml.nn.modules.wiring import NCPMap
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Create an NCP neuron map
 neuron_map = NCPMap(
@@ -95,7 +95,7 @@ The connectivity follows specific patterns:
 
 ```python
 from ember_ml.nn.modules.wiring import FullyConnectedMap
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Create a fully connected neuron map
 neuron_map = FullyConnectedMap(
@@ -116,7 +116,7 @@ print(f"Input size: {neuron_map.input_size}")      # 8
 
 ```python
 from ember_ml.nn.modules.wiring import RandomMap
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Create a random neuron map
 neuron_map = RandomMap(
@@ -256,7 +256,7 @@ You can create custom neuron maps by extending the `NeuronMap` base class:
 
 ```python
 from ember_ml.nn.modules.wiring import NeuronMap
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml import ops
 
 class SmallWorldNeuronMap(NeuronMap):
@@ -334,7 +334,7 @@ Neuron maps are primarily used with RNN layers that support wired connectivity:
 ```python
 from ember_ml.nn.modules.wiring import NCPMap
 from ember_ml.nn.modules.rnn import CfC
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Create a neuron map
 neuron_map = NCPMap(
@@ -364,7 +364,7 @@ You can visualize neuron maps to better understand the connectivity patterns:
 import matplotlib.pyplot as plt
 import numpy as np
 from ember_ml.nn.modules.wiring import NCPMap
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Create a neuron map
 neuron_map = NCPMap(

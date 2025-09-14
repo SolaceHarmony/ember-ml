@@ -66,7 +66,7 @@ def _convert_input(x: Any) -> mx.array:
         
     # Handle EmberTensor and MLXTensor objects
     if hasattr(x, '__class__') and hasattr(x.__class__, '__name__') and x.__class__.__name__ in ['EmberTensor', 'MLXTensor']:
-        # For EmberTensor, extract the underlying data and convert to numpy first
+        # For tensor, extract the underlying data and convert to numpy first
         if hasattr(x, 'to_numpy'):
             return mx.array(x.to_numpy())
         # If it has a _tensor attribute, use that

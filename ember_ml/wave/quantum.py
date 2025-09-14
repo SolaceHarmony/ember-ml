@@ -6,11 +6,11 @@ import math
 # import cmath # Not directly used for tensor ops, math.pi is fine
 from typing import List, Dict, Optional, Tuple, Union
 
-from ember_ml import ops
-from ember_ml.nn import tensor # For tensor.EmberTensor, tensor.zeros etc.
-from ember_ml.nn.tensor.types import TensorLike # For type hinting
+from ember_ml import ops, stats
+from ember_ml import tensor # For tensor.EmberTensor, tensor.zeros etc.
+from ember_ml.types import TensorLike # For type hinting
 from ember_ml.nn.modules import Module, Parameter # For Module and Parameter
-from ember_ml.nn.container import Linear # For Linear layer
+from ember_ml.nn.layers import Linear # For Linear layer
 # Assuming stats and linearalg are accessible via ops
 # from ember_ml.ops import stats, linearalg
 
@@ -65,7 +65,7 @@ class WaveFunction:
         Returns:
             Normalized wave function
         """
-        prob_sum = ops.stats.sum(self.probability_density()) # backend tensor (scalar)
+        prob_sum = stats.sum(self.probability_density()) # backend tensor (scalar)
         norm = ops.sqrt(prob_sum) # backend tensor (scalar)
         
         # tensor.item for condition

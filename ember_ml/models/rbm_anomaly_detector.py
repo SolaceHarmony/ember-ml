@@ -16,11 +16,10 @@ from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 
 # Import our modules
-from ember_ml.ops import stats
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import stats
+from ember_ml import ops, tensor
 from ember_ml.models.rbm.rbm_module import RBMModule
-from ember_ml.nn.tensor.types import TensorLike
+from ember_ml.types import TensorLike
 class RBMBasedAnomalyDetector:
     """
     Anomaly detection system based on Restricted Boltzmann Machines.

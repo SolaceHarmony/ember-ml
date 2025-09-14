@@ -6,8 +6,7 @@ It tests each operation with different backends to ensure consistency.
 """
 
 import pytest
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.backend import get_backend, set_backend
 
 # List of backends to test

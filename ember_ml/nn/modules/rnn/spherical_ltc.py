@@ -4,9 +4,8 @@ Spherical variant of LTC neurons operating on unit sphere manifold.
 
 from typing import Optional, Union, Dict, Any, Tuple
 from dataclasses import dataclass
-from ember_ml.ops import linearalg
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import linearalg
+from ember_ml import ops, tensor
 from ember_ml.nn.modules.rnn.geometric import GeometricNeuron, normalize_sphere
 from ember_ml.nn.modules.rnn.blocky import BaseChain
 @dataclass

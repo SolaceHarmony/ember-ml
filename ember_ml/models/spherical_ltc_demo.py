@@ -9,7 +9,7 @@ from ember_ml.nn.modules.rnn.spherical_ltc import (
     SphericalLTCChain
 )
 
-from ember_ml.nn import tensor # For tensor.EmberTensor, tensor.zeros etc.
+from ember_ml import tensor # For tensor.EmberTensor, tensor.zeros etc.
 from ember_ml import ops # For ops.multiply, ops.sin, ops.pi, ops.linearalg.norm etc.
 
 def generate_input_signal(

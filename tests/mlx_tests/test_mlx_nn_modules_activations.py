@@ -1,7 +1,7 @@
 import pytest
 import numpy as np # For comparison with known correct results
 import math # For comparison with known correct results
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml import ops
 from ember_ml.nn.modules import activations as activations_module # Import module for classes
 from ember_ml.nn.modules.activations import get_activation # Import helper function
@@ -54,7 +54,7 @@ def test_sigmoid_module():
 
 def test_softmax_module():
     # Test Softmax Module
-    from ember_ml.ops import stats
+    from ember_ml import stats
     softmax = activations_module.Softmax(axis=-1)
     x = tensor.convert_to_tensor([[1.0, 2.0, 3.0], [1.0, 1.0, 1.0]])
     result = softmax(x)

@@ -18,7 +18,7 @@ from ember_ml.nn.modules.rnn import LSTM, GRU, CfC, LQNet, CTRQNet
 
 ```python
 from ember_ml.nn.modules.rnn import RNN
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Create an RNN layer
 rnn_layer = RNN(input_size=10, hidden_size=20, activation='tanh')
@@ -41,7 +41,7 @@ y = rnn_layer(x) # Example without state return
 
 ```python
 from ember_ml.nn.modules.rnn import LSTM
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Create an LSTM layer
 lstm_layer = LSTM(input_size=10, hidden_size=20)
@@ -65,7 +65,7 @@ y = lstm_layer(x) # Example without state return
 
 ```python
 from ember_ml.nn.modules.rnn import GRU
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Create a GRU layer
 gru_layer = GRU(input_size=10, hidden_size=20)
@@ -91,7 +91,7 @@ CfC modules implement closed-form continuous-time recurrent neural networks, whi
 ```python
 from ember_ml.nn.modules.rnn import CfC
 from ember_ml.nn.modules.wiring import NCPMap
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Create a NeuronMap
 neuron_map = NCPMap(
@@ -127,7 +127,7 @@ LTC modules implement liquid time-constant recurrent neural networks, which mode
 
 ```python
 from ember_ml.nn.modules.rnn import LTC
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Create a NeuronMap (e.g., FullyConnectedMap)
 from ember_ml.nn.modules.wiring import FullyConnectedMap
@@ -165,7 +165,7 @@ Stride-aware modules are specialized for processing temporal data with variable 
 
 ```python
 from ember_ml.nn.modules.rnn import StrideAwareCfC
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Create a NeuronMap (assuming FullyConnected for this example)
 # The StrideAwareCfC layer expects a ``NeuronMap`` instance defining its wiring
@@ -195,7 +195,7 @@ CfC and LTC modules support time deltas between inputs, which is useful for irre
 ```python
 from ember_ml.nn.modules.rnn import CfC
 from ember_ml.nn.modules.wiring import NCPMap
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Create a NeuronMap
 neuron_map = NCPMap(
@@ -226,7 +226,7 @@ Stride-aware modules can process time series at multiple scales simultaneously:
 
 ```python
 from ember_ml.nn.modules.rnn import StrideAwareCfC
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Create a NeuronMap first
 from ember_ml.nn.modules.wiring import FullyConnectedMap
@@ -262,7 +262,7 @@ You can stack multiple RNN layers to create deep recurrent networks:
 ```python
 from ember_ml.nn.modules import Module
 from ember_ml.nn.modules.rnn import LSTM
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 class DeepLSTM(Module):
     def __init__(self, input_size, hidden_size, num_layers):
@@ -336,7 +336,7 @@ Quantum-inspired modules combine principles from quantum computing with classica
 ```python
 from ember_ml.nn.modules.rnn import LQNet
 from ember_ml.nn.modules.wiring import NCPMap
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Create a neuron map for connectivity
 neuron_map = NCPMap(
@@ -371,7 +371,7 @@ outputs = lqnet(inputs)
 ```python
 from ember_ml.nn.modules.rnn import CTRQNet
 from ember_ml.nn.modules.wiring import NCPMap
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Create a neuron map for connectivity
 neuron_map = NCPMap(

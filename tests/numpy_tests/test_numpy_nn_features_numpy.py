@@ -1,8 +1,7 @@
 # tests/numpy_tests/test_nn_features.py
 import pytest
 
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.nn import features
 
 # Note: Assumes conftest.py provides the numpy_backend fixture
@@ -42,7 +41,7 @@ def test_features_pca_inverse_transform_numpy(numpy_backend): # Use fixture
     reconstructed = pca_instance.inverse_transform(transformed)
     # assert isinstance(reconstructed, tensor.EmberTensor), "PCA inverse transform did not return EmberTensor" # Check removed
     assert tensor.shape(reconstructed) == tensor.shape(data), "PCA reconstructed shape is incorrect"
-    mean_diff = ops.stats.mean(ops.abs(ops.subtract(data, reconstructed)))
+    mean_diff = stats.mean(ops.abs(ops.subtract(data, reconstructed)))
     assert tensor.item(mean_diff) < 5.0, f"PCA reconstruction error seems too high: {tensor.item(mean_diff)}"
 
 def test_features_one_hot_numpy(numpy_backend): # Use fixture

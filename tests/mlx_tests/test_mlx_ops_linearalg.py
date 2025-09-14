@@ -3,11 +3,10 @@ from numpy import dtype
 import time
 
 # Import Ember ML modules
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.ops import set_backend
-from ember_ml.ops import stats
-from ember_ml.ops import linearalg
+from ember_ml import stats
+from ember_ml import linearalg
 
 # Set the backend for these tests
 set_backend("mlx")
@@ -117,7 +116,7 @@ def test_qr_numerical_stability():
     
     # Compute error matrix and maximum absolute error
     diff = ops.subtract(q_t_q, identity)
-    max_error = ops.stats.max(ops.abs(diff))
+    max_error = stats.max(ops.abs(diff))
     mean_error = stats.mean(ops.abs(diff))
     
     # Print actual values for debugging

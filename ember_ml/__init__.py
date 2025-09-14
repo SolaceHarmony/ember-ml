@@ -60,10 +60,31 @@ from ember_ml import nn
 from ember_ml import ops
 from ember_ml import training
 from ember_ml import visualization
-from ember_ml import wave
 from ember_ml import utils
 from ember_ml import asyncml
-from ember_ml.nn.tensor import set_seed
+
+
+class _TensorProxy:
+    """Callable wrapper around :mod:`ember_ml.tensor` mimicking ``torch.tensor``."""
+
+    def __init__(self):
+        self._module = importlib.import_module("ember_ml.tensor")
+
+    def __getattr__(self, name):  # pragma: no cover - simple delegation
+        return getattr(self._module, name)
+
+    def __call__(self, *args, **kwargs):
+        return self._module.convert_to_tensor(*args, **kwargs)
+
+
+tensor = _TensorProxy()
+
+
+def set_seed(seed):
+    """Set the random seed for all backends."""
+    from ember_ml import tensor
+
+    tensor.set_seed(seed)
 # Version of the Ember ML package
 __version__ = '0.2.0'
 
@@ -78,8 +99,8 @@ __all__ = [
     'ops',
     'training',
     'visualization',
-    'wave',
     'utils',
     'asyncml',
+    'tensor',
     '__version__'
 ]

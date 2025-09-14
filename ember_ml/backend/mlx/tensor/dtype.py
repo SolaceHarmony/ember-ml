@@ -95,11 +95,11 @@ class MLXDType:
         if isinstance(dtype, str):
             return dtype
             
-        # Handle EmberDType objects
-        if hasattr(dtype, 'name'):
+        # Extract name attribute if present (generic object with name)
+        if hasattr(dtype, 'name') and isinstance(dtype.name, str):
             return dtype.name
-            
-        # Map MLX dtypes to EmberDType names
+
+        # Map MLX dtypes to canonical dtype names
         dtype_map = {
             mx.float16: 'float16',
             mx.float32: 'float32',
@@ -117,25 +117,9 @@ class MLXDType:
         if hasattr(mx, 'bool_'):
             dtype_map[mx.bool_] = 'bool_'  # Use 'bool_' to match EmberDType naming
         
-        # Special handling for MLX dtype objects
-        if hasattr(dtype, 'name') and isinstance(dtype.name, str):
-            # Map MLX dtype names to EmberDType names
-            mlx_to_ember = {
-                'float16': 'float16',
-                'float32': 'float32',
-                'int8': 'int8',
-                'int16': 'int16',
-                'int32': 'int32',
-                'int64': 'int64',
-                'uint8': 'uint8',
-                'uint16': 'uint16',
-                'uint32': 'uint32',
-                'uint64': 'uint64',
-                'bool': 'bool_',
-                'bool_': 'bool_'
-            }
-            if dtype.name in mlx_to_ember:
-                return mlx_to_ember[dtype.name]
+        # If still unresolved and object has name attribute, attempt direct mapping
+        if hasattr(dtype, 'name') and dtype.name in ('bool', 'bool_'):
+            return 'bool_'
 
         if dtype in dtype_map:
             return dtype_map[dtype]

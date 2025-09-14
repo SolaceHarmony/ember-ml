@@ -14,11 +14,11 @@ from datetime import datetime
 
 # Import our modules from ember_ml
 from ember_ml.data import GenericCSVLoader, GenericTypeDetector
-from ember_ml.nn.features.temporal_processor import TemporalStrideProcessor
-from ember_ml.nn.features.feature_engineer import GenericFeatureEngineer
+from ember_ml.features.temporal_processor import TemporalStrideProcessor
+from ember_ml.features.feature_engineer import GenericFeatureEngineer
 from ember_ml.models.rbm_anomaly_detector import RBMBasedAnomalyDetector
 from ember_ml.visualization.rbm_visualizer import RBMVisualizer
-
+from ember_ml import stats
 
 def generate_telemetry_data(n_samples=1000, n_features=10, anomaly_fraction=0.05):
     """
@@ -33,7 +33,7 @@ def generate_telemetry_data(n_samples=1000, n_features=10, anomaly_fraction=0.05
         DataFrame with telemetry data and anomaly labels
     """
     # Generate normal data using tensor operations
-    from ember_ml.nn import tensor
+    from ember_ml import tensor
     from ember_ml import ops
     
     # Set random seed for reproducibility
@@ -179,7 +179,7 @@ def main():
     os.makedirs('outputs/models', exist_ok=True)
     
     # Set random seed for reproducibility
-    from ember_ml.nn import tensor
+    from ember_ml import tensor
     from ember_ml import ops
     tensor.set_seed(42)
     

@@ -8,6 +8,7 @@ explicit alias updates.
 """
 
 import logging
+import builtins
 from typing import Optional, Any, Union, TypeVar, Protocol, runtime_checkable, List
 
 # Setup basic logging configuration if not already configured
@@ -40,6 +41,7 @@ pi = ops_module.pi
 
 # Import submodules from the ops module
 stats = ops_module.stats
+builtins.stats = stats
 linearalg = ops_module.linearalg
 bitwise = ops_module.bitwise
 
@@ -142,7 +144,7 @@ irfftn = ops_module.irfftn
 # Provide simple random namespace for compatibility
 class _RandomNamespace:
     def uniform(self, minval: float = 0.0, maxval: float = 1.0, shape=()):
-        from ember_ml.nn.tensor import random_uniform, squeeze
+        from ember_ml import random_uniform, squeeze
         minval = float(getattr(minval, "item", lambda: minval)()) if not isinstance(minval, (int, float)) else minval
         maxval = float(getattr(maxval, "item", lambda: maxval)()) if not isinstance(maxval, (int, float)) else maxval
         if shape == ():
@@ -151,7 +153,7 @@ class _RandomNamespace:
         return random_uniform(shape, minval=minval, maxval=maxval)
 
     def normal(self, shape=(), mean: float = 0.0, stddev: float = 1.0):
-        from ember_ml.nn.tensor import random_normal, squeeze
+        from ember_ml import random_normal, squeeze
         mean = float(getattr(mean, "item", lambda: mean)()) if not isinstance(mean, (int, float)) else mean
         stddev = float(getattr(stddev, "item", lambda: stddev)()) if not isinstance(stddev, (int, float)) else stddev
         if shape == ():
@@ -162,7 +164,7 @@ class _RandomNamespace:
 random = _RandomNamespace()
 
 # Alias tensor indexing helpers for convenience
-from ember_ml.nn import tensor as _tensor
+import ember_ml.tensor as _tensor
 
 def index_update(tensor_obj, indices, value):
     return _tensor.index_update(tensor_obj, indices, value)

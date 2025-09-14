@@ -8,8 +8,7 @@ and theta-gamma oscillatory gating.
 
 from typing import Optional, Tuple, Dict, Any, Union, List
 
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.nn.modules.base_module import BaseModule as Module, Parameter
 from ember_ml.nn.modules.wiring import NeuronMap
 from ember_ml.nn.modules.rnn import GUCE
@@ -184,7 +183,7 @@ class GUCENCP(Module):
             self.neuron_states[i] = neuron_state
             
             # Compute output (mean of neuron state)
-            new_states.append(ops.stats.mean(neuron_state))
+            new_states.append(stats.mean(neuron_state))
         
         # Combine new states
         new_state = tensor.stack(new_states)

@@ -11,8 +11,7 @@ import numpy as np
 import math
 import torch
 
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.backend.torch.linearalg.orthogonal_ops import HPC16x8, qr_128
 
 @pytest.fixture
@@ -59,7 +58,7 @@ def test_hpc_orthogonal_vs_standard_qr(torch_backend):
     identity = tensor.eye(m)
     
     # Compute error
-    error_hpc = ops.stats.mean(ops.abs(q_t_q - identity))
+    error_hpc = stats.mean(ops.abs(q_t_q - identity))
     
     # Now try with standard QR (without HPC)
     # We'll use torch.linalg.qr directly
@@ -158,12 +157,12 @@ def test_orthogonal_non_square_matrices(torch_backend):
             # Tall matrix: Q^T * Q should be identity
             q_t_q = ops.matmul(ops.transpose(q), q)
             identity = tensor.eye(shape[1])
-            error = ops.stats.mean(ops.abs(q_t_q - identity))
+            error = stats.mean(ops.abs(q_t_q - identity))
         else:
             # Wide matrix: Q * Q^T should be identity
             q_q_t = ops.matmul(q, ops.transpose(q))
             identity = tensor.eye(shape[0])
-            error = ops.stats.mean(ops.abs(q_q_t - identity))
+            error = stats.mean(ops.abs(q_q_t - identity))
         
         # Error should be small
         assert error < 1e-5, f"Orthogonality error too large for shape {shape}: {error}"

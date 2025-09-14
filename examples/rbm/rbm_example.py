@@ -127,7 +127,7 @@ def generate_image_data(n_samples=500, width=10, height=10, n_patterns=3):
         pattern = patterns[pattern_idx]
         from ember_ml import ops
         # Add some noise to the pattern
-        from ember_ml.nn import tensor
+        from ember_ml import tensor
         noisy_pattern = pattern + tensor.random_normal(0, 0.05, n_pixels)
         noisy_pattern = ops.clip(noisy_pattern, 0, 1)
         

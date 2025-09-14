@@ -3,7 +3,7 @@
 from ray import get
 from ember_ml.nn.modules.activations.tanh_module import Tanh as LeCun
 import numpy as np
-from ember_ml.nn.tensor.types import TensorLike
+from ember_ml.types import TensorLike
 from ember_ml.nn.modules import Module
 from ember_ml.nn.modules.activations import get_activation
 class CfCCell(Module):

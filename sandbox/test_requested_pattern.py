@@ -3,8 +3,7 @@ Test script to verify the requested import pattern works correctly.
 """
 
 # Import ops from ember_ml
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 
 # Set the backend (optional, as it should auto-select)
 ops.set_backend('numpy')  # or 'torch' or 'mlx'
@@ -12,7 +11,7 @@ ops.set_backend('numpy')  # or 'torch' or 'mlx'
 # Test the stats.mean function with tensor dtype
 try:
     # This is the exact pattern requested by the user
-    x = ops.stats.mean([1, 2, 3], axis=0)
+    x = stats.mean([1, 2, 3], axis=0)
     print(f"Success! Result: {x}")
     
     # We can also use tensor types from nn.tensor

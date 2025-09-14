@@ -10,7 +10,7 @@ from typing import Dict, Any, Optional, List, Tuple, Union
 from ember_ml import ops
 from ember_ml.nn.modules import Module, Parameter
 from ember_ml.nn.modules.wiring import NeuronMap, NCPMap
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml.nn.modules.activations import get_activation
 
 class CTRQNet(Module):

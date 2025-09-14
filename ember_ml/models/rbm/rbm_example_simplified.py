@@ -12,7 +12,7 @@ import time
 from datetime import datetime
 
 # Import our modules
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml.models.rbm import RBMModule
 from ember_ml.visualization.rbm_visualizer import RBMVisualizer
 
@@ -32,7 +32,7 @@ def generate_toy_data(n_samples=500, n_features=100, pattern_size=10, n_patterns
     """
     # Initialize data with low random values
     data = tensor.random_uniform(0, 0.1, (n_samples, n_features))
-    
+    from ember_ml import ops
     # Create patterns
     patterns = []
     for i in range(n_patterns):
@@ -110,6 +110,7 @@ def generate_image_data(n_samples=500, width=10, height=10, n_patterns=3):
         
         # Add some noise to the pattern
         noisy_pattern = pattern + tensor.random_normal(0, 0.05, n_pixels)
+        from ember_ml import ops
         noisy_pattern = ops.clip(noisy_pattern, 0, 1)
         
         # Embed the pattern with some random background

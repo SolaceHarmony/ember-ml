@@ -6,9 +6,9 @@ import math
 import numpy as np
 from typing import List, Dict, Optional, Tuple, Union
 
-from ember_ml import ops
-from ember_ml.nn import tensor # For tensor.EmberTensor, tensor.zeros etc.
-from ember_ml.nn.tensor.types import TensorLike # For type hinting
+from ember_ml import ops, stats
+from ember_ml import tensor # For tensor.EmberTensor, tensor.zeros etc.
+from ember_ml.types import TensorLike # For type hinting
 
 class FrequencyAnalyzer:
     """Analyzer for frequency components of signals."""
@@ -84,7 +84,7 @@ class FrequencyAnalyzer:
 
         # Find peaks
         peaks = []
-        spectrum_max = ops.stats.max(spectrum) # spectrum_max is a backend tensor (scalar)
+        spectrum_max = stats.max(spectrum) # spectrum_max is a backend tensor (scalar)
 
         for i in range(1, tensor.shape(spectrum)[-1]-1): # Iterate over the last dimension
             # spectrum and freqs are backend tensors. Indexing them returns backend tensors.
@@ -139,7 +139,7 @@ class FrequencyAnalyzer:
         # Sum peak amplitudes
         peak_sum = sum(p['amplitude'] for p in peaks)
         # Assuming spectrum is 1D for this logic
-        total_sum = ops.stats.sum(spectrum) # total_sum is a backend tensor (scalar)
+        total_sum = stats.sum(spectrum) # total_sum is a backend tensor (scalar)
         
         # ops.greater returns backend boolean tensor, convert to Python bool with tensor.item()
         return tensor.item(ops.divide(peak_sum, tensor.item(total_sum))) if tensor.item(ops.greater(total_sum, 0.0)) else 0.0
@@ -247,7 +247,7 @@ class WaveSynthesizer:
                 print("Warning: ops.image.resize with linear mode for 1D not found. Envelope may not be applied correctly.")
 
         abs_envelope = ops.abs(processed_envelope) # backend tensor
-        max_abs_env = ops.stats.max(abs_envelope)   # backend tensor (scalar)
+        max_abs_env = stats.max(abs_envelope)   # backend tensor (scalar)
 
         # tensor.item(ops.greater(...)) for Python bool condition
         if tensor.item(ops.greater(max_abs_env, 0.0)):
@@ -339,8 +339,8 @@ class HarmonicProcessor:
         Returns:
             Filtered signal (raw backend tensor)
         """
-        # ops.abs and ops.stats.max operate on and return backend tensors
-        original_max = ops.stats.max(ops.abs(signal)) # original_max is backend scalar tensor
+        # ops.abs and stats.max operate on and return backend tensors
+        original_max = stats.max(ops.abs(signal)) # original_max is backend scalar tensor
         
         duration = tensor.shape(signal)[-1] / self.sampling_rate
         # tensor.zeros_like returns backend tensor

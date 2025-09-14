@@ -1,10 +1,9 @@
 # tests/numpy_tests/test_nn_tensor_conversion.py
 import pytest
-from ember_ml import ops
-from ember_ml.nn import tensor
-from ember_ml.nn.tensor.common.ember_tensor import EmberTensor
+from ember_ml import ops, tensor
+from ember_ml import tensor
 import numpy as np
-from ember_ml.nn.tensor.types import TensorLike
+from ember_ml.types import TensorLike
 
 # Note: Assumes conftest.py provides the numpy_backend fixture
 

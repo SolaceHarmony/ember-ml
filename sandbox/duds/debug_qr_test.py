@@ -12,11 +12,10 @@ import time
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Import Ember ML modules
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.ops import set_backend
-from ember_ml.ops import stats
-from ember_ml.ops import linearalg
+from ember_ml import stats
+from ember_ml import linearalg
 
 def debug_qr_test():
     """Debug version of the QR numerical stability test."""
@@ -116,7 +115,7 @@ def debug_qr_test():
     
     # Compute error statistics
     abs_diff = ops.abs(diff)
-    max_error = ops.stats.max(abs_diff)
+    max_error = stats.max(abs_diff)
     mean_error = stats.mean(abs_diff)
     
     print(f"\nMaximum absolute error: {max_error}")
@@ -148,7 +147,7 @@ def debug_qr_test():
     # Compute reconstruction error
     recon_diff = ops.subtract(a, recon)
     recon_abs_diff = ops.abs(recon_diff)
-    recon_max_error = ops.stats.max(recon_abs_diff)
+    recon_max_error = stats.max(recon_abs_diff)
     recon_mean_error = stats.mean(recon_abs_diff)
     
     print(f"Maximum reconstruction error: {recon_max_error}")

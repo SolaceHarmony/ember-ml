@@ -1,8 +1,6 @@
 # tests/torch_tests/test_nn_tensor_dtype.py
 import pytest
-from ember_ml import ops
-from ember_ml.nn import tensor
-from ember_ml.nn.tensor.common.dtypes import EmberDType
+from ember_ml import ops, tensor
 
 # Note: Assumes conftest.py provides the torch_backend fixture
 
@@ -47,7 +45,7 @@ def test_dtype_str_conversion_torch(torch_backend, dtype_obj): # Use fixture
         dtype_str = tensor.to_dtype_str(dtype_obj)
         assert isinstance(dtype_str, str), f"to_dtype_str failed for {dtype_obj}"
         retrieved_dtype_obj = tensor.from_dtype_str(dtype_str)
-        assert isinstance(retrieved_dtype_obj, EmberDType), f"from_dtype_str failed for '{dtype_str}'"
+     # Round trip should yield identical canonical representation
         assert retrieved_dtype_obj == dtype_obj, f"Round trip failed for {dtype_obj} ('{dtype_str}')"
     except Exception as e:
          pytest.skip(f"Skipping dtype {dtype_obj} for torch due to error: {e}")

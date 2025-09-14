@@ -7,8 +7,7 @@ which help maintain the variance of activations and gradients across layers.
 
 from typing import Tuple, Optional, Union, Any
 
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 
 def glorot_uniform(shape: Tuple[int, ...], dtype: Optional[Any] = None, device: Optional[str] = None):
     """
@@ -76,7 +75,7 @@ def orthogonal(shape: Tuple[int, ...], gain: float = 1.0, dtype: Optional[Any] =
     Returns:
         Initialized tensor
     """
-    from ember_ml.ops import linearalg
+    from ember_ml import linearalg
     
     # Use the backend-specific implementation from ops.linearalg
     return linearalg.orthogonal(shape, gain, dtype, device)

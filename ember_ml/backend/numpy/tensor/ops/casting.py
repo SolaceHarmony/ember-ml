@@ -19,15 +19,9 @@ def _validate_dtype(dtype: DType) -> Optional[Any]:
     if dtype is None:
         return None
     
-    # EmberDType handling
-    if (hasattr(dtype, '__class__') and
-        hasattr(dtype.__class__, '__name__') and
-        dtype.__class__.__name__ == 'EmberDType'):
-        from ember_ml.nn.tensor.common.dtypes import EmberDType
-        if isinstance(dtype, EmberDType):
-            dtype_from_ember = dtype._backend_dtype
-            if dtype_from_ember is not None:
-                return dtype_from_ember
+    # Generic object-with-name handling
+    if hasattr(dtype, 'name') and isinstance(dtype.name, str):
+        return NumpyDType().from_dtype_str(dtype.name)
             
     # EmberTensor string handling
     if isinstance(dtype, str):

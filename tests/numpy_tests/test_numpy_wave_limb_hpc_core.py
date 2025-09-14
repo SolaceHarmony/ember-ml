@@ -3,8 +3,7 @@ import numpy as np # For comparison with known correct results
 import array # For working with limb arrays
 
 # Import Ember ML modules
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.wave.limb import hpc_limb_core # Import the module
 from ember_ml.ops import set_backend
 

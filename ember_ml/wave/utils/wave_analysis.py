@@ -7,12 +7,11 @@ This module provides utilities for analyzing wave signals.
 import numpy as np
 from typing import Union, List, Tuple, Optional, Dict
 from scipy import signal
-from ember_ml import ops
-from ember_ml.nn import tensor
-from ember_ml.nn.tensor.types import TensorLike # Corrected import
+from ember_ml import ops, linearalg, tensor, stats
+from ember_ml.types import TensorLike # Corrected import
 # Try to import librosa, but don't fail if it's not available
 try:
-    import librosa
+    import librosa # type: ignore
     LIBROSA_AVAILABLE = True
 except ImportError:
     LIBROSA_AVAILABLE = False

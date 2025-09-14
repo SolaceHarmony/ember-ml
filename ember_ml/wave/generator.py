@@ -4,10 +4,9 @@ Wave pattern and signal generation components.
 
 import math
 from typing import List, Optional, Dict, Tuple, Union
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.nn import modules
-from ember_ml.nn import container
+from ember_ml.nn import layers
 from ember_ml.nn.modules import activations
 from ember_ml.backend import get_backend
 from .binary_wave import WaveConfig
@@ -228,20 +227,20 @@ class WaveGenerator(modules.Module):
         self.config = config
         
         # Generator network
-        self.net = container.Sequential([
-            container.Linear(latent_dim, hidden_dim),
+        self.net = layers.Sequential([
+            layers.Linear(latent_dim, hidden_dim),
             activations.ReLU(),
-            container.Linear(hidden_dim, hidden_dim),
+            layers.Linear(hidden_dim, hidden_dim),
             activations.ReLU(),
-            container.Linear(hidden_dim, config.grid_size[0] * config.grid_size[1] if isinstance(config.grid_size, tuple) else config.grid_size * config.grid_size),
+            layers.Linear(hidden_dim, config.grid_size[0] * config.grid_size[1] if isinstance(config.grid_size, tuple) else config.grid_size * config.grid_size),
             activations.Sigmoid()
         ])
         
         # Phase network
-        self.phase_net = container.Sequential([
-            container.Linear(latent_dim, hidden_dim),
+        self.phase_net = layers.Sequential([
+            layers.Linear(latent_dim, hidden_dim),
             activations.ReLU(),
-            container.Linear(hidden_dim, config.num_phases if hasattr(config, 'num_phases') else 8),
+            layers.Linear(hidden_dim, config.num_phases if hasattr(config, 'num_phases') else 8),
             activations.Sigmoid()
         ])
         

@@ -16,7 +16,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from ember_ml.nn.modules import CfC, LTC, ELTC
 from ember_ml.nn.modules.wiring import AutoNCP
 from ember_ml.nn.modules.trainers import MemoryOptimizedTrainer
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml import ops
 
 def main():

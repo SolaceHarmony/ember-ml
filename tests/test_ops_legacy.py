@@ -5,8 +5,7 @@ This module tests the basic functionality of the ops module using pytest.
 """
 
 import pytest
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.backend import set_backend, get_backend
 
 # Test with all available backends

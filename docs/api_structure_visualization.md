@@ -65,7 +65,7 @@ flowchart TD
 ### Current Import Pattern:
 ```python
 # Multiple import locations
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml import ops
 
 # Mixed operation locations

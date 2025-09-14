@@ -1,7 +1,7 @@
 import pytest
 from ember_ml.ops import set_backend
 from ember_ml.nn.modules import Module, Parameter
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml import ops
 # Assuming attention mechanisms are directly under ember_ml.attention
 # from ember_ml.attention import SomeAttentionModule # Replace with actual imports

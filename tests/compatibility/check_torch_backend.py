@@ -1,5 +1,4 @@
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 import matplotlib.pyplot as plt
 import numpy as np
 

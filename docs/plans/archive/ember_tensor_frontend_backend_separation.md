@@ -45,7 +45,7 @@ def convert_to_tensor(data, dtype=None, device=None, requires_grad=False):
     Returns:
         EmberTensor
     """
-    # If already an EmberTensor, return it directly (reference passing)
+    # If already an tensor, return it directly (reference passing)
     if isinstance(data, EmberTensor):
         return data
     
@@ -64,7 +64,7 @@ Simplify the EmberTensor class to only maintain the essential internal state:
 class EmberTensor:
     def __init__(self, data, dtype=None):
         """Initialize an EmberTensor with minimal state."""
-        # If data is already an EmberTensor, extract its backend tensor (reference)
+        # If data is already an tensor, extract its backend tensor (reference)
         if isinstance(data, EmberTensor):
             self._tensor = data._tensor  # Direct reference to the same backend tensor
             self._dtype = data._dtype if dtype is None else dtype

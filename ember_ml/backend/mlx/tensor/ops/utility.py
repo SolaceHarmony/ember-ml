@@ -9,14 +9,14 @@ def _validate_and_get_mlx_dtype(dtype: Optional[Any]) -> Optional[mx.Dtype]:
     Validate and convert input dtype to an MLX Dtype.
 
     Args:
-        dtype: Input dtype (string, EmberDType, MLX Dtype, None)
+        dtype: Input dtype (canonical dtype string, MLX Dtype, or None)
 
     Returns:
         Validated MLX Dtype or None
     """
     if dtype is None:
         return None
-
+        dtype: Optional desired dtype (canonical dtype string, mx.Dtype, None).
     # If it's already an MLX dtype, return it
     if isinstance(dtype, mx.Dtype):
         return dtype
@@ -25,7 +25,7 @@ def _validate_and_get_mlx_dtype(dtype: Optional[Any]) -> Optional[mx.Dtype]:
     dtype_name = None
     if isinstance(dtype, str):
         dtype_name = dtype
-    elif hasattr(dtype, 'name'): # Handles EmberDType
+    elif hasattr(dtype, 'name'):
         dtype_name = str(dtype.name)
 
     if dtype_name:
@@ -63,7 +63,7 @@ def _validate_and_get_mlx_dtype(dtype: Optional[Any]) -> Optional[mx.Dtype]:
         else:
             raise ValueError(f"Unknown data type name: {dtype_name}")
 
-    # If it's not a string, EmberDType, or MLX Dtype, it's invalid
+    # If it's not a string or MLX Dtype, it's invalid
     raise ValueError(f"Invalid dtype: {dtype} of type {type(dtype)}")
 
 def _convert_input(x: TensorLike, dtype: Optional[DType]=None, device: Optional[Union[None,mx.Device]]=None) -> Any:
@@ -198,7 +198,7 @@ def _convert_input(x: TensorLike, dtype: Optional[DType]=None, device: Optional[
             raise ValueError(f"Cannot convert sequence {type(x)} with item types {item_types} to MLX array: {str(e)}")
        
     # For any other type, reject it with a corrected list of supported types
-    raise ValueError(f"Cannot convert {type(x)} to MLX array. Supported types: Python scalars/sequences, NumPy scalars/arrays, MLXTensor, EmberTensor, Parameter.")
+    raise ValueError(f"Cannot convert {type(x)} to MLX array. Supported types: Python scalars/sequences, NumPy scalars/arrays, MLXTensor, tensor, Parameter.")
 
 def _convert_to_tensor(data: TensorLike, dtype: Optional[DType] = None, device=None) -> mx.array:
     """
@@ -206,7 +206,7 @@ def _convert_to_tensor(data: TensorLike, dtype: Optional[DType] = None, device=N
 
     Args:
         data: Input data
-        dtype: Optional desired data type (string, EmberDType, MLX Dtype).
+    dtype: Optional desired data type (canonical string or MLX Dtype).
         device: Ignored for MLX backend
 
     Returns:

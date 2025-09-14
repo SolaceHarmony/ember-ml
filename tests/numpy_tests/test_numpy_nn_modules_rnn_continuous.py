@@ -2,8 +2,7 @@ import pytest
 import numpy as np # For comparison with known correct results
 
 # Import Ember ML modules
-from ember_ml import ops
-from ember_ml.nn import tensor
+from ember_ml import ops, tensor
 from ember_ml.nn.modules.wiring import FullyConnectedMap, NCPMap # Import necessary maps
 from ember_ml.nn.modules.rnn import CfC, LTC # Import continuous RNN modules
 from ember_ml.ops import set_backend

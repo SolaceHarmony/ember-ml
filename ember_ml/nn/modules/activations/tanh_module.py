@@ -4,7 +4,8 @@ Hyperbolic Tangent (Tanh) activation module.
 """
 from ember_ml import ops
 from ember_ml.nn.modules import Module
-from ember_ml.nn import tensor
+from ember_ml import tensor
+from ember_ml.types import TensorLike
 
 class Tanh(Module):
     """
@@ -13,7 +14,7 @@ class Tanh(Module):
     """
     def __init__(self):
         super().__init__()
-    def forward(self, x: tensor.EmberTensor) -> tensor.EmberTensor:
+    def forward(self, x: TensorLike) -> TensorLike:
         """Forward pass of Tanh."""
         # Import lazily and call the backend-agnostic activation op
         from ember_ml.nn.modules.activations import tanh # Import from parent __init__

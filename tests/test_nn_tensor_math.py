@@ -7,7 +7,7 @@ It tests each operation with different backends to ensure consistency.
 import pytest
 import numpy as np
 from ember_ml import ops
-from ember_ml.nn.tensor import (
+from ember_ml import (
     zeros, ones, eye, full, arange, reshape, transpose,
     convert_to_tensor, cast, copy, to_numpy,
     shape, dtype, maximum

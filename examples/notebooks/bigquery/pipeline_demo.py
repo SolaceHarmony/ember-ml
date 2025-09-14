@@ -18,7 +18,7 @@ import argparse
 from ember_ml.nn.modules import Module # Keep Module, remove others that cause ImportError
 from typing import Dict, List, Optional, Tuple, Union, Any, Generator
 from ember_ml.nn import ops # Ensure ops is imported for tensor operations
-from ember_ml.nn import tensor # Ensure tensor is imported for tensor operations
+from ember_ml import tensor # Ensure tensor is imported for tensor operations
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -27,7 +27,7 @@ logging.basicConfig(
 logger = logging.getLogger('pipeline_demo')
 
 # Import our components (using the purified backend-agnostic implementation)
-from ember_ml.nn.features.terabyte_feature_extractor import TerabyteFeatureExtractor, TerabyteTemporalStrideProcessor
+from ember_ml.features.terabyte_feature_extractor import TerabyteFeatureExtractor, TerabyteTemporalStrideProcessor
 from ember_ml.models.optimized_rbm import OptimizedRBM
 from ember_ml.models.stride_aware_cfc import (
     create_liquid_network_with_motor_neuron,
@@ -420,7 +420,7 @@ class IntegratedPipeline:
         """
         # Import necessary Ember ML training components
         from ember_ml.training import Adam, MSELoss
-        from ember_ml.nn import tensor # Ensure tensor is imported
+        from ember_ml import tensor # Ensure tensor is imported
         from ember_ml import ops # Ensure ops is imported
 
         start_time = time.time()
@@ -836,7 +836,7 @@ def main():
         
         # Create dummy targets for demonstration using tensor.random_uniform
         # In a real application, you would use actual targets
-        from ember_ml.nn import tensor # Ensure tensor is imported
+        from ember_ml import tensor # Ensure tensor is imported
         train_targets = tensor.random_uniform((len(train_rbm_features), 1))
         val_targets = tensor.random_uniform((len(val_rbm_features), 1))
         # Convert back to numpy temporarily because model.fit expects it (TF dependency)

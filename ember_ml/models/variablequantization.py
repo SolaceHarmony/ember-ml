@@ -2,10 +2,10 @@ import hashlib
 from dataclasses import dataclass
 from typing import List, Tuple, Optional
 import time
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml.ops import set_backend
-from ember_ml.nn.tensor.types import TensorLike
-from ember_ml.ops import stats
+from ember_ml.types import TensorLike
+from ember_ml import stats
 from ember_ml import ops
 
 @dataclass

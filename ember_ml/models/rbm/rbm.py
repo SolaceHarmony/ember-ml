@@ -7,13 +7,13 @@ This module provides a Restricted Boltzmann Machine (RBM) implementation for the
 import numpy as np
 # Import ops and stats separately
 from ember_ml import ops
-from ember_ml.ops import stats
+from ember_ml import stats
 from ember_ml.nn.modules import Module, Parameter
-from ember_ml.nn.tensor import random_uniform
-from ember_ml.nn import tensor
-from ember_ml.nn.container import Linear
+from ember_ml import tensor
+from ember_ml.nn.layers import Linear
 from ember_ml.nn.modules.activations import get_activation
 from typing import Optional, Tuple, List, Dict, Any, Union, Callable
+from ember_ml.types import TensorLike
 
 class RestrictedBoltzmannMachine(Module):
     """
@@ -55,7 +55,7 @@ class RestrictedBoltzmannMachine(Module):
         # Move to device
         self.to(self.device)
     
-    def visible_to_hidden(self, visible: tensor.EmberTensor) -> Tuple[tensor.EmberTensor, tensor.EmberTensor]:
+    def visible_to_hidden(self, visible: TensorLike) -> Tuple[Any, Any]:
         """
         Compute hidden activations and probabilities given visible units.
         
@@ -102,7 +102,7 @@ class RestrictedBoltzmannMachine(Module):
         
         return hidden_probs, hidden_states
     
-    def hidden_to_visible(self, hidden: tensor.EmberTensor) -> Tuple[tensor.EmberTensor, tensor.EmberTensor]:
+    def hidden_to_visible(self, hidden: TensorLike) -> Tuple[Any, Any]:
         """
         Compute visible activations and probabilities given hidden units.
         
@@ -130,7 +130,7 @@ class RestrictedBoltzmannMachine(Module):
         
         return visible_probs, visible_states
     
-    def forward(self, visible: tensor.EmberTensor) -> Tuple[tensor.EmberTensor, tensor.EmberTensor, tensor.EmberTensor, tensor.EmberTensor]:
+    def forward(self, visible: TensorLike) -> Tuple[Any, Any, Any, Any]:
         """
         Forward pass.
         
@@ -148,7 +148,7 @@ class RestrictedBoltzmannMachine(Module):
         
         return hidden_probs, hidden_states, visible_probs, visible_states
     
-    def free_energy(self, visible: tensor.EmberTensor) -> tensor.EmberTensor:
+    def free_energy(self, visible: TensorLike) -> Any:
         """
         Compute the free energy of a visible vector.
         
@@ -179,7 +179,7 @@ class RestrictedBoltzmannMachine(Module):
         
         return visible_term + hidden_term
     
-    def reconstruct(self, visible: tensor.EmberTensor, num_gibbs_steps: int = 1) -> tensor.EmberTensor:
+    def reconstruct(self, visible: TensorLike, num_gibbs_steps: int = 1) -> Any:
         """
         Reconstruct visible units.
         
@@ -221,7 +221,7 @@ class RestrictedBoltzmannMachine(Module):
         
         return visible_probs
     
-    def sample(self, num_samples: int, num_gibbs_steps: int = 1000) -> tensor.EmberTensor:
+    def sample(self, num_samples: int, num_gibbs_steps: int = 1000) -> Any:
         """
         Sample from the RBM.
         
@@ -340,7 +340,7 @@ class RestrictedBoltzmannMachine(Module):
         if per_sample:
             return error
         else:
-            return ops.stats.mean(error)
+            return stats.mean(error)
             
     def anomaly_score(self, data):
         """
@@ -381,7 +381,7 @@ class RestrictedBoltzmannMachine(Module):
         return ops.greater_equal(scores, threshold)
 
 def train_rbm(rbm: RestrictedBoltzmannMachine,
-              data: tensor.EmberTensor,
+              data: TensorLike,
               num_epochs: int = 10, 
               batch_size: int = 32, 
               learning_rate: float = 0.01, 
@@ -457,7 +457,7 @@ def train_rbm(rbm: RestrictedBoltzmannMachine,
             
             # In a real implementation, we would update weights here
             # For now, we'll just compute the loss
-            loss = ops.stats.mean(ops.subtract(positive_free_energy, negative_free_energy))
+            loss = stats.mean(ops.subtract(positive_free_energy, negative_free_energy))
             
             epoch_loss += loss
         
@@ -472,8 +472,8 @@ def train_rbm(rbm: RestrictedBoltzmannMachine,
     return losses
 
 def reconstruct_with_rbm(rbm: RestrictedBoltzmannMachine,
-                         data: tensor.EmberTensor,
-                         num_gibbs_steps: int = 1) -> tensor.EmberTensor:
+                         data: TensorLike,
+                         num_gibbs_steps: int = 1) -> Any:
     """
     Reconstruct data using an RBM.
     

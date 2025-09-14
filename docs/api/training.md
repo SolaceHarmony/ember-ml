@@ -262,7 +262,7 @@ def regression_metrics(y_true, y_pred):
 ```python
 from ember_ml.training import SGD, MSELoss
 from ember_ml.nn.modules import Linear
-from ember_ml.nn import tensor
+from ember_ml import tensor
 from ember_ml import ops
 
 # Create a simple linear model
@@ -298,7 +298,7 @@ for epoch in range(100):
 
 ```python
 from ember_ml.training import classification_metrics, confusion_matrix
-from ember_ml.nn import tensor
+from ember_ml import tensor
 
 # Generate some predictions
 y_true = tensor.convert_to_tensor([0, 1, 2, 0, 1, 2])

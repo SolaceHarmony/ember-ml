@@ -7,7 +7,7 @@ The `ember_ml.ops.linearalg` module provides a comprehensive set of backend-agno
 ## Importing
 
 ```python
-from ember_ml.ops import linearalg
+from ember_ml import linearalg
 ```
 
 ## Available Functions
@@ -40,8 +40,8 @@ from ember_ml.ops import linearalg
 
 ```python
 from ember_ml import ops
-from ember_ml.ops import linearalg
-from ember_ml.nn import tensor
+from ember_ml import linearalg
+from ember_ml import tensor
 
 # Create a matrix
 a = tensor.convert_to_tensor([[1, 2], [3, 4]])
@@ -67,8 +67,8 @@ print("L:", l)  # Lower triangular matrix
 
 ```python
 from ember_ml import ops
-from ember_ml.ops import linearalg
-from ember_ml.nn import tensor
+from ember_ml import linearalg
+from ember_ml import tensor
 
 # Create a coefficient matrix and constants
 a = tensor.convert_to_tensor([[3, 1], [1, 2]])
@@ -86,8 +86,8 @@ print("Verification:", result)  # [9, 8]
 ### Matrix Properties
 
 ```python
-from ember_ml.ops import linearalg
-from ember_ml.nn import tensor
+from ember_ml import linearalg
+from ember_ml import tensor
 
 # Create a matrix
 a = tensor.convert_to_tensor([[1, 2], [3, 4]])
@@ -108,8 +108,8 @@ print("Frobenius norm:", norm_a)  # 5.477...
 ### Working with Diagonals
 
 ```python
-from ember_ml.ops import linearalg
-from ember_ml.nn import tensor
+from ember_ml import linearalg
+from ember_ml import tensor
 
 # Create a vector and form a diagonal matrix
 v = tensor.convert_to_tensor([1, 2, 3])

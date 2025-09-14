@@ -2,7 +2,7 @@
 Test script to verify EmberTensor works with different backends.
 """
 
-from ember_ml.nn.tensor import EmberTensor, int32, float32
+from ember_ml import tensor, int32, float32
 from ember_ml.backend import get_backend, set_backend
 
 def print_tensor_info(tensor, backend_name):
@@ -21,23 +21,23 @@ def test_backend(backend_name):
         print(f"\nSwitched to {backend_name} backend")
         
         # Create tensors with different dtypes
-        tensor_int = EmberTensor([1, 2, 3], dtype=int32)
-        tensor_float = EmberTensor([1.0, 2.0, 3.0], dtype=float32)
+        tensor_int = tensor([1, 2, 3], dtype=int32)
+        tensor_float = tensor([1.0, 2.0, 3.0], dtype=float32)
         
         # Print tensor information
         print_tensor_info(tensor_int, backend_name)
         print_tensor_info(tensor_float, backend_name)
         
         # Test detach
-        tensor_with_grad = EmberTensor([1, 2, 3], requires_grad=True)
+        tensor_with_grad = tensor([1, 2, 3], requires_grad=True)
         detached = tensor_with_grad.detach()
         print(f"requires_grad before detach: {tensor_with_grad.requires_grad}")
         print(f"requires_grad after detach: {detached.requires_grad}")
         
         # Test reshape
-        reshaped = EmberTensor([[1, 2], [3, 4]])
+        reshaped = tensor([[1, 2], [3, 4]])
         print(f"Original shape: {reshaped.shape}")
-        tensor_obj = EmberTensor([0])
+        tensor_obj = tensor([0])
         reshaped = tensor_obj.reshape(reshaped.to_backend_tensor(), (4,))
         print(f"Reshaped shape: {reshaped.shape}")
         
