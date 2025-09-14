@@ -45,6 +45,17 @@ builtins.stats = stats
 linearalg = ops_module.linearalg
 bitwise = ops_module.bitwise
 
+# Backwards compatibility: explicit reconfiguration of ops for a backend.
+def set_ops(backend: str) -> None:
+    """Set the active backend for operations.
+
+    Historically ``ops.set_ops`` was required to switch operation tables
+    after changing backends. The modern implementation updates proxies
+    automatically, so this function simply delegates to
+    :func:`set_backend`.
+    """
+    set_backend(backend)
+
 # Import all operations from the ops module
 # Math operations
 add = ops_module.add
@@ -119,6 +130,21 @@ sparse_categorical_crossentropy = ops_module.sparse_categorical_crossentropy
 huber_loss = ops_module.huber_loss
 log_cosh_loss = ops_module.log_cosh_loss
 
+# Stats operations
+mean = ops_module.mean
+var = ops_module.var
+median = ops_module.median
+std = ops_module.std
+percentile = ops_module.percentile
+max = ops_module.max
+min = ops_module.min
+sum = ops_module.sum
+cumsum = ops_module.cumsum
+argmax = ops_module.argmax
+sort = ops_module.sort
+argsort = ops_module.argsort
+gaussian = ops_module.gaussian
+
 # Vector operations
 normalize_vector = ops_module.normalize_vector
 compute_energy_stability = ops_module.compute_energy_stability
@@ -171,6 +197,25 @@ def index_update(tensor_obj, indices, value):
 
 index = _tensor.index
 
+# Activation functions
+def sigmoid(x):
+    from ember_ml import exp
+    return divide(1, add(1, exp(negative(x))))
+
+def relu(x):
+    from ember_ml import zeros_like
+    return where(greater(x, 0), x, zeros_like(x))
+
+def tanh(x):
+    e_pos = exp(x)
+    e_neg = exp(negative(x))
+    return divide(subtract(e_pos, e_neg), add(e_pos, e_neg))
+
+def softmax(x, axis=-1):
+    x_shifted = subtract(x, max(x, axis=axis, keepdims=True))
+    e = exp(x_shifted)
+    return divide(e, sum(e, axis=axis, keepdims=True))
+
 
 # Master list of all operations for __all__
 _MASTER_OPS_LIST = [
@@ -190,16 +235,20 @@ _MASTER_OPS_LIST = [
     # Loss operations
     'mse', 'mean_absolute_error', 'binary_crossentropy', 'categorical_crossentropy',
     'sparse_categorical_crossentropy', 'huber_loss', 'log_cosh_loss',
+    # Stats operations
+    'mean', 'var', 'median', 'std', 'percentile', 'max', 'min', 'sum', 'cumsum', 'argmax', 'sort', 'argsort', 'gaussian',
     # Vector operations
     'normalize_vector', 'compute_energy_stability', 'compute_interference_strength', 'compute_phase_coherence',
     'partial_interference', 'euclidean_distance', 'cosine_similarity', 'exponential_decay', 'fft', 'ifft',
     'fft2', 'ifft2', 'fftn', 'ifftn', 'rfft', 'irfft', 'rfft2', 'irfft2', 'rfftn', 'irfftn',
+    # Activation functions
+    'sigmoid', 'relu', 'tanh', 'softmax',
     'index_update', 'index',
 ]
 
 # Define __all__ to include backend controls, pi, submodules, and all operations
 __all__ = [
-    'set_backend', 'get_backend', 'auto_select_backend',  # Backend controls
+    'set_backend', 'get_backend', 'auto_select_backend', 'set_ops',  # Backend controls
     'pi',  # Constants
     'stats', 'linearalg', 'bitwise', 'random',  # Submodules
 ] + _MASTER_OPS_LIST  # All operations

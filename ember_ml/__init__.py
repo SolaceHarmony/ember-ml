@@ -8,6 +8,11 @@ that can work with different backends (NumPy, PyTorch, MLX).
 import importlib
 from typing import Union, Literal
 
+# Re-export common tensor helpers and dtype constants for convenience
+import ember_ml.dtypes as _dtypes_module
+import ember_ml.tensor as _tensor_module
+from ember_ml.dtypes import *  # noqa: F401,F403 - re-exported names
+
 # Default backend
 _CURRENT_BACKEND = None
 _BACKEND_MODULE = None
@@ -52,16 +57,8 @@ except Exception as e:
     print(f"Warning: Error selecting default backend: {e}. Imports may fail if backend operations are used without calling set_backend().")
     pass # Allow import to proceed without a default backend set
 
-# Import submodules
-# from ember_ml import benchmarks # Removed - moved out of package
-from ember_ml import data
-from ember_ml import models
-from ember_ml import nn
-from ember_ml import ops
-from ember_ml import training
-from ember_ml import visualization
-from ember_ml import utils
-from ember_ml import asyncml
+# Submodules are imported lazily via ``__getattr__`` below to avoid
+# unnecessary import-time side effects and potential circular imports.
 
 
 class _TensorProxy:
@@ -79,6 +76,11 @@ class _TensorProxy:
 
 tensor = _TensorProxy()
 
+# Export tensor ops at top level (except the ``tensor`` constructor)
+for _name in getattr(_tensor_module, "__all__", []):
+    if _name != "tensor":
+        globals()[_name] = getattr(_tensor_module, _name)
+
 
 def set_seed(seed):
     """Set the random seed for all backends."""
@@ -93,14 +95,22 @@ __all__ = [
     'set_backend',
     'set_seed',
     # 'auto_select_backend', # Removed - moved to ops
-    'data',
-    'models',
-    'nn',
-    'ops',
-    'training',
-    'visualization',
-    'utils',
-    'asyncml',
-    'tensor',
-    '__version__'
+    'data', 'models', 'nn', 'ops', 'training', 'visualization', 'utils', 'asyncml',
+    'tensor', '__version__'
 ]
+
+# Include tensor ops and dtype helpers in the public API
+__all__ += [n for n in getattr(_tensor_module, '__all__', []) if n != 'tensor']
+__all__ += list(getattr(_dtypes_module, '__all__', []))
+
+_SUBMODULES = {
+    'data', 'models', 'nn', 'ops', 'training', 'visualization', 'utils', 'asyncml'
+}
+
+def __getattr__(name):
+    """Lazily import top-level submodules on first access."""
+    if name in _SUBMODULES:
+        module = importlib.import_module(f'ember_ml.{name}')
+        globals()[name] = module
+        return module
+    raise AttributeError(f"module 'ember_ml' has no attribute '{name}'")
