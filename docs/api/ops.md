@@ -145,8 +145,8 @@ The `ops` module also re-exports key backend management functions:
 - All operations are backend-agnostic and work with any backend (NumPy, PyTorch, MLX) set via `ops.set_backend`.
 - The operations follow a consistent API across different backends.
 - Most operations support broadcasting, similar to NumPy and other array libraries.
-- For tensor creation and manipulation (which return `EmberTensor`), use the `ember_ml.nn.tensor` module.
-- For statistical operations (e.g., mean, std, var), use the `ember_ml.ops.stats` module.
-- For linear algebra operations (e.g., svd, inv, det), use the `ember_ml.ops.linearalg` module.
+- For tensor creation and manipulation (which return `EmberTensor`), use the `ember_ml.tensor` module.
+- For statistical operations (e.g., mean, std, var), use the `ember_ml.stats` module.
+- For linear algebra operations (e.g., svd, inv, det), use the `ember_ml.linearalg` module.
 - For activation functions (functional or Module classes), use the `ember_ml.nn.modules.activations` module.
-- For feature extraction operations/factories, use the `ember_ml.nn.features` module.
+- For feature extraction operations/factories, use the `ember_ml.features` module.
