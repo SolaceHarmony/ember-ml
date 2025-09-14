@@ -8,7 +8,7 @@ for all wiring configurations.
 from typing import Optional, Tuple, Dict, Any
 from ember_ml import ops, tensor
 from ember_ml.ops import stats  # Import stats module for sum operation
-from ember_ml.tensor import EmberTensor
+from ember_ml.types import TensorLike
 
 class NeuronMap: # Renamed from Wiring
     """
@@ -45,16 +45,16 @@ class NeuronMap: # Renamed from Wiring
         self.seed = seed
         
         # Initialize masks
-        self._input_mask: Optional[EmberTensor] = None
-        self._recurrent_mask: Optional[EmberTensor] = None
-        self._output_mask: Optional[EmberTensor] = None
+        self._input_mask: Optional[TensorLike] = None
+        self._recurrent_mask: Optional[TensorLike] = None
+        self._output_mask: Optional[TensorLike] = None
         
         # Initialize adjacency matrices
         self.adjacency_matrix = tensor.zeros([units, units], dtype=tensor.int32)
         self.sensory_adjacency_matrix = None
         self._built = False # Track build status
         
-    def build(self, input_dim=None) -> Tuple[EmberTensor, tensor, EmberTensor]:
+    def build(self, input_dim=None) -> Tuple[TensorLike, TensorLike, TensorLike]:
         """
         Build the wiring configuration.
         
@@ -92,7 +92,7 @@ class NeuronMap: # Renamed from Wiring
         """
         return self._built
     
-    def get_input_mask(self) -> Optional[EmberTensor]:
+    def get_input_mask(self) -> Optional[TensorLike]:
         """
         Get the input mask.
         
@@ -107,10 +107,10 @@ class NeuronMap: # Renamed from Wiring
         
         return (
             tensor.convert_to_tensor(self._input_mask)
-            if not isinstance(self._input_mask, EmberTensor)
+            if not isinstance(self._input_mask, (tuple, list))
             else self._input_mask
         )
-    def get_recurrent_mask(self) -> Optional[EmberTensor]:
+    def get_recurrent_mask(self) -> Optional[TensorLike]:
         """
         Get the recurrent mask.
         
@@ -126,7 +126,7 @@ class NeuronMap: # Renamed from Wiring
         # Return the mask directly
         return self._recurrent_mask
     
-    def get_output_mask(self) -> Optional[EmberTensor]:
+    def get_output_mask(self) -> Optional[TensorLike]:
         """
         Get the output mask.
         

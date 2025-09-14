@@ -9,8 +9,6 @@ import importlib
 
 from ember_ml.backend import get_backend
 from ..dtypes import (
-    EmberDType,
-    DType,
     get_dtype,
     to_dtype_str,
     from_dtype_str,
@@ -232,27 +230,6 @@ class Index:
 index = Index()
 
 
-class EmberTensor:
-    """Backend-agnostic tensor wrapper."""
-
-    def __init__(self, data, dtype=None, device=None):
-        self._tensor = _convert_to_backend_tensor(data, dtype=dtype, device=device)
-        self._dtype = dtype
-
-    def to_backend_tensor(self):
-        """Return the underlying backend tensor."""
-
-        return self._tensor
-
-    @property
-    def backend(self):  # pragma: no cover - simple property
-        return get_backend()
-
-    @property
-    def dtype(self):  # pragma: no cover - simple property
-        return dtype(self._tensor)
-
-
 _convert_to_backend_tensor = lambda *args, **kwargs: getattr(
     importlib.import_module(
         f"ember_ml.backend.{get_backend()}.tensor.ops.utility"
@@ -261,10 +238,18 @@ _convert_to_backend_tensor = lambda *args, **kwargs: getattr(
 )(*args, **kwargs)
 
 
-def dtype(data):
-    """Get the data type of a tensor."""
+def dtype(obj: Any = None):
+    """Dtype helper.
 
-    return _get_backend_tensor_ops_module().dtype(data)
+    - dtype(tensor_obj) -> backend dtype of tensor_obj
+    - dtype("float32") -> backend-native dtype (or canonical string)
+    - dtype() -> returns callable so dtype()("float32") works
+    """
+    if obj is None:
+        return get_dtype
+    if isinstance(obj, str):
+        return get_dtype(obj)
+    return _get_backend_tensor_ops_module().dtype(obj)
 
 
 def array(data: Any, dtype: Any = None, device: Optional[str] = None) -> Any:
@@ -273,15 +258,8 @@ def array(data: Any, dtype: Any = None, device: Optional[str] = None) -> Any:
     return convert_to_tensor(data, dtype=dtype, device=device)
 
 
-def convert_to_tensor(
-    data: Any, dtype: Any = None, device: Optional[str] = None
-) -> Any:
-    """Convert data to a raw backend tensor of the currently active backend."""
-
-    if isinstance(data, EmberTensor):
-        return _convert_to_backend_tensor(
-            data.to_backend_tensor(), dtype=dtype, device=device
-        )
+def convert_to_tensor(data: Any, dtype: Any = None, device: Optional[str] = None) -> Any:
+    """Convert data to a raw backend tensor of the active backend."""
     return _convert_to_backend_tensor(data, dtype=dtype, device=device)
 
 
@@ -292,9 +270,6 @@ def tensor(data: Any, dtype: Any = None, device: Optional[str] = None) -> Any:
 
 
 __all__ = [
-    "EmberTensor",
-    "EmberDType",
-    "DType",
     "dtype",
     "array",
     "tensor",

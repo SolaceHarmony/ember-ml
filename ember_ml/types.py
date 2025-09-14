@@ -1,72 +1,127 @@
-"""Type definitions for tensor operations.
+"""Core public type aliases for Ember ML frontend.
 
-This module provides standard type aliases for tensor operations in the Ember ML framework.
-These type aliases ensure consistent type annotations across the codebase and
-help with static type checking.
+The goal of this module is to expose stable, backend-agnostic typing helpers
+used throughout the high-level API while avoiding hard runtime dependencies
+on any specific backend library (NumPy / Torch / MLX).  All heavy backend
+imports remain optional and occur only behind ``TYPE_CHECKING`` guards so
+that importing ``ember_ml`` does not force-install every backend.
+
+Design principles:
+* No runtime imports of backend modules purely for typing.
+* Light Protocol-based structural typing where it provides value.
+* Broad ``Any`` fallbacks at runtime to keep import cost minimal.
+* Forward-compatible: new backends can integrate by matching Protocols.
 """
 
-from typing import Union, Optional, Sequence, Any, List, Tuple, TYPE_CHECKING
+from __future__ import annotations
 
-# Import EmberTensor for type annotations
-from ember_ml.dtypes import EmberDType
+from typing import Any, Optional, Protocol, Sequence, Tuple, Union, List, TYPE_CHECKING, runtime_checkable
 
-# Conditionally import backend types for type checking only
-if TYPE_CHECKING:
-    # These imports are only used for type checking and not at runtime
+# Re-exported numeric scalar convenience type
+Numeric = Union[int, float]
+
+# Minimal shape alias (list/tuple of ints) kept permissive intentionally
+ShapeLike = Union[int, Sequence[int]]
+
+@runtime_checkable
+class SupportsDType(Protocol):
+    """Protocol for objects exposing a ``dtype`` attribute.
+
+    Backends commonly expose ``.dtype``; using a Protocol allows structural
+    typing without importing concrete tensor classes.
+    """
+
+    @property
+    def dtype(self) -> Any:  # pragma: no cover - structural typing only
+        ...
+
+
+@runtime_checkable
+class SupportsDevice(Protocol):
+    """Protocol for objects with an optional ``device`` attribute."""
+
+    @property
+    def device(self) -> Any:  # pragma: no cover - structural typing only
+        ...
+
+
+@runtime_checkable
+class EmberTensorLike(Protocol):
+    """Protocol capturing the minimal surface used by high-level ops.
+
+    This intentionally omits numerical operations; those are mediated through
+    ``ember_ml.ops`` which handles backend dispatch.  Only metadata queried
+    by generic helpers (shape / dtype / device / size) is modeled here.
+    """
+
+    @property
+    def shape(self) -> Any:  # Typically a tuple[int, ...]
+        ...
+
+    @property
+    def dtype(self) -> Any:
+        ...
+
+    # Optional; some backends expose ``device``
+    @property
+    def device(self) -> Any:  # pragma: no cover
+        ...
+
+    def __array__(self, *args: Any, **kwargs: Any) -> Any:  # NumPy compatibility hook
+        ...
+
+
+# Conditional precise backend-only typing (ignored at runtime)
+if TYPE_CHECKING:  # pragma: no cover - typing only
     import numpy as np
     import torch
-
+    import mlx.core as mx
     from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
     from ember_ml.backend.torch.tensor import TorchTensor
     from ember_ml.backend.mlx.tensor.tensor import MLXTensor
-    # from ember_ml.nn.tensor.common.ember_tensor import EmberTensor # Moved up
 
-# Moved TensorTypes outside of TYPE_CHECKING
-TensorTypes = Union[
-    Any,  # Placeholder for TensorLike, resolved during type checking
-    Any,  # Placeholder for 'mlx.core.array'
-    Any,  # Placeholder for MLXTensor
-    Any,  # Placeholder for EmberTensor
-    Any,  # Placeholder for TorchTensor
-    Any   # Placeholder for NumpyTensor
-]
+    BackendArray = Union[
+        np.ndarray,
+        torch.Tensor,
+        mx.array,
+        NumpyTensor,
+        TorchTensor,
+        MLXTensor,
+    ]
+else:
+    BackendArray = Any  # Fallback placeholder when type checking is off
 
-# Basic type aliases
-Numeric = Union[int, float]
 
-# Standard type aliases for general tensor-like inputs
-# This covers all possible input types that can be converted to a tensor
 TensorLike = Optional[Union[
     Numeric,
     bool,
     List[Any],
     Tuple[Any, ...],
-    np.ndarray if TYPE_CHECKING else Any,
-    torch.Tensor if TYPE_CHECKING else Any,
-    NumpyTensor if TYPE_CHECKING else Any,
-    TorchTensor if TYPE_CHECKING else Any,
-    MLXTensor if TYPE_CHECKING else Any,
+    BackendArray,  # Resolved to precise union only during type checking
+    EmberTensorLike,
 ]]
 
-# Dimension-specific tensor types
-Scalar = Union[int, float, bool]  # 0D tensors
-Vector = Union[List[Union[int, float, bool]], Tuple[Union[int, float, bool], ...]]  # 1D tensors
-Matrix = Union[List[List[Union[int, float, bool]]]]  # 2D tensors
+# Public export list for star-import hygiene (optional, kept concise)
+__all__ = [
+    'Numeric',
+    'ShapeLike',
+    'SupportsDType',
+    'SupportsDevice',
+    'EmberTensorLike',
+    'TensorLike',
+]
 
-# Shape definitions
+
+#! Legacy compatibility aliases (lightweight)
+Scalar = Union[int, float, bool]
+Vector = Sequence[Scalar]
+Matrix = Sequence[Sequence[Scalar]]
 Shape = Union[int, Sequence[int]]
-ShapeLike = Union[int, Tuple[int, ...], List[int]]
-
-# Dtype definitions
-DType = Optional[Union[str, EmberDType, Any]]  # Any covers backend-specific dtype objects
+DType = Optional[Union[str, Any]]
 Device = Optional[str]
-
-# Dimension types
 Axis = Optional[Union[int, Sequence[int]]]
+ScalarLike = Optional[Union[Numeric, bool]]
 
-# Scalar types
-ScalarLike = Optional[Union[
-    Numeric,
-    bool,
-    TensorTypes
-]]
+__all__ += [
+    'Scalar', 'Vector', 'Matrix', 'Shape', 'DType', 'Device', 'Axis', 'ScalarLike'
+]

@@ -12,7 +12,7 @@ def cast(tensor: TensorLike, dtype: DType) -> mlx.core.array:
 
     Args:
         tensor: Input tensor-like object.
-        dtype: Target data type (EmberDType, mlx.core.Dtype, str, or None).
+        dtype: Target data type (canonical dtype string, mlx.core.Dtype, or None).
 
     Returns:
         MLX array with the new data type.

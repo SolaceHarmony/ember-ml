@@ -356,7 +356,7 @@ def _create_new_tensor(creation_func: Callable, dtype: Optional[Any] = None, dev
 
     Args:
         creation_func: The underlying NumPy creation function (e.g., np.zeros, np.eye, np.random.uniform).
-        dtype: Optional desired dtype (EmberDType, string, np.dtype, None).
+    dtype: Optional desired dtype (canonical string, np.dtype, None).
         device: Ignored for NumPy.
         **kwargs: Function-specific arguments (e.g., shape, N, M, start, stop, num, fill_value).
 

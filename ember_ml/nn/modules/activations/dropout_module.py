@@ -6,6 +6,7 @@ from typing import Dict, Any # Added imports
 from ember_ml import ops
 from ember_ml.nn.modules import Module
 from ember_ml import tensor
+from ember_ml.types import TensorLike
 
 class Dropout(Module):
     """
@@ -30,7 +31,7 @@ class Dropout(Module):
         self.seed = seed
         # Training/evaluation mode is controlled by the 'training' flag in forward()
 
-    def forward(self, x: tensor.EmberTensor, training: bool = True) -> tensor.EmberTensor:
+    def forward(self, x: TensorLike, training: bool = True) -> TensorLike:
         """
         Forward pass for Dropout.
 
