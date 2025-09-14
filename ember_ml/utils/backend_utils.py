@@ -128,7 +128,7 @@ def sin_cos_transform(values: Any, period: float = 1.0) -> Tuple[Any, Any]:
     
     return sin_values, cos_values
 
-def vstack_safe(arrays: List[Any]) -> Optional[tensor.EmberTensor]: # Return type updated
+def vstack_safe(arrays: List[Any]) -> Optional[Any]:
     """
     Safely stack arrays vertically using the current backend.
 
@@ -143,25 +143,22 @@ def vstack_safe(arrays: List[Any]) -> Optional[tensor.EmberTensor]: # Return typ
     if not arrays:
         return None # Or return an empty tensor: tensor.zeros((0,)) etc.
 
-    # Convert all arrays in the list to EmberTensors
-    # Assume a default dtype if not specified and items are not already EmberTensors
-    # For safety, try to infer dtype from the first tensor; otherwise use tensor.float32
-    first_item_device = ops.get_device()  # Default device
-    first_item_dtype = tensor.float32  # Backend-agnostic default dtype
+    # Infer common dtype/device from first element when possible
+    first_item_device = ops.get_device()
+    first_item_dtype = tensor.float32
+    first = arrays[0]
+    if hasattr(first, "dtype"):
+        try:
+            first_item_dtype = tensor.dtype(first)
+        except Exception:
+            pass
+    if hasattr(first, "device"):
+        try:
+            first_item_device = first.device  # type: ignore
+        except Exception:
+            pass
 
-    if arrays and isinstance(arrays[0], tensor.EmberTensor):
-        first_item_device = arrays[0].device
-        first_item_dtype = arrays[0].dtype
-    elif arrays and hasattr(arrays[0], 'dtype') and hasattr(arrays[0], 'device'): # For backend tensors
-        # This part is tricky as backend tensor device/dtype access isn't standardized here
-        # For now, we'll rely on convert_to_tensor to handle it or use defaults.
-        pass
-
-    ember_tensors = [
-        tensor.convert_to_tensor(arr, dtype=first_item_dtype, device=first_item_device)
-        if not isinstance(arr, tensor.EmberTensor) else arr
-        for arr in arrays
-    ]
+    ember_tensors = [tensor.convert_to_tensor(arr, dtype=first_item_dtype, device=first_item_device) for arr in arrays]
 
     # Ensure all tensors are now on the same device (e.g., device of the first tensor)
     # This step might be important if convert_to_tensor doesn't unify devices.

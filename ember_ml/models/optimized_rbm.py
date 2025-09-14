@@ -84,7 +84,7 @@ class OptimizedRBM:
         # Initialize weights and biases as EmberTensors on the target device
         scale_factor = 0.01 # Python float
         # ops.sqrt returns backend tensor, ensure n_visible is also tensor for op
-        n_visible_tensor = tensor.convert_to_tensor(float(n_visible), dtype=tensor.EmberDType.float32, device=self.device_str)
+        n_visible_tensor = tensor.convert_to_tensor(float(n_visible), dtype=tensor.float32, device=self.device_str)
         scale_denominator = ops.sqrt(n_visible_tensor)
         # ops.divide returns backend tensor. Use tensor.item() to get scalar for stddev
         scale = tensor.item(ops.divide(scale_factor, scale_denominator))
@@ -116,20 +116,8 @@ class OptimizedRBM:
         # tensor.convert_to_tensor now returns a backend tensor.
         # ops.to_device also returns a backend tensor.
         # If data is tensor, unwrap it first.
-        if isinstance(data, tensor.EmberTensor): # Check if it's the wrapper
-            backend_data = data.to_backend_tensor()
-            # Check device of the underlying backend tensor
-            # This needs a robust way to get device from backend tensor via common ops
-            # For now, assume if it was an tensor, its device was managed by the wrapper
-            # or we just proceed to convert/move it.
-            if ops.get_device_of_tensor(backend_data) != self.device_str:
-                return ops.to_device(backend_data, self.device_str)
-            return backend_data # Already correct device
-
-        # If not tensor, it could be numpy, list, or already a backend tensor.
-        # tensor.convert_to_tensor handles these cases and places on self.device_str.
-        # It also handles if 'data' is already a backend tensor on the correct device.
-        return tensor.convert_to_tensor(data, dtype=tensor.EmberDType.float32, device=self.device_str)
+        # Directly convert to backend tensor on the target device
+        return tensor.convert_to_tensor(data, dtype=tensor.float32, device=self.device_str)
 
     def sigmoid(self, x: TensorLike) -> TensorLike: # Takes and returns backend tensor
         """
@@ -166,8 +154,8 @@ class OptimizedRBM:
         if not self.use_binary_states:
             return hidden_probs
         
-        random_values = tensor.random_uniform(shape=ops.shape(hidden_probs), device=ops.get_device_of_tensor(hidden_probs))
-        return tensor.cast(ops.greater(hidden_probs, random_values), dtype=tensor.EmberDType.float32)
+        random_values = tensor.random_uniform(shape=ops.shape(hidden_probs), device=ops.get_device(hidden_probs))
+        return tensor.cast(ops.greater(hidden_probs, random_values), dtype=tensor.float32)
     
     def compute_visible_probabilities(self, hidden_states: TensorLike) -> TensorLike: # Takes and returns backend tensor
         """
@@ -192,8 +180,8 @@ class OptimizedRBM:
         if not self.use_binary_states:
             return visible_probs
         
-        random_values = tensor.random_uniform(shape=ops.shape(visible_probs), device=ops.get_device_of_tensor(visible_probs))
-        return tensor.cast(ops.greater(visible_probs, random_values), dtype=tensor.EmberDType.float32)
+        random_values = tensor.random_uniform(shape=ops.shape(visible_probs), device=ops.get_device(visible_probs))
+        return tensor.cast(ops.greater(visible_probs, random_values), dtype=tensor.float32)
     
     def contrastive_divergence(self, batch_data: TensorLike, k: int = 1) -> float:
         """

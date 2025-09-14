@@ -13,6 +13,7 @@ from matplotlib.colors import LinearSegmentedColormap
 import os
 from datetime import datetime
 from typing import List, Optional, Tuple, Dict, Union
+from typing import List, Optional, Tuple, Dict, Union, Any
 import time
 import pandas as pd
 # Import the RBM class and tensor module
@@ -1438,9 +1439,9 @@ class RBMVisualizer:
     
     def generate_category_statistics_tables(
         self,
-        data: Union[TensorLike, tensor.EmberTensor],
-        normal_data: Union[TensorLike, tensor.EmberTensor],
-        category_labels: Union[TensorLike, tensor.EmberTensor],
+    data: Union[TensorLike, Any],
+    normal_data: Union[TensorLike, Any],
+    category_labels: Union[TensorLike, Any],
         cluster_info: Dict,
         feature_names: Optional[List[str]] = None,
         save_dir: str = 'outputs/tables',
@@ -1623,9 +1624,9 @@ class RBMVisualizer:
     
     def plot_anomaly_category_statistics(
         self,
-        data: Union[TensorLike, tensor.EmberTensor],
-        normal_data: Union[TensorLike, tensor.EmberTensor],
-        category_labels: Union[TensorLike, tensor.EmberTensor],
+    data: Union[TensorLike, Any],
+    normal_data: Union[TensorLike, Any],
+    category_labels: Union[TensorLike, Any],
         cluster_info: Dict,
         feature_names: Optional[List[str]] = None,
         title: str = 'Anomaly Category Statistics',

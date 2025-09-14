@@ -1,19 +1,43 @@
-"""
-Hybrid neural architectures combining LTC networks with attention mechanisms and LSTM layers.
+"""Hybrid LTC / Attention / LSTM composite modules.
+
+This file was refactored to remove deprecated ``EmberDType`` and legacy
+``EmberTensor`` wrapper references. It now relies solely on backend-agnostic
+functional tensor utilities exposed through :mod:`ember_ml.tensor` and
+operations from :mod:`ember_ml.ops`.
 """
 
-from ember_ml import tensor # For tensor.zeros etc.
+from typing import Dict, Any, List
+
+from ember_ml import tensor, ops
 from ember_ml.types import TensorLike
-from ember_ml import ops
-from typing import Dict, Any, List # Added List for type hinting
 from ember_ml.nn.modules import Module, activations
-from ember_ml.types import TensorLike
-from ember_ml.nn.modules.rnn import LSTM # Assuming this LSTM is already backend-agnostic
+from ember_ml.nn.modules.rnn import LSTM
+
+
+class AttentionLayer(Module):
+    """Simple single-head attention layer for temporal processing."""
+
+    def __init__(self, query_dim: int, key_dim: int, value_dim: int, hidden_dim: int):
+        from ember_ml.nn.layers import Linear  # Local import to avoid circulars
+        super().__init__()
+        self.query_map = Linear(query_dim, hidden_dim)
+        self.key_map = Linear(key_dim, hidden_dim)
+        self.value_map = Linear(value_dim, hidden_dim)
+        self.scale = hidden_dim ** 0.5
+
+    def forward(self, query: TensorLike, key: TensorLike, value: TensorLike) -> TensorLike:
+        q_mapped = tensor.expand_dims(self.query_map(query), axis=1)
+        k_mapped_transposed = tensor.transpose(self.key_map(key), axes=(0, 2, 1))
+        v_mapped = self.value_map(value)
+        scores_unscaled = ops.matmul(q_mapped, k_mapped_transposed)
+        scores_scaled = ops.divide(scores_unscaled, self.scale)
+        attn_weights = ops.softmax(scores_scaled, axis=-1)
+        output_expanded = ops.matmul(attn_weights, v_mapped)
+        return tensor.squeeze(output_expanded, axis=1)
+
 
 class HybridNeuron(Module):
-    """
-    Hybrid neuron combining LTC dynamics with attention mechanisms.
-    """
+    """Hybrid neuron combining LTC dynamics with attention mechanisms."""
     
     def __init__(self,
                  neuron_id: int, # Assuming neuron_id is not used by base Module if not passed
@@ -51,14 +75,13 @@ class HybridNeuron(Module):
         self.state = self._initialize_state() # Initialize state (backend tensor)
         self.history: List[TensorLike] = [] # Initialize history (stores backend tensors)
         
-    def _initialize_state(self) -> TensorLike: # Returns backend tensor
-        """Initialize neuron state."""
-        # tensor.zeros returns a backend tensor
-        return tensor.zeros((self.hidden_size,), dtype=tensor.EmberDType.float32)
+    def _initialize_state(self) -> TensorLike:
+        """Initialize neuron state backend tensor."""
+        return tensor.zeros((self.hidden_size,), dtype=tensor.float32)
         
     def update(self,
-               input_signal: TensorLike, # Expects backend tensor (ops will handle)
-               **kwargs) -> TensorLike: # Returns backend tensor
+               input_signal: TensorLike,
+               **kwargs) -> TensorLike:
         """
         Update neuron state using hybrid processing.
 
@@ -69,11 +92,8 @@ class HybridNeuron(Module):
         Returns:
             Updated state tensor (backend tensor) [hidden_size]
         """
-        # input_signal might be tensor, ops will unwrap. Or it's already backend.
-    # If storing wrappers was intended, conversion logic would be here.
-        # Assuming self.memory_buffer stores backend tensors.
-        # If input_signal is tensor, unwrap before append if strict about buffer type.
-    current_input_backend = input_signal
+        # Append latest input to temporal memory
+        current_input_backend = input_signal
         self.memory_buffer.append(current_input_backend)
 
         if len(self.memory_buffer) > self.max_memory_size:
@@ -106,7 +126,7 @@ class HybridNeuron(Module):
         self.state = ops.add(self.state, ops.multiply(self.dt, dh))
         
         # Store history
-        self.history.append(tensor.copy(self.state)) # Use tensor.copy
+        self.history.append(tensor.copy(self.state))
         
         return self.state
         
@@ -120,11 +140,11 @@ class HybridNeuron(Module):
             'tau': self.tau,
             'dt': self.dt,
             'hidden_size': self.hidden_size,
-            # Convert backend tensors to lists for serialization using tensor.to_list
-            'memory_buffer': [tensor.to_list(m) for m in self.memory_buffer],
+            # Convert backend tensors to lists for serialization
+            'memory_buffer': [tensor.tolist(m) for m in self.memory_buffer],
             'max_memory_size': self.max_memory_size,
-            'state': tensor.to_list(self.state),
-            'history': [tensor.to_list(h) for h in self.history]
+            'state': tensor.tolist(self.state),
+            'history': [tensor.tolist(h) for h in self.history]
         })
         return state_dict
         
@@ -142,55 +162,6 @@ class HybridNeuron(Module):
         self.history = [tensor.convert_to_tensor(h) for h in state_dict['history']]
 
 
-class AttentionLayer(Module):
-    """Multi-head attention layer for temporal processing."""
-    
-    def __init__(self, 
-                 query_dim: int,
-                 key_dim: int,
-                 value_dim: int,
-                 hidden_dim: int):
-        """
-        Initialize attention layer.
-        """
-        from ember_ml.nn.layers import Linear # Local import if not at top level
-        super().__init__()
-        self.query_map = Linear(query_dim, hidden_dim) # Renamed to avoid conflict with 'query' arg
-        self.key_map = Linear(key_dim, hidden_dim)     # Renamed
-        self.value_map = Linear(value_dim, hidden_dim) # Renamed
-        self.scale = hidden_dim ** 0.5
-        
-    def forward(self, 
-                query: TensorLike,
-                key: TensorLike,
-                value: TensorLike) -> TensorLike: # Return backend tensor
-        """
-        Compute attention-weighted output.
-        """
-        # query_map, key_map, value_map are Linear layers, they return backend tensors
-        # tensor.expand_dims, tensor.transpose, ops.matmul, ops.divide, ops.softmax, tensor.squeeze
-        # all now operate on and return backend tensors.
-        q_mapped = tensor.expand_dims(self.query_map(query), axis=1)
-
-        # Key: [B, S_L, K_D] -> Linear -> [B, S_L, H_D] -> transpose -> [B, H_D, S_L]
-        k_mapped_transposed = tensor.transpose(self.key_map(key), axes=(0, 2, 1)) # Assuming batch first (B, S_L, H_D) -> (B, H_D, S_L)
-                                                                              # If key is (S_L, H_D) then axes=(-2,-1) or (1,0)
-
-        # Value: [B, S_L, V_D] -> Linear -> [B, S_L, H_D]
-        v_mapped = self.value_map(value)
-
-        # Scores: [B, 1, H_D] @ [B, H_D, S_L] = [B, 1, S_L]
-        scores_unscaled = ops.matmul(q_mapped, k_mapped_transposed)
-        scores_scaled = ops.divide(scores_unscaled, self.scale)
-        
-        # Apply attention weights
-        attn_weights = ops.softmax(scores_scaled, axis=-1) # Softmax over seq_len of keys
-
-        # Output: [B, 1, S_L] @ [B, S_L, H_D] (v_mapped) = [B, 1, H_D]
-        output_expanded = ops.matmul(attn_weights, v_mapped)
-        
-        # Squeeze: [B, 1, H_D] -> [B, H_D]
-        return tensor.squeeze(output_expanded, axis=1)
 
 class HybridLNNModel(Module):
     """
@@ -231,12 +202,12 @@ class HybridLNNModel(Module):
         self.output_layer = Linear(lstm_hidden_size, output_size)
         
     def forward(self,
-                input_sequence: TensorLike, # Expect backend tensor
-                times: TensorLike) -> TensorLike: # Returns backend tensor
-    # ops.shape and ops.get_device_of_tensor can take backend tensor
+                input_sequence: TensorLike,
+                times: TensorLike) -> TensorLike:
+        # Shape / device / dtype discovery
         batch_size, seq_len, _ = tensor.shape(input_sequence)
-        current_device = ops.get_device_of_tensor(input_sequence)
-        input_dtype = ops.dtype(input_sequence) # Get dtype from input
+        current_device = ops.get_device(input_sequence)
+        input_dtype = tensor.dtype(input_sequence)
 
         x0_shape = (batch_size, self.hidden_size * self.parallel_chains)
         # tensor.zeros returns backend tensor
@@ -248,7 +219,7 @@ class HybridLNNModel(Module):
             # times[t_idx] if times is backend tensor and supports __getitem__ returning backend tensor
             # Or use tensor.slice_tensor for robustness.
             # For simplicity, assuming times[t_idx] gives a scalar backend tensor.
-            t_start_val = tensor.item(times[t_idx]) # Get Python float
+            t_start_val = tensor.item(times[t_idx])
             t_end_val = tensor.item(times[t_idx + 1])
             
             t_span_list = [t_start_val, t_end_val]
@@ -258,8 +229,8 @@ class HybridLNNModel(Module):
             u = input_sequence[:, t_idx, :] # u is a backend tensor slice
             
             try:
-                 # tensor.split returns list of backend tensors
-                 x0_split = tensor.split(x0, num_splits=self.parallel_chains, axis=1)
+             # tensor.split returns list of backend tensors
+             x0_split = tensor.split(x0, num_splits=self.parallel_chains, axis=1)
             except AttributeError:
                  print("Warning: tensor.split failed, attempting manual slicing for chunks.")
                  split_size = x0.shape[1] // self.parallel_chains
@@ -349,8 +320,8 @@ class ImprovedLiquidTimeConstantCell(Module):
         self.U = Linear(input_size, hidden_size)
         # Parameters store backend tensors internally if Parameter class was also refactored.
         # tensor.zeros/ones return backend tensors.
-        self.b = Parameter(tensor.zeros((hidden_size,), dtype=tensor.EmberDType.float32))
-        self.tau = Parameter(tensor.ones((hidden_size,), dtype=tensor.EmberDType.float32))
+        self.b = Parameter(tensor.zeros((hidden_size,), dtype=tensor.float32))
+        self.tau = Parameter(tensor.ones((hidden_size,), dtype=tensor.float32))
         
     def forward(self,
                 t: TensorLike, # time, often scalar backend tensor
@@ -362,7 +333,11 @@ class ImprovedLiquidTimeConstantCell(Module):
 
         # Ensure 1.0 is treated compatibly, e.g. if x is backend tensor, ops.add should handle scalar.
         # Or convert explicitly:
-        one_val = tensor.convert_to_tensor(1.0, dtype=ops.dtype(x), device=ops.get_device_of_tensor(x))
+        one_val = tensor.convert_to_tensor(
+            1.0,
+            dtype=tensor.dtype(x),
+            device=ops.get_device(x)
+        )
         nonlinear_term = ops.sqrt(ops.add(x, one_val))
 
         neg_x = ops.negative(x)

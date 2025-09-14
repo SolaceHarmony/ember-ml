@@ -62,13 +62,9 @@ class EmberTensorLike(Protocol):
     def dtype(self) -> Any:
         ...
 
-    # Optional; some backends expose ``device``
-    @property
-    def device(self) -> Any:  # pragma: no cover
-        ...
 
-    def __array__(self, *args: Any, **kwargs: Any) -> Any:  # NumPy compatibility hook
-        ...
+    # NumPy compatibility hook intentionally omitted for looser runtime structural matching
+    # Implementations may still provide __array__, but it is not required.
 
 
 # Conditional precise backend-only typing (ignored at runtime)

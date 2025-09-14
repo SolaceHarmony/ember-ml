@@ -38,10 +38,9 @@ def _get_backend_dtype():
     """
     backend_name = get_backend()
     registry = BackendRegistry()
-    module = registry.get_backend_module()
-
-    if module is None:  # Should not happen once backend is set
-        raise RuntimeError("Backend module not initialized.")
+    _backend_name, module = registry.get_backend()
+    if module is None:
+        raise RuntimeError("Backend module not initialized (no active backend module in registry).")
 
     # Common attribute patterns (prefer explicit helper objects)
     candidate_attr_names = [
