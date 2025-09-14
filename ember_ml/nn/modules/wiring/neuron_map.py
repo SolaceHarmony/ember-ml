@@ -100,7 +100,7 @@ class NeuronMap: # Renamed from Wiring
         which neurons in the circuit.
         
         Returns:
-            Input mask as an EmberTensor
+            Input mask as a tensor-like object
         """
         if self._input_mask is None:
             self._input_mask, self._recurrent_mask, self._output_mask = self.build()

@@ -2,7 +2,8 @@
 Hybrid neural architectures combining LTC networks with attention mechanisms and LSTM layers.
 """
 
-from ember_ml import tensor # For tensor.EmberTensor, tensor.zeros etc.
+from ember_ml import tensor # For tensor.zeros etc.
+from ember_ml.types import TensorLike
 from ember_ml import ops
 from typing import Dict, Any, List # Added List for type hinting
 from ember_ml.nn.modules import Module, activations
@@ -56,23 +57,23 @@ class HybridNeuron(Module):
         return tensor.zeros((self.hidden_size,), dtype=tensor.EmberDType.float32)
         
     def update(self,
-               input_signal: TensorLike, # Expects backend tensor or EmberTensor (ops will handle)
+               input_signal: TensorLike, # Expects backend tensor (ops will handle)
                **kwargs) -> TensorLike: # Returns backend tensor
         """
         Update neuron state using hybrid processing.
 
         Args:
-            input_signal: Input tensor (backend tensor or EmberTensor) [hidden_size]
+            input_signal: Input tensor (backend tensor) [hidden_size]
             **kwargs: Additional parameters
 
         Returns:
             Updated state tensor (backend tensor) [hidden_size]
         """
         # input_signal might be tensor, ops will unwrap. Or it's already backend.
-        # If storing EmberTensor wrappers was intended, conversion logic would be here.
+    # If storing wrappers was intended, conversion logic would be here.
         # Assuming self.memory_buffer stores backend tensors.
         # If input_signal is tensor, unwrap before append if strict about buffer type.
-        current_input_backend = input_signal.to_backend_tensor() if isinstance(input_signal, tensor.EmberTensor) else input_signal
+    current_input_backend = input_signal
         self.memory_buffer.append(current_input_backend)
 
         if len(self.memory_buffer) > self.max_memory_size:
@@ -230,9 +231,9 @@ class HybridLNNModel(Module):
         self.output_layer = Linear(lstm_hidden_size, output_size)
         
     def forward(self,
-                input_sequence: TensorLike, # Expect backend tensor or EmberTensor
+                input_sequence: TensorLike, # Expect backend tensor
                 times: TensorLike) -> TensorLike: # Returns backend tensor
-        # ops.shape and ops.get_device_of_tensor can take EmberTensor or backend tensor
+    # ops.shape and ops.get_device_of_tensor can take backend tensor
         batch_size, seq_len, _ = tensor.shape(input_sequence)
         current_device = ops.get_device_of_tensor(input_sequence)
         input_dtype = ops.dtype(input_sequence) # Get dtype from input
@@ -246,7 +247,7 @@ class HybridLNNModel(Module):
         for t_idx in range(seq_len - 1):
             # times[t_idx] if times is backend tensor and supports __getitem__ returning backend tensor
             # Or use tensor.slice_tensor for robustness.
-            # For simplicity, assuming times[t_idx] gives a scalar backend tensor or EmberTensor.
+            # For simplicity, assuming times[t_idx] gives a scalar backend tensor.
             t_start_val = tensor.item(times[t_idx]) # Get Python float
             t_end_val = tensor.item(times[t_idx + 1])
             

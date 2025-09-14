@@ -35,7 +35,8 @@ class StrideAwareCell(Module):
         else:
             self.bias = None
 
-    def forward(self, inputs, state: Optional[tensor.EmberTensor] = None) -> Tuple[tensor.EmberTensor, tensor.EmberTensor]:
+    from ember_ml.types import TensorLike
+    def forward(self, inputs, state: Optional[TensorLike] = None) -> Tuple[TensorLike, TensorLike]:
         if state is None:
             batch_size = tensor.shape(inputs)[0]
             state = tensor.zeros((batch_size, self.hidden_size))
