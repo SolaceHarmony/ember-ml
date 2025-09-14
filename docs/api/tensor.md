@@ -1,6 +1,6 @@
 # Tensor Module
 
-The `ember_ml.nn.tensor` module provides a backend-agnostic tensor implementation that works with any backend (NumPy, PyTorch, MLX) using the backend abstraction layer.
+The `ember_ml.tensor` module provides a backend-agnostic tensor implementation that works with any backend (NumPy, PyTorch, MLX) using the backend abstraction layer.
 
 ## Overview
 
@@ -14,7 +14,7 @@ The tensor module is designed to provide a consistent API for tensor operations 
 
 The tensor module follows the backend abstraction architecture of Ember ML:
 
-1. **Frontend Abstractions**: The `ember_ml.nn.tensor` module provides abstract interfaces and common implementations
+1. **Frontend Abstractions**: The `ember_ml.tensor` module provides abstract interfaces and common implementations
 2. **Backend Implementations**: The actual implementations reside in the backend directory, with specific implementations for each supported backend (NumPy, PyTorch, MLX)
 3. **Dispatch Mechanism**: The frontend abstractions dispatch calls to the appropriate backend implementation based on the currently selected backend
 
@@ -174,10 +174,10 @@ tensor = tensor([[1, 2, 3], [4, 5, 6]], device='mps')   # Apple Silicon GPU
 
 ## Backend Selection
 
-The tensor module uses the current backend selected by the `ember_ml.backend` module. You can change the backend using the `set_backend` function:
+The tensor module uses the current backend selected via the top-level `set_backend` function:
 
 ```python
-from ember_ml.backend import set_backend
+from ember_ml import set_backend
 
 # Set the backend to PyTorch
 set_backend('torch')

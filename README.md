@@ -55,7 +55,7 @@ The project includes tools for extracting features from BigQuery tables, includi
 2. Install the required packages: `pip install -r requirements.txt`
 3. Choose your backend:
    ```python
-   from ember_ml.backend import set_backend
+   from ember_ml import set_backend
    
    # Use MLX (optimized for Apple Silicon)
    set_backend('mlx')
@@ -88,4 +88,3 @@ x = ops.random.normal(shape=(100, 10))
 output = model(x)
 ```
 
-=======

@@ -57,15 +57,12 @@ print(z)
 Ember ML automatically selects the best backend based on your hardware:
 
 ```python
-from ember_ml.backend import get_backend
-
 # Get the current backend
+from ember_ml.ops import get_backend, set_backend
 backend = get_backend()
 print(f"Using backend: {backend}")
 
 # Manually set a backend
-from ember_ml.ops import set_backend
-
 # Set to NumPy backend
 set_backend('numpy')
 print(f"Now using backend: {get_backend()}")
