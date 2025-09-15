@@ -49,83 +49,56 @@ class _ModuleAccessor:
     
     def __init__(self):
         self._loaded = {}
+        self._loading = set()  # Track modules currently being loaded to prevent recursion
+    
+    def _safe_import(self, module_name, import_path):
+        """Safely import a module with recursion protection."""
+        if module_name in self._loading:
+            return None  # Prevent recursion
+        
+        if module_name not in self._loaded:
+            self._loading.add(module_name)
+            try:
+                module = importlib.import_module(import_path)
+                self._loaded[module_name] = module
+            except ImportError as e:
+                print(f"Warning: Could not import {module_name} module: {e}")
+                self._loaded[module_name] = None
+            except Exception as e:
+                print(f"Warning: Error importing {module_name} module: {e}")
+                self._loaded[module_name] = None
+            finally:
+                self._loading.discard(module_name)
+        
+        return self._loaded[module_name]
     
     @property
     def data(self):
-        if 'data' not in self._loaded:
-            try:
-                from ember_ml import data
-                self._loaded['data'] = data
-            except ImportError as e:
-                print(f"Warning: Could not import data module: {e}")
-                self._loaded['data'] = None
-        return self._loaded['data']
+        return self._safe_import('data', 'ember_ml.data')
     
     @property
     def models(self):
-        if 'models' not in self._loaded:
-            try:
-                from ember_ml import models
-                self._loaded['models'] = models
-            except ImportError as e:
-                print(f"Warning: Could not import models module: {e}")
-                self._loaded['models'] = None
-        return self._loaded['models']
+        return self._safe_import('models', 'ember_ml.models')
     
     @property
     def nn(self):
-        if 'nn' not in self._loaded:
-            try:
-                from ember_ml import nn
-                self._loaded['nn'] = nn
-            except ImportError as e:
-                print(f"Warning: Could not import nn module: {e}")
-                self._loaded['nn'] = None
-        return self._loaded['nn']
+        return self._safe_import('nn', 'ember_ml.nn')
     
     @property
     def training(self):
-        if 'training' not in self._loaded:
-            try:
-                from ember_ml import training
-                self._loaded['training'] = training
-            except ImportError as e:
-                print(f"Warning: Could not import training module: {e}")
-                self._loaded['training'] = None
-        return self._loaded['training']
+        return self._safe_import('training', 'ember_ml.training')
     
     @property
     def visualization(self):
-        if 'visualization' not in self._loaded:
-            try:
-                from ember_ml import visualization
-                self._loaded['visualization'] = visualization
-            except ImportError as e:
-                print(f"Warning: Could not import visualization module: {e}")
-                self._loaded['visualization'] = None
-        return self._loaded['visualization']
+        return self._safe_import('visualization', 'ember_ml.visualization')
     
     @property
     def utils(self):
-        if 'utils' not in self._loaded:
-            try:
-                from ember_ml import utils
-                self._loaded['utils'] = utils
-            except ImportError as e:
-                print(f"Warning: Could not import utils module: {e}")
-                self._loaded['utils'] = None
-        return self._loaded['utils']
+        return self._safe_import('utils', 'ember_ml.utils')
     
     @property
     def asyncml(self):
-        if 'asyncml' not in self._loaded:
-            try:
-                from ember_ml import asyncml
-                self._loaded['asyncml'] = asyncml
-            except ImportError as e:
-                print(f"Warning: Could not import asyncml module: {e}")
-                self._loaded['asyncml'] = None
-        return self._loaded['asyncml']
+        return self._safe_import('asyncml', 'ember_ml.asyncml')
 
 # Create the module accessor
 _modules = _ModuleAccessor()
