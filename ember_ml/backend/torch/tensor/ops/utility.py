@@ -19,7 +19,6 @@ def _validate_and_get_torch_dtype(dtype: Optional[Any]) -> Optional[torch.dtype]
     """
     if dtype is None:
         return None
-        dtype: Input dtype to validate (canonical dtype string, torch.dtype, or None).
     # If it's already a torch.dtype, return it
     if isinstance(dtype, torch.dtype):
         return dtype
