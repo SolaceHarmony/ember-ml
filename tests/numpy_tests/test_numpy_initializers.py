@@ -1,9 +1,9 @@
 import pytest
-import numpy as np # For comparison with known correct results
+import numpy as np  # For comparison with known correct results
 
 # Import Ember ML modules
-from ember_ml import ops, tensor
-from ember_ml.nn import initializers # Import initializers module
+from ember_ml import ops, tensor, stats
+from ember_ml.nn import initializers  # Import initializers module
 from ember_ml.ops import set_backend
 
 # Set the backend for these tests
@@ -29,7 +29,7 @@ def test_zeros_initializer():
     result_np = tensor.to_numpy(result)
 
     # Assert correctness (should be all zeros)
-    assert isinstance(result, tensor.EmberTensor)
+    assert isinstance(result, np.ndarray)
     assert tensor.shape(result) == shape
     assert ops.allclose(result_np, tensor.zeros(shape))
 
@@ -43,7 +43,7 @@ def test_ones_initializer():
     result_np = tensor.to_numpy(result)
 
     # Assert correctness (should be all ones)
-    assert isinstance(result, tensor.EmberTensor)
+    assert isinstance(result, np.ndarray)
     assert tensor.shape(result) == shape
     assert ops.allclose(result_np, tensor.ones(shape))
 
@@ -58,7 +58,7 @@ def test_constant_initializer():
     result_np = tensor.to_numpy(result)
 
     # Assert correctness (should be filled with constant value)
-    assert isinstance(result, tensor.EmberTensor)
+    assert isinstance(result, np.ndarray)
     assert tensor.shape(result) == shape
     assert ops.allclose(result_np, np.full(shape, constant_value))
 
@@ -74,7 +74,7 @@ def test_random_uniform_initializer():
     result_np = tensor.to_numpy(result)
 
     # Assert properties of uniform distribution
-    assert isinstance(result, tensor.EmberTensor)
+    assert isinstance(result, np.ndarray)
     assert tensor.shape(result) == shape
     assert ops.all(result_np >= minval)
     assert ops.all(result_np < maxval)
@@ -94,7 +94,7 @@ def test_random_normal_initializer():
     result_np = tensor.to_numpy(result)
 
     # Assert properties of normal distribution
-    assert isinstance(result, tensor.EmberTensor)
+    assert isinstance(result, np.ndarray)
     assert tensor.shape(result) == shape
     # Check mean and std (should be close to expected for a large sample)
     assert ops.less(ops.abs(ops.subtract(stats.mean(result), mean)), 0.05).item()
