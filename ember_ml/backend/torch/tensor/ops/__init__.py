@@ -18,7 +18,17 @@ from ember_ml.backend.torch.tensor.ops.indexing import (
     # Note: scatter_* helpers might be internal to indexing.py
 )
 from ember_ml.backend.torch.tensor.ops.utility import (
-    to_numpy, item, shape, dtype, copy, var, sort, argsort, maximum
+    convert_to_tensor,
+    convert_to_torch_tensor,
+    to_numpy,
+    item,
+    shape,
+    dtype,
+    copy,
+    var,
+    sort,
+    argsort,
+    maximum,
 )
 from ember_ml.backend.torch.tensor.ops.random import (
     random_normal, random_uniform, random_binomial, random_gamma, random_exponential,
@@ -66,6 +76,7 @@ __all__ = [
     'index_update',
 
     # Utility operations
+    'convert_to_tensor',
     'convert_to_torch_tensor',
     'to_numpy',
     'item',

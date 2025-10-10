@@ -23,6 +23,10 @@ def _validate_and_get_torch_dtype(dtype: Optional[Any]) -> Optional[torch.dtype]
     if isinstance(dtype, torch.dtype):
         return dtype
 
+    # Treat typing.Any or other typing-based placeholders as "unspecified"
+    if getattr(dtype, '__module__', None) == 'typing':
+        return None
+
     # Handle string dtypes or objects with a 'name' attribute
     dtype_name = None
     if isinstance(dtype, str):
@@ -643,18 +647,32 @@ def _create_new_tensor(creation_func: Callable, dtype: Optional[Any] = None, dev
 
 
 # Expose necessary functions
+def convert_to_tensor(data: Any, dtype: Optional[Any] = None, device: Optional[str] = None) -> torch.Tensor:
+    """Public wrapper exposing :func:`_convert_to_tensor` as part of the ops API."""
+
+    return _convert_to_tensor(data, dtype=dtype, device=device)
+
+
+def convert_to_torch_tensor(data: Any, dtype: Optional[Any] = None, device: Optional[str] = None) -> torch.Tensor:
+    """Alias maintained for backward compatibility with older Torch helpers."""
+
+    return _convert_to_tensor(data, dtype=dtype, device=device)
+
+
 __all__ = [
     "_convert_input",
     "_convert_to_tensor",
+    "convert_to_tensor",
+    "convert_to_torch_tensor",
     "to_numpy",
     "item",
     "shape",
-    "dtype", # Now returns string
+    "dtype",  # Now returns string
     "copy",
     "var",
     "sort",
     "argsort",
     "maximum",
     "_validate_and_get_torch_dtype",
-    "_create_new_tensor", # Export the new helper
+    "_create_new_tensor",  # Export the new helper
 ]

@@ -22,6 +22,7 @@ VectorOpsProxy = create_proxy_module("vector_ops", "{backend}.vector_ops")
 StatsProxy = create_proxy_module("stats", "{backend}.stats")
 LinearAlgProxy = create_proxy_module("linearalg", "{backend}.linearalg")
 BitwiseProxy = create_proxy_module("bitwise", "{backend}.bitwise")
+ActivationOpsProxy = create_proxy_module("activations", "{backend}.activations.ops")
 
 # Create instances of the proxy modules
 math_ops = MathOpsProxy("math_ops", "ember_ml.ops")
@@ -33,6 +34,7 @@ vector_ops = VectorOpsProxy("vector_ops", "ember_ml.ops")
 stats = StatsProxy("stats", "ember_ml.ops")
 linearalg = LinearAlgProxy("linearalg", "ember_ml.ops")
 bitwise = BitwiseProxy("bitwise", "ember_ml.ops")
+activations = ActivationOpsProxy("activations", "ember_ml.ops")
 
 # Initialize the proxy modules with the current backend
 from ember_ml.backend import get_backend, get_backend_module
@@ -188,6 +190,13 @@ _OPS_MAPPING = {
     'binary_wave_propagate': bitwise,
     'create_duty_cycle': bitwise,
     'generate_blocky_sin': bitwise,
+
+    # Activation operations
+    'sigmoid': activations,
+    'relu': activations,
+    'tanh': activations,
+    'softmax': activations,
+    'softplus': activations,
 }
 
 # Create a class to handle dynamic attribute access for the ops module
@@ -210,12 +219,14 @@ class OpsModule:
             'stats': stats,
             'linearalg': linearalg,
             'bitwise': bitwise,
+            'activations': activations,
         }
 
         # Expose submodules directly
         self.stats = stats
         self.linearalg = linearalg
         self.bitwise = bitwise
+        self.activations = activations
 
         # Import backend control functions
         from ember_ml.backend import get_backend, auto_select_backend

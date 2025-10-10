@@ -33,6 +33,8 @@ def softmax(x: TensorLike, axis: int = -1) -> torch.Tensor:
     """Apply Softmax activation."""
     from ember_ml.backend.torch.tensor import TorchTensor
     x_tensor = TorchTensor().convert_to_tensor(data=x)
+    if not torch.is_floating_point(x_tensor) and not torch.is_complex(x_tensor):
+        x_tensor = x_tensor.to(dtype=torch.float32)
     return torch.softmax(x_tensor, dim=axis)
 
 def softplus(x: TensorLike) -> torch.Tensor:

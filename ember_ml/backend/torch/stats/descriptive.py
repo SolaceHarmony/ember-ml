@@ -163,6 +163,9 @@ def mean(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
     from ember_ml.backend.torch.tensor.tensor import TorchTensor
     tensor_instance = TorchTensor()
     x_tensor = tensor_instance.convert(x, dtype=dtype)
+
+    if not torch.is_floating_point(x_tensor) and not torch.is_complex(x_tensor):
+        x_tensor = x_tensor.to(dtype=torch.float32)
     
     # Get the dtype directly from the tensor
     # This is simpler and more reliable than re-validating

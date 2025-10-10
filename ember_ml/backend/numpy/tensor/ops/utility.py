@@ -132,26 +132,11 @@ def _convert_to_tensor(data: TensorLike, dtype: Optional[Any] = None, device: Op
     # NumPy only supports CPU, so we ignore the device parameter
 
     # Apply dtype if provided
-    # Apply dtype if provided or infer default
-    target_dtype = None
     if dtype is not None:
-        # Validate the provided dtype
-        from ember_ml.backend.numpy.tensor.ops.casting import _validate_dtype # Import helper
+        from ember_ml.backend.numpy.tensor.ops.casting import _validate_dtype  # Import helper
         target_dtype = _validate_dtype(dtype)
-    else:
-        # Infer default dtype if none provided
-        if np.issubdtype(tensor.dtype, np.integer):
-            target_dtype = default_int
-        elif np.issubdtype(tensor.dtype, np.floating):
-             # Only cast floats to default_float if they aren't already float64
-             if tensor.dtype != np.float64:
-                 target_dtype = default_float
-             # else: keep float64
-        # Keep other types (bool, complex) as they are unless specified
-
-    # Perform casting only if a valid target_dtype was determined
-    if target_dtype is not None and tensor.dtype != target_dtype:
-         tensor = tensor.astype(target_dtype) # Use astype()
+        if target_dtype is not None and tensor.dtype != target_dtype:
+            tensor = tensor.astype(target_dtype)  # Use astype()
     # NumPy only supports CPU, so no device movement is needed
 
     return tensor

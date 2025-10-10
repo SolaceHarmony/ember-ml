@@ -67,6 +67,7 @@ from ember_ml.backend.mlx.comparison_ops import (
 from ember_ml.backend.mlx.device_ops import (
     to_device,
     get_device,
+    set_device,
     get_available_devices,
     memory_usage,
     memory_info,
@@ -176,6 +177,7 @@ __all__ = [
     # Device operations
     'to_device',
     'get_device',
+    'set_device',
     'get_available_devices',
     'memory_usage',
     'memory_info',
@@ -221,3 +223,6 @@ __all__ = [
 
 
 ]
+from . import linearalg  # re-export module namespace
+from . import stats  # re-export module namespace
+from . import bitwise  # re-export module namespace
