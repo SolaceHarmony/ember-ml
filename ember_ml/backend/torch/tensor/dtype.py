@@ -101,7 +101,7 @@ class TorchDType:
         elif dtype == torch.int64:
             return 'int64'
         elif dtype == torch.bool:
-            return 'bool_'
+            return 'bool'
         elif dtype == torch.int8:
             return 'int8'
         elif dtype == torch.int16:

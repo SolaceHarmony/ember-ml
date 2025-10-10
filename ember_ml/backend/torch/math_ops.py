@@ -195,7 +195,13 @@ def mean(x: TensorLike, axis: Optional[ShapeLike] = None, keepdims: bool = False
         return torch.mean(x_tensor, dim=axis, keepdim=keepdims)
 
 
-def sum(x: TensorLike, axis: Optional[ShapeLike] = None, keepdim: bool = False) -> Any: # Changed torch.Tensor to Any
+def sum(
+    x: TensorLike,
+    axis: Optional[ShapeLike] = None,
+    keepdim: bool = False,
+    *,
+    keepdims: Optional[bool] = None,
+) -> Any:  # Changed torch.Tensor to Any
     """
     Compute sum of tensor elements along specified axis.
     
@@ -209,6 +215,10 @@ def sum(x: TensorLike, axis: Optional[ShapeLike] = None, keepdim: bool = False) 
         Sum of tensor elements
     """
     from ember_ml.backend.torch.tensor import TorchTensor
+
+    if keepdims is not None:
+        keepdim = keepdims
+
     x_tensor = TorchTensor().convert_to_tensor(x)
     
     if axis is None:

@@ -45,7 +45,7 @@ __all__ = [
     'reshape', 'transpose', 'concatenate', 'stack', 'split', 'expand_dims', 'squeeze', 'tile', 'pad',
     'vstack', 'hstack',
     'slice_tensor', 'slice_update', 'gather', 'tensor_scatter_nd_update', 'scatter',
-    'convert_to_torch_tensor', 'to_numpy', 'item', 'shape', 'dtype', 'copy', 'argsort', 'maximum',
+    'convert_to_tensor', 'convert_to_torch_tensor', 'to_numpy', 'item', 'shape', 'dtype', 'copy', 'argsort', 'maximum',
     'random_normal', 'random_uniform', 'random_binomial', 'random_gamma', 'random_exponential',
     'random_poisson', 'random_categorical', 'random_permutation', 'shuffle', 'set_seed', 'get_seed',
    # Stats Ops Functions (added)
@@ -192,7 +192,8 @@ from ember_ml.backend.torch.tensor.ops import (
    reshape, transpose, concatenate, stack, split, expand_dims, squeeze, tile, pad,
    vstack, hstack,
    slice_tensor, slice_update, gather, tensor_scatter_nd_update, scatter,
-   to_numpy, item, shape, dtype, copy, var as tensor_var, sort as tensor_sort, argsort, maximum, # aliased var/sort to avoid name clash
+   convert_to_tensor, convert_to_torch_tensor, to_numpy, item, shape, dtype, copy, var as tensor_var,
+   sort as tensor_sort, argsort, maximum,  # aliased var/sort to avoid name clash
    random_normal, random_uniform, random_binomial, random_gamma, random_exponential,
    random_poisson, random_categorical, random_permutation, shuffle, set_seed, get_seed
 )
@@ -202,3 +203,7 @@ power = pow
 
 # Import activation functions (Added)
 from ember_ml.backend.torch.activations.ops import relu, sigmoid, tanh, softmax, softplus
+
+from . import linearalg  # re-export module namespace
+from . import stats  # re-export module namespace
+from . import bitwise  # re-export module namespace

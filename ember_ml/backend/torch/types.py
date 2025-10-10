@@ -28,13 +28,13 @@ IndexType = Union[int, Sequence[int], 'torch.Tensor']
 Indices = Union[Sequence[int], 'torch.Tensor']
 
 # PyTorch specific
-TorchArray = Any # Changed from torch.Tensor due to AttributeError
-DTypeClass = Any # Changed from torch.dtype due to AttributeError
+TorchArray = torch.Tensor
+DTypeClass = torch.dtype
 
 # Precision related
-default_int = Any # Changed from torch.int32 due to AttributeError
-default_float = Any # Changed from torch.float32 due to AttributeError
-default_bool = Any # Changed from torch.bool due to AttributeError
+default_int = torch.int32
+default_float = torch.float32
+default_bool = torch.bool
 TensorLike = Any
 ScalarLike = Any
 

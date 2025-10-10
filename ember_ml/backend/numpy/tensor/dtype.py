@@ -105,8 +105,8 @@ class NumpyDType:
             'uint16': 'uint16',
             'uint32': 'uint32',
             'uint64': 'uint64',
-            'bool': 'bool_', # Map numpy 'bool' to standard 'bool_'
-            'bool_': 'bool_' # Handle np.bool_ type as well
+            'bool': 'bool',
+            'bool_': 'bool'
             # Add complex types if needed
             # 'complex64': 'complex64',
             # 'complex128': 'complex128',

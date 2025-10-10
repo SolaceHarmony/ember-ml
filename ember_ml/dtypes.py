@@ -1,161 +1,130 @@
-"""
-Data types for ember_ml.nn.tensor.
+"""Backend-agnostic dtype helpers."""
 
-This module provides a backend-agnostic data type system that can be used
-across different backends.
-"""
+from __future__ import annotations
 
-from typing import Any, Union, Optional
+from typing import Any
 
-from ember_ml.backend import get_backend, get_backend_module
-from ember_ml.backend.registry import BackendRegistry
+from ember_ml.backend import get_backend_module
 
-# Cache for backend instances
-_CURRENT_INSTANCES = {}
+_CANONICAL_DTYPES = (
+    "float32",
+    "float64",
+    "int32",
+    "int64",
+    "bool_",
+    "int8",
+    "int16",
+    "uint8",
+    "uint16",
+    "uint32",
+    "uint64",
+    "float16",
+)
 
-def _get_backend_module():
-    """Get the current backend module."""
-    return get_backend_module()
 
-###############################################################################
-# Deprecation note:
-#   EmberDType has been removed. Dtypes are now represented by plain strings
-#   (e.g. "float32") or backend-native dtype objects. Public helpers below
-#   provide minimal conversion utilities. Any legacy code importing EmberDType
-#   should migrate to using string constants.
-###############################################################################
-
-# Removed EmberDType abstraction: canonical dtypes are plain strings.
-
-# Get the backend dtype class
-def _get_backend_dtype():
-    """Get the dtype helper instance for the active backend.
-
-    Uses the centralized ``BackendRegistry`` to fetch the already-imported
-    backend module, then attempts to retrieve a conventional ``dtype`` or
-    ``dtypes`` attribute. Falls back gracefully to a lightweight proxy that
-    simply returns string names if a structured dtype helper is unavailable.
-    """
-    backend_name = get_backend()
-    registry = BackendRegistry()
-    _backend_name, module = registry.get_backend()
-    if module is None:
-        raise RuntimeError("Backend module not initialized (no active backend module in registry).")
-
-    # Common attribute patterns (prefer explicit helper objects)
-    candidate_attr_names = [
-        'dtype',      # e.g., module-level accessor object
-        'dtypes',     # plural variant
-        'DType',      # class or factory
-        'dtype_ops',  # legacy pattern
-    ]
-
-    for attr in candidate_attr_names:
-        if hasattr(module, attr):
-            helper = getattr(module, attr)
-            # If it's a class, instantiate (best-effort, no-arg only)
+def _backend_dtype_helper() -> Any:
+    module = get_backend_module()
+    for attr in ("dtype", "dtypes", "DType", "dtype_ops"):
+        if not hasattr(module, attr):
+            continue
+        helper = getattr(module, attr)
+        if isinstance(helper, type):  # class helper without state
             try:
-                if isinstance(helper, type):  # class
-                    return helper()  # type: ignore
+                return helper()  # type: ignore[call-arg]
             except Exception:  # pragma: no cover - defensive
-                pass
-            return helper
+                continue
+        return helper
+    return None
 
-    # Fallback proxy provides minimal attribute-based access
-    class _FallbackDTypeProxy:
-        def __getattr__(self, name: str):  # pragma: no cover - trivial
-            return name
 
-    return _FallbackDTypeProxy()
-
-# Define a function to get a data type from the backend
 def get_dtype(name: str):
-    """Get backend-native dtype object for canonical name if possible.
+    """Return the backend-native dtype for ``name`` when available."""
 
-    Falls back to the canonical string if backend helper lacks attribute.
-    """
-    helper = _get_backend_dtype()
-    # Preferred: helper has attribute with same name
+    helper = _backend_dtype_helper()
+    if helper is None:
+        return name
     if hasattr(helper, name):
-        attr = getattr(helper, name)
-        # Some helpers expose properties returning native dtype objects
-        return attr
-    # Next: generic get_dtype method
-    if hasattr(helper, 'get_dtype'):
+        return getattr(helper, name)
+    if hasattr(helper, "get_dtype"):
         try:
-            return helper.get_dtype(name)  # type: ignore
-        except Exception:
+            return helper.get_dtype(name)  # type: ignore[attr-defined]
+        except Exception:  # pragma: no cover - backend-specific errors
             pass
-    return name  # Fallback to string
+    return name
 
-# Define a function to convert a dtype to a string
+
 def to_dtype_str(dtype: Any) -> str:
-    """Convert a dtype-like object to a canonical string.
+    """Convert ``dtype`` to a canonical string when possible."""
 
-    Accepts strings or backend-native dtype objects. Falls back to ``str``.
-    """
-    helper = _get_backend_dtype()
-    if hasattr(helper, 'to_dtype_str'):
+    helper = _backend_dtype_helper()
+    if helper is not None and hasattr(helper, "to_dtype_str"):
         try:
-            return helper.to_dtype_str(dtype)  # type: ignore
-        except Exception:
+            return helper.to_dtype_str(dtype)  # type: ignore[attr-defined]
+        except Exception:  # pragma: no cover - backend-specific errors
             pass
-    if hasattr(dtype, 'name') and isinstance(getattr(dtype, 'name'), str):
-        return getattr(dtype, 'name')  # e.g., numpy/torch dtype .name
+    if hasattr(dtype, "name") and isinstance(getattr(dtype, "name"), str):
+        return getattr(dtype, "name")
     return str(dtype)
 
-# Define a function to convert a string to a dtype
+
 def from_dtype_str(dtype_str: str):
-    """Convert a dtype string to backend-native dtype where possible."""
-    helper = _get_backend_dtype()
-    if hasattr(helper, 'from_dtype_str'):
+    """Convert ``dtype_str`` to backend-native dtype when supported."""
+
+    helper = _backend_dtype_helper()
+    if helper is not None and hasattr(helper, "from_dtype_str"):
         try:
-            return helper.from_dtype_str(dtype_str)  # type: ignore
-        except Exception:
+            return helper.from_dtype_str(dtype_str)  # type: ignore[attr-defined]
+        except Exception:  # pragma: no cover - backend-specific errors
             pass
     return get_dtype(dtype_str)
 
-# Define a class to dynamically get data types from the backend
-_CANONICAL_DTYPES = (
-    'float32','float64','int32','int64','bool_',
-    'int8','int16','uint8','uint16','uint32','uint64','float16'
-)
 
-def list_dtypes() -> tuple:
-    """Return tuple of canonical dtype names."""
+def list_dtypes() -> tuple[str, ...]:
+    """Return the canonical dtype names supported by Ember ML."""
+
     return _CANONICAL_DTYPES
 
-class _DTypeAccessor:
-    """Attribute access returning canonical dtype strings.
 
-    Accessing e.g. ``dtypes.float32`` returns the string ``"float32"``.
-    """
-    def __getattr__(self, name: str) -> str:  # pragma: no cover - trivial
+class _DTypeAccessor:
+    def __getattr__(self, name: str) -> str:  # pragma: no cover - simple mapping
         if name in _CANONICAL_DTYPES:
             return name
         raise AttributeError(name)
 
-dtypes = _DTypeAccessor()
 
-# Create a DType class with dynamic properties for each data type
-dtype = dtypes  # Backwards alias
-# Canonical string constants (legacy compatibility)
-float32 = 'float32'
-float64 = 'float64'
-int32 = 'int32'
-int64 = 'int64'
-bool_ = 'bool_'
-int8 = 'int8'
-int16 = 'int16'
-uint8 = 'uint8'
-uint16 = 'uint16'
-uint32 = 'uint32'
-uint64 = 'uint64'
-float16 = 'float16'
-# Define a list of all available data types and functions
+dtypes = _DTypeAccessor()
+dtype = dtypes  # legacy alias
+
+float32 = "float32"
+float64 = "float64"
+int32 = "int32"
+int64 = "int64"
+bool_ = "bool_"
+int8 = "int8"
+int16 = "int16"
+uint8 = "uint8"
+uint16 = "uint16"
+uint32 = "uint32"
+uint64 = "uint64"
+float16 = "float16"
+
 __all__ = [
-    'dtype', 'dtypes', 'list_dtypes',
-    'get_dtype', 'to_dtype_str', 'from_dtype_str',
-    'float32', 'float64', 'int32', 'int64', 'bool_',
-    'int8', 'int16', 'uint8', 'uint16', 'uint32', 'uint64', 'float16'
+    "dtype",
+    "dtypes",
+    "from_dtype_str",
+    "get_dtype",
+    "list_dtypes",
+    "to_dtype_str",
+    "float32",
+    "float64",
+    "int32",
+    "int64",
+    "bool_",
+    "int8",
+    "int16",
+    "uint8",
+    "uint16",
+    "uint32",
+    "uint64",
+    "float16",
 ]
