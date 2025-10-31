@@ -10,10 +10,12 @@ from ember_ml.backend import (
     using_backend,
 )
 from ember_ml import ops
+from ember_ml.types import EmberTensorLike
 from ember_ml.tensor import (
     arange,
     array,
     cast,
+    concatenate,
     convert_to_tensor,
     copy,
     dtype,
@@ -21,11 +23,14 @@ from ember_ml.tensor import (
     full,
     maximum,
     ones,
+    ones_like,
     reshape,
     shape,
+    stack,
     to_numpy,
     transpose,
     zeros,
+    zeros_like,
     # Dtypes
     float16,
     float32,
@@ -65,6 +70,9 @@ def set_backend(backend: str) -> None:
 # Create tensor alias
 tensor = convert_to_tensor
 
+# Export EmberTensor as alias for EmberTensorLike for backward compatibility
+EmberTensor = EmberTensorLike
+
 # Specialized namespaces - these are dynamic and update automatically
 linalg = ops.linearalg
 stats = ops.stats
@@ -95,10 +103,14 @@ __all__ = [
     "set_backend",
     "set_seed",
     "using_backend",
+    # Types
+    "EmberTensor",
+    "EmberTensorLike",
     # Tensor creation and manipulation
     "arange",
     "array",
     "cast",
+    "concatenate",
     "convert_to_tensor",
     "copy",
     "dtype",
@@ -106,12 +118,15 @@ __all__ = [
     "full",
     "maximum",
     "ones",
+    "ones_like",
     "reshape",
     "shape",
+    "stack",
     "tensor",
     "to_numpy",
     "transpose",
     "zeros",
+    "zeros_like",
     # Dtypes
     "float16",
     "float32",
