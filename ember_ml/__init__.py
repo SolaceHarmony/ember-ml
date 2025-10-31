@@ -73,22 +73,31 @@ tensor = convert_to_tensor
 # Export EmberTensor as alias for EmberTensorLike for backward compatibility
 EmberTensor = EmberTensorLike
 
-# Specialized namespaces - these are dynamic and update automatically
-linalg = ops.linearalg
-stats = ops.stats
-activations = ops.activations
-bitwise = ops.bitwise
-random = ops.random
-
 
 def __getattr__(name: str):
     """
-    Dynamically resolve operations from ops module.
+    Dynamically resolve operations and namespaces from ops module.
     
     This allows operations like add, multiply, etc. to be accessed directly
     from ember_ml while still using the dynamic backend dispatch from ops.
+    Specialized namespaces are also dynamically resolved to avoid stale references
+    after backend switching.
     """
-    # Try to get from ops first (for operations)
+    # Map specialized namespace names to their ops equivalents
+    _namespace_mapping = {
+        'linalg': 'linearalg',  # Note: ops uses "linearalg" spelling
+        'stats': 'stats',
+        'activations': 'activations',
+        'bitwise': 'bitwise',
+        'random': 'random',
+    }
+    
+    # Handle specialized namespaces dynamically
+    if name in _namespace_mapping:
+        ops_name = _namespace_mapping[name]
+        return getattr(ops, ops_name)
+    
+    # Try to get from ops for operations
     if hasattr(ops, name):
         return getattr(ops, name)
     
