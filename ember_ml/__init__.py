@@ -9,7 +9,6 @@ from ember_ml.backend import (
     using_backend,
 )
 from ember_ml import ops
-from ember_ml.types import EmberTensorLike
 from ember_ml.tensor import (
     arange,
     array,
@@ -69,9 +68,6 @@ def set_backend(backend: str) -> None:
 # Create tensor alias
 tensor = convert_to_tensor
 
-# Export EmberTensor as alias for EmberTensorLike for backward compatibility
-EmberTensor = EmberTensorLike
-
 
 def __getattr__(name: str):
     """
@@ -129,9 +125,6 @@ __all__ = [
     "set_backend",
     "set_seed",
     "using_backend",
-    # Types
-    "EmberTensor",
-    "EmberTensorLike",
     # Tensor creation and manipulation
     "arange",
     "array",
