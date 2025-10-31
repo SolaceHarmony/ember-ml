@@ -6,7 +6,6 @@ from ember_ml.backend import (
     auto_select_backend,
     get_available_backends,
     get_backend,
-    set_backend as _set_backend_impl,
     using_backend,
 )
 from ember_ml import ops
@@ -78,10 +77,28 @@ def __getattr__(name: str):
     """
     Dynamically resolve operations and namespaces from ops module.
     
-    This allows operations like add, multiply, etc. to be accessed directly
-    from ember_ml while still using the dynamic backend dispatch from ops.
-    Specialized namespaces are also dynamically resolved to avoid stale references
-    after backend switching.
+    This enables a flat API where operations like add, multiply, matmul, etc. can be
+    accessed directly from ember_ml (e.g., `em.add`) while still using the dynamic
+    backend dispatch mechanism from the ops module.
+    
+    Specialized namespaces (linalg, stats, activations, bitwise, random) are also
+    dynamically resolved on each access to avoid stale references after backend
+    switching. The namespace mapping handles name differences between the public API
+    and internal ops module (e.g., 'linalg' -> 'linearalg').
+    
+    Args:
+        name: The attribute name being accessed from the ember_ml module.
+    
+    Returns:
+        The requested operation function or namespace module from ops.
+    
+    Raises:
+        AttributeError: If the requested attribute doesn't exist in the ops module.
+    
+    Examples:
+        >>> import ember_ml as em
+        >>> em.add(em.array([1, 2]), em.array([3, 4]))
+        >>> em.linalg.svd(em.array([[1, 2], [3, 4]]))
     """
     # Map specialized namespace names to their ops equivalents
     _namespace_mapping = {
