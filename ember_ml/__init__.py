@@ -192,7 +192,6 @@ __all__ = [
     "log2",
     "log10",
     "pow",
-    "power",
     "sin",
     "cos",
     "tan",
