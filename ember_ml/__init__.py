@@ -1,4 +1,15 @@
-"""Public package interface for Ember ML."""
+"""Public package interface for Ember ML.
+
+This module provides a flat, PyTorch-like API where common operations are accessible
+at the top level. Most operations (math, reduction, comparison, logical, activation,
+and linear algebra functions) are dynamically resolved via __getattr__ from the ops
+module, ensuring automatic backend dispatch and preventing stale references after
+backend switching.
+
+Explicitly defined exports include tensor creation functions, dtype constants, and
+backend management utilities. The __all__ list includes both explicitly defined
+attributes and those dynamically resolved via __getattr__ for complete API documentation.
+"""
 
 from __future__ import annotations
 
@@ -68,6 +79,16 @@ def set_backend(backend: str) -> None:
 # Create tensor alias
 tensor = convert_to_tensor
 
+# Namespace mapping for dynamic attribute resolution
+# Maps public API names to internal ops module names
+_NAMESPACE_MAPPING = {
+    'linalg': 'linearalg',  # Note: ops uses "linearalg" spelling
+    'stats': 'stats',
+    'activations': 'activations',
+    'bitwise': 'bitwise',
+    'random': 'random',
+}
+
 
 def __getattr__(name: str):
     """
@@ -96,18 +117,9 @@ def __getattr__(name: str):
         >>> em.add(em.array([1, 2]), em.array([3, 4]))
         >>> em.linalg.svd(em.array([[1, 2], [3, 4]]))
     """
-    # Map specialized namespace names to their ops equivalents
-    _namespace_mapping = {
-        'linalg': 'linearalg',  # Note: ops uses "linearalg" spelling
-        'stats': 'stats',
-        'activations': 'activations',
-        'bitwise': 'bitwise',
-        'random': 'random',
-    }
-    
     # Handle specialized namespaces dynamically
-    if name in _namespace_mapping:
-        ops_name = _namespace_mapping[name]
+    if name in _NAMESPACE_MAPPING:
+        ops_name = _NAMESPACE_MAPPING[name]
         return getattr(ops, ops_name)
     
     # Try to get from ops for operations
@@ -159,13 +171,13 @@ __all__ = [
     "uint32",
     "uint64",
     "bool_",
-    # Specialized namespaces
+    # Specialized namespaces (dynamically resolved via __getattr__)
     "linalg",
     "stats",
     "activations",
     "bitwise",
     "random",
-    # Math operations
+    # Math operations (dynamically resolved via __getattr__)
     "add",
     "subtract",
     "multiply",
@@ -194,7 +206,7 @@ __all__ = [
     "sign",
     "mod",
     "floor_divide",
-    # Reduction operations
+    # Reduction operations (dynamically resolved via __getattr__)
     "sum",
     "mean",
     "max",
@@ -204,7 +216,7 @@ __all__ = [
     "median",
     "percentile",
     "cumsum",
-    # Comparison operations
+    # Comparison operations (dynamically resolved via __getattr__)
     "equal",
     "not_equal",
     "greater",
@@ -214,19 +226,19 @@ __all__ = [
     "allclose",
     "isclose",
     "isnan",
-    # Logical operations
+    # Logical operations (dynamically resolved via __getattr__)
     "logical_and",
     "logical_or",
     "logical_not",
     "logical_xor",
     "all",
     "any",
-    # Activation functions
+    # Activation functions (dynamically resolved via __getattr__)
     "relu",
     "sigmoid",
     "softmax",
     "softplus",
-    # Linear algebra
+    # Linear algebra (dynamically resolved via __getattr__)
     "svd",
     "qr",
     "eigh",
