@@ -9,7 +9,7 @@ import pytest
 from ember_ml import (
     zeros, ones, zeros_like, ones_like, eye, reshape, transpose,
     concatenate, stack, shape, dtype, cast, copy,
-    float32, int32, array, EmberTensor
+    float32, int32, array
 )
 from ember_ml.backend import get_backend, set_backend
 
