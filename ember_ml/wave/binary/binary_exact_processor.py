@@ -1,4 +1,3 @@
-import numpy as np
 from typing import List, Tuple, Optional
 
 from ember_ml import ops, tensor

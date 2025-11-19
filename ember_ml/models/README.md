@@ -95,7 +95,6 @@ The Liquid State Machine implementation uses a reservoir of recurrently connecte
 ### Training an RBM
 
 ```python
-import numpy as np
 from ember_ml.models.rbm import RBM
 from ember_ml import ops
 
@@ -126,7 +125,6 @@ print(f"Reconstruction error: {error}")
 ### Using RBM for Anomaly Detection
 
 ```python
-import numpy as np
 from ember_ml.models.rbm_anomaly_detector import RBMAnomalyDetector
 from ember_ml import ops
 

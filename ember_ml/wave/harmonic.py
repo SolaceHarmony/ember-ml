@@ -3,7 +3,6 @@ Harmonic wave processing components.
 """
 
 import math
-import numpy as np
 from typing import List, Dict, Optional, Tuple, Union
 
 from ember_ml import ops, stats

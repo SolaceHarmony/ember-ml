@@ -6,7 +6,6 @@ It integrates with the generic feature extraction library to provide end-to-end
 anomaly detection capabilities, including unsupervised categorization of anomalies.
 """
 
-import numpy as np
 import pandas as pd
 import os
 import time
@@ -707,7 +706,7 @@ class RBMBasedAnomalyDetector:
             cluster_labels = kmeans.fit_predict(hidden_activations)
             
             # Compute silhouette score if there are at least 2 clusters with samples
-            if len(np.unique(cluster_labels)) >= 2:
+            if len(set(cluster_labels)) >= 2:
                 score = silhouette_score(hidden_activations, cluster_labels)
                 print(f"[DEBUG] K={k}, Silhouette Score={score:.4f}")
                 
@@ -736,7 +735,9 @@ class RBMBasedAnomalyDetector:
             
             # Get features that are most activated for this cluster
             feature_activations = X_scaled[cluster_indices].mean(axis=0)
-            top_features_idx = np.argsort(ops.abs(feature_activations))[::-1][:3]  # Top 3 features
+            abs_features = tensor.to_numpy(ops.abs(feature_activations))
+            sorted_indices = sorted(range(len(abs_features)), key=lambda idx: float(abs_features[idx]), reverse=True)
+            top_features_idx = sorted_indices[:3]
             
             # Store cluster information
             cluster_info[cluster_id] = {

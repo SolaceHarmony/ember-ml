@@ -6,10 +6,10 @@ arbitrary neuron types and dynamics, with a focus on spatial embedding.
 """
 
 from typing import Optional, List, Dict, Any, Union, Tuple
-from ember_ml.types import TensorLike # Corrected import
-import numpy as np
-import scipy.spatial.distance
 
+import mlx.core as mx
+
+from ember_ml.types import TensorLike  # Corrected import
 from ember_ml import ops, tensor
 from ember_ml.nn.modules import Module, Parameter
 
@@ -111,12 +111,23 @@ class EnhancedNeuronMap:
         coords_tensor = [tensor.convert_to_tensor(coord) for coord in self.coordinates]
         coords_stacked = tensor.stack(coords_tensor, axis=1)
         
-        # Calculate the distance matrix using scipy temporarily
-        # This will be replaced with a pure tensor implementation when available
-        coords_np = tensor.to_numpy(coords_stacked)
-        euclidean_vector = scipy.spatial.distance.pdist(coords_np, metric=distance_metric)
-        euclidean = scipy.spatial.distance.squareform(euclidean_vector**distance_power)
-        self.distance_matrix = tensor.convert_to_tensor(euclidean, dtype=tensor.float32)
+        # Calculate the distance matrix using MLX operations directly to avoid SciPy dependency.
+        coords_mx = tensor.convert_to_tensor(coords_stacked).astype(mx.float32)
+        diffs = mx.expand_dims(coords_mx, axis=1) - mx.expand_dims(coords_mx, axis=0)
+
+        if distance_metric == "manhattan":
+            distances = mx.sum(mx.abs(diffs), axis=-1)
+        elif distance_metric == "chebyshev":
+            distances = mx.max(mx.abs(diffs), axis=-1)
+        else:  # Default to Euclidean
+            distances = mx.sqrt(mx.sum(diffs * diffs, axis=-1))
+
+        if distance_power != 1.0:
+            distances = mx.power(distances, distance_power)
+
+        self.distance_matrix = tensor.convert_to_tensor(
+            distances, dtype=tensor.float32
+        )
         
         # Calculate communicability matrix (will be updated during build)
         self.communicability_matrix = tensor.ones_like(self.distance_matrix)

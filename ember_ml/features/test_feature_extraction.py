@@ -5,7 +5,6 @@ This module provides a test function to demonstrate the feature extraction pipel
 """
 
 import pandas as pd
-import numpy as np
 from typing import Dict, List, Optional, Tuple, Any
 
 from ember_ml.features.generic_csv_loader import GenericCSVLoader

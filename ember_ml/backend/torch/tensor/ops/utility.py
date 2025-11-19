@@ -264,8 +264,7 @@ def _convert_to_tensor(data: Any, dtype: Optional[Any] = None, device: Optional[
     # If target_torch_dtype was None, we keep the original or inferred dtype.
     # If target_device was None, we keep the original or inferred device (or the default).
     return tensor
-import numpy as np
-def to_numpy(data: TensorLike) -> 'np.ndarray': 
+def to_numpy(data: TensorLike):
     """
     Convert a PyTorch tensor to a NumPy array.
 
@@ -281,32 +280,11 @@ def to_numpy(data: TensorLike) -> 'np.ndarray':
         NumPy array (empty array if input is None)
     """
     if data is None:
-        return np.array([]) # Return empty array if input is None
+        return []
 
     # Convert to tensor first to handle various inputs
-    tensor_torch = _convert_to_tensor(data)
-    
-    # Check if the tensor is an integer type
-    is_integer_dtype = tensor_torch.dtype in [torch.int8, torch.int16, torch.int32, torch.int64, torch.uint8]
-    
-    # Ensure tensor is on CPU before converting to NumPy
-    numpy_array = tensor_torch.detach().cpu().numpy()
-    
-    # If the original tensor was an integer type, ensure the NumPy array is also an integer type
-    if is_integer_dtype and numpy_array.dtype.kind == 'f':
-        # Convert to the corresponding NumPy integer type
-        if tensor_torch.dtype == torch.int8:
-            return numpy_array.astype(np.int8)
-        elif tensor_torch.dtype == torch.int16:
-            return numpy_array.astype(np.int16)
-        elif tensor_torch.dtype == torch.int32:
-            return numpy_array.astype(np.int32)
-        elif tensor_torch.dtype == torch.int64:
-            return numpy_array.astype(np.int64)
-        elif tensor_torch.dtype == torch.uint8:
-            return numpy_array.astype(np.uint8)
-    
-    return numpy_array
+    tensor_torch = _convert_to_tensor(data).detach().cpu()
+    return tensor_torch.tolist()
 
 
 def item(data: TensorLike) -> Union[int, float, bool]:

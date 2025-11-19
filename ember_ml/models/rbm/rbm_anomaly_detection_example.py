@@ -5,7 +5,6 @@ This script demonstrates how to use the RBM-based anomaly detector
 with the generic feature extraction library to detect anomalies in data.
 """
 
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import os

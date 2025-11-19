@@ -544,8 +544,6 @@ class RBM:
             'timestamp': datetime.now().isoformat()
         }
         
-        # Save to file using NumPy
-        import numpy as np
         ops.save(filepath, model_data, allow_pickle=True)
         print(f"Model saved to {filepath}")
     
@@ -563,7 +561,6 @@ class RBM:
             Loaded RBM model
         """
         # Load model data
-        import numpy as np
         model_data = ops.load(filepath, allow_pickle=True).item()
         
         # Create model

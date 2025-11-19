@@ -69,7 +69,6 @@ class EmberTensorLike(Protocol):
 
 # Conditional precise backend-only typing (ignored at runtime)
 if TYPE_CHECKING:  # pragma: no cover - typing only
-    import numpy as np
     import torch
     import mlx.core as mx
     from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
@@ -77,7 +76,7 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
     from ember_ml.backend.mlx.tensor.tensor import MLXTensor
 
     BackendArray = Union[
-        np.ndarray,
+        'numpy.ndarray',
         torch.Tensor,
         mx.array,
         NumpyTensor,

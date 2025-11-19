@@ -1,11 +1,18 @@
+from __future__ import annotations
+
 """
 Generic Feature Engineer
 
 This module provides a class for creating features based on detected column types.
 """
 
-import pandas as pd
 from typing import Dict, List, Any
+
+try:  # pandas is an optional dependency and isn't available in our MLX-only env
+    import pandas as pd
+except ModuleNotFoundError:  # pragma: no cover - graceful degradation path
+    pd = None
+
 from ember_ml import ops, tensor
 class GenericFeatureEngineer:
     """
@@ -45,6 +52,12 @@ class GenericFeatureEngineer:
         Returns:
             DataFrame with engineered features
         """
+        if pd is None:
+            raise ImportError(
+                "pandas is required for GenericFeatureEngineer but is not installed. "
+                "Please install pandas in environments that need dataframe feature engineering."
+            )
+
         df_processed = df.copy()
         
         # Process datetime columns

@@ -4,13 +4,14 @@
 # from ember_ml.backend.mlx.linearalg.linearalg_ops import MLXLinearAlgOps
 
 # Import directly from moved files using absolute paths
-from ember_ml.backend.mlx.linearalg.eigen_ops import cholesky, eig, eigvals, eigh # Added eigh
+from ember_ml.backend.mlx.linearalg.eigen_ops import cholesky, eig, eigvals, eigh  # Added eigh
 from ember_ml.backend.mlx.linearalg.svd_ops import svd
 from ember_ml.backend.mlx.linearalg.qr_ops import qr
-from ember_ml.backend.mlx.linearalg.inverses_ops import inv # Assuming function is here
-from ember_ml.backend.mlx.linearalg.matrix_ops import det, norm, diag, diagonal # Assuming functions are here
-from ember_ml.backend.mlx.linearalg.solvers_ops import solve, lstsq # Assuming functions are here
-from ember_ml.backend.mlx.linearalg.orthogonal_ops import orthogonal # Import orthogonal function
+from ember_ml.backend.mlx.linearalg.inverses_ops import inv  # Assuming function is here
+from ember_ml.backend.mlx.linearalg.matrix_ops import det, norm, diag, diagonal  # Assuming functions are here
+from ember_ml.backend.mlx.linearalg.solvers_ops import solve, lstsq  # Assuming functions are here
+from ember_ml.backend.mlx.linearalg.orthogonal_ops import orthogonal  # Import orthogonal function
+from ember_ml.backend.mlx.linearalg.expm_ops import expm
 
 # Import HPC-specific components
 from ember_ml.backend.mlx.linearalg.hpc16x8_ops import _add_limb_precision, HPC16x8
@@ -33,7 +34,8 @@ __all__ = [
     "svd",
     "diag",
     "diagonal",
-    "orthogonal", # Add orthogonal to exports
+    "orthogonal",  # Add orthogonal to exports
+    "expm",
     # Add HPC components to exports
     "orthogonalize_nonsquare",
     "_add_limb_precision",

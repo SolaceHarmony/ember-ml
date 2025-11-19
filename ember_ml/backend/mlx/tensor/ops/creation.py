@@ -1,9 +1,9 @@
 """MLX tensor creation operations."""
 
 from typing import Optional, Union
+from numbers import Integral
 
 import mlx.core as mx
-import numpy as np
 
 from ember_ml.backend.mlx.types import DType, TensorLike, Shape, ShapeLike, ScalarLike
 
@@ -79,7 +79,7 @@ def ones_like(tensor: 'TensorLike', dtype: 'Optional[DType]' = None, device: Opt
 def full(shape: 'ShapeLike', fill_value: 'ScalarLike', dtype: 'Optional[DType]' = None, device: Optional[str] = None) -> 'mx.array':
     """Create a tensor filled with a scalar value."""
     # Handle scalar shape case
-    if isinstance(shape, (int, np.integer)):
+    if isinstance(shape, Integral):
         shape = (shape,)
 
     # Ensure shape is a tuple

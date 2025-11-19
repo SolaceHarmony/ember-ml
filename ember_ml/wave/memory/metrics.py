@@ -4,7 +4,6 @@ Analysis metrics and measurement utilities for wave memory systems.
 
 from dataclasses import dataclass
 from typing import List, Dict, Optional
-import numpy as np
 import time
 
 from ember_ml import ops, tensor

@@ -5,7 +5,6 @@ This module provides a fully connected wiring configuration for neural
 circuit policies, where all neurons are connected to all other neurons.
 """
 
-import numpy as np
 from typing import Optional, Tuple, Dict, Any # Added Dict, Any
 
 # Use explicit path for clarity now it's moved

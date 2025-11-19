@@ -2,11 +2,11 @@
 Visualization tools for wave memory analysis.
 """
 
-import numpy as np
+import math
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 import matplotlib.animation as animation
-from typing import List, Tuple, Optional
+from typing import Any, List, Tuple, Optional
 
 from ember_ml import ops, tensor
 from ember_ml.types import TensorLike
@@ -24,6 +24,12 @@ class WaveMemoryAnalyzer:
         plt.rcParams['axes.facecolor'] = 'white'
         plt.rcParams['axes.grid'] = True
         plt.rcParams['grid.alpha'] = 0.3
+        
+    def _to_scalar(self, value: Any) -> float:
+        try:
+            return tensor.item(value)
+        except Exception:
+            return float(value)
         
     def analyze_model(self, 
                      model: MultiSphereWaveModel, 
@@ -119,10 +125,13 @@ class WaveMemoryAnalyzer:
     def _plot_phase_space(self, ax: plt.Axes, history: TensorLike):
         """Plot phase space trajectories."""
         for sphere_id in range(history.shape[1]):
-            phase_angles = np.arctan2(
-                ops.linearalg.norm(history[:, sphere_id, 1:], axis=1),
-                history[:, sphere_id, 0]
-            )
+            phase_angles = []
+            for t in range(len(history)):
+                y = ops.linearalg.norm(history[t, sphere_id, 1:], axis=0)
+                x = history[t, sphere_id, 0]
+                y_val = self._to_scalar(y)
+                x_val = self._to_scalar(x)
+                phase_angles.append(math.atan2(y_val, x_val))
             energies = stats.sum(history[:, sphere_id]**2, axis=1)
             sc = ax.scatter(phase_angles, energies, 
                           c=range(len(phase_angles)),
@@ -153,10 +162,10 @@ class WaveMemoryAnalyzer:
         for i in range(history.shape[1]-1):
             phase_diff = []
             for t in range(steps):
-                p1 = np.arctan2(ops.linearalg.norm(history[t, i, 1:]), 
-                               history[t, i, 0])
-                p2 = np.arctan2(ops.linearalg.norm(history[t, i+1, 1:]), 
-                               history[t, i+1, 0])
+                p1 = math.atan2(self._to_scalar(ops.linearalg.norm(history[t, i, 1:], axis=0)), 
+                               self._to_scalar(history[t, i, 0]))
+                p2 = math.atan2(self._to_scalar(ops.linearalg.norm(history[t, i+1, 1:], axis=0)), 
+                               self._to_scalar(history[t, i+1, 0]))
                 phase_diff.append(p2 - p1)
             ax.plot(range(steps), phase_diff, label=f'Spheres {i}-{i+1}')
             
@@ -207,9 +216,8 @@ class WaveMemoryAnalyzer:
         """Plot energy transfer between time steps."""
         steps = len(history)
         for sphere_id in range(history.shape[1]):
-            energy_transfer = np.diff(
-                [stats.sum(state**2) for state in history[:, sphere_id]]
-            )
+            energies = [stats.sum(state**2) for state in history[:, sphere_id]]
+            energy_transfer = [curr - prev for prev, curr in zip(energies, energies[1:])]
             ax.plot(range(1, steps), energy_transfer, 
                    label=f'Sphere {sphere_id}')
             
@@ -231,7 +239,10 @@ class WaveMemoryAnalyzer:
         phase_coherence = []
         for t in range(steps):
             phases = [
-                np.arctan2(ops.linearalg.norm(state[1:]), state[0])
+                math.atan2(
+                    self._to_scalar(ops.linearalg.norm(state[1:], axis=0)),
+                    self._to_scalar(state[0])
+                )
                 for state in history[t]
             ]
             diffs = [

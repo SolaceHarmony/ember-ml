@@ -2,7 +2,6 @@
 
 # import torch # Removed
 import matplotlib.pyplot as plt
-import numpy as np # Kept for matplotlib if it needs numpy arrays, or for arange if tensor.arange is not suitable for plt
 # Updated import path for Spherical LTC components
 from ember_ml.nn.modules.rnn.spherical_ltc import (
     SphericalLTCConfig,
@@ -131,7 +130,7 @@ def plot_results(
     # Assuming tensor.arange exists like np.arange or torch.arange
     # If tensor.arange is not available, use tensor.linspace or np.arange and convert
     # For now, assume tensor.arange(0, num_steps) * dt works or:
-    time_np = np.arange(num_steps) * dt # Keep time as numpy for matplotlib directly
+    time_values = [i * dt for i in range(num_steps)]
 
     # Plot norms (should stay close to 1)
     plt.figure(figsize=(12, 6))
@@ -146,7 +145,7 @@ def plot_results(
         # norms[:, i] -> tensor.slice_tensor for columns or direct slicing if EmberTensor supports
         # norms_i = norms[:, i] # Assuming norms is (time, num_neurons)
         # For plotting, convert to numpy
-        plt.plot(time_np, tensor.to_numpy(norms[:, i]), label=f'LTC {i+1} Norm') # norms[:,i] if supported
+        plt.plot(time_values, tensor.to_numpy(norms[:, i]), label=f'LTC {i+1} Norm') # norms[:,i] if supported
         
     plt.axvline(pattern_time, color='r', linestyle='--', label='Pattern End')
     plt.title('Spherical LTC Chain - State Vector Norms')
@@ -161,7 +160,7 @@ def plot_results(
     
     # Input signal: input_signal[:, 0]
     # Convert to numpy for plotting
-    plt.plot(time_np, tensor.to_numpy(input_signal[:, 0]), label='Input', linewidth=2) # input_signal[:,0] if supported
+    plt.plot(time_values, tensor.to_numpy(input_signal[:, 0]), label='Input', linewidth=2) # input_signal[:,0] if supported
     
     # Neuron states: states[0, :, i, 0]
     for i in range(num_neurons):
@@ -169,7 +168,7 @@ def plot_results(
         # state_proj_i = states[0, :, i, 0] # Assuming this slicing works on EmberTensor
         # Convert to numpy for plotting
         plt.plot(
-            time_np,
+            time_values,
             tensor.to_numpy(states[0, :, i, 0]), # state_proj_i
             label=f'LTC {i+1}',
             alpha=0.8

@@ -1,4 +1,3 @@
-import numpy as np
 from .wave_generator import harmonic_wave, map_embeddings_to_harmonics
 
 class HarmonicTrainer:

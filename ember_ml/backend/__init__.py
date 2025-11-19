@@ -173,17 +173,18 @@ def using_backend(backend: str):
 
 def _detect_torch_device(module: ModuleType) -> str:
     try:
+        # Prioritize MPS on darwin systems
+        mps_backend = getattr(module, "backends", {}).get("mps")
+        if mps_backend and mps_backend.is_available():
+            return "mps"
+    except Exception:  # pragma: no cover - defensive
+        pass
+    try:
         cuda_available = bool(getattr(module, "cuda", None) and module.cuda.is_available())
     except Exception:  # pragma: no cover - defensive
         cuda_available = False
     if cuda_available:
         return "cuda"
-    try:
-        mps = getattr(getattr(module, "backends", None), "mps", None)
-        if mps is not None and mps.is_available():
-            return "mps"
-    except Exception:  # pragma: no cover - defensive
-        pass
     return "cpu"
 
 

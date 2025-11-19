@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 from typing import List, Dict, Any
 import pandas as pd
-import numpy as np
 from ember_ml import stats
 from ember_ml import ops, tensor
 from ember_ml import tensor, zeros, ones, reshape, concatenate, to_numpy, convert_to_tensor

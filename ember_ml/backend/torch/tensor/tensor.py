@@ -26,12 +26,10 @@ ArrayLike = Union[TorchTensorType, Numeric, List[Any], Tuple[Any, ...]]
 TensorTypes = Any
 # Conditional imports
 if TYPE_CHECKING:
-    import numpy as np
     from ember_ml import tensor
     from ember_ml.backend.torch.tensor.tensor import TorchTensor
     
     TensorTypes = Union[
-        np.ndarray,
         TorchTensorType,
         TorchTensor,
         EmberTensor
@@ -518,7 +516,6 @@ class TorchTensor:
         from ember_ml.backend.torch.tensor.ops.manipulation import pad as pad_func
         return pad_func(data, paddings, constant_values)
 
-    import numpy
     def to_numpy(self, data: Optional[TensorLike] = None) -> Optional[Any]: # Changed numpy.ndarray to Any
         """
         Convert a PyTorch tensor to a NumPy array.

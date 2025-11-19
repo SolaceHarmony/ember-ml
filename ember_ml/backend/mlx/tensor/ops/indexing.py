@@ -6,7 +6,7 @@ from typing import Union, Optional, Literal, Any, List
 from ember_ml.backend.mlx.types import (
     TensorLike, Shape, ShapeLike
 )
-from ember_ml.backend.mlx.tensor.ops.utility import to_numpy
+from ember_ml import tensor
 
 def slice_tensor(tensor: TensorLike, starts: Shape, sizes: Shape) -> mx.array:
     """
@@ -571,47 +571,31 @@ def scatter_softmax(values: TensorLike, index: TensorLike, dim_size: int, axis: 
     return mx.where(valid_mask, softmax_result, mx.zeros_like(softmax_result))
 # No compatibility wrapper for slice_tensor to avoid conflicts with built-in slice
 
+def _iter_nonzero(data, prefix=None):
+    if prefix is None:
+        prefix = []
+    if isinstance(data, list):
+        for idx, value in enumerate(data):
+            yield from _iter_nonzero(value, prefix + [idx])
+    else:
+        if data != 0:
+            yield tuple(prefix)
+
+
 def nonzero(tensor: TensorLike) -> mx.array:
     """
     Returns the indices of the elements that are non-zero.
-    
-    Args:
-        tensor: Input tensor
-        
-    Returns:
-        Tensor containing the indices of the non-zero elements
     """
-    # Convert input to MLX array
     from ember_ml.backend.mlx.tensor.tensor import MLXTensor
     Tensor = MLXTensor()
     tensor_array = Tensor.convert_to_tensor(tensor)
-    
-    # Create a boolean mask for non-zero elements
-    mask = mx.not_equal(tensor_array, mx.array(0))
-    
-    # MLX doesn't support boolean indexing directly, so we'll use NumPy as a fallback
-    # Convert to NumPy, use np.nonzero, then convert back to MLX
-    
-    # Convert to NumPy array
-    import numpy as np
-    np_array = to_numpy(tensor_array)
-    
-    # Use NumPy's nonzero function
-    np_indices = np.nonzero(np_array)
-    
-    # Stack the indices to get the expected format
-    if len(np_indices) == 1:
-        # For 1D tensors, reshape to Nx1
-        result_np = np.reshape(np_indices[0], (-1, 1))
-    else:
-        # For multi-dimensional tensors, stack the indices
-        result_np = np.stack(np_indices, axis=1)
-    
-    # Convert back to MLX array
-    if result_np.size == 0:
-        # Handle empty case
-        return mx.zeros((0, len(tensor_array.shape)), dtype=mx.int32)
-    return mx.array(result_np, dtype=mx.int32)
+    nested = tensor.tolist(tensor_array)
+    shape = tensor_array.shape
+
+    indices = list(_iter_nonzero(nested))
+    if not indices:
+        return mx.zeros((0, len(shape)), dtype=mx.int32)
+    return mx.array(indices, dtype=mx.int32)
 
 def meshgrid(*arrays: TensorLike, indexing: Literal['xy', 'ij'] = 'xy') -> List[mx.array]:
     """

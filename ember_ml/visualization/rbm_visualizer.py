@@ -6,22 +6,71 @@ including static plots and animations that showcase the learning process
 and the "dreaming" capabilities of RBMs.
 """
 
-import numpy as np
+import math
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.colors import LinearSegmentedColormap
 import os
 from datetime import datetime
-from typing import List, Optional, Tuple, Dict, Union
-from typing import List, Optional, Tuple, Dict, Union, Any
+from typing import Any, Dict, List, Optional, Tuple, Union
 import time
 import pandas as pd
-# Import the RBM class and tensor module
 from ember_ml import ops, tensor
 from ember_ml.models.rbm.rbm_module import RBMModule
-# Import stats module directly
 from ember_ml.types import TensorLike
 from ember_ml import stats
+
+def _to_list(values) -> List[float]:
+    if hasattr(values, 'tolist'):
+        return [float(v) for v in values.tolist()]
+    try:
+        return [float(v) for v in list(values)]
+    except Exception:
+        return [float(values)]
+
+def _to_scalar(value) -> float:
+    try:
+        return tensor.item(value)
+    except Exception:
+        return float(value)
+
+def _unique_nonnegative(seq) -> List[int]:
+    seen = set()
+    result = []
+    for item in seq:
+        val = int(item)
+        if val >= 0 and val not in seen:
+            seen.add(val)
+            result.append(val)
+    return result
+
+def _argsort(values: List[float]) -> List[int]:
+    return sorted(range(len(values)), key=lambda idx: values[idx])
+
+def _pearson_correlation(x_vals: List[float], y_vals: List[float]) -> float:
+    n = len(x_vals)
+    if n == 0:
+        return 0.0
+    mean_x = sum(x_vals) / n
+    mean_y = sum(y_vals) / n
+    numerator = sum((x - mean_x) * (y - mean_y) for x, y in zip(x_vals, y_vals))
+    denom_x = sum((x - mean_x) ** 2 for x in x_vals)
+    denom_y = sum((y - mean_y) ** 2 for y in y_vals)
+    if denom_x == 0 or denom_y == 0:
+        return 0.0
+    return numerator / math.sqrt(denom_x * denom_y)
+
+def _linear_slope(x_vals: List[float], y_vals: List[float]) -> Tuple[float, float]:
+    n = len(x_vals)
+    if n == 0:
+        return 0.0, 0.0
+    mean_x = sum(x_vals) / n
+    mean_y = sum(y_vals) / n
+    numerator = sum((x - mean_x) * (y - mean_y) for x, y in zip(x_vals, y_vals))
+    denominator = sum((x - mean_x) ** 2 for x in x_vals)
+    slope = numerator / denominator if denominator != 0 else 0.0
+    intercept = mean_y - slope * mean_x
+    return slope, intercept
 
 
 class RBMVisualizer:
@@ -79,6 +128,19 @@ class RBMVisualizer:
             'weight_cmap',
             ['#3b4cc0', 'white', '#b40426']
         )
+
+    @staticmethod
+    def _linear_slope(x_vals: List[float], y_vals: List[float]) -> Tuple[float, float]:
+        n = len(x_vals)
+        if n == 0:
+            return 0.0, 0.0
+        mean_x = sum(x_vals) / n
+        mean_y = sum(y_vals) / n
+        numerator = sum((x - mean_x) * (y - mean_y) for x, y in zip(x_vals, y_vals))
+        denominator = sum((x - mean_x) ** 2 for x in x_vals)
+        slope = numerator / denominator if denominator != 0 else 0.0
+        intercept = mean_y - slope * mean_x
+        return slope, intercept
     
     def plot_training_curve(
         self,
@@ -210,6 +272,7 @@ class RBMVisualizer:
             train_errors = rbm.training_errors.numpy()
         else:
             train_errors = tensor.to_numpy(rbm.training_errors)
+        train_errors_list = [float(err) for err in train_errors]
         
         # Extract validation errors if available
         val_errors = None
@@ -238,7 +301,7 @@ class RBMVisualizer:
         
         # Plot error improvement rate (first derivative of error)
         ax2 = axes[0, 1]
-        error_improvements = np.diff(train_errors)
+        error_improvements = [train_errors_list[i] - train_errors_list[i-1] for i in range(1, len(train_errors_list))]
         ax2.plot(error_improvements, 'g-', linewidth=2)
         ax2.axhline(y=0, color='r', linestyle='--', alpha=0.5)
         
@@ -284,22 +347,21 @@ class RBMVisualizer:
         ax4.legend()
         
         # Add convergence metrics as text
-        if len(train_errors) > 1:
+        if len(train_errors_list) > 1:
             # Calculate convergence metrics
-            final_error = train_errors[-1]
-            error_reduction = train_errors[0] - final_error
-            error_reduction_pct = (error_reduction / train_errors[0]) * 100
+            final_error = train_errors_list[-1]
+            first_error = train_errors_list[0]
+            error_reduction = first_error - final_error
+            error_reduction_pct = (error_reduction / first_error) * 100 if first_error != 0 else 0.0
             
             # Calculate convergence rate (slope of log error)
-            log_errors = np.log(train_errors)
-            epochs = tensor.arange(len(log_errors))
+            log_errors = [math.log(max(err, 1e-8)) for err in train_errors_list]
+            epoch_indices = list(range(len(log_errors)))
             if len(log_errors) > 10:
-                # Use the last 10 epochs to estimate convergence rate
-                slope, _ = np.polyfit(epochs[-10:], log_errors[-10:], 1)
-                convergence_rate = slope
+                slope, _ = self._linear_slope(epoch_indices[-10:], log_errors[-10:])
             else:
-                slope, _ = np.polyfit(epochs, log_errors, 1)
-                convergence_rate = slope
+                slope, _ = self._linear_slope(epoch_indices, log_errors)
+            convergence_rate = slope
             
             # Check if training has converged based on error improvement
             if len(error_improvements) > 5:
@@ -1357,7 +1419,6 @@ class RBMVisualizer:
         Returns:
             List of visible states at each step
         """
-        import numpy as np
         from ember_ml import tensor
         from ember_ml import ops
         
@@ -1385,11 +1446,7 @@ class RBMVisualizer:
             if len(visible_states.shape) == 1:
                 visible_states = tensor.reshape(visible_states, (1, -1))
         
-        # List to store states at each step
-        dream_states = []
-        
-        # Add initial state
-        dream_states.append(tensor.to_numpy(visible_states[0]))
+        dream_states = [tensor.to_numpy(visible_states[0])]
         
         # Parameters for temperature annealing
         # Start with high temperature (more randomness) and gradually lower it
@@ -1469,7 +1526,6 @@ class RBMVisualizer:
         from ember_ml import tensor
         from ember_ml import ops
         
-        # Convert inputs to numpy for processing if they're tensors
         if hasattr(data, 'numpy'):
             data_np = tensor.to_numpy(data)
         else:
@@ -1479,15 +1535,14 @@ class RBMVisualizer:
             normal_data_np = tensor.to_numpy(normal_data)
         else:
             normal_data_np = normal_data
-            
+
         if hasattr(category_labels, 'numpy'):
             category_labels_np = tensor.to_numpy(category_labels)
         else:
             category_labels_np = category_labels
-        
-        # Get unique category labels (excluding -1 for normal samples)
-        unique_categories = np.unique(category_labels_np)
-        unique_categories = unique_categories[unique_categories >= 0]
+
+        category_sequence = category_labels_np.tolist() if hasattr(category_labels_np, 'tolist') else list(category_labels_np)
+        unique_categories = _unique_nonnegative(category_sequence)
         
         if len(unique_categories) == 0:
             print("No anomaly categories to analyze.")
@@ -1670,13 +1725,12 @@ class RBMVisualizer:
             normal_data_np = normal_data
             
         if hasattr(category_labels, 'numpy'):
-            category_labels_np = tensor.to_numpy(category_labels)
+        category_labels_np = tensor.to_numpy(category_labels)
         else:
             category_labels_np = category_labels
-        
-        # Get unique category labels (excluding -1 for normal samples)
-        unique_categories = np.unique(category_labels_np)
-        unique_categories = unique_categories[unique_categories >= 0]
+
+        categories_seq = category_labels_np.tolist() if hasattr(category_labels_np, 'tolist') else list(category_labels_np)
+        unique_categories = _unique_nonnegative(categories_seq)
         
         if len(unique_categories) == 0:
             print("No anomaly categories to visualize.")
@@ -1893,9 +1947,8 @@ class RBMVisualizer:
         Returns:
             Matplotlib figure
         """
-        # Get unique category labels (excluding -1 for normal samples)
-        unique_categories = np.unique(category_labels)
-        unique_categories = unique_categories[unique_categories >= 0]
+        label_sequence = category_labels.tolist() if hasattr(category_labels, 'tolist') else list(category_labels)
+        unique_categories = _unique_nonnegative(label_sequence)
         
         if len(unique_categories) == 0:
             print("No anomaly categories to visualize.")
@@ -1939,7 +1992,8 @@ class RBMVisualizer:
             ax1.set_xlabel('Z-Score')
             
             # Sort the bars for better visualization
-            sort_idx = np.argsort(feature_z_scores)
+            z_list = [float(z) for z in feature_z_scores]
+            sort_idx = _argsort(z_list)
             ax1.set_yticks(tensor.arange(len(feature_names)))
             ax1.set_yticklabels([feature_names[i] for i in sort_idx])
             
@@ -2030,7 +2084,9 @@ class RBMVisualizer:
         
         for i in range(data.shape[1]):
             for j in range(rbm.n_hidden):
-                correlation_matrix[i, j] = np.corrcoef(data[:, i], hidden_probs_np[:, j])[0, 1]
+                data_col = data[:, i]
+                corr = _pearson_correlation(_to_list(data_col), _to_list(hidden_probs_np[:, j]))
+                correlation_matrix[i, j] = corr
         
         # Create figure
         fig, ax = plt.subplots(figsize=self.figsize)

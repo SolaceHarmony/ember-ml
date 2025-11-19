@@ -12,22 +12,18 @@ from ember_ml.backend.torch.tensor.dtype import TorchDType
 
 # Conditionally import types for type checking only
 if TYPE_CHECKING:
-    # These imports are only used for type checking and not at runtime
-    import numpy
     from torch import Tensor
     from ember_ml import tensor
     from ember_ml.nn.tensor.common.dtypes import EmberDType
     from ember_ml.backend.torch.tensor.tensor import TorchTensor
 
 AllTensorLike = Optional[Union[
-    'numpy.ndarray' if TYPE_CHECKING else Any,
     'Tensor' if TYPE_CHECKING else Any,
     'TorchTensor' if TYPE_CHECKING else Any,
     'EmberTensor' if TYPE_CHECKING else Any,
 ]]
 
 AllDType = Optional[Union[
-    'numpy.dtype' if TYPE_CHECKING else Any,
     'torch.dtype' if TYPE_CHECKING else Any,
     'EmberDType' if TYPE_CHECKING else Any,
     'TorchDType' if TYPE_CHECKING else Any,

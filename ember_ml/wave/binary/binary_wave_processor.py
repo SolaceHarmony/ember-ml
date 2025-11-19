@@ -1,4 +1,3 @@
-# import numpy as np # Removed if all usages are replaced
 from typing import List, Tuple, Optional
 from dataclasses import dataclass
 import struct

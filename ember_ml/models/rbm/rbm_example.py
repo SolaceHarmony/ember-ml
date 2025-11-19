@@ -5,7 +5,7 @@ This script demonstrates how to use the RestrictedBoltzmannMachine and RBMVisual
 classes to train an RBM on a simple dataset and visualize the results.
 """
 
-import numpy as np
+import random
 import matplotlib.pyplot as plt
 import os
 import time
@@ -46,11 +46,11 @@ def generate_toy_data(n_samples=500, n_features=100, pattern_size=10, n_patterns
     # Embed patterns in random positions
     for i in range(n_samples):
         # Choose a random pattern
-        pattern_idx = np.random.randint(0, n_patterns)
+        pattern_idx = random.randint(0, n_patterns - 1)
         pattern = patterns[pattern_idx]
         
         # Choose a random position to embed the pattern
-        start_pos = np.random.randint(0, n_features - pattern_size + 1)
+        start_pos = random.randint(0, n_features - pattern_size)
         
         # Embed the pattern
         data[i, start_pos:start_pos + pattern_size] = pattern
@@ -125,7 +125,7 @@ def generate_image_data(n_samples=500, width=10, height=10, n_patterns=3):
     # Embed patterns in the data
     for i in range(n_samples):
         # Choose a random pattern
-        pattern_idx = np.random.randint(0, len(patterns))
+    pattern_idx = random.randint(0, len(patterns) - 1)
         pattern = patterns[pattern_idx]
         
         # Add some noise to the pattern
@@ -150,7 +150,8 @@ def main():
     os.makedirs('outputs/models', exist_ok=True)
     
     # Set random seed for reproducibility
-    np.random.seed(42)
+    random.seed(42)
+    tensor.set_seed(42)
     
     # Generate data
     print("\nGenerating toy data...")
@@ -178,8 +179,6 @@ def main():
     # Convert to generator for train_rbm
     def data_generator(data, batch_size=10):
         """Convert data to a generator yielding batches."""
-        import numpy as np
-        from ember_ml import tensor
         n_samples = len(data)
         indices = tensor.random_permutation(n_samples)
         for i in range(0, n_samples, batch_size):

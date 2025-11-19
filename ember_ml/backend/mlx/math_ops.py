@@ -5,7 +5,6 @@ This module provides MLX implementations of math operations.
 """
 
 import mlx.core as mx
-import numpy as np
 from typing import Union, Optional, List, Tuple, Literal
 from ember_ml.backend.mlx.tensor.ops import cast
 from ember_ml.backend.mlx.tensor import MLXDType

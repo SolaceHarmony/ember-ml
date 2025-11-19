@@ -6,12 +6,11 @@ arbitrary neuron types and dynamics, with a focus on spatial embedding.
 """
 
 from typing import Optional, List, Dict, Any, Union, Tuple
-from ember_ml.types import TensorLike # Added import
-import numpy as np
-import scipy.spatial.distance
 
-from ember_ml import ops, stats
-from ember_ml import tensor
+from ember_ml.linearalg import expm
+
+from ember_ml.types import TensorLike  # Added import
+from ember_ml import ops, stats, tensor
 from ember_ml.nn.modules.wiring.enhanced_neuron_map import EnhancedNeuronMap
 
 class EnhancedNCPMap(EnhancedNeuronMap):
@@ -181,23 +180,8 @@ class EnhancedNCPMap(EnhancedNeuronMap):
             from_coords = [coord[from_start:from_end] for coord in self.coordinates]
             to_coords = [coord[to_start:to_end] for coord in self.coordinates]
             
-            # Convert coordinates to tensors and stack them
-            from_coords_tensor = [tensor.convert_to_tensor(coord) for coord in from_coords]
-            to_coords_tensor = [tensor.convert_to_tensor(coord) for coord in to_coords]
-            
-            from_points_tensor = tensor.stack(from_coords_tensor, axis=1)
-            to_points_tensor = tensor.stack(to_coords_tensor, axis=1)
-            
-            # Convert to numpy temporarily for cdist (will be replaced with tensor equivalent)
-            from_points = tensor.to_numpy(from_points_tensor)
-            to_points = tensor.to_numpy(to_points_tensor)
-            
-            # Calculate pairwise distances
-            distances = scipy.spatial.distance.cdist(
-                from_points, to_points, metric="euclidean")
-            
-            # Convert distances to tensor
-            distances_tensor = tensor.convert_to_tensor(distances)
+            # Slice the precomputed distance matrix instead of relying on SciPy.
+            distances_tensor = self.distance_matrix[from_start:from_end, to_start:to_end]
             
             # Normalize distances to [0, 1] range
             max_dist = stats.max(distances_tensor)
@@ -282,13 +266,6 @@ class EnhancedNCPMap(EnhancedNeuronMap):
             )
         
         # Update communicability matrix based on recurrent mask
-        # We need to use numpy temporarily for matrix exponential
-        # This will be replaced with a pure tensor implementation when available
-        recurrent_np = tensor.to_numpy(recurrent_mask)
-        
-        # Calculate communicability (using matrix exponential)
-        from scipy.linalg import expm
-        
         # Normalize by degree using tensor operations
         row_sums = stats.sum(recurrent_mask, axis=1)
         
@@ -304,17 +281,16 @@ class EnhancedNCPMap(EnhancedNeuronMap):
         inv_sqrt_row_sums = ops.divide(tensor.ones_like(sqrt_row_sums), sqrt_row_sums)
         D_sqrt_inv_tensor = diag(inv_sqrt_row_sums)
         
-        # Convert to numpy for matrix exponential (until we have a tensor version)
-        D_sqrt_inv = tensor.to_numpy(D_sqrt_inv_tensor)
+        # Matrix multiplication performed with backend ops
+        normalized = ops.matmul(D_sqrt_inv_tensor, ops.matmul(recurrent_mask, D_sqrt_inv_tensor))
         
-        # Matrix multiplication
-        normalized = D_sqrt_inv @ recurrent_np @ D_sqrt_inv
-        
-        # Apply matrix exponential
-        comm_matrix_np = expm(normalized)
-        
-        # Convert back to tensor
-        self.communicability_matrix = tensor.convert_to_tensor(comm_matrix_np)
+        normalized_np = tensor.to_numpy(normalized)
+        communicability_np = expm(normalized_np)
+        result_dtype = tensor.dtype(normalized)
+        self.communicability_matrix = tensor.convert_to_tensor(
+            communicability_np,
+            dtype=result_dtype,
+        )
         
         self._built = True
         return input_mask, recurrent_mask, output_mask

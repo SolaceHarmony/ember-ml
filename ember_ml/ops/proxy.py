@@ -170,6 +170,7 @@ _OPS_MAPPING = {
     'diag': linearalg,
     'diagonal': linearalg,
     'orthogonal': linearalg,
+    'expm': linearalg,
     'HPC16x8': linearalg,
 
     # Bitwise operations

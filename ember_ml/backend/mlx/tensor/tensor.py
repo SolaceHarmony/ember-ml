@@ -1,7 +1,6 @@
 """MLX tensor class and operations."""
 
 import mlx.core as mx
-import numpy
 from typing import Union, Optional, Sequence, Any, Literal, List, TYPE_CHECKING, Tuple
 from ember_ml.backend.mlx.tensor.dtype import MLXDType
 
@@ -26,12 +25,10 @@ ArrayLike = Union[MLXArray, Numeric, List[Any], Tuple[Any, ...]]
 TensorTypes = Any
 # Conditional imports
 if TYPE_CHECKING:
-    import numpy as np
     from ember_ml import tensor
     from ember_ml.backend.mlx.tensor.tensor import MLXTensor
     
     TensorTypes = Union[
-        np.ndarray,
         MLXArray,
         MLXTensor
     ]

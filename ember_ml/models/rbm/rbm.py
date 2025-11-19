@@ -4,7 +4,6 @@ Restricted Boltzmann Machine (RBM) implementation.
 This module provides a Restricted Boltzmann Machine (RBM) implementation for the ember_ml library.
 """
 
-import numpy as np
 # Import ops and stats separately
 from ember_ml import ops
 from ember_ml import stats

@@ -5,7 +5,6 @@ This script shows how to use the RBM implementation with different backends
 (NumPy, PyTorch, MLX) and compares their performance.
 """
 
-import numpy as np
 import time
 import matplotlib.pyplot as plt
 from sklearn import datasets

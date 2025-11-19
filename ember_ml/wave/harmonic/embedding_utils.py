@@ -1,6 +1,6 @@
 from transformers import AutoTokenizer, AutoModel
 import torch
-import numpy as np
+from ember_ml import tensor
 
 class EmbeddingGenerator:
     """Class to handle text embedding generation using transformer models."""
@@ -41,8 +41,8 @@ class EmbeddingGenerator:
                 outputs = self.model(**inputs)
             
             # Use the CLS token embedding as the text representation
-            cls_embedding = outputs.last_hidden_state[:, 0, :].numpy()
-            embeddings.append(cls_embedding)
+            cls_embedding = outputs.last_hidden_state[:, 0, :].detach().cpu()
+            embeddings.append(tensor.convert_to_tensor(cls_embedding, requires_grad=False))
             
         return tensor.vstack(embeddings)
     

@@ -1,4 +1,4 @@
-import numpy as np
+from ember_ml import ops, tensor
 
 def harmonic_wave(params, t, batch_size):
     """
@@ -37,5 +37,5 @@ def map_embeddings_to_harmonics(embeddings):
     batch_size, embedding_dim = embeddings.shape
     params = []
     for i in range(batch_size):
-        params.append(np.random.rand(3 * embedding_dim))  # Amplitudes, Frequencies, Phases
+        params.append(tensor.random_uniform((3 * embedding_dim,), dtype=tensor.float32))
     return tensor.vstack(params)

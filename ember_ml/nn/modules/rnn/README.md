@@ -288,8 +288,7 @@ bidirectional_rnn = RNN(
 ### Basic Usage
 
 ```python
-import numpy as np
-from ember_ml import ops
+from ember_ml import ops, tensor
 from ember_ml.nn.modules.rnn import CfC, LTC, LSTM, GRU, RNN
 from ember_ml.nn import Sequential
 

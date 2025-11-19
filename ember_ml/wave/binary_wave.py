@@ -3,7 +3,6 @@
 from dataclasses import dataclass
 from typing import Dict, Optional, Tuple
 
-# import numpy as np # Removed, as np.* calls will be replaced by ops.*
 
 from ember_ml import ops, tensor
 from ember_ml.nn.modules import Module, Parameter

@@ -558,7 +558,6 @@ class RestrictedBoltzmannMachine:
             Loaded RBM model
         """
         # Use ops.load when available, for now use numpy
-        import numpy as np
         model_data = ops.load(filepath, allow_pickle=True).item()
         
         # Create model

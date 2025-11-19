@@ -1,4 +1,4 @@
-import numpy as np
+import math
 from typing import List, Tuple, Optional
 from array import array
 from dataclasses import dataclass
@@ -151,12 +151,12 @@ class LimbWaveNeuron:
             self.wave_state = hpc_sub(self.wave_state, decrement)
         
         # Adaptive leak current
-        leak_shift = max(3, min(6, int(np.log2(wave_val / 1000)) if wave_val > 0 else 3))
+        leak_shift = max(3, min(6, int(math.log2(wave_val / 1000)) if wave_val > 0 else 3))
         leak = hpc_shr(self.wave_state, leak_shift)
         self.wave_state = hpc_sub(self.wave_state, leak)
         
         # Conduction output with AGC
-        output = hpc_shr(self.wave_state, int(np.log2(self.conduction_div)))
+        output = hpc_shr(self.wave_state, int(math.log2(self.conduction_div)))
         output = self._apply_agc(output)
         
         return output

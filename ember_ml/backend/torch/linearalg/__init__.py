@@ -6,6 +6,7 @@ from ember_ml.backend.torch.linearalg.matrix_ops import det, norm, diag, diagona
 from ember_ml.backend.torch.linearalg.solvers_ops import solve, lstsq # eig, eigvals moved
 from ember_ml.backend.torch.linearalg.decomp_ops import eig, eigvals # Import from correct file
 from ember_ml.backend.torch.linearalg.orthogonal_ops import orthogonal # Import orthogonal function
+from ember_ml.backend.torch.linearalg.expm_ops import expm
 
 __all__ = [
     # Functions exported from submodules
@@ -22,5 +23,6 @@ __all__ = [
     "svd",
     "diag",
     "diagonal",
-    "orthogonal" # Add orthogonal to exports
+    "orthogonal", # Add orthogonal to exports
+    "expm"
 ]

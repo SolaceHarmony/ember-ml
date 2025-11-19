@@ -82,18 +82,8 @@ def generate_embeddings(texts: List[str]):
         # or by first converting pt_cls_embedding to NumPy array.
         # For safety, converting to NumPy first is often more portable if direct PT->Ember isn't guaranteed.
         # requires_grad=False is good practice for embeddings not needing further training here.
-        try:
-            # Attempt direct conversion if supported, or via numpy
-            # If pt_cls_embedding is on GPU, it needs .cpu() first for numpy conversion
-            np_embedding = pt_cls_embedding.cpu().detach().numpy()
-            ember_cls_embedding = tensor.convert_to_tensor(np_embedding, requires_grad=False)
-        except AttributeError as e: # If .cpu().detach().numpy() fails (e.g. not a PT tensor)
-            # This path indicates an issue with the assumption about hf_model output type
-            print(f"Error converting transformer output: {e}. Ensure 'transformers' is using PyTorch and output is as expected.")
-            # Fallback or re-raise:
-            # For now, if conversion fails for one, we might want to skip or error out for all.
-            # Propagating None or raising an error.
-            return None # Or raise specific error
+        pt_cls_embedding = pt_cls_embedding.detach().cpu()
+        ember_cls_embedding = tensor.convert_to_tensor(pt_cls_embedding, requires_grad=False)
 
         embeddings_list.append(ember_cls_embedding)
 
@@ -248,9 +238,6 @@ def visualize_embeddings(target, learned):
     plt.show()
     
     if __name__ == "__main__":
-        # Remove numpy import
-        # import numpy as np
-
         # Generate time steps using tensor.linspace
         # Assuming embeddings is already an EmberTensor or compatible
         num_time_steps = tensor.shape(embeddings)[1]

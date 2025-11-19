@@ -55,8 +55,21 @@ from ember_ml.tensor import (
     bool_,
 )
 from ember_ml import training
-from ember_ml import visualization
-from ember_ml import wave
+
+def _optional_module(import_path: str, placeholder_name: str):
+    try:
+        module = __import__(import_path, fromlist=["*"])
+    except Exception as exc:  # pragma: no cover - optional path
+        class _UnavailableModule:
+            def __getattr__(self, item):
+                raise ImportError(
+                    f"{import_path} requires optional dependencies that are not available."
+                ) from exc
+        return _UnavailableModule()
+    return module
+
+visualization = _optional_module("ember_ml.visualization", "visualization")
+wave = _optional_module("ember_ml.wave", "wave")
 from ember_ml import utils
 
 # Lazily select a backend on import if none has been chosen yet.

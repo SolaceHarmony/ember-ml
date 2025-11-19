@@ -3,11 +3,17 @@ Mathematical utility functions for wave memory analysis.
 Provides core operations for vector manipulation and wave calculations.
 """
 
-import numpy as np
+import math
 from typing import List, Tuple, Union, Optional
 
 from ember_ml import ops, tensor
 from ember_ml.types import TensorLike
+
+def _to_scalar(value) -> float:
+    try:
+        return tensor.item(value)
+    except Exception:
+        return float(value)
 
 def normalize_vector(vec: TensorLike, epsilon: float = 1e-12) -> TensorLike:
     """
@@ -35,7 +41,8 @@ def compute_phase_angle(vec: TensorLike) -> float:
     Returns:
         Phase angle in radians
     """
-    return np.arctan2(ops.linearalg.norm(vec[1:]), vec[0])
+    return math.atan2(_to_scalar(ops.linearalg.norm(vec[1:], axis=0)),
+                      _to_scalar(vec[0]))
 
 def compute_energy(vec: TensorLike) -> float:
     """
@@ -70,7 +77,7 @@ def partial_interference(base: TensorLike,
     
     # Compute dot product and angle
     dot_prod = ops.clip(ops.dot(base, new), -1.0, 1.0)
-    angle = np.arccos(dot_prod)
+    angle = math.acos(_to_scalar(dot_prod))
     
     if angle < epsilon:
         return base
@@ -130,7 +137,8 @@ def compute_interference_strength(vectors: List[TensorLike]) -> float:
     ])
     
     # Zero out diagonal (self-interference)
-    np.fill_diagonal(dot_products, 0)
+    mask = ops.subtract(tensor.ones_like(dot_products), tensor.eye(tensor.shape(dot_products)[0], dtype=dot_products.dtype))
+    dot_products = ops.multiply(dot_products, mask)
     
     # Return average non-zero interference
     return float(stats.mean(dot_products[dot_products != 0]))

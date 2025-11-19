@@ -1,5 +1,15 @@
 import matplotlib.pyplot as plt
-import numpy as np
+from ember_ml import tensor, ops, stats
+
+def _cosine_similarity_matrix(target_embeddings, learned_waves):
+    target_embeddings = tensor.cast(target_embeddings, tensor.float32)
+    learned_waves = tensor.cast(learned_waves, tensor.float32)
+    similarity = ops.matmul(target_embeddings, tensor.transpose(learned_waves))
+    target_norms = ops.sqrt(stats.sum(target_embeddings**2, axis=1, keepdims=True))
+    learned_norms = ops.sqrt(stats.sum(learned_waves**2, axis=1, keepdims=True))
+    denom = ops.matmul(target_norms, tensor.transpose(learned_norms))
+    denom = ops.maximum(denom, tensor.ones_like(denom) * 1e-8)
+    return ops.divide(similarity, denom)
 
 class HarmonicVisualizer:
     """Class to handle visualization of embeddings and harmonic waves."""
@@ -90,8 +100,7 @@ class HarmonicVisualizer:
             learned_waves (TensorLike): Generated harmonic waves
             figsize (tuple): Figure size (width, height)
         """
-        # Compute cosine similarity
-        similarity = np.corrcoef(target_embeddings, learned_waves)
+        similarity = _cosine_similarity_matrix(target_embeddings, learned_waves)
         
         plt.figure(figsize=figsize)
         plt.imshow(similarity, cmap='coolwarm', aspect='auto')

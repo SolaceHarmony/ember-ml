@@ -5,7 +5,6 @@ This module provides the DopamineModulator class that simulates basic
 dopamine dynamics for modulating neural behavior based on input strength.
 """
 
-import numpy as np
 from dataclasses import dataclass
 from typing import List, Tuple
 from ember_ml import stats

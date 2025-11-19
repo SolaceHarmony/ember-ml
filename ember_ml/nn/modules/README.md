@@ -83,22 +83,23 @@ The AutoNCP module automatically creates an NCPWiring configuration based on the
 ### Training an NCP Model
 
 ```python
-import numpy as np
-from ember_ml import ops
+from math import pi
+from ember_ml import ops, tensor
 from ember_ml.nn.wirings import NCPWiring
 from ember_ml.nn.modules import NCP
 
 # Create a simple dataset
-X = ops.reshape(ops.linspace(0, 2 * np.pi, 100), (-1, 1))
+
+X = tensor.reshape(X, (-1, 1))
 y = ops.sin(X)
 
-# Convert to numpy for splitting
-X_np = tensor.to_numpy(X)
-y_np = tensor.to_numpy(y)
-
-# Split into train and test sets
-X_train, X_test = X_np[:80], X_np[80:]
-y_train, y_test = y_np[:80], y_np[80:]
+# Split into train and test sets using tensor slicing
+n_samples = tensor.shape(X)[0]
+split_idx = int(n_samples * 0.8)
+X_train = tensor.slice_tensor(X, starts=[0, 0], sizes=[split_idx, 1])
+X_test = tensor.slice_tensor(X, starts=[split_idx, 0], sizes=[n_samples - split_idx, 1])
+y_train = tensor.slice_tensor(y, starts=[0, 0], sizes=[split_idx, 1])
+y_test = tensor.slice_tensor(y, starts=[split_idx, 0], sizes=[n_samples - split_idx, 1])
 
 # Create a wiring configuration
 wiring = NCPWiring(

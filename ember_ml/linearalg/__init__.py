@@ -23,6 +23,7 @@ lstsq = linearalg_proxy.lstsq
 diag = linearalg_proxy.diag
 diagonal = linearalg_proxy.diagonal
 orthogonal = linearalg_proxy.orthogonal
+expm = linearalg_proxy.expm
 
 # Try to import optional functions if available in the backend
 try:
@@ -53,5 +54,6 @@ __all__ = [
     'diag',
     'diagonal',
     'orthogonal',
+    'expm',
     # HPC16x8 removed from exports due to missing backend support
 ]

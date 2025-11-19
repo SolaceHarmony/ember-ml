@@ -8,7 +8,8 @@ from ember_ml.backend.numpy.linearalg.decomp_ops import qr, svd, cholesky, eig, 
 from ember_ml.backend.numpy.linearalg.inverses_ops import inv
 from ember_ml.backend.numpy.linearalg.matrix_ops import det, norm, diag, diagonal
 from ember_ml.backend.numpy.linearalg.solvers_ops import solve, lstsq  # eig, eigvals moved
-from ember_ml.backend.numpy.linearalg.orthogonal_ops import orthogonal # Import orthogonal function
+from ember_ml.backend.numpy.linearalg.orthogonal_ops import orthogonal  # Import orthogonal function
+from ember_ml.backend.numpy.linearalg.expm_ops import expm
 
 __all__ = [
     # "NumpyLinearAlgOps", # Removed class export
@@ -25,5 +26,6 @@ __all__ = [
     "svd",
     "diag",
     "diagonal",
-    "orthogonal"  # Add orthogonal to exports
+    "orthogonal",  # Add orthogonal to exports
+    "expm"
 ]

@@ -1,4 +1,4 @@
-import numpy as np
+import math
 from typing import List, Tuple, Optional
 from array import array
 import math
@@ -187,8 +187,9 @@ class WaveInterferenceNetwork:
         # Process each sample
         for sample in pcm_data:
             # Get sign and magnitude
-            sign = np.sign(sample)
-            magnitude = abs(sample)
+            sample_val = float(sample)
+            sign = 1 if sample_val >= 0 else -1
+            magnitude = abs(sample_val)
             
             # Scale to wave representation
             wave_val = int(magnitude * scale)
@@ -278,7 +279,10 @@ class WaveInterferenceProcessor:
         # Generate sweep signal
         duration = 1.0
         t = tensor.linspace(0, duration, int(duration * sample_rate))
-        freqs = np.logspace(np.log10(20), np.log10(20000), 10)  # 10 frequencies from 20Hz to 20kHz
+        num_freqs = 10
+        log_min = math.log10(20.0)
+        log_max = math.log10(20000.0)
+        freqs = [10 ** (log_min + (log_max - log_min) * i / (num_freqs - 1)) for i in range(num_freqs)]
         
         responses = {}
         for freq in freqs:

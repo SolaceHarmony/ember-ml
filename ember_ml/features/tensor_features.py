@@ -6,7 +6,6 @@ making it compatible with all backends (NumPy, PyTorch, MLX).
 """
 
 from typing import Any, Optional, Union, Sequence, List, Tuple, cast
-import numpy as np # Import numpy for coordinate construction
 
 from ember_ml import ops, tensor
 
@@ -67,12 +66,10 @@ def one_hot(
 
     # Stack coordinates along the last axis -> shape (N, rank+1)
     # Use numpy stack temporarily if tensor.stack has issues or different signature
-    try:
-        final_coords_tensor = tensor.stack(final_coords_list, axis=-1)
-    except Exception:
-        # Fallback or alternative stacking method if tensor.stack fails/differs
-        np_coords = [tensor.to_numpy(c) for c in final_coords_list]
-        final_coords_tensor = tensor.convert_to_tensor(tensor.stack(np_coords, axis=-1))
+    final_coords_tensor = tensor.stack(
+        [tensor.convert_to_tensor(c) for c in final_coords_list],
+        axis=-1
+    )
 
     # Ensure coordinates are integer type for indexing
     final_coords_tensor = tensor.cast(final_coords_tensor, tensor.int32)

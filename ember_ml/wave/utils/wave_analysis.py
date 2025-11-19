@@ -4,11 +4,17 @@ Wave analysis utilities.
 This module provides utilities for analyzing wave signals.
 """
 
-import numpy as np
 from typing import Union, List, Tuple, Optional, Dict
 from scipy import signal
 from ember_ml import ops, linearalg, tensor, stats
 from ember_ml.types import TensorLike # Corrected import
+
+def _to_list(value):
+    array = tensor.to_numpy(value)
+    try:
+        return array.tolist()
+    except AttributeError:
+        return list(array)
 # Try to import librosa, but don't fail if it's not available
 try:
     import librosa # type: ignore
@@ -130,12 +136,17 @@ def compute_spectral_rolloff(wave: TensorLike, sample_rate: int = 44100) -> Tens
         Spectral rolloff
     """
     if not LIBROSA_AVAILABLE:
-        # Fallback implementation using FFT
         frequencies, magnitudes = compute_fft(wave, sample_rate)
-        cumsum = np.cumsum(magnitudes)
-        rolloff_point = 0.85 * cumsum[-1]  # Default rolloff at 85%
-        rolloff_idx = ops.where(cumsum >= rolloff_point)[0][0]
-        return tensor.convert_to_tensor([frequencies[rolloff_idx]])
+        frequencies_list = _to_list(frequencies)
+        magnitudes_list = _to_list(magnitudes)
+        cumsum = []
+        total = 0.0
+        for mag in magnitudes_list:
+            total += float(mag)
+            cumsum.append(total)
+        rolloff_point = 0.85 * cumsum[-1]
+        rolloff_idx = next((idx for idx, val in enumerate(cumsum) if val >= rolloff_point), len(cumsum) - 1)
+        return tensor.convert_to_tensor([frequencies_list[rolloff_idx]])
     return librosa.feature.spectral_rolloff(y=wave, sr=sample_rate)[0]
 
 def compute_zero_crossing_rate(wave: TensorLike) -> float:
@@ -149,9 +160,12 @@ def compute_zero_crossing_rate(wave: TensorLike) -> float:
         Zero crossing rate
     """
     if not LIBROSA_AVAILABLE:
-        # Fallback implementation
-        zero_crossings = stats.sum(ops.abs(np.diff(np.signbit(wave))))
-        return zero_crossings / len(wave)
+        wave_list = _to_list(wave)
+        zero_crossings = sum(
+            1 for i in range(1, len(wave_list))
+            if (wave_list[i-1] >= 0) != (wave_list[i] >= 0)
+        )
+        return zero_crossings / len(wave_list)
     return stats.mean(librosa.feature.zero_crossing_rate(wave))
 
 def compute_rms(wave: TensorLike) -> float:
@@ -164,7 +178,7 @@ def compute_rms(wave: TensorLike) -> float:
     Returns:
         Root mean square
     """
-    return ops.sqrt(stats.mean(np.square(wave)))
+    return ops.sqrt(stats.mean(ops.square(wave)))
 
 def compute_peak_amplitude(wave: TensorLike) -> float:
     """
@@ -204,7 +218,12 @@ def compute_dominant_frequency(wave: TensorLike, sample_rate: int = 44100) -> fl
         Dominant frequency in Hz
     """
     frequencies, magnitudes = compute_fft(wave, sample_rate)
-    return frequencies[np.argmax(magnitudes)]
+    frequencies_list = _to_list(frequencies)
+    magnitudes_list = _to_list(magnitudes)
+    if not magnitudes_list:
+        return 0.0
+    dominant_idx = max(range(len(magnitudes_list)), key=lambda idx: magnitudes_list[idx])
+    return frequencies_list[dominant_idx]
 
 def compute_harmonic_ratio(wave: TensorLike, sample_rate: int = 44100) -> float:
     """

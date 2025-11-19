@@ -5,7 +5,6 @@ Wave segment implementation using HPC limb arithmetic for precise wave computati
 from typing import List, Optional
 from ember_ml.types import TensorLike # Added import
 from ember_ml import tensor # Moved import to top level
-import numpy as np
 from .hpc_limb import HPCLimb, hpc_add, hpc_sub, hpc_shr
 
 class WaveSegment:

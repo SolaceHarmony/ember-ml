@@ -1,5 +1,4 @@
 import mlx.core as mx
-import numpy as np
 import time
 import os
 

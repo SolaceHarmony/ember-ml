@@ -3,7 +3,7 @@ PWM (Pulse Width Modulation) signal processing for wave segments.
 Handles conversion between PCM and PWM representations.
 """
 
-import numpy as np
+import math
 from typing import Tuple, Optional
 
 from ember_ml import ops, tensor
@@ -65,7 +65,7 @@ class PWMProcessor:
             duty_cycle = (avg_amplitude + 32768) / 65536
             
             # Quantize duty cycle to available levels
-            quantized_duty = np.round(duty_cycle * (self.levels - 1)) / (self.levels - 1)
+            quantized_duty = round(duty_cycle * (self.levels - 1)) / (self.levels - 1)
             
             # Generate PWM pattern
             high_samples = int(quantized_duty * self.samples_per_period)
@@ -123,11 +123,12 @@ class PWMProcessor:
             
         duty_cycles = tensor.convert_to_tensor(duty_cycles)
         
+        duty_list = [float(tensor.item(value) if hasattr(value, 'item') else float(value)) for value in duty_cycles]
         return {
             'mean_duty_cycle': stats.mean(duty_cycles),
             'min_duty_cycle': stats.min(duty_cycles),
             'max_duty_cycle': stats.max(duty_cycles),
-            'unique_levels': len(np.unique(duty_cycles)),
+            'unique_levels': len(set(duty_list)),
             'theoretical_levels': self.levels
         }
         

@@ -1,4 +1,3 @@
-import numpy as np
 from typing import List, Tuple, Optional
 import sys
 import os

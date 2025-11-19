@@ -16,7 +16,6 @@ def _validate_and_get_mlx_dtype(dtype: Optional[Any]) -> Optional[mx.Dtype]:
     """
     if dtype is None:
         return None
-        dtype: Optional desired dtype (canonical dtype string, mx.Dtype, None).
     # If it's already an MLX dtype, return it
     if isinstance(dtype, mx.Dtype):
         return dtype
@@ -234,9 +233,7 @@ def _convert_to_tensor(data: TensorLike, dtype: Optional[DType] = None, device=N
     
     return tensor
 
-import numpy as np # Import numpy for to_numpy function
-
-def to_numpy(data: TensorLike) -> np.ndarray:
+def to_numpy(data: TensorLike):
     """
     Convert an MLX array to a NumPy array.
 
@@ -254,11 +251,8 @@ def to_numpy(data: TensorLike) -> np.ndarray:
     if data is None:
         return None
     
-    # Convert input to MLX array first
     tensor_data = _convert_to_tensor(data)
-    
-    # Use the built-in numpy conversion
-    return np.array(tensor_data)
+    return tensor.tolist(tensor_data)
 
 
 def item(data: TensorLike) -> Union[int, float, bool]:

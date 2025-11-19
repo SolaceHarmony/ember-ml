@@ -5,14 +5,51 @@ This module provides metrics utilities for classification tasks.
 """
 
 from typing import Dict, Tuple, Any
-from ember_ml import tensor
+from ember_ml import tensor, stats
 from ember_ml.types import TensorLike
 from ember_ml import ops
 
-# Import sklearn metrics that we haven't implemented yet
-from sklearn.metrics import (
-    accuracy_score, precision_score, recall_score, f1_score
-)
+try:  # Optional dependency
+    from sklearn.metrics import (
+        accuracy_score, precision_score, recall_score, f1_score,
+        roc_curve, auc, precision_recall_curve as sk_precision_recall_curve,
+        average_precision_score as sk_average_precision_score,
+    )
+except ModuleNotFoundError:  # pragma: no cover - fallback path
+    accuracy_score = precision_score = recall_score = f1_score = None
+    roc_curve = auc = sk_precision_recall_curve = sk_average_precision_score = None
+
+
+def _basic_macro_metrics(y_true: TensorLike, y_pred: TensorLike) -> Tuple[float, float, float, float]:
+    """Compute accuracy/precision/recall/F1 without sklearn."""
+    true_list = tensor.to_numpy(tensor.convert_to_tensor(y_true)).tolist()
+    pred_list = tensor.to_numpy(tensor.convert_to_tensor(y_pred)).tolist()
+    if not true_list:
+        return 0.0, 0.0, 0.0, 0.0
+
+    labels = sorted(set(true_list) | set(pred_list))
+    total = len(true_list)
+    accuracy = sum(int(t == p) for t, p in zip(true_list, pred_list)) / total
+
+    precisions = []
+    recalls = []
+    for label in labels:
+        tp = sum(1 for t, p in zip(true_list, pred_list) if t == label and p == label)
+        fp = sum(1 for t, p in zip(true_list, pred_list) if t != label and p == label)
+        fn = sum(1 for t, p in zip(true_list, pred_list) if t == label and p != label)
+        prec = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+        rec = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+        precisions.append(prec)
+        recalls.append(rec)
+
+    precision_macro = sum(precisions) / len(labels)
+    recall_macro = sum(recalls) / len(labels)
+    if precision_macro + recall_macro > 0:
+        f1_macro = 2 * precision_macro * recall_macro / (precision_macro + recall_macro)
+    else:
+        f1_macro = 0.0
+
+    return accuracy, precision_macro, recall_macro, f1_macro
 
 def classification_metrics(y_true: TensorLike, y_pred: TensorLike) -> Dict[str, float]:
     """
@@ -25,6 +62,10 @@ def classification_metrics(y_true: TensorLike, y_pred: TensorLike) -> Dict[str, 
     Returns:
         Dictionary of metrics
     """
+    if accuracy_score is None:
+        acc, prec, rec, f1 = _basic_macro_metrics(y_true, y_pred)
+        return {'accuracy': acc, 'precision': prec, 'recall': rec, 'f1': f1}
+
     return {
         'accuracy': accuracy_score(y_true, y_pred),
         'precision': precision_score(y_true, y_pred, average='macro'),
@@ -167,8 +208,11 @@ def roc_auc(y_true: TensorLike, y_score: TensorLike) -> Tuple[TensorLike, Tensor
     Returns:
         Tuple of (fpr, tpr, thresholds, auc)
     """
-    from sklearn.metrics import roc_curve, auc
-    
+    if roc_curve is None or auc is None:
+        raise ImportError(
+            "scikit-learn is required for roc_auc. Install scikit-learn to enable this metric."
+        )
+
     fpr, tpr, thresholds = roc_curve(y_true, y_score)
     roc_auc = auc(fpr, tpr)
     
@@ -185,9 +229,12 @@ def precision_recall_curve(y_true: TensorLike, y_score: TensorLike) -> Tuple[Ten
     Returns:
         Tuple of (precision, recall, thresholds)
     """
-    from sklearn.metrics import precision_recall_curve
+    if sk_precision_recall_curve is None:
+        raise ImportError(
+            "scikit-learn is required for precision_recall_curve. Install scikit-learn to enable this metric."
+        )
     
-    precision, recall, thresholds = precision_recall_curve(y_true, y_score)
+    precision, recall, thresholds = sk_precision_recall_curve(y_true, y_score)
     
     return precision, recall, thresholds
 
@@ -202,6 +249,9 @@ def average_precision_score(y_true: TensorLike, y_score: TensorLike) -> float:
     Returns:
         Average precision score
     """
-    from sklearn.metrics import average_precision_score
+    if sk_average_precision_score is None:
+        raise ImportError(
+            "scikit-learn is required for average_precision_score. Install scikit-learn to enable this metric."
+        )
     
-    return average_precision_score(y_true, y_score)
+    return sk_average_precision_score(y_true, y_score)
