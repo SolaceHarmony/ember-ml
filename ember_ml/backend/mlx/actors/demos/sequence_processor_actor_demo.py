@@ -27,7 +27,7 @@ async def test_sequence_processor_demo():
  
     # Process a sequence
     # Create sequence data as EmberTensor
-    sequence_data = EmberTensor.random_normal((10, 2))
+    sequence_data = tensor.random_normal((10, 2))
     result = await sequence_processor.process_sequence.remote(sequence_data)
     # Result['outputs'] is expected to be an EmberTensor
     print(f"Sequence processing result: {result}")

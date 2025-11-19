@@ -30,8 +30,8 @@ def solve(a: TensorLike, b: TensorLike) -> torch.Tensor:
         then multiplies by b to get the solution: x = A^(-1) * b.
     """
     # Convert inputs to Torch arrays with float32 dtype
-    a_array = torch.Tensor(a, dtype=torch.float32)
-    b_array = torch.Tensor(b, dtype=torch.float32)
+    a_array = torch.tensor(a, dtype=torch.float32)
+    b_array = torch.tensor(b, dtype=torch.float32)
     from ember_ml.backend.torch.linearalg import inv # Simplified import path
     # Compute the inverse of a using our custom implementation
     a_inv = inv(a_array)

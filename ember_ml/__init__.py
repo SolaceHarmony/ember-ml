@@ -265,22 +265,39 @@ def dtype(obj: Any = None):
     return _get_backend_tensor_ops_module().dtype(obj)
 
 
-def tensor(data: Any, dtype: Any = None, device: Optional[str] = None) -> Any:
-    """Create a tensor from data, mirroring ``torch.tensor`` semantics."""
+def _tensor_callable(data: Any, dtype: Any = None, device: Optional[str] = None) -> Any:
+    """Core tensor creation helper used by callers and the `tensor` namespace."""
 
     return _convert_to_backend_tensor(data, dtype=dtype, device=device)
 
 
 def convert_to_tensor(data: Any, dtype: Any = None, device: Optional[str] = None) -> Any:
-    """Alias for :func:`tensor` so frontend call sites continue to work."""
+    """Alias for the tensor callable for backward compatibility."""
 
-    return tensor(data, dtype=dtype, device=device)
+    return _tensor_callable(data, dtype=dtype, device=device)
 
 
 def array(data: Any, dtype: Any = None, device: Optional[str] = None) -> Any:
     """Shortcut alias for :func:`convert_to_tensor` to maintain legacy `ember_ml.array`."""
 
     return convert_to_tensor(data, dtype=dtype, device=device)
+
+
+class TensorNamespace:
+    """Callable namespace exposing tensor creation plus helper attributes."""
+
+    def __call__(self, data: Any, dtype: Any = None, device: Optional[str] = None) -> Any:
+        return _tensor_callable(data, dtype=dtype, device=device)
+
+    def __getattr__(self, name: str) -> Any:
+        if name in globals():
+            value = globals()[name]
+            if callable(value):
+                return value
+        raise AttributeError(f"'ember_ml.tensor' has no attribute '{name}'")
+
+
+tensor = TensorNamespace()
 
 def _optional_module(import_path: str, placeholder_name: str):
     try:
@@ -303,12 +320,12 @@ from ember_ml import utils
 if get_backend() is None:
     backend_name, _ = auto_select_backend()
     if backend_name is not None:
-        ops.set_backend(backend_name, persist=False)
+        ops.set_backend(backend_name)
 
 
 def set_backend(backend: str, *, persist: bool = True) -> None:
     """Set the backend and update all cached operations."""
-    ops.set_backend(backend, persist=persist)
+    ops.set_backend(backend)
 
 # Namespace mapping for dynamic attribute resolution
 # Maps public API names to internal ops module names

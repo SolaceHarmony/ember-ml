@@ -96,7 +96,7 @@ def sin_cos_transform(values: Any, period: float = 1.0) -> Tuple[Any, Any]:
     Returns:
         Tuple of (sin_values, cos_values) as EmberTensors
     """
-    values_tensor = tensor.convert_to_tensor(values)  # Ensure it's an EmberTensor
+    values_tensor = tensor(values)  # Ensure it's an EmberTensor
 
     # Determine dtype and device safely without direct attribute access
     try:

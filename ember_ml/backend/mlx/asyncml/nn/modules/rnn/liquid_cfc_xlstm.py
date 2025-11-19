@@ -4,10 +4,10 @@ Asynchronous implementation of the liquid_cfc_xlstm neural network module.
 
 from typing import Dict, Any
 
-from ember_ml.activations import sigmoid, tanh
-x
-from ember_ml.asyncml import zeroes_like, ones_like
-from ember_ml.asyncml.nn import tensor
+from ember_ml.nn.modules.activations import sigmoid, tanh
+
+from ember_ml.asyncml import zeros_like, ones_like
+from ember_ml import tensor
 # Import asynchronous tensor operations
 from ember_ml.asyncml.ops import matmul, where, add, subtract, multiply, divide
 

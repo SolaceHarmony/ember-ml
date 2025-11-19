@@ -9,10 +9,17 @@ import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 
-from ember_ml import ops, tensor
+from ember_ml import ops, tensor, stats, linearalg
 from ember_ml.types import TensorLike
 from .metrics import AnalysisMetrics, MetricsCollector
 from ..models.multi_sphere import MultiSphereWaveModel
+
+
+def _to_scalar(value: Any) -> float:
+    try:
+        return tensor.item(value)
+    except Exception:
+        return float(value)
 
 
 class WaveMemoryAnalyzer:
@@ -26,14 +33,8 @@ class WaveMemoryAnalyzer:
         plt.rcParams['axes.facecolor'] = 'white'
         plt.rcParams['axes.grid'] = True
         plt.rcParams['grid.alpha'] = 0.3
-        
-    def _to_scalar(self, value: Any) -> float:
-        try:
-            return tensor.item(value)
-        except Exception:
-            return float(value)
-        
-    def analyze_model(self, 
+
+    def analyze_model(self,
                      model: MultiSphereWaveModel, 
                      steps: int = 10) -> Tuple[plt.Figure, TensorLike, AnalysisMetrics]:
         """
@@ -129,10 +130,10 @@ class WaveMemoryAnalyzer:
         for sphere_id in range(history.shape[1]):
             phase_angles = []
             for t in range(len(history)):
-                y = ops.linearalg.norm(history[t, sphere_id, 1:], axis=0)
+                y = linearalg.norm(history[t, sphere_id, 1:], axis=0)
                 x = history[t, sphere_id, 0]
-                y_val = self._to_scalar(y)
-                x_val = self._to_scalar(x)
+                y_val = _to_scalar(y)
+                x_val = _to_scalar(x)
                 phase_angles.append(math.atan2(y_val, x_val))
             energies = stats.sum(history[:, sphere_id]**2, axis=1)
             sc = ax.scatter(phase_angles, energies, 
@@ -164,10 +165,10 @@ class WaveMemoryAnalyzer:
         for i in range(history.shape[1]-1):
             phase_diff = []
             for t in range(steps):
-                p1 = math.atan2(self._to_scalar(ops.linearalg.norm(history[t, i, 1:], axis=0)), 
-                               self._to_scalar(history[t, i, 0]))
-                p2 = math.atan2(self._to_scalar(ops.linearalg.norm(history[t, i+1, 1:], axis=0)), 
-                               self._to_scalar(history[t, i+1, 0]))
+                p1 = math.atan2(_to_scalar(ops.linearalg.norm(history[t, i, 1:], axis=0)),
+                                _to_scalar(history[t, i, 0]))
+                p2 = math.atan2(_to_scalar(ops.linearalg.norm(history[t, i + 1, 1:], axis=0)),
+                                _to_scalar(history[t, i+1, 0]))
                 phase_diff.append(p2 - p1)
             ax.plot(range(steps), phase_diff, label=f'Spheres {i}-{i+1}')
             
@@ -242,8 +243,8 @@ class WaveMemoryAnalyzer:
         for t in range(steps):
             phases = [
                 math.atan2(
-                    self._to_scalar(ops.linearalg.norm(state[1:], axis=0)),
-                    self._to_scalar(state[0])
+                    _to_scalar(ops.linearalg.norm(state[1:], axis=0)),
+                    _to_scalar(state[0])
                 )
                 for state in history[t]
             ]
