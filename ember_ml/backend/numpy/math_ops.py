@@ -4,10 +4,12 @@ NumPy math operations for ember_ml.
 This module provides NumPy implementations of math operations.
 """
 
-import numpy as np
 from typing import Optional, Union, List, Literal, Tuple
+
+import numpy as np
+
 from ember_ml.backend.numpy.types import TensorLike, ShapeLike
-from ember_ml.backend.numpy.tensor.ops.manipulation import vstack, hstack
+
 
 # We avoid creating global instances to prevent circular imports
 # Each function will create its own instances when needed

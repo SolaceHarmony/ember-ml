@@ -14,3 +14,5 @@ DEFAULT_DTYPE = NumpyDType().float32
 
 # Current random seed
 _current_seed = None
+__all__ = ["DEFAULT_DEVICE", "DEFAULT_DTYPE"]
+

@@ -4,15 +4,16 @@ Restricted Boltzmann Machine (RBM) implementation.
 This module provides a Restricted Boltzmann Machine (RBM) implementation for the ember_ml library.
 """
 
+from typing import Optional, Tuple, List, Any, Callable
+
 # Import ops and stats separately
 from ember_ml import ops
 from ember_ml import stats
-from ember_ml.nn.modules import Module, Parameter
 from ember_ml import tensor
-from ember_ml.nn.layers import Linear
+from ember_ml.nn.modules import Module, Parameter
 from ember_ml.nn.modules.activations import get_activation
-from typing import Optional, Tuple, List, Dict, Any, Union, Callable
 from ember_ml.types import TensorLike
+
 
 class RestrictedBoltzmannMachine(Module):
     """

@@ -6,11 +6,11 @@ This module provides MLX implementations of bitwise shift operations
 """
 
 import mlx.core as mx
-from typing import Union
 
 # Import MLXTensor dynamically within functions
 # from ember_ml.backend.mlx.tensor import MLXTensor
 from ember_ml.backend.mlx.types import TensorLike
+
 
 def left_shift(x: TensorLike, shifts: TensorLike) -> mx.array:
     """

@@ -4,18 +4,24 @@ from __future__ import annotations
 
 import importlib
 import json
+import os
 from contextlib import contextmanager
 from pathlib import Path
 from types import ModuleType
 from typing import Dict, List, Optional, Tuple
 
 _BACKEND_MODULES: Dict[str, str] = {
-    "numpy": "ember_ml.backend.numpy",
     "torch": "ember_ml.backend.torch",
     "mlx": "ember_ml.backend.mlx",
+    "numpy": "ember_ml.backend.numpy",
 }
 
 _CONFIG_PATH = Path(__file__).resolve().parents[2] / "backend_config.json"
+
+_BACKEND_STATE_DIR = Path(__file__).resolve().parent
+_BACKEND_PERSIST_FILE = _BACKEND_STATE_DIR / ".backend"
+_DEVICE_PERSIST_FILE = _BACKEND_STATE_DIR / ".device"
+_USER_CONFIG_FILE = Path.home() / ".ember_ml" / "config"
 
 
 def load_backend_config() -> Dict[str, bool]:
@@ -36,6 +42,95 @@ def load_backend_config() -> Dict[str, bool]:
 
 
 _CONFIG = load_backend_config()
+
+
+def _read_text_file(path: Path) -> Optional[str]:
+    try:
+        text = path.read_text().strip()
+    except FileNotFoundError:
+        return None
+    return text or None
+
+
+def _load_env_override() -> Tuple[Optional[str], Optional[str]]:
+    backend = os.environ.get("ember_ml_BACKEND") or os.environ.get("EMBER_ML_BACKEND")
+    device = os.environ.get("ember_ml_DEVICE") or os.environ.get("EMBER_ML_DEVICE")
+    return (backend.strip(), device.strip()) if backend else (None, None)
+
+
+def _read_user_config_override() -> Tuple[Optional[str], Optional[str]]:
+    if not _USER_CONFIG_FILE.exists():
+        return None, None
+    backend = None
+    device = None
+    try:
+        with _USER_CONFIG_FILE.open("r", encoding="utf-8") as handle:
+            for line in handle:
+                if "=" not in line:
+                    continue
+                key, value = map(str.strip, line.split("=", 1))
+                if not key or not value:
+                    continue
+                lower_key = key.lower()
+                if lower_key == "backend":
+                    backend = value
+                elif lower_key == "device":
+                    device = value
+    except Exception:
+        return None, None
+    return backend, device
+
+
+def _read_persisted_override() -> Tuple[Optional[str], Optional[str]]:
+    backend = _read_text_file(_BACKEND_PERSIST_FILE)
+    device = _read_text_file(_DEVICE_PERSIST_FILE)
+    return backend, device
+
+
+def _persist_backend_choice(backend: str, device: Optional[str]) -> None:
+    try:
+        _BACKEND_PERSIST_FILE.write_text(backend, encoding="utf-8")
+    except OSError:
+        pass
+    if device:
+        try:
+            _DEVICE_PERSIST_FILE.write_text(device, encoding="utf-8")
+        except OSError:
+            pass
+
+
+def _default_device_for_backend(backend: str, module: ModuleType) -> Optional[str]:
+    if backend == "torch":
+        return _detect_torch_device(module)
+    if backend == "mlx":
+        get_device_func = getattr(module, "get_device", None)
+        if callable(get_device_func):
+            try:
+                return get_device_func()
+            except Exception:
+                return None
+    if backend == "numpy":
+        return "cpu"
+    return None
+
+
+def _override_candidates() -> List[Tuple[str, Optional[str]]]:
+    overrides: List[Tuple[str, Optional[str]]] = []
+    entries = [
+        _load_env_override(),
+        _read_persisted_override(),
+        _read_user_config_override(),
+    ]
+    seen: set[str] = set()
+    for backend_name, device in entries:
+        if not backend_name:
+            continue
+        backend_name = backend_name.strip()
+        if not backend_name or backend_name in seen:
+            continue
+        overrides.append((backend_name, device))
+        seen.add(backend_name)
+    return overrides
 
 
 def _module_path(backend: str) -> str:
@@ -92,20 +187,33 @@ def get_available_backends() -> List[str]:
 def auto_select_backend() -> Tuple[Optional[str], Optional[str]]:
     """Choose the first configured backend that can be imported."""
 
-    for name in _candidate_order():
-        module = _try_import_backend(name)
+    seen: set[str] = set()
+    for backend_name, device_override in _override_candidates():
+        if backend_name not in _BACKEND_MODULES:
+            continue
+        module = _try_import_backend(backend_name)
         if module is None:
             continue
-        device: Optional[str] = None
-        if name == "torch":
-            device = _detect_torch_device(module)
-        elif name == "numpy":
-            device = "cpu"
-        return name, device
+        seen.add(backend_name)
+        return backend_name, device_override or _default_device_for_backend(
+            backend_name, module
+        )
+
+    for backend_name in _candidate_order():
+        if backend_name in seen:
+            continue
+        if not _CONFIG.get(backend_name, False):
+            continue
+        module = _try_import_backend(backend_name)
+        if module is None:
+            continue
+        seen.add(backend_name)
+        return backend_name, _default_device_for_backend(backend_name, module)
+
     return None, None
 
 
-def set_backend(backend: str) -> None:
+def set_backend(backend: str, *, persist: bool = True) -> None:
     """Activate ``backend`` as the current backend."""
 
     global _CURRENT_BACKEND_NAME, _CURRENT_BACKEND_MODULE
@@ -115,6 +223,9 @@ def set_backend(backend: str) -> None:
     _CURRENT_BACKEND_MODULE = module
     if backend not in _AVAILABLE_BACKENDS:
         _AVAILABLE_BACKENDS.append(backend)
+    if persist:
+        device_value = _default_device_for_backend(backend, module)
+        _persist_backend_choice(backend, device_value)
 
 
 def get_backend() -> Optional[str]:
@@ -124,7 +235,7 @@ def get_backend() -> Optional[str]:
         return _CURRENT_BACKEND_NAME
     backend, _ = auto_select_backend()
     if backend is not None:
-        set_backend(backend)
+        set_backend(backend, persist=False)
     return _CURRENT_BACKEND_NAME
 
 
@@ -163,12 +274,12 @@ def using_backend(backend: str):
 
     original = get_backend()
     if backend != original:
-        set_backend(backend)
+        set_backend(backend, persist=False)
     try:
         yield
     finally:
         if original is not None and original != backend:
-            set_backend(original)
+            set_backend(original, persist=False)
 
 
 def _detect_torch_device(module: ModuleType) -> str:

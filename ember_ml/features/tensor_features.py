@@ -5,9 +5,10 @@ This module provides tensor feature operations using the ops abstraction layer,
 making it compatible with all backends (NumPy, PyTorch, MLX).
 """
 
-from typing import Any, Optional, Union, Sequence, List, Tuple, cast
+from typing import Any
 
-from ember_ml import ops, tensor
+from ember_ml import tensor
+
 
 # --- Standalone Functions ---
 

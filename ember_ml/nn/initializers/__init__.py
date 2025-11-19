@@ -20,12 +20,12 @@ All initializers maintain numerical stability and proper scaling
 while preserving backend independence.
 """
 
-from typing import Callable, Any, Dict, Optional
+from typing import Callable, Any, Optional
 
+from ember_ml import tensor
+from .binomial import BinomialInitializer, binomial
 # Use relative imports for files within the same package
 from .glorot import glorot_uniform, glorot_normal, orthogonal
-from .binomial import BinomialInitializer, binomial
-from ember_ml import tensor
 
 
 def _resolve_dtype(

@@ -6,17 +6,18 @@ This actor is responsible for managing neural state, including persistence,
 loading, and analysis, using EmberTensor for state representation.
 """
 
-import ray
-import time
 import json
-import pickle
-import os
 import math
-from typing import Dict, List, Any, Optional
-from ember_ml.types import TensorLike
+import os
+import pickle
+import time
+from typing import Dict, Any
+
+import ray
 
 # Import EmberTensor
 from ember_ml import tensor
+from ember_ml.types import TensorLike
 
 
 @ray.remote

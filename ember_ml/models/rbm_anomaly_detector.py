@@ -6,19 +6,22 @@ It integrates with the generic feature extraction library to provide end-to-end
 anomaly detection capabilities, including unsupervised categorization of anomalies.
 """
 
-import pandas as pd
 import os
 import time
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple, Union, Any
+from typing import Dict, Optional, Tuple
+
+import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 
+from ember_ml import ops, tensor
 # Import our modules
 from ember_ml import stats
-from ember_ml import ops, tensor
 from ember_ml.models.rbm.rbm_module import RBMModule
 from ember_ml.types import TensorLike
+
+
 class RBMBasedAnomalyDetector:
     """
     Anomaly detection system based on Restricted Boltzmann Machines.

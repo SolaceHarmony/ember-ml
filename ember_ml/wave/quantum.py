@@ -2,15 +2,16 @@
 Quantum wave processing components.
 """
 
-import math
 # import cmath # Not directly used for tensor ops, math.pi is fine
-from typing import List, Dict, Optional, Tuple, Union
+from typing import List, Optional, Tuple
 
 from ember_ml import ops, stats
-from ember_ml import tensor # For tensor.EmberTensor, tensor.zeros etc.
-from ember_ml.types import TensorLike # For type hinting
-from ember_ml.nn.modules import Module, Parameter # For Module and Parameter
-from ember_ml.nn.layers import Linear # For Linear layer
+from ember_ml import tensor  # For tensor.EmberTensor, tensor.zeros etc.
+from ember_ml.nn.layers import Linear  # For Linear layer
+from ember_ml.nn.modules import Module, Parameter  # For Module and Parameter
+from ember_ml.types import TensorLike  # For type hinting
+
+
 # Assuming stats and linearalg are accessible via ops
 # from ember_ml.ops import stats, linearalg
 

@@ -1,7 +1,7 @@
 """MLX tensor creation operations."""
 
-from typing import Optional, Union
 from numbers import Integral
+from typing import Optional, Union
 
 import mlx.core as mx
 

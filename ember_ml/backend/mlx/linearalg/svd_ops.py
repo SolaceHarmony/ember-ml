@@ -5,16 +5,17 @@ MLX SVD operations for ember_ml.
 This module provides MLX implementations of Singular Value Decomposition (SVD)
 using custom Metal kernels for performance and stability.
 """
-from typing import Union, Tuple, Literal
-import mlx.core as mx
+from typing import Union, Tuple
 
-# Import from tensor_ops and types
-from ember_ml.backend.mlx.tensor import MLXDType
-from ember_ml.backend.mlx.types import TensorLike
-from ember_ml.backend.mlx.tensor import MLXTensor
+import mlx.core as mx
 
 # Import QR dependency from qr_ops
 from ember_ml.backend.mlx.linearalg.qr_ops import qr
+# Import from tensor_ops and types
+from ember_ml.backend.mlx.tensor import MLXDType
+from ember_ml.backend.mlx.tensor import MLXTensor
+from ember_ml.backend.mlx.types import TensorLike
+
 dtype_obj = MLXDType()
 
 # --- QR Kernel Code Removed (Moved to qr_ops.py) ---

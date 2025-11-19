@@ -4,11 +4,11 @@ RBM Training Functions
 This module provides functions for training and using RBM modules.
 """
 
-import os
 import json
+import os
 
 from ember_ml import ops, tensor
-from ember_ml.nn.layers import Linear
+
 
 def contrastive_divergence_step(rbm, batch_data, k=1):
     """

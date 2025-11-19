@@ -4,8 +4,10 @@ NumPy implementation of comparison operations.
 This module provides NumPy implementations of comparison operations.
 """
 
-import numpy as np
 from typing import Any
+
+import numpy as np
+
 from ember_ml.backend.numpy.types import TensorLike
 
 
@@ -40,7 +42,6 @@ def not_equal(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     Tensor = NumpyTensor()
     return np.not_equal(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
-
 def less(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     """
     Check if one tensor is less than another element-wise.
@@ -55,7 +56,6 @@ def less(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     from ember_ml.backend.numpy.tensor import NumpyTensor
     Tensor = NumpyTensor()
     return np.less(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
-
 
 def less_equal(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     """
@@ -72,7 +72,6 @@ def less_equal(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     Tensor = NumpyTensor()
     return np.less_equal(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
-
 def greater(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     """
     Check if one tensor is greater than another element-wise.
@@ -87,7 +86,6 @@ def greater(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     from ember_ml.backend.numpy.tensor import NumpyTensor
     Tensor = NumpyTensor()
     return np.greater(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
-
 
 def greater_equal(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     """
@@ -104,7 +102,6 @@ def greater_equal(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     Tensor = NumpyTensor()
     return np.greater_equal(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
-
 def logical_and(x: Any, y: Any) -> np.ndarray:
     """
     Compute the logical AND of two tensors element-wise.
@@ -119,7 +116,6 @@ def logical_and(x: Any, y: Any) -> np.ndarray:
     from ember_ml.backend.numpy.tensor import NumpyTensor
     Tensor = NumpyTensor()
     return np.logical_and(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
-
 
 def logical_or(x: Any, y: Any) -> np.ndarray:
     """
@@ -136,7 +132,6 @@ def logical_or(x: Any, y: Any) -> np.ndarray:
     Tensor = NumpyTensor()
     return np.logical_or(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y))
 
-
 def logical_not(x: Any) -> np.ndarray:
     """
     Compute the logical NOT of a tensor element-wise.
@@ -150,7 +145,6 @@ def logical_not(x: Any) -> np.ndarray:
     from ember_ml.backend.numpy.tensor import NumpyTensor
     Tensor = NumpyTensor()
     return np.logical_not(Tensor.convert_to_tensor(x))
-
 
 def logical_xor(x: Any, y: Any) -> np.ndarray:
     """
@@ -201,7 +195,6 @@ def isclose(x: Any, y: Any, rtol: float = 1e-5, atol: float = 1e-8) -> np.ndarra
     from ember_ml.backend.numpy.tensor import NumpyTensor
     Tensor = NumpyTensor()
     return np.isclose(Tensor.convert_to_tensor(x), Tensor.convert_to_tensor(y), rtol=rtol, atol=atol)
-
 
 def all(x: Any, axis: Any = None) -> Any:
     """

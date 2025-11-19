@@ -8,8 +8,8 @@ using a wiring configuration.
 from typing import Optional, Tuple, Dict, Any, Union
 
 from ember_ml import ops
-from ember_ml.nn import initializers  # Import initializers module
 from ember_ml import tensor
+from ember_ml.nn import initializers  # Import initializers module
 from ember_ml.nn.modules.activations import get_activation  # Keep helper import
 from ember_ml.nn.modules.base_module import BaseModule as Module, Parameter
 from ember_ml.nn.modules.wiring import NeuronMap  # Use renamed base class

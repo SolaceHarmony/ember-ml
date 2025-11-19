@@ -4,8 +4,10 @@ NumPy data type implementation for ember_ml.
 This module provides NumPy implementations of data type operations.
 """
 
-import numpy as np
 from typing import Union, Any, Optional
+
+import numpy as np
+
 
 class NumpyDType:
     """NumPy implementation of data type operations."""

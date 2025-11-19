@@ -7,14 +7,13 @@ the BackendRegistry and ProxyModule pattern to avoid the need for explicit
 alias updates.
 """
 
-import importlib
-import sys
 import asyncio
 import functools
-from typing import Dict, List, Set, Callable, Any, Optional, Type, TypeVar
+import importlib
+from typing import Any, Type
 
-from ember_ml.backend.registry import BackendRegistry, ProxyModule, create_proxy_module
-from ember_ml.ops.proxy import _OPS_MAPPING as SYNC_OPS_MAPPING
+from ember_ml.backend.registry import BackendRegistry, ProxyModule
+
 
 # Helper to create an asynchronous wrapper for a synchronous function
 def _make_async_wrapper(sync_func):

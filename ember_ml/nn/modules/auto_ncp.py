@@ -8,7 +8,8 @@ around the NCP class that automatically configures the wiring.
 from typing import Optional, Dict, Any
 
 from ember_ml.nn.modules.ncp import NCP
-from ember_ml.nn.modules.wiring import NCPMap # Import from wiring subpackage
+from ember_ml.nn.modules.wiring import NCPMap  # Import from wiring subpackage
+
 
 class AutoNCP(NCP):
     """

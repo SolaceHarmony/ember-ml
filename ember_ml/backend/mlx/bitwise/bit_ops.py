@@ -5,9 +5,10 @@ This module provides MLX implementations of bit manipulation operations
 (count_ones, count_zeros, get_bit, set_bit, toggle_bit).
 """
 
-from typing import Union
 import mlx.core as mx
+
 from ember_ml.backend.mlx.types import TensorLike
+
 
 def count_ones(x: TensorLike) -> mx.array:
     """

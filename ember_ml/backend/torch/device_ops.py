@@ -2,9 +2,12 @@
 PyTorch device operations for ember_ml.
 """
 
+from typing import Any, Optional, List, Dict  # Import List and Dict for type hints
+
 import torch
-from typing import Any, Optional, List, Dict # Import List and Dict for type hints
-from ember_ml.backend.torch.types import TensorLike, default_int # Use TensorLike instead of ArrayLike
+
+from ember_ml.backend.torch.types import TensorLike, default_int  # Use TensorLike instead of ArrayLike
+
 # Module-level variable to store the pseudo-default device
 # Initialize by determining the best available device
 

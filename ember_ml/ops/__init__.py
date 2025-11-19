@@ -15,8 +15,8 @@ _CACHE: Dict[str, Any] = {}
 _RESOLVED_NAMES: Set[str] = set()
 
 
-def set_backend(backend: str) -> None:
-    _set_backend(backend)
+def set_backend(backend: str, *, persist: bool = True) -> None:
+    _set_backend(backend, persist=persist)
     _clear_cached_ops()
 
 

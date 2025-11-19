@@ -5,11 +5,13 @@ This module provides a backend-agnostic implementation of a batch normalization 
 that works with any backend (NumPy, PyTorch, MLX).
 """
 
-from typing import Optional, Any, Tuple
+from typing import Any
 
 from ember_ml import ops, stats
-from ember_ml.nn.modules.base_module import BaseModule as Module, Parameter
 from ember_ml import tensor
+from ember_ml.nn.modules.base_module import BaseModule as Module, Parameter
+
+
 class BatchNormalization(Module):
     """
     Batch Normalization layer.

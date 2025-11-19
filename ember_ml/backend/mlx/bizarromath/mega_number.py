@@ -5,8 +5,10 @@ This module provides the MLXMegaNumber class, using mlx.array with dtype=int16
 as the underlying representation for chunk-based (limb-based) arithmetic.
 """
 
+from typing import Tuple, Union, Optional
+
 import mlx.core as mx
-from typing import Tuple, Union, List, Optional, Any
+
 
 class MLXMegaNumber:
     """

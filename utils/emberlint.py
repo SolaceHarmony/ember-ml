@@ -575,8 +575,8 @@ def check_backend_consistency_for_file(file_path: str) -> Tuple[bool, List[Dict]
     if not ("/ops/" in file_path or "/backend/" in file_path):
         return True, []
     
-    # Skip backend/__init__.py, backend/base.py, and backend/.backend
-    if "/backend/__init__.py" in file_path or "/backend/base.py" in file_path or "/backend/.backend" in file_path or "/backend/.device" in file_path:
+    # Skip backend/tensor.py, backend/base.py, and backend/.backend
+    if "/backend/tensor.py" in file_path or "/backend/base.py" in file_path or "/backend/.backend" in file_path or "/backend/.device" in file_path:
         return True, []
     
     try:

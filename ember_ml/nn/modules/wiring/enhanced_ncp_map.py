@@ -5,13 +5,13 @@ This module provides an enhanced NCP map implementation that supports
 arbitrary neuron types and dynamics, with a focus on spatial embedding.
 """
 
-from typing import Optional, List, Dict, Any, Union, Tuple
+from typing import Optional, List, Tuple
 
-from ember_ml.linearalg import expm
-
-from ember_ml.types import TensorLike  # Added import
 from ember_ml import ops, stats, tensor
+from ember_ml.linearalg import expm
 from ember_ml.nn.modules.wiring.enhanced_neuron_map import EnhancedNeuronMap
+from ember_ml.types import TensorLike  # Added import
+
 
 class EnhancedNCPMap(EnhancedNeuronMap):
     """

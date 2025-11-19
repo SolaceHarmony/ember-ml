@@ -3,13 +3,15 @@ Wave pattern and signal generation components.
 """
 
 import math
-from typing import List, Optional, Dict, Tuple, Union
+from typing import List, Optional, Tuple, Union
+
 from ember_ml import ops, tensor
-from ember_ml.nn import modules
-from ember_ml.nn import layers
-from ember_ml.nn.modules import activations
 from ember_ml.backend import get_backend
+from ember_ml.nn import layers
+from ember_ml.nn import modules
+from ember_ml.nn.modules import activations
 from .binary_wave import WaveConfig
+
 
 class SignalSynthesizer:
     """Synthesizer for generating various waveforms."""

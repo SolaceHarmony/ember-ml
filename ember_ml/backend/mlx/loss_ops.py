@@ -4,8 +4,9 @@ MLX backend loss operations.
 This module provides MLX implementations of loss operations.
 """
 
-import mlx.core as mx
 from typing import Optional, Union, Sequence
+
+import mlx.core as mx
 
 from ember_ml.backend.mlx.types import TensorLike
 

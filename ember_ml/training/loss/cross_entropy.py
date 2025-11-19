@@ -5,11 +5,10 @@ This module provides a backend-agnostic implementation of the Cross Entropy loss
 that works with any backend (NumPy, PyTorch, MLX).
 """
 
-from typing import Dict, List, Optional, Union, Any, Callable
-
 from ember_ml import ops
-from ember_ml.training.loss.base import Loss
 from ember_ml import tensor
+from ember_ml.training.loss.base import Loss
+
 
 class CrossEntropyLoss(Loss):
     """

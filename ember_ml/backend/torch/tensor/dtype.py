@@ -4,8 +4,9 @@ PyTorch data type implementation for ember_ml.
 This module provides PyTorch implementations of data types.
 """
 
-import torch
 from typing import Union, Any, Optional
+
+import torch
 
 
 class TorchDType:

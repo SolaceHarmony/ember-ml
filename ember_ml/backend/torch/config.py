@@ -5,6 +5,7 @@ This module provides configuration settings for the PyTorch backend.
 """
 
 import torch
+
 from ember_ml.backend.torch.tensor.dtype import TorchDType
 
 # Default device for PyTorch operations

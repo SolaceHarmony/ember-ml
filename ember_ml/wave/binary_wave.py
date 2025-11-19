@@ -3,10 +3,10 @@
 from dataclasses import dataclass
 from typing import Dict, Optional, Tuple
 
-
 from ember_ml import ops, tensor
-from ember_ml.nn.modules import Module, Parameter
 from ember_ml.nn.layers.linear import Linear
+from ember_ml.nn.modules import Module, Parameter
+
 
 def _roll(x: tensor.EmberTensor, shifts: int, axis: int = 0) -> tensor.EmberTensor:
     """Roll tensor along a given axis using ops.roll."""

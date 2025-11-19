@@ -1,7 +1,3 @@
-from typing import List, Tuple, Optional
-import sys
-import os
-
 # Import from ember_ml.wave.limb
 from ember_ml import ops, tensor
 from ember_ml.types import TensorLike
@@ -14,6 +10,7 @@ from ember_ml.wave.limb.hpc_limb_core import (
     hpc_compare,
     HPCWaveSegment
 )
+
 
 class BinaryWaveNeuron:
     """Binary wave neuron using HPC limb arithmetic"""

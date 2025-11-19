@@ -3,18 +3,17 @@ Demonstrates using the SequenceProcessorActor from the ember_ml.actors package.
 """
 
 import asyncio
+
 import ray
-import asyncio
-import ray
-# import mlx.core as mx # Removed as EmberTensor is used
- 
-# Import EmberTensor
-from ember_ml import tensor
- 
+
+from ember_ml.actors.supervisor.sequence_processor_actor import SequenceProcessorActor
 # Import the actors from their new locations
 from ember_ml.actors.task.metal_kernel_actor import MetalKernelActor
-from ember_ml.actors.supervisor.sequence_processor_actor import SequenceProcessorActor
- 
+
+
+# import mlx.core as mx # Removed as EmberTensor is used
+# Import EmberTensor
+
 async def test_sequence_processor_demo():
     """
     Demonstrates creating and interacting with the SequenceProcessorActor.

@@ -1,6 +1,6 @@
 """Metal-accelerated HPC implementation for non-square orthogonal matrices."""
 import mlx.core as mx
-from typing import Tuple, Optional
+
 
 def orthogonalize_nonsquare(a: mx.array, max_block_size: int = 32) -> mx.array:
     """

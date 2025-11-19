@@ -4,17 +4,16 @@
 Stride-Aware Continuous-time Fully Connected (CfC) Layer.
 """
 
-from typing import Union, Optional, Dict, Any # Added Dict, Any
+from typing import Union, Optional, Dict, Any  # Added Dict, Any
 
-from ember_ml import ops, tensor
+from ember_ml import tensor
 from ember_ml.nn.modules import Module
-from ember_ml.nn.modules.wiring import NeuronMap # Use renamed base class
-# Import the cell this layer uses
-from ember_ml.nn.modules.rnn.stride_aware_cfc import StrideAwareCfC # Remove lecun_tanh import
 # Import specific wirings needed for default behavior
-from ember_ml.nn.modules.wiring import FullyConnectedMap # Use renamed map class
-from ember_ml.nn.modules import activations # Import activations module
-from ember_ml.nn.modules.activations import get_activation # Import the new helper
+from ember_ml.nn.modules.activations import get_activation  # Import the new helper
+# Import the cell this layer uses
+from ember_ml.nn.modules.rnn.stride_aware_cfc import StrideAwareCfC  # Remove lecun_tanh import
+from ember_ml.nn.modules.wiring import NeuronMap  # Use renamed base class
+
 
 class StrideAwareCfC(Module):
     """
@@ -231,7 +230,6 @@ class StrideAwareCfC(Module):
             # It's a map config
             # Import from the modules.wiring package where map classes reside
             from ember_ml.nn.modules import wiring as map_module
-            import importlib
 
             # Get the wiring class name and config params
             map_class_name = neuron_map_or_cell_config.pop("class_name", "NeuronMap") # Use NeuronMap as default

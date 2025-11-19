@@ -5,13 +5,13 @@ This module provides a PCA implementation using the ops abstraction layer,
 making it compatible with all backends (NumPy, PyTorch, MLX).
 """
 
-from typing import Optional, Dict, Any, Union, Tuple
-from math import log
+from typing import Optional, Any, Union, Tuple
 
-from ember_ml import tensor
 from ember_ml import ops as ops
 from ember_ml import stats
 from ember_ml import tensor
+
+
 # Defer svd import to method call to respect dynamic backend
 def _svd_flip(u, v):
     """Sign correction for SVD to ensure deterministic output.

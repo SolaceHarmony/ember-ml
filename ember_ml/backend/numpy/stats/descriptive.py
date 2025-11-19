@@ -4,8 +4,9 @@ NumPy descriptive statistics operations.
 This module provides implementations of descriptive statistics using NumPy.
 """
 
+from typing import Union, Sequence, Optional, Any
+
 import numpy as np
-from typing import Union, Sequence, Optional,Any
 
 from ember_ml.backend.numpy.types import TensorLike
 

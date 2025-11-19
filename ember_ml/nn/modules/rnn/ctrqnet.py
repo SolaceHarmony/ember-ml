@@ -5,13 +5,13 @@ This module provides an implementation of Continuous-Time Recurrent Quantum Neur
 which extend LQNets with continuous-time dynamics and enhanced quantum-inspired features.
 """
 
-from typing import Dict, Any, Optional, List, Tuple, Union
+from typing import Dict, Any
 
 from ember_ml import ops
-from ember_ml.nn.modules import Module, Parameter
-from ember_ml.nn.modules.wiring import NeuronMap, NCPMap
 from ember_ml import tensor
-from ember_ml.nn.modules.activations import get_activation
+from ember_ml.nn.modules import Module, Parameter
+from ember_ml.nn.modules.wiring import NeuronMap
+
 
 class CTRQNet(Module):
     """

@@ -1,6 +1,8 @@
-from transformers import AutoTokenizer, AutoModel
 import torch
+from transformers import AutoTokenizer, AutoModel
+
 from ember_ml import tensor
+
 
 class EmbeddingGenerator:
     """Class to handle text embedding generation using transformer models."""

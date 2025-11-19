@@ -5,11 +5,12 @@ This module provides an implementation of a non-gradient learning approach
 using perturbation theory and expectation values from covariance matrices.
 """
 
-from typing import Dict, Any, Optional, List, Tuple, Union, Callable
+from typing import Dict, Any
 
 from ember_ml import ops
-from ember_ml.nn.modules import Module, Parameter
 from ember_ml import tensor
+from ember_ml.nn.modules import Module, Parameter
+
 
 class ExpectationSolver(Module):
     """

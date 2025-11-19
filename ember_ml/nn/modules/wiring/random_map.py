@@ -7,10 +7,11 @@ circuit policies, where connections are randomly generated.
 
 from typing import Optional, Tuple
 
-from ember_ml import ops, tensor
-from ember_ml.types import TensorLike
+from ember_ml import tensor
 # Use explicit path for clarity now it's moved
 from ember_ml.nn.modules.wiring.neuron_map import NeuronMap
+from ember_ml.types import TensorLike
+
 
 class RandomMap(NeuronMap): # Name is already correct
     """

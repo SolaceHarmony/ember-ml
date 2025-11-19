@@ -9,10 +9,11 @@ This implementation directly uses NeuronMap for both structure and dynamics.
 # (Removed unused typing imports)
 
 from ember_ml import ops, tensor
-from ember_ml.nn.modules.wiring import NeuronMap, NCPMap
-from ember_ml.nn.modules import Module, Parameter
 from ember_ml.nn.initializers import glorot_uniform, orthogonal
+from ember_ml.nn.modules import Module, Parameter
 from ember_ml.nn.modules.activations import get_activation
+from ember_ml.nn.modules.wiring import NeuronMap, NCPMap
+
 
 class CfC(Module):
     """
@@ -138,10 +139,10 @@ class CfC(Module):
         ones = tensor.ones((units,))  # shape: (units,)
         # Handle different backends that may not have device attribute
         try:
-            scale_val = tensor.convert_to_tensor(self.time_scale_factor, dtype=ones.dtype, device=ones.device)
+            scale_val = tensor(self.time_scale_factor, dtype=ones.dtype, device=ones.device)
         except (AttributeError, TypeError):
             # For backends without device attribute (numpy, mlx)
-            scale_val = tensor.convert_to_tensor(self.time_scale_factor, dtype=ones.dtype)
+            scale_val = tensor(self.time_scale_factor, dtype=ones.dtype)
         
         self.time_scale = Parameter(ops.multiply(ones, scale_val))
         

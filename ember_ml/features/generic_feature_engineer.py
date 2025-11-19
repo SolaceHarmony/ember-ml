@@ -4,9 +4,12 @@ Generic Feature Engineer
 This module provides a class for creating features based on detected column types.
 """
 
+from typing import Dict, List
+
 import pandas as pd
-from typing import Dict, List, Optional, Any
+
 from ember_ml import ops
+
 
 class GenericFeatureEngineer:
     """

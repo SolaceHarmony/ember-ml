@@ -8,14 +8,14 @@ to optimize feature extraction for this specific table structure.
 
 import logging
 import time
-from typing import Any, Dict, List, Optional, Tuple, Union, Set
+from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 
-from ember_ml import tensor
 from ember_ml import ops
-from ember_ml.features.enhanced_type_detector import EnhancedTypeDetector
+from ember_ml import tensor
 from ember_ml.features.animated_feature_processor import AnimatedFeatureProcessor
+from ember_ml.features.enhanced_type_detector import EnhancedTypeDetector
 
 # Set up logging
 logger = logging.getLogger(__name__)

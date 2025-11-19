@@ -5,12 +5,13 @@ This module provides an implementation of an autoencoder using liquid neural net
 (CfC and LTC) for time series anomaly detection.
 """
 
-from typing import Dict, Any, Optional, List, Tuple, Union, Callable
+from typing import Dict, Any
 
 from ember_ml import ops
-from ember_ml.nn.modules import Module, Parameter
 from ember_ml import tensor
+from ember_ml.nn.modules import Module
 from ember_ml.nn.modules.rnn import CfC, LTC, ELTC, CTGRU, CTRNN
+
 
 class LiquidAutoencoder(Module):
     """

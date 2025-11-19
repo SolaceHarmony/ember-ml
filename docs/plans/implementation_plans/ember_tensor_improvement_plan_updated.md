@@ -66,7 +66,7 @@ After thoroughly examining the backend implementations, I've identified the foll
 Create a clear separation between public and internal tensor conversion functions:
 
 ```python
-# In ember_ml/nn/tensor/common/__init__.py
+# In ember_ml/nn/tensor/common/tensor.py
 # Rename the current function to indicate it's internal and don't export it
 _convert_to_backend_tensor = lambda *args, **kwargs: _get_tensor_ops().convert_to_tensor(*args, **kwargs)
 
@@ -81,7 +81,7 @@ __all__ = [
     # ... other operations ...
 ]
 
-# In ember_ml/nn/tensor/__init__.py
+# In ember_ml/nn/tensor/tensor.py
 def convert_to_tensor(data, dtype=None, device=None, requires_grad=False):
     """
     Convert any tensor or array-like object to an EmberTensor.

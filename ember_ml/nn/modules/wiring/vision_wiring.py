@@ -5,11 +5,11 @@ This module provides a specialized wiring pattern for visual processing tasks,
 implementing local receptive fields and feature hierarchies.
 """
 
-from typing import Dict, Any, Optional, List, Tuple, Union, Callable
+from typing import Dict, Any, Optional, List, Tuple
 
-from ember_ml import ops
-from ember_ml.nn.modules.wiring import NeuronMap
 from ember_ml import tensor
+from ember_ml.nn.modules.wiring import NeuronMap
+
 
 class VisionWiring(NeuronMap):
     """

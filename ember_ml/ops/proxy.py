@@ -6,11 +6,9 @@ to the current backend. It uses the BackendRegistry and ProxyModule pattern
 to avoid the need for explicit alias updates.
 """
 
-import importlib
-import sys
-from typing import Dict, List, Set, Callable, Any, Optional, Type, TypeVar
+from typing import Any
 
-from ember_ml.backend.registry import BackendRegistry, ProxyModule, create_proxy_module
+from ember_ml.backend.registry import BackendRegistry, create_proxy_module
 
 # Create proxy module classes for each operation category
 MathOpsProxy = create_proxy_module("math_ops", "{backend}.math_ops")
@@ -242,20 +240,6 @@ class OpsModule:
 
         self.set_backend = set_backend
 
-        # Import pi from math as a fallback
-        import math
-        self.pi = math.pi
-
-        # Try to get pi from the current backend
-        try:
-            from ember_ml.backend import get_backend_module
-            backend_module = get_backend_module()
-            if hasattr(backend_module, 'math_ops') and hasattr(backend_module.math_ops, 'pi'):
-                self.pi = backend_module.math_ops.pi
-            elif hasattr(backend_module, 'pi'):
-                self.pi = backend_module.pi
-        except (ImportError, AttributeError):
-            pass  # Keep math.pi as fallback
 
     def __getattr__(self, name: str) -> Any:
         """

@@ -7,7 +7,9 @@ dopamine dynamics for modulating neural behavior based on input strength.
 
 from dataclasses import dataclass
 from typing import List, Tuple
+
 from ember_ml import stats
+
 
 @dataclass
 class DopamineState:

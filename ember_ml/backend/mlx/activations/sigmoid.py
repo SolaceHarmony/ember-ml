@@ -1,7 +1,10 @@
 # ember_ml/backend/mlx/activations/ops/sigmoid.py
-import mlx.core as mx
 from typing import Optional
+
+import mlx.core as mx
+
 from ember_ml.backend.mlx.types import TensorLike, DType
+
 
 def sigmoid(x: TensorLike, dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
     """

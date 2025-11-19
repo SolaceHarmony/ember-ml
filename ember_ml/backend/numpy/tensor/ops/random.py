@@ -1,7 +1,8 @@
 """NumPy tensor random operations."""
 
+from typing import Union, Optional
+
 import numpy as np
-from typing import Union, Optional, Sequence, Any, List, Tuple
 
 from ember_ml.backend.numpy.tensor.dtype import NumpyDType
 from ember_ml.backend.numpy.types import Shape, TensorLike, DType

@@ -6,11 +6,11 @@ This module provides NumPy implementations of bit manipulation operations
 """
 
 import numpy as np
-from typing import Union
 
 # Import NumpyTensor dynamically within functions
 # from ember_ml.backend.numpy.tensor import NumpyTensor
 from ember_ml.backend.numpy.types import TensorLike
+
 
 def count_ones(x: TensorLike) -> np.ndarray:
     """

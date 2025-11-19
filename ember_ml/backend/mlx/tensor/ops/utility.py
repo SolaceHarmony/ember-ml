@@ -1,8 +1,11 @@
 """MLX tensor utility operations."""
-import mlx.core as mx # Ensure mx is imported
 from typing import Union, Optional, Any, Sequence, Callable, Tuple
 
-from ember_ml.backend.mlx.types import TensorLike, DType,default_float, default_int
+import mlx.core as mx  # Ensure mx is imported
+import numpy as np
+
+from ember_ml.backend.mlx.types import TensorLike, DType, default_float, default_int
+
 
 def _validate_and_get_mlx_dtype(dtype: Optional[Any]) -> Optional[mx.Dtype]:
     """
@@ -65,6 +68,44 @@ def _validate_and_get_mlx_dtype(dtype: Optional[Any]) -> Optional[mx.Dtype]:
     # If it's not a string or MLX Dtype, it's invalid
     raise ValueError(f"Invalid dtype: {dtype} of type {type(dtype)}")
 
+
+def _dtype_from_numpy(np_dtype: np.dtype) -> Optional[mx.Dtype]:
+    """Infer MLX dtype from a NumPy dtype."""
+
+    kind = getattr(np_dtype, "kind", None)
+    if kind in ("i", "u"):
+        return default_int
+    if kind == "f":
+        return default_float
+    if kind == "b":
+        return mx.bool_ if hasattr(mx, "bool_") else default_float
+    try:
+        return _validate_and_get_mlx_dtype(np_dtype.name)
+    except ValueError:
+        return None
+
+
+def _infer_default_dtype_from_value(value: TensorLike) -> mx.Dtype:
+    """Determine a sensible MLX dtype when no dtype is provided."""
+
+    if isinstance(value, bool):
+        return mx.bool_ if hasattr(mx, "bool_") else default_float
+    if isinstance(value, int) and not isinstance(value, bool):
+        return default_int
+    if isinstance(value, float):
+        return default_float
+    if isinstance(value, (list, tuple)):
+        try:
+            arr = np.asarray(value)
+        except Exception:
+            return default_float
+        inferred = _dtype_from_numpy(arr.dtype)
+        return inferred or default_float
+    if isinstance(value, np.ndarray):
+        inferred = _dtype_from_numpy(value.dtype)
+        return inferred or default_float
+    return default_float
+
 def _convert_input(x: TensorLike, dtype: Optional[DType]=None, device: Optional[Union[None,mx.Device]]=None) -> Any:
     """
     Convert input to MLX array.
@@ -93,10 +134,8 @@ def _convert_input(x: TensorLike, dtype: Optional[DType]=None, device: Optional[
         ValueError: If the input cannot be converted to an MLX array
     """
     if dtype is None:
-        # Use the default float type for MLX
-        dtype = default_float
+        dtype = _infer_default_dtype_from_value(x)
     else:
-        # Validate and get the MLX dtype
         dtype = _validate_and_get_mlx_dtype(dtype)
 
     if x is None:

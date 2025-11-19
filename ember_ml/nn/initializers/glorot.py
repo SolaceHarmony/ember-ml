@@ -5,9 +5,10 @@ This module provides Glorot (Xavier) initializers for neural network weights,
 which help maintain the variance of activations and gradients across layers.
 """
 
-from typing import Tuple, Optional, Union, Any
+from typing import Tuple, Optional, Any
 
 from ember_ml import ops, tensor
+
 
 def glorot_uniform(shape: Tuple[int, ...], dtype: Optional[Any] = None, device: Optional[str] = None):
     """

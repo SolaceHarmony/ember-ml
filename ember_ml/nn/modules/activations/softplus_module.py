@@ -3,7 +3,6 @@
 Softplus activation module.
 """
 from ember_ml.nn.modules import Module
-from ember_ml import tensor
 from ember_ml.types import TensorLike
 
 class Softplus(Module):

@@ -5,7 +5,7 @@ This file demonstrates how to use the ``StrideAware`` class for
 multi-timescale processing.
 """
 
-from ember_ml import ops, tensor
+from ember_ml import tensor
 from ember_ml.nn.modules.rnn import StrideAware
 
 

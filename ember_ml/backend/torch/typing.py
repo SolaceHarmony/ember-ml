@@ -7,15 +7,10 @@ help with static type checking.
 """
 
 from typing import Union, Optional, Sequence, Any, List, Tuple, TypeVar, TYPE_CHECKING
-import torch
-from ember_ml.backend.torch.tensor.dtype import TorchDType
 
 # Conditionally import types for type checking only
 if TYPE_CHECKING:
-    from torch import Tensor
-    from ember_ml import tensor
     from ember_ml.nn.tensor.common.dtypes import EmberDType
-    from ember_ml.backend.torch.tensor.tensor import TorchTensor
 
 AllTensorLike = Optional[Union[
     'Tensor' if TYPE_CHECKING else Any,

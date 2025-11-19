@@ -5,13 +5,15 @@ This module provides NumPy implementations of operations specific to
 binary wave processing, such as interference and propagation.
 """
 
+from typing import List
+
 import numpy as np
-from typing import List, Union
 
 # Import NumpyTensor dynamically within functions
 # from ember_ml.backend.numpy.tensor import NumpyTensor
 from ember_ml.backend.numpy.types import TensorLike
-from .basic_ops import bitwise_and, bitwise_or, bitwise_xor # Import from sibling module
+from .basic_ops import bitwise_and, bitwise_or, bitwise_xor  # Import from sibling module
+
 
 def binary_wave_interference(waves: List[TensorLike], mode: str = 'xor') -> np.ndarray:
     """

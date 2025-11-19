@@ -167,7 +167,7 @@ def _convert_input(x: Any, dtype: Optional[DType] = None, device: Optional[str] 
 #### 3.1 Update nn.tensor.__init__ Functions to Return Native Backend Tensors
 
 ```python
-# In ember_ml/nn/tensor/__init__.py
+# In ember_ml/nn/tensor/tensor.py
 def ones(shape, dtype=None, device=None):
     """
     Create a tensor filled with ones.

@@ -5,9 +5,11 @@ This module provides a normalization implementation using the ops abstraction la
 making it compatible with all backends (NumPy, PyTorch, MLX).
 """
 
-from typing import Optional, Any, Tuple
-from ember_ml import stats
+from typing import Any
+
 from ember_ml import ops, tensor
+from ember_ml import stats
+
 
 class Normalize:
     """Scale input vectors individually to unit norm.

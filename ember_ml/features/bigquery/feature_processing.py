@@ -11,9 +11,9 @@ from typing import Any, List, Optional, Tuple
 # We need pandas for isna() checks in one_hot_encode and hash_encode
 import pandas as pd
 
-from ember_ml import tensor
 from ember_ml import ops
 from ember_ml import stats
+from ember_ml import tensor
 from ember_ml.features.bigquery.encoding import one_hot_encode, hash_encode
 
 # Set up logging

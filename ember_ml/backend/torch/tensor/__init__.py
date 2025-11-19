@@ -5,7 +5,6 @@ This module provides PyTorch implementations of tensor operations.
 """
 
 from ember_ml.backend.torch.tensor.dtype import TorchDType
-from ember_ml.backend.torch.tensor.tensor import TorchTensor
 from ember_ml.backend.torch.tensor.ops import (
     # Casting operations
     cast,
@@ -27,6 +26,7 @@ from ember_ml.backend.torch.tensor.ops import (
     random_normal, random_uniform, random_binomial, random_gamma, random_exponential,
     random_poisson, random_categorical, random_permutation, shuffle, set_seed, get_seed,
 )
+from ember_ml.backend.torch.tensor.tensor import TorchTensor
 
 __all__ = [
     # Classes

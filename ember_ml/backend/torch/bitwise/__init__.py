@@ -2,8 +2,8 @@
 
 # Import functions from submodules using absolute paths
 from ember_ml.backend.torch.bitwise.basic_ops import bitwise_and, bitwise_or, bitwise_xor, bitwise_not
-from ember_ml.backend.torch.bitwise.shift_ops import left_shift, right_shift, rotate_left, rotate_right
 from ember_ml.backend.torch.bitwise.bit_ops import count_ones, count_zeros, get_bit, set_bit, toggle_bit
+from ember_ml.backend.torch.bitwise.shift_ops import left_shift, right_shift, rotate_left, rotate_right
 from ember_ml.backend.torch.bitwise.wave_ops import (
     binary_wave_interference,
     binary_wave_propagate,

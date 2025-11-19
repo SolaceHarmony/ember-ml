@@ -6,7 +6,7 @@ that work with any backend (NumPy, PyTorch, MLX).
 """
 
 from ember_ml.training.loss.base import Loss
-from ember_ml.training.loss.mse import MSELoss
 from ember_ml.training.loss.cross_entropy import CrossEntropyLoss
+from ember_ml.training.loss.mse import MSELoss
 
 __all__ = ['Loss', 'MSELoss', 'CrossEntropyLoss']

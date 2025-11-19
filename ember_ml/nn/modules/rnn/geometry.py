@@ -1,14 +1,14 @@
 """Geometric operations for non-Euclidean neural computations."""
 
-from regex import T
-from ember_ml import tensor
-from ember_ml.nn.modules import Module, Parameter
-from ember_ml import stats
+from typing import Any
+from typing import Tuple
+
 from ember_ml import linearalg
 from ember_ml import ops
-from typing import Tuple
+from ember_ml import stats
+from ember_ml import tensor
+from ember_ml.nn.modules import Module, Parameter
 from ember_ml.types import TensorLike
-from typing import Any
 
 
 def normalize_sphere(vec: tensor.convert_to_tensor, eps: float = 1e-12) -> tensor.convert_to_tensor:

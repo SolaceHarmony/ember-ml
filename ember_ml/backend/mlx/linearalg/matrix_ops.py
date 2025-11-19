@@ -4,14 +4,15 @@ MLX matrix linear algebra operations for ember_ml.
 This module provides MLX operations.
 """
 
-import mlx.core as mx
-from typing import Union, Tuple, Optional, Literal
+from typing import Union, Tuple, Optional
 
-# Import from tensor_ops
-from ember_ml.backend.mlx.types import TensorLike
-from ember_ml.backend.mlx.linearalg.svd_ops import svd # Corrected path
+import mlx.core as mx
+
+from ember_ml.backend.mlx.linearalg.svd_ops import svd  # Corrected path
 from ember_ml.backend.mlx.tensor import MLXDType
 from ember_ml.backend.mlx.types import OrdLike
+# Import from tensor_ops
+from ember_ml.backend.mlx.types import TensorLike
 
 dtype_obj = MLXDType()
 

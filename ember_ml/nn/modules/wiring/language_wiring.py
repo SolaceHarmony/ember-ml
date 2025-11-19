@@ -5,11 +5,11 @@ This module provides a specialized wiring pattern for language processing tasks,
 implementing multi-head attention and position-wise processing mechanisms.
 """
 
-from typing import Dict, Any, Optional, List, Tuple, Union, Callable
+from typing import Dict, Any, Optional
 
-from ember_ml import ops
-from ember_ml.nn.modules.wiring import NeuronMap
 from ember_ml import tensor
+from ember_ml.nn.modules.wiring import NeuronMap
+
 
 class LanguageWiring(NeuronMap):
     """

@@ -8,7 +8,7 @@ requiring explicit alias updates in each module.
 
 import importlib
 import sys
-from typing import Dict, List, Set, Callable, Any, Optional, Type, TypeVar, cast
+from typing import Dict, List, Set, Callable, Any, Optional, Type, TypeVar
 
 # Type variable for generic proxy class
 T = TypeVar('T')

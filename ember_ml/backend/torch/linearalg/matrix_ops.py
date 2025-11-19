@@ -4,13 +4,14 @@ PyTorch matrix operations for ember_ml.
 This module provides PyTorch implementations of matrix operations.
 """
 
-import torch
-from typing import Union, Tuple, Optional, Literal
+from typing import Union, Tuple, Optional
 
+import torch
+
+from ember_ml.backend.torch.linearalg.decomp_ops import svd  # Corrected import path
+from ember_ml.backend.torch.tensor import TorchDType
 # Import from tensor_ops
 from ember_ml.backend.torch.types import TensorLike, OrdLike
-from ember_ml.backend.torch.linearalg.decomp_ops import svd # Corrected import path
-from ember_ml.backend.torch.tensor import TorchDType
 
 dtype_obj = TorchDType()
 
@@ -211,8 +212,7 @@ def diag(x: TensorLike, k: int = 0) -> torch.Tensor:
         result = torch.zeros([int(m), int(m)], dtype=dtype)
         
         # Import the scatter function from indexing
-        from ember_ml.backend.torch.tensor.ops.indexing import scatter_add
-        
+
         # Fill the diagonal
         # Use torch.greater_equal for comparison
         is_non_negative = torch.greater_equal(torch.tensor(k), torch.tensor(0))

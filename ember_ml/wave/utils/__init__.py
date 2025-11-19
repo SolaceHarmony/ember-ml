@@ -11,8 +11,8 @@ Components:
 All functions maintain backend independence through the ops abstraction layer.
 """
 
-from ember_ml.wave.utils.wave_conversion import *
 from ember_ml.wave.utils.wave_analysis import *
+from ember_ml.wave.utils.wave_conversion import *
 from ember_ml.wave.utils.wave_visualization import *
 
 __all__ = [

@@ -6,11 +6,10 @@ These type aliases ensure consistent type annotations across the codebase and
 help with static type checking.
 """
 
-from typing import (
-    Any, List, Optional, Sequence, Tuple, Union, Literal,
-    TYPE_CHECKING
-)
 import os
+from typing import (
+    Any, List, Optional, Sequence, Tuple, Union, TYPE_CHECKING
+)
 
 import torch
 

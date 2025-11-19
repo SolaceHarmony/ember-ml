@@ -4,11 +4,14 @@ MLX math operations for ember_ml.
 This module provides MLX implementations of math operations.
 """
 
-import mlx.core as mx
 from typing import Union, Optional, List, Tuple, Literal
-from ember_ml.backend.mlx.tensor.ops import cast
+
+import mlx.core as mx
+
 from ember_ml.backend.mlx.tensor import MLXDType
+from ember_ml.backend.mlx.tensor.ops import cast
 from ember_ml.backend.mlx.types import TensorLike, ShapeLike
+
 
 def gather(x: TensorLike, indices: TensorLike, axis: int = 0) -> mx.array:
     """
@@ -851,8 +854,6 @@ def _calculate_pi_value(precision_digits=15):
     numerator = mx.multiply(Q, mx.array(426880))
     numerator = mx.multiply(numerator, sqrt_10005)
     pi_approx = mx.divide(numerator, T)
-    eval_pi = np.ndarray(pi_approx.astype(pi_approx.dtype).shape, dtype=np.float32)
-    # Return as MLX array with shape (1,)
     return pi_approx
 
 # Calculate pi with appropriate precision for MLX (float32)
@@ -912,3 +913,6 @@ def binary_split(a: TensorLike, b: TensorLike) -> Tuple[mx.array, mx.array]:
         Qab = mx.add(mx.multiply(Qam, Pmb), mx.multiply(Pam, Qmb))
         
         return Pab, Qab
+
+# Alias for pow
+power = pow

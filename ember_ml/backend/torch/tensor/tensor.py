@@ -1,10 +1,9 @@
 """PyTorch tensor class and operations."""
 
-from typing import Union, Optional, Sequence, Any, Literal, List, TYPE_CHECKING, Tuple
-from ember_ml.backend.torch.tensor.dtype import TorchDType
-
 # Conditionally import backend types for type checking only
-import torch
+from typing import Union, Optional, Sequence, Any, Literal, List, TYPE_CHECKING, Tuple
+
+from ember_ml.backend.torch.tensor.dtype import TorchDType
 
 # Basic type aliases
 Numeric = Union[int, float]
@@ -26,7 +25,6 @@ ArrayLike = Union[TorchTensorType, Numeric, List[Any], Tuple[Any, ...]]
 TensorTypes = Any
 # Conditional imports
 if TYPE_CHECKING:
-    from ember_ml import tensor
     from ember_ml.backend.torch.tensor.tensor import TorchTensor
     
     TensorTypes = Union[

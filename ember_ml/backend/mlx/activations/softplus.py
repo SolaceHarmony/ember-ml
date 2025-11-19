@@ -1,8 +1,11 @@
 # ember_ml/backend/mlx/activations/ops/softplus.py
+from typing import Optional
+
 import mlx.core as mx
 import mlx.nn as mx_nn
-from typing import Optional
+
 from ember_ml.backend.mlx.types import TensorLike, DType
+
 
 def softplus(x: TensorLike, dtype: Optional[DType] = None, device: Optional[str] = None) -> mx.array:
     """

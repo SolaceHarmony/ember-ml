@@ -4,8 +4,10 @@ Core data structures for defining sphere interactions in wave memory systems.
 
 from dataclasses import dataclass
 from typing import List, Optional
-from ember_ml import tensor # Added import
-from ember_ml.types import TensorLike # Added import
+
+from ember_ml import tensor  # Added import
+from ember_ml.types import TensorLike  # Added import
+
 
 @dataclass
 class SphereOverlap:

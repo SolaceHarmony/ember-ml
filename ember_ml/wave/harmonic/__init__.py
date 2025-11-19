@@ -5,14 +5,15 @@ This module provides implementations of harmonic embeddings,
 including wave generators and embedding utilities.
 """
 
-from ember_ml.wave.harmonic.embedding_utils import *
-from ember_ml.wave.harmonic.wave_generator import *
-from ember_ml.wave.harmonic.visualization import *
-from ember_ml.wave.harmonic.training import *
-
+import importlib
 # Import directly from the parent module
 import sys
-import importlib
+
+from ember_ml.wave.harmonic.embedding_utils import *
+from ember_ml.wave.harmonic.training import *
+from ember_ml.wave.harmonic.visualization import *
+from ember_ml.wave.harmonic.wave_generator import *
+
 if 'ember_ml.wave.harmonic' in sys.modules:
     # Get the parent module
     parent_module = importlib.import_module('ember_ml.wave')

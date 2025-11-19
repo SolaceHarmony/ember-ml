@@ -6,9 +6,9 @@ providing the foundation for arbitrary-precision and binary wave computations
 within the MLX backend.
 """
 
+from .mega_binary import MLXMegaBinary, InterferenceMode
 # Import classes from submodules
 from .mega_number import MLXMegaNumber
-from .mega_binary import MLXMegaBinary, InterferenceMode
 
 # Define what gets exported when 'from . import *' is used
 __all__ = [

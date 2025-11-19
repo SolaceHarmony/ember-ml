@@ -6,14 +6,16 @@ designed for processing large-scale data with efficient memory usage and support
 for chunked training.
 """
 
+import logging
+import os
 import time
 from datetime import datetime
-import os
-import logging
-from typing import Dict, List, Optional, Tuple, Union, Any, Generator
-from ember_ml import stats
+from typing import List, Optional, Union, Generator
+
 from ember_ml import ops, tensor
+from ember_ml import stats
 from ember_ml.types import TensorLike
+
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,

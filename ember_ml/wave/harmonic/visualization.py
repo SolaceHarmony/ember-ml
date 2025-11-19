@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
+
 from ember_ml import tensor, ops, stats
+
 
 def _cosine_similarity_matrix(target_embeddings, learned_waves):
     target_embeddings = tensor.cast(target_embeddings, tensor.float32)

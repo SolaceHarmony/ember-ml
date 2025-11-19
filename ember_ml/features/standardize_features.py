@@ -9,6 +9,7 @@ from typing import Any
 
 from ember_ml import ops, tensor
 
+
 class Standardize:
     """Standardize features by removing the mean and scaling to unit variance.
     

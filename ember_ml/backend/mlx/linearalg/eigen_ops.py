@@ -6,13 +6,14 @@ This module provides MLX implementations of matrix decomposition operations
 like Cholesky and Eigendecomposition. QR has been moved to qr_ops.py.
 SVD has been moved to svd_ops.py.
 """
-from typing import Union, Tuple, Literal, List, Optional
+from typing import Union, Tuple, List
+
 import mlx.core as mx
 
 # Import from tensor_ops
 from ember_ml.backend.mlx.tensor import MLXDType
-from ember_ml.backend.mlx.types import TensorLike
 from ember_ml.backend.mlx.tensor import MLXTensor
+from ember_ml.backend.mlx.types import TensorLike
 # Import HPC for robust eigendecomposition
 from .hpc16x8_ops import HPC16x8
 

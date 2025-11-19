@@ -5,10 +5,12 @@ This module provides PyTorch-specific implementation of orthogonal matrix operat
 using high-precision computing techniques for numerical stability, similar to the MLX backend.
 """
 
-import torch
 from typing import Tuple, Optional, Any, Union
 
+import torch
+
 from ember_ml.backend.torch.types import TensorLike
+
 
 def _add_limb_precision(a: torch.Tensor, b: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
     """Add two numbers with limb-based extended precision."""

@@ -4,10 +4,10 @@ MLX implementation of comparison operations.
 This module provides MLX implementations of comparison operations.
 """
 
-import mlx.core as mx
 from typing import Any
 
-# Import from tensor_ops
+import mlx.core as mx
+
 from ember_ml.backend.mlx.types import TensorLike
 
 
@@ -181,7 +181,6 @@ def allclose(x: TensorLike, y: TensorLike, rtol: float = 1e-5, atol: float = 1e-
     x_tensor = Tensor.convert_to_tensor(x)
     y_tensor = Tensor.convert_to_tensor(y)
     return mx.allclose(x_tensor, y_tensor, rtol=rtol, atol=atol)
-
 
 def isclose(x: TensorLike, y: TensorLike, rtol: float = 1e-5, atol: float = 1e-8) -> mx.array:
     """

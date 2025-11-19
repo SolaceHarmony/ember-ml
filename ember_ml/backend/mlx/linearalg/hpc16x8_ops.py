@@ -5,14 +5,15 @@ This module provides high-precision matrix computation implementations for the M
 It allows for more numerically stable computations by implementing a limb-based precision approach.
 """
 from typing import Union, Tuple, Optional, Any
+
 import mlx.core as mx
 
 # Import from tensor_ops
 from ember_ml.backend.mlx.tensor import MLXDType
 from ember_ml.backend.mlx.types import TensorLike
+from .orthogonal_nonsquare import orthogonalize_nonsquare
 # Import the consolidated QR function from qr_ops
 from .qr_ops import qr
-from .orthogonal_nonsquare import orthogonalize_nonsquare
 
 dtype_obj = MLXDType()
 

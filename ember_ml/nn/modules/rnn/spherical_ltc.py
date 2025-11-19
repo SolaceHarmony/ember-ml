@@ -2,12 +2,15 @@
 Spherical variant of LTC neurons operating on unit sphere manifold.
 """
 
-from typing import Optional, Union, Dict, Any, Tuple
 from dataclasses import dataclass
+from typing import Optional, Union, Dict, Any
+
 from ember_ml import linearalg
 from ember_ml import ops, tensor
-from ember_ml.nn.modules.rnn.geometric import GeometricNeuron, normalize_sphere
 from ember_ml.nn.modules.rnn.blocky import BaseChain
+from ember_ml.nn.modules.rnn.geometric import GeometricNeuron, normalize_sphere
+
+
 @dataclass
 class SphericalLTCConfig:
     """Configuration for Spherical LTC neurons."""

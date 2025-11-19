@@ -1,7 +1,8 @@
 """PyTorch tensor utility operations."""
 
-import torch
 from typing import Union, Optional, Any, Sequence, Callable, Tuple
+
+import torch
 
 # Assume types are defined correctly
 from ember_ml.backend.torch.types import DType, TensorLike, Shape, default_float, default_int

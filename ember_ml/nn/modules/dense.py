@@ -5,12 +5,14 @@ This module provides a backend-agnostic implementation of a dense (fully connect
 layer that works with any backend (NumPy, PyTorch, MLX).
 """
 
-from typing import Optional, Any, Dict # Removed Union, Tuple, Callable
+from typing import Optional, Any, Dict  # Removed Union, Tuple, Callable
 
 from ember_ml import ops
+from ember_ml import tensor
 from ember_ml.nn.modules import Module, Parameter
 from ember_ml.nn.modules.activations import get_activation
-from ember_ml import tensor
+
+
 class Dense(Module):
     # Explicitly type hint attributes for clarity and type checking
     input_dim: int
@@ -52,8 +54,8 @@ class Dense(Module):
 
         # Initialize weights using Glorot uniform initialization
         # Use ops for backend agnosticism
-        denominator = ops.add(tensor.convert_to_tensor(self.input_dim), tensor.convert_to_tensor(self.units))
-        sqrt_val = ops.sqrt(ops.divide(tensor.convert_to_tensor(6.0), denominator))
+        denominator = ops.add(tensor(self.input_dim), tensor(self.units))
+        sqrt_val = ops.sqrt(ops.divide(tensor(6.0), denominator))
         self.kernel = Parameter(
             tensor.random_uniform(
                 (self.input_dim, self.units),

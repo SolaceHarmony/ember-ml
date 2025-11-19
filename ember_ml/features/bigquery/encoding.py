@@ -6,12 +6,11 @@ for use in Ember ML models.
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 import pandas as pd
 
 from ember_ml import tensor
-from ember_ml import ops
 
 # Set up logging
 logger = logging.getLogger(__name__)

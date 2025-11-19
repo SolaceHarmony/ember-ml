@@ -5,9 +5,13 @@ This module provides NumPy implementations of the ember_ml I/O operations interf
 """
 
 import os
-import numpy as np
 from typing import Union, Dict
+
+import numpy as np
+
 from ember_ml.backend.numpy.types import TensorLike, PathLike
+
+
 # Removed top-level import for NumpyTensor to enable lazy loading
 # from ember_ml.backend.numpy.tensor.tensor import NumpyTensor
 
@@ -49,4 +53,3 @@ def load(filepath: PathLike, allow_pickle: bool = True) -> Union[np.ndarray, Dic
     # Load from file using NumPy
     return np.load(filepath, allow_pickle=allow_pickle)
 
-# Removed NumpyIOOps class as it's redundant with standalone functions

@@ -6,14 +6,15 @@ which are a type of recurrent neural network that operates in continuous time.
 This implementation directly uses NeuronMap for both structure and dynamics.
 """
 
-from typing import Dict, Any, Optional, List, Tuple, Union
+from typing import Dict, Any, Optional
 
 from ember_ml import ops
+from ember_ml import tensor
 from ember_ml.nn.initializers import glorot_uniform, orthogonal
 from ember_ml.nn.modules import Module, Parameter
-from ember_ml.nn.modules.wiring import NeuronMap, NCPMap
-from ember_ml import tensor
 from ember_ml.nn.modules.activations import get_activation
+from ember_ml.nn.modules.wiring import NeuronMap, NCPMap
+
 
 class CTRNN(Module):
     """

@@ -20,7 +20,7 @@ BACKEND_FILES = {
 }
 
 # Path to ops module
-OPS_MODULE_PATH = "ember_ml/ops/__init__.py"
+OPS_MODULE_PATH = "ember_ml/ops/tensor.py"
 
 # Path to implementations directory
 IMPLEMENTATIONS_DIR = "ember_ml/backend/implementations"

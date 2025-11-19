@@ -5,9 +5,10 @@ This module provides metrics utilities for classification tasks.
 """
 
 from typing import Dict, Tuple, Any
+
+from ember_ml import ops
 from ember_ml import tensor, stats
 from ember_ml.types import TensorLike
-from ember_ml import ops
 
 try:  # Optional dependency
     from sklearn.metrics import (

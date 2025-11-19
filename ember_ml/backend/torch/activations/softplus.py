@@ -1,8 +1,10 @@
 # ember_ml/backend/torch/activations/softplus.py
-import torch
-import torch.nn.functional as F
 from typing import Optional
+
+import torch
+
 from ember_ml.backend.torch.types import TensorLike, DType
+
 
 def softplus(x: TensorLike, dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
     """

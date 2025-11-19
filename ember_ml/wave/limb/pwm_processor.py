@@ -3,12 +3,9 @@ PWM (Pulse Width Modulation) signal processing for wave segments.
 Handles conversion between PCM and PWM representations.
 """
 
-import math
-from typing import Tuple, Optional
-
-from ember_ml import ops, tensor
+from ember_ml import tensor
 from ember_ml.types import TensorLike
-from .hpc_limb import HPCLimb
+
 
 class PWMProcessor:
     """

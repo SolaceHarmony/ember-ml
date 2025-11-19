@@ -4,8 +4,9 @@ PyTorch inverse operations for ember_ml.
 This module provides PyTorch implementations of matrix inverse operations.
 """
 
-import torch
 from typing import Any
+
+import torch
 
 from ember_ml.backend.torch.tensor.ops.utility import convert_to_tensor
 

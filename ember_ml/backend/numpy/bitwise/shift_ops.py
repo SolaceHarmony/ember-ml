@@ -6,11 +6,11 @@ This module provides NumPy implementations of bitwise shift operations
 """
 
 import numpy as np
-from typing import Union
 
 # Import NumpyTensor dynamically within functions
 # from ember_ml.backend.numpy.tensor import NumpyTensor
 from ember_ml.backend.numpy.types import TensorLike
+
 
 def left_shift(x: TensorLike, shifts: TensorLike) -> np.ndarray:
     """

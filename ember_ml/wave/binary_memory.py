@@ -2,13 +2,15 @@
 Wave-based memory storage and pattern retrieval mechanisms.
 """
 
-from typing import Optional, List, Dict, Tuple, Any
 from dataclasses import dataclass
+from typing import Optional, List, Dict, Tuple, Any
+
 from ember_ml import ops, tensor
-from ember_ml.nn import modules
 from ember_ml.nn import layers
+from ember_ml.nn import modules
 from ember_ml.nn.modules import activations
 from .binary_wave import WaveConfig, BinaryWave
+
 
 @dataclass
 class MemoryPattern:

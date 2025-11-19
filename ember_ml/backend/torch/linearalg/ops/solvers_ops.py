@@ -4,8 +4,9 @@ PyTorch solver operations for ember_ml.
 This module provides PyTorch implementations of linear system solver operations.
 """
 
+from typing import Optional, Tuple, Any
+
 import torch
-from typing import Optional, Union, List, Tuple, Any
 
 from ember_ml.backend.torch.tensor.ops.utility import convert_to_tensor
 

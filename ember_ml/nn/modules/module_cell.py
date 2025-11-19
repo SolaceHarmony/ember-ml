@@ -5,10 +5,10 @@ This module provides the ModuleCell abstract base class, which defines
 the interface for all cell types in ember_ml.
 """
 
-from typing import Optional, List, Dict, Any, Union, Tuple, TypeVar
+from typing import List, Union, TypeVar
 
 from ember_ml import ops, tensor
-from ember_ml.nn.modules import Module, Parameter
+from ember_ml.nn.modules import Module
 
 # Type variable for state size
 StateSize = TypeVar('StateSize', int, List[int])

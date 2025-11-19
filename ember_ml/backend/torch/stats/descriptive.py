@@ -4,8 +4,9 @@ PyTorch descriptive statistics operations.
 This module provides implementations of descriptive statistics using PyTorch.
 """
 
-import torch
 from typing import Union, Sequence, Optional, Any
+
+import torch
 
 from ember_ml.backend.torch.types import TensorLike
 

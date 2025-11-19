@@ -1,11 +1,9 @@
 import math
-from typing import List, Tuple, Optional
 from array import array
-from dataclasses import dataclass
 
 from ember_ml import ops, tensor
 from ember_ml.types import TensorLike
-
+from ember_ml import stats
 # HPC-limb constants
 CHUNK_BITS = 64
 CHUNK_BASE = 1 << CHUNK_BITS

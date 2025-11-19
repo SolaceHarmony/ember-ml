@@ -4,13 +4,14 @@ MLX matrix linear algebra operations for ember_ml.
 This module provides MLX operations.
 """
 
-import mlx.core as mx
-from typing import Union, Tuple, Optional, Literal
+from typing import Union, Tuple, Optional
 
-# Import from tensor_ops
-from ember_ml.backend.mlx.types import TensorLike
+import mlx.core as mx
+
 from ember_ml.backend.mlx.linearalg.ops.decomp_ops import svd
 from ember_ml.backend.mlx.tensor import MLXDType
+# Import from tensor_ops
+from ember_ml.backend.mlx.types import TensorLike
 
 dtype_obj = MLXDType()
 
@@ -234,8 +235,7 @@ def diag(x: TensorLike, k: int = 0) -> mx.array:
         result = mx.zeros((m, m), dtype=dtype)
         
         # Import the scatter function from indexing
-        from ember_ml.backend.mlx.tensor.ops.indexing import scatter_add
-        
+
         # Fill the diagonal
         # Use mx.greater_equal for comparison
         is_non_negative = mx.greater_equal(mx.array(k), mx.array(0))

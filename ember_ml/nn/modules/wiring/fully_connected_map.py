@@ -5,11 +5,12 @@ This module provides a fully connected wiring configuration for neural
 circuit policies, where all neurons are connected to all other neurons.
 """
 
-from typing import Optional, Tuple, Dict, Any # Added Dict, Any
+from typing import Optional, Tuple, Dict, Any  # Added Dict, Any
 
+from ember_ml import tensor
 # Use explicit path for clarity now it's moved
 from ember_ml.nn.modules.wiring.neuron_map import NeuronMap
-from ember_ml import tensor
+
 
 class FullyConnectedMap(NeuronMap): # Name is already correct
     """

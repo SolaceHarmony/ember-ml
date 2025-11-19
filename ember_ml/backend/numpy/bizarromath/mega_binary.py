@@ -6,15 +6,16 @@ using numpy.ndarray with dtype=uint16 as the underlying representation for
 binary wave and bitwise operations.
 """
 
-import numpy as np
-from typing import Tuple, Union, List, Optional, Any
 from enum import Enum
+from typing import Union, List
 
-# Import backend types
-from ember_ml.backend.numpy.types import TensorLike
+import numpy as np
 
 # Import the base class from the same directory
 from ember_ml.backend.numpy.bizarromath.mega_number import NumpyMegaNumber
+
+
+# Import backend types
 
 class InterferenceMode(Enum):
     """Interference modes for binary wave operations."""

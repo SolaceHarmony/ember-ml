@@ -5,12 +5,15 @@ This module provides MLX implementations of the ember_ml I/O operations interfac
 """
 
 import os
-import mlx.core as mx
 from typing import Any, Optional
+
+import mlx.core as mx
+
 from ember_ml.backend.mlx.types import TensorLike
+
+
 # Removed top-level import and instantiation of MLXTensor
 # from ember_ml.backend.mlx.tensor import MLXTensor
-
 
 def save(filepath: str, obj: TensorLike, allow_pickle: Optional[bool] = None) -> None:
     """
@@ -49,4 +52,3 @@ def load(filepath: str, allow_pickle: bool = True) -> Any:
     # Load from file using MLX
     return mx.load(filepath)
 
-# Removed MLXIOOps class as it's redundant with standalone functions

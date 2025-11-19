@@ -7,15 +7,19 @@ These functions can be called directly or through the TorchTensor class methods.
 # Import functions defined within this directory (ops) using absolute paths
 from ember_ml.backend.torch.tensor.ops.casting import cast
 from ember_ml.backend.torch.tensor.ops.creation import (
-    zeros, ones, eye, zeros_like, ones_like, full, full_like, arange, linspace, meshgrid # Add meshgrid
+    zeros, ones, eye, zeros_like, ones_like, full, full_like, arange, linspace, meshgrid  # Add meshgrid
+)
+from ember_ml.backend.torch.tensor.ops.indexing import (
+    slice_tensor, slice_update, gather, tensor_scatter_nd_update, scatter, nonzero, index_update
+    # Note: scatter_* helpers might be internal to indexing.py
 )
 from ember_ml.backend.torch.tensor.ops.manipulation import (
     reshape, transpose, concatenate, stack, split, expand_dims, squeeze, tile, pad,
     vstack, hstack
 )
-from ember_ml.backend.torch.tensor.ops.indexing import (
-    slice_tensor, slice_update, gather, tensor_scatter_nd_update, scatter, nonzero, index_update
-    # Note: scatter_* helpers might be internal to indexing.py
+from ember_ml.backend.torch.tensor.ops.random import (
+    random_normal, random_uniform, random_binomial, random_gamma, random_exponential,
+    random_poisson, random_categorical, random_permutation, shuffle, random_shuffle, set_seed, get_seed
 )
 from ember_ml.backend.torch.tensor.ops.utility import (
     convert_to_tensor,
@@ -29,10 +33,6 @@ from ember_ml.backend.torch.tensor.ops.utility import (
     sort,
     argsort,
     maximum,
-)
-from ember_ml.backend.torch.tensor.ops.random import (
-    random_normal, random_uniform, random_binomial, random_gamma, random_exponential,
-    random_poisson, random_categorical, random_permutation, shuffle, random_shuffle, set_seed, get_seed
 )
 
 # Define the list of symbols to export

@@ -5,12 +5,12 @@ This provides explicit type hints for all dynamically aliased operations,
 allowing type checkers to recognize the proper signatures of ops functions.
 """
 
-from typing import List, Optional, Any, Union, Tuple, Dict, Set, TypeVar, overload
-
+from typing import List, Optional, Any, Union, Tuple, Dict
 from ember_ml.types import TensorLike
+
 type Tensor = Any
 # Constants
-
+def pi() -> Any: ...
 # Backend control
 def set_backend(backend: str) -> None: ...
 def get_backend() -> str: ...
@@ -115,6 +115,3 @@ def irfftn(x: TensorLike) -> Tensor: ...
 
 # Folders
 # Import submodules for type checking
-from ember_ml import linearalg
-from ember_ml import stats
-from ember_ml.ops import bitwise

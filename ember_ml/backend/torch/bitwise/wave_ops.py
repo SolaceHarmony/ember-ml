@@ -5,14 +5,16 @@ This module provides PyTorch implementations of operations specific to
 binary wave processing, such as interference and propagation.
 """
 
-import torch
 from typing import List
 
+import torch
+
+from ember_ml.backend.torch.bitwise.basic_ops import bitwise_and, bitwise_or, bitwise_xor  # Import from sibling module
+from ember_ml.backend.torch.bitwise.shift_ops import left_shift, right_shift  # Import from sibling module
 # Import TorchTensor dynamically within functions
 # from ember_ml.backend.torch.tensor import TorchTensor
 from ember_ml.backend.torch.types import TensorLike
-from ember_ml.backend.torch.bitwise.basic_ops import bitwise_and, bitwise_or, bitwise_xor # Import from sibling module
-from ember_ml.backend.torch.bitwise.shift_ops import left_shift, right_shift # Import from sibling module
+
 
 def binary_wave_interference(waves: List[TensorLike], mode: str = 'xor') -> torch.Tensor:
     """

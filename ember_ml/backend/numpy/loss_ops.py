@@ -1,6 +1,7 @@
 """NumPy backend implementation for loss operations."""
 
 from typing import Optional, Union, Sequence
+
 import numpy as np
 
 from ember_ml.backend.numpy.types import TensorLike, default_int

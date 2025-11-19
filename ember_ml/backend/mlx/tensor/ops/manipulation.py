@@ -1,9 +1,11 @@
 """MLX tensor manipulation operations."""
 
-import mlx.core as mx
-from typing import Optional,Union, List
+from typing import Optional, Union, List
 
-from ember_ml.backend.mlx.types import TensorLike,ShapeLike,Shape
+import mlx.core as mx
+
+from ember_ml.backend.mlx.types import TensorLike, ShapeLike, Shape
+
 
 def reshape(tensor: TensorLike, shape: ShapeLike) -> mx.array:
     """

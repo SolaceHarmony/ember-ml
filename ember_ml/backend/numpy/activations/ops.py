@@ -1,8 +1,8 @@
 # ember_ml/backend/numpy/activations/ops.py
 import numpy as np
-from typing import Any
 
 from ember_ml.backend.numpy.types import TensorLike
+
 # Import NumpyTensor for lazy loading inside functions
 # Removed ActivationOps import as class wrapper is being removed
 # from ember_ml.nn.modules.activations.ops.activation_ops import ActivationOps

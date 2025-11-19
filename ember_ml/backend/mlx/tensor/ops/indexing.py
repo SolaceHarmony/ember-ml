@@ -1,12 +1,13 @@
 """MLX tensor indexing operations."""
 
+from typing import Union, Optional, Literal, Any, List
+
 import mlx.core as mx
 
-from typing import Union, Optional, Literal, Any, List
 from ember_ml.backend.mlx.types import (
     TensorLike, Shape, ShapeLike
 )
-from ember_ml import tensor
+
 
 def slice_tensor(tensor: TensorLike, starts: Shape, sizes: Shape) -> mx.array:
     """

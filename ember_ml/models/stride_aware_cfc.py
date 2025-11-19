@@ -5,14 +5,14 @@ This module provides implementations of stride-aware CfC cells and networks,
 which can process data with different stride lengths.
 """
 
-from typing import Dict, List, Optional, Tuple, Union, Any, Callable
+from typing import Dict, List, Tuple
 
-from ember_ml import ops, tensor
-from ember_ml.nn.modules import Module, Dense # Add Dense import
-from ember_ml.nn.modules.rnn import CfC, LSTM
-from ember_ml.nn.modules import AutoNCP # Updated import path
-from ember_ml.nn.initializers import Constant
 from ember_ml import ops
+from ember_ml import tensor
+from ember_ml.nn.initializers import Constant
+from ember_ml.nn.modules import Module, Dense  # Add Dense import
+from ember_ml.nn.modules.rnn import CfC, LSTM
+
 
 def create_liquid_network_with_motor_neuron(
     input_dim: int,

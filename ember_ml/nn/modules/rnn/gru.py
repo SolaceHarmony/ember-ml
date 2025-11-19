@@ -8,9 +8,10 @@ which wraps a GRUCell to create a recurrent layer.
 from typing import Dict, Any
 
 from ember_ml import ops
-from ember_ml.nn.modules import Module
 # Removed GRUCell import
 from ember_ml import tensor
+from ember_ml.nn.modules import Module
+
 
 class GRU(Module):
     """

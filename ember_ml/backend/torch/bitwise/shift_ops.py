@@ -6,11 +6,11 @@ This module provides PyTorch implementations of bitwise shift operations
 """
 
 import torch
-from typing import Union
 
 # Import TorchTensor dynamically within functions
 # from ember_ml.backend.torch.tensor import TorchTensor
 from ember_ml.backend.torch.types import TensorLike
+
 
 def left_shift(x: TensorLike, shifts: TensorLike) -> torch.Tensor:
     """

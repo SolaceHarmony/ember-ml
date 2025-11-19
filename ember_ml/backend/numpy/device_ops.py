@@ -2,13 +2,16 @@
 NumPy device operations for ember_ml.
 """
 
-import numpy as np
 from typing import Any, Optional, List, Dict
-from ember_ml.backend.numpy.types import TensorLike # Use TensorLike from numpy types
 
+import numpy as np
 
-# Module-level variable for default device (always 'cpu' for numpy)
-_default_device = 'cpu'
+from ember_ml.backend.numpy.config import DEFAULT_DEVICE
+from ember_ml.backend.numpy.types import TensorLike  # Use TensorLike from numpy types
+
+# Module-level variable for default device consistency. Track the canonical name
+# so higher level helpers can rely on ``"cpu"`` due to NumPy having no GPU support.
+_default_device = DEFAULT_DEVICE
 
 def get_device(tensor: Optional[Any] = None) -> str:
     """
@@ -43,7 +46,7 @@ def get_device_of_tensor(tensor: Any) -> str:
             return str(dev)
         except Exception:
             pass
-    return 'cpu'
+    return DEFAULT_DEVICE
 
 def set_device(device: Any) -> None:
     """

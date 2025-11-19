@@ -11,7 +11,8 @@ Key advantages over limb-based HPC16x8:
 - Single rounding point at final output
 - Based on: Dekker (1971), Knuth TAOCP Vol 2, Shewchuk (1997)
 """
-from typing import Tuple, Optional
+from typing import Optional
+
 import mlx.core as mx
 
 # ============================================================================

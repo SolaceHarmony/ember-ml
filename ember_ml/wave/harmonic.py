@@ -3,11 +3,12 @@ Harmonic wave processing components.
 """
 
 import math
-from typing import List, Dict, Optional, Tuple, Union
+from typing import List, Dict
 
 from ember_ml import ops, stats
-from ember_ml import tensor # For tensor.EmberTensor, tensor.zeros etc.
-from ember_ml.types import TensorLike # For type hinting
+from ember_ml import tensor  # For tensor.EmberTensor, tensor.zeros etc.
+from ember_ml.types import TensorLike  # For type hinting
+
 
 class FrequencyAnalyzer:
     """Analyzer for frequency components of signals."""

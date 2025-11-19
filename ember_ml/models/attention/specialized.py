@@ -7,7 +7,8 @@ CfC (Closed-form Continuous-time) architecture.
 """
 
 from typing import Union, List, Literal
-from ember_ml import ops, tensor
+
+from ember_ml import ops
 from ember_ml import tensor
 from ember_ml.nn.modules import Module
 from ember_ml.nn.modules.rnn import CfC

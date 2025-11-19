@@ -3,15 +3,17 @@ Visualization tools for wave memory analysis.
 """
 
 import math
+from typing import Any, Tuple
+
+import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
-import matplotlib.animation as animation
-from typing import Any, List, Tuple, Optional
 
 from ember_ml import ops, tensor
 from ember_ml.types import TensorLike
-from ..models.multi_sphere import MultiSphereWaveModel
 from .metrics import AnalysisMetrics, MetricsCollector
+from ..models.multi_sphere import MultiSphereWaveModel
+
 
 class WaveMemoryAnalyzer:
     """

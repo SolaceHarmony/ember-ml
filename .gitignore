@@ -133,3 +133,4 @@ telemetry_data.csv
 .roo/system-prompt-leading-with-vulnerability
 .roo/system-prompt-weights-removal-discussion
 backups/*.*
+/backups/

@@ -6,6 +6,7 @@ for computing and tracking attention based on temporal, causal, and novelty fact
 """
 
 from typing import Dict, List, Tuple
+
 from ember_ml import ops
 from ember_ml.models.attention.mechanisms.state import AttentionState
 

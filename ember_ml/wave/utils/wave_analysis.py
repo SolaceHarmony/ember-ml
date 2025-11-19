@@ -4,10 +4,13 @@ Wave analysis utilities.
 This module provides utilities for analyzing wave signals.
 """
 
-from typing import Union, List, Tuple, Optional, Dict
+from typing import Tuple, Dict
+
 from scipy import signal
+
 from ember_ml import ops, linearalg, tensor, stats
-from ember_ml.types import TensorLike # Corrected import
+from ember_ml.types import TensorLike  # Corrected import
+
 
 def _to_list(value):
     array = tensor.to_numpy(value)

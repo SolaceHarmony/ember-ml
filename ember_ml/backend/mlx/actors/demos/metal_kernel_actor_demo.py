@@ -3,15 +3,14 @@ Demonstrates using the MetalKernelActor from the ember_ml.actors package.
 """
 
 import asyncio
-import ray
-import asyncio
-import ray
-# import mlx.core as mx # Removed as EmberTensor is used
 
-from ember_ml import tensor 
+from ember_ml import tensor
 # Import the MetalKernelActor from its new location
 from ember_ml.actors.task.metal_kernel_actor import MetalKernelActor
- 
+
+
+# import mlx.core as mx # Removed as EmberTensor is used
+
 async def test_metal_kernel_demo():
     """
     Demonstrates creating and interacting with the MetalKernelActor.

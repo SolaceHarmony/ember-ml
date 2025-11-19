@@ -6,11 +6,11 @@ This module provides NumPy implementations of basic bitwise operations
 """
 
 import numpy as np
-from typing import Any
 
 # Import NumpyTensor dynamically within functions to avoid circular dependencies
 # from ember_ml.backend.numpy.tensor import NumpyTensor
 from ember_ml.backend.numpy.types import TensorLike
+
 
 def bitwise_and(x: TensorLike, y: TensorLike) -> np.ndarray:
     """

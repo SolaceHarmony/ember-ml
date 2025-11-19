@@ -5,11 +5,11 @@ This module provides a specialized wiring pattern for frequency analysis tasks,
 implementing frequency-specific neurons and harmonic connections.
 """
 
-from typing import Dict, Any, Optional, List, Tuple, Union, Callable
+from typing import Dict, Any, Optional
 
-from ember_ml import ops
-from ember_ml.nn.modules.wiring import NeuronMap
 from ember_ml import tensor
+from ember_ml.nn.modules.wiring import NeuronMap
+
 
 class FrequencyWiring(NeuronMap):
     """

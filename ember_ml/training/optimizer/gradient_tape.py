@@ -5,9 +5,11 @@ This module provides a backend-agnostic Gradient Tape for Ember ML that works
 with any backend using the frontend abstraction layer.
 """
 
-from typing import Any, List, Optional, Union, Tuple, Dict, Set
+from typing import Any, List, Union, Set
+
 from ember_ml import ops, tensor
 from ember_ml.nn.modules import Parameter
+
 
 class GradientTape:
     """

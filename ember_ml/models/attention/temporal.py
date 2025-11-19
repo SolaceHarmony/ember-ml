@@ -2,15 +2,18 @@
 Temporal attention mechanisms for sequence processing and time-based patterns.
 """
 
-from typing import Optional
 import math
-from ember_ml import ops, tensor
+from typing import Optional
+
+from ember_ml import ops
 from ember_ml import tensor, zeros, arange, maximum, shape, concatenate, expand_dims, reshape, transpose
-from ember_ml.nn.modules import Module
-from ember_ml.nn.layers import Dropout, Linear, Sequential
-from ember_ml.nn.modules.activations import Sigmoid, softmax # Import Sigmoid and softmax
 from ember_ml.models.attention.base import BaseAttention
+from ember_ml.nn.layers import Dropout, Linear, Sequential
+from ember_ml.nn.modules import Module
+from ember_ml.nn.modules.activations import Sigmoid, softmax  # Import Sigmoid and softmax
 from ember_ml.types import TensorLike
+
+
 class PositionalEncoding(Module):
     """Positional encoding for temporal information."""
     

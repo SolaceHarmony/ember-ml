@@ -4,14 +4,15 @@ MLX descriptive statistics operations.
 This module provides implementations of descriptive statistics using MLX.
 """
 
-import mlx.core as mx
 from typing import Union, Sequence, Optional, Any
 
-from ember_ml.backend.mlx.types import TensorLike
+import mlx.core as mx
 
 from ember_ml.backend.mlx.math_ops import pi as math_pi
+from ember_ml.backend.mlx.types import TensorLike
 
-def median(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None, 
+
+def median(x: TensorLike, axis: Optional[Union[int, Sequence[int]]] = None,
           keepdims: bool = False) -> mx.array:
     """
     Compute the median along the specified axis.

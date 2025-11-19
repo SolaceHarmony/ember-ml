@@ -5,12 +5,13 @@ This module provides an efficient implementation of Restricted Boltzmann Machine
 that can use different backends (NumPy, PyTorch, MLX) for tensor operations.
 """
 
+import os
 import time
 from datetime import datetime
-import os
-from typing import Dict, List, Optional, Tuple, Union, Any
+from typing import Dict, List, Optional, Any
 
 from ember_ml import ops, stats, tensor
+
 
 class RBM:
     """

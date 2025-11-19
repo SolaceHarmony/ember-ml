@@ -5,11 +5,13 @@ This module provides the NumpyMegaNumber class, using numpy.ndarray with dtype=i
 as the underlying representation for chunk-based (limb-based) arithmetic.
 """
 
+from typing import Tuple, Union, Optional
+
 import numpy as np
-from typing import Tuple, Union, List, Optional, Any
 
 # Import backend types
 from ember_ml.backend.numpy.types import TensorLike
+
 
 class NumpyMegaNumber:
     """

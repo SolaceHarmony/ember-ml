@@ -494,7 +494,7 @@ def sin(self, x):
     "frontend_abstraction": """
 # Example of exposing a function in the frontend
 
-# In ember_ml/ops/__init__.py
+# In ember_ml/ops/tensor.py
 sin = lambda x: math_ops().sin(x)
 
 # Usage in application code

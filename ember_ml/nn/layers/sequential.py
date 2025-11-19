@@ -5,13 +5,14 @@ This module provides a backend-agnostic implementation of a sequential container
 that works with any backend (NumPy, PyTorch, MLX).
 """
 
-from typing import Optional, Union, Tuple, Any, Dict, List, Sequence
+from typing import Optional, Union, Tuple, Any, Dict, List
 
 # Import necessary layer modules for from_config reconstruction
 from . import linear
 from ..modules import Module, activations
-from typing import Dict, Any, List  # Ensure these are imported if not already
 from ... import tensor
+
+
 class Sequential(Module):
     """
     A sequential container.
@@ -45,7 +46,7 @@ class Sequential(Module):
             Output tensor after passing through all layers
         """
         # Ensure x is a tensor
-        x = tensor.convert_to_tensor(x)
+        x = tensor(x)
         
         # Pass input through each layer in sequence
         for layer in self.layers:

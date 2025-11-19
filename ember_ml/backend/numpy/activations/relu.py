@@ -1,7 +1,10 @@
 # ember_ml/backend/numpy/activations/relu.py
-import numpy as np
 from typing import Optional
+
+import numpy as np
+
 from ember_ml.backend.numpy.types import TensorLike, DType
+
 
 def relu(x: TensorLike, dtype: Optional[DType] = None) -> np.ndarray:
     """

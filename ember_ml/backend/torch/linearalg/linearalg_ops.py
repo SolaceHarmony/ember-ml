@@ -4,7 +4,6 @@ PyTorch linear algebra operations for ember_ml.
 This module provides PyTorch implementations of linear algebra operations.
 """
 
-import torch
 from typing import Literal
 
 # Import from tensor_ops

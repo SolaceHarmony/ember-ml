@@ -1,10 +1,13 @@
 """MLX tensor random operations."""
 
 from typing import Union, Optional, Any
+
 import mlx.core as mx
 
-from ember_ml.backend.mlx.types import Shape, TensorLike, DType,default_int, default_float
-from ember_ml.backend.mlx.tensor.ops.utility import _create_new_tensor # Import helper
+from ember_ml.backend.mlx.tensor.ops.utility import _create_new_tensor  # Import helper
+from ember_ml.backend.mlx.types import Shape, TensorLike, DType, default_int, default_float
+
+
 # Create single instances to reuse throughout the module
 # DTypeHandler instance removed, logic moved to helper/local
 

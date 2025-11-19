@@ -4,7 +4,6 @@ MLX solver operations for ember_ml.
 This module provides MLX implementations of solver operations.
 """
 
-import mlx.core as mx
 from typing import Literal
 
 # Import from tensor_ops

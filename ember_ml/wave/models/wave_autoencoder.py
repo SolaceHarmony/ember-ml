@@ -4,12 +4,13 @@ Wave Autoencoder model.
 This module provides an autoencoder model for wave-based neural processing.
 """
 
+from typing import Tuple, List, Dict
+
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from typing import Optional, Tuple, List, Dict, Any
-from ember_ml import tensor # Added import
-from ember_ml.types import TensorLike # Added import
+
+from ember_ml.types import TensorLike  # Added import
+
 
 class WaveEncoder(nn.Module):
     """

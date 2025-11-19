@@ -6,10 +6,12 @@ using high-precision computing techniques for numerical stability, similar to th
 """
 
 import math
-import numpy as np
 from typing import Tuple, Optional, Any, Union
 
+import numpy as np
+
 from ember_ml.backend.numpy.types import TensorLike
+
 
 def _add_limb_precision(a: np.ndarray, b: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     """Add two numbers with limb-based extended precision."""

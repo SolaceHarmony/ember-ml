@@ -4,12 +4,13 @@ NumPy solver linear algebra operations for ember_ml.
 This module provides NumPy operations.
 """
 
-import numpy as np
-from typing import Union, Tuple, Optional
+from typing import Tuple, Optional
 
+import numpy as np
+
+from ember_ml.backend.numpy.tensor import NumpyDType
 # Import from tensor_ops
 from ember_ml.backend.numpy.types import TensorLike
-from ember_ml.backend.numpy.tensor import NumpyDType
 
 dtype_obj = NumpyDType()
 

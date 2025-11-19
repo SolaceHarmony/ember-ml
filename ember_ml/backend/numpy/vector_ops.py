@@ -4,8 +4,10 @@ NumPy implementation of vector operations.
 This module provides NumPy implementations of vector operations.
 """
 
-import numpy as np
 from typing import Optional, Tuple
+
+import numpy as np
+
 from ember_ml.backend.numpy.types import TensorLike, Shape, default_float, Axis
 
 

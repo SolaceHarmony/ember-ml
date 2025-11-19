@@ -4,8 +4,10 @@ MLX data type implementation for ember_ml.
 This module provides MLX implementations of data type operations.
 """
 
-import mlx.core as mx
 from typing import Union, Any, Optional
+
+import mlx.core as mx
+
 
 class MLXDType:
     """MLX implementation of data type operations."""

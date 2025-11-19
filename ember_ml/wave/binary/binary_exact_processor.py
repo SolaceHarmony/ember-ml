@@ -1,7 +1,6 @@
-from typing import List, Tuple, Optional
-
-from ember_ml import ops, tensor
+from ember_ml import ops, tensor, stats
 from ember_ml.types import TensorLike
+
 
 class BinaryWaveState:
     """Exact binary wave state using Python's arbitrary precision integers"""
@@ -147,7 +146,7 @@ class ExactBinaryNetwork:
             
             output_samples.append(scaled_val)
             
-        return tensor.convert_to_tensor(output_samples, dtype=tensor.int16)
+        return tensor(output_samples, dtype=tensor.int16)
 
 def create_test_signal(duration_sec: float, sample_rate: int) -> TensorLike:
     """Create test signal with multiple frequencies"""

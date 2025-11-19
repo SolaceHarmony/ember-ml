@@ -3,10 +3,12 @@ Wave conversion utilities.
 
 This module provides utilities for converting between different wave representations.
 """
-from typing import Union, List, Tuple, Optional
-from ember_ml.types import TensorLike # Added import
-from ember_ml import linearalg, stats, ops, tensor
 from typing import Any
+from typing import Union, Optional
+
+from ember_ml import linearalg, stats, ops, tensor
+from ember_ml.types import TensorLike  # Added import
+
 # Define TensorLike as a type alias for better readability
 DType = Any
 def pcm_to_float(pcm_data: TensorLike, dtype: Any = tensor.float32) -> Any:

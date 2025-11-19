@@ -47,30 +47,31 @@ Available Modules:
 
 """
 
+# Import activation modules after the base classes are available.
+from ember_ml.nn.modules.activations import ReLU, Tanh, Sigmoid, Softmax, Softplus, LeCunTanh, Dropout
+from ember_ml.nn.modules.auto_ncp import AutoNCP
+# from ember_ml.nn.modules.rnn.stride_aware_cfc_layer import StrideAwareCfC
+# Import base classes first to avoid import-time circularities.
 from ember_ml.nn.modules.base_module import BaseModule as Module, BaseModule, Parameter
+from ember_ml.nn.modules.dense import Dense  # Import Dense from its new location
+from ember_ml.nn.modules.guce_ncp import GUCENCP, AutoGUCENCP
 # Removed ModuleCell and ModuleWiredCell imports
 from ember_ml.nn.modules.ncp import NCP
-from ember_ml.nn.modules.auto_ncp import AutoNCP
-from ember_ml.nn.modules.guce_ncp import GUCENCP, AutoGUCENCP
-from ember_ml.nn.modules.dense import Dense # Import Dense from its new location
+# Import the separated layer and corrected cell import
+from ember_ml.nn.modules.rnn import (
+    CfC, LTC, ELTC, ODESolver, CTGRU, CTRNN, GUCE
+)
+# Import RNN modules (keep existing) - Removed StrideAwareCfC from this line
+from ember_ml.nn.modules.rnn import RNN, LSTM, GRU, StrideAware
+# Import solver modules
+from ember_ml.nn.modules.solvers import ExpectationSolver
+# Import anomaly detection modules
+from ember_ml.nn.modules.trainers import MemoryOptimizedTrainer
 # Import NeuronMap classes from the new wiring sub-package
 from ember_ml.nn.modules.wiring import (
     NeuronMap, NCPMap, FullyConnectedMap, RandomMap,
     LanguageWiring, RoboticsWiring, SignalWiring, FrequencyWiring, VisionWiring
 )
-# Import RNN modules (keep existing) - Removed StrideAwareCfC from this line
-from ember_ml.nn.modules.rnn import RNN, LSTM, GRU, StrideAware
-# Import the separated layer and corrected cell import
-from ember_ml.nn.modules.rnn import (
-    CfC, LTC, ELTC, ODESolver, CTGRU, CTRNN, GUCE
-)
-# from ember_ml.nn.modules.rnn.stride_aware_cfc_layer import StrideAwareCfC
-# Import activation modules
-from ember_ml.nn.modules.activations import ReLU, Tanh, Sigmoid, Softmax, Softplus, LeCunTanh, Dropout
-# Import solver modules
-from ember_ml.nn.modules.solvers import ExpectationSolver
-# Import anomaly detection modules
-from ember_ml.nn.modules.trainers import MemoryOptimizedTrainer
 
 __all__ = [
     # Base

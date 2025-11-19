@@ -6,11 +6,10 @@ from the active backend (NumPy, PyTorch, MLX) to provide a consistent
 `async_ops.*` interface. It handles backend switching by updating these aliases.
 """
 
-import importlib
-import sys
-import os
 import asyncio
 import functools
+import importlib
+import sys
 from typing import Optional, Any, Union, TypeVar
 
 # Import types for type annotations
@@ -27,13 +26,11 @@ D = TypeVar('D', bound=Union[str, DType])
 # Import backend control functions
 from ember_ml.backend import (
     get_backend,
-    set_backend as original_set_backend,
-    get_backend_module,
-    auto_select_backend
+    get_backend_module
 )
 
 # Master list of all functions expected to be aliased by ember_ml.async.ops
-# This list is copied from ember_ml.ops.__init__.py
+# This list is copied from ember_ml.ops.tensor.py
 _MASTER_OPS_LIST = [
     # Math (Core arithmetic, trig, exponential, etc.)
     'add', 'subtract', 'multiply', 'divide', 'matmul', 'dot',
@@ -141,9 +138,9 @@ def _update_async_ops_aliases():
     _aliased_backend = backend_name # Mark this backend as aliased
 
 # --- Define set_backend for this module to trigger alias updates ---
-# This function will likely be called from ember_ml.backend.__init__.py
+# This function will likely be called from ember_ml.backend.tensor.py
 # We define it here for clarity on what needs to happen when backend is set.
-# The actual set_backend logic that triggers this should be in ember_ml.backend.__init__.py
+# The actual set_backend logic that triggers this should be in ember_ml.backend.tensor.py
 # def set_backend(backend: str):
 #     """Sets the backend and updates async ops aliases."""
 #     # This function should ideally be called by the main set_backend in ember_ml.backend

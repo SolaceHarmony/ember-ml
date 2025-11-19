@@ -4,13 +4,15 @@ Test Feature Extraction
 This module provides a test function to demonstrate the feature extraction pipeline.
 """
 
+from typing import List, Optional
+
 import pandas as pd
-from typing import Dict, List, Optional, Tuple, Any
 
 from ember_ml.features.generic_csv_loader import GenericCSVLoader
-from ember_ml.features.generic_type_detector import GenericTypeDetector
 from ember_ml.features.generic_feature_engineer import GenericFeatureEngineer
+from ember_ml.features.generic_type_detector import GenericTypeDetector
 from ember_ml.features.temporal_processor import TemporalStrideProcessor
+
 
 def test_feature_extraction(csv_path: str, header_file: Optional[str] = None,
                            window_size: int = 5, stride_perspectives: List[int] = None):

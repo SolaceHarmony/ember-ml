@@ -5,6 +5,7 @@ This module provides standard type aliases for tensor operations in the Ember ML
 These type aliases ensure consistent type annotations across the codebase and
 help with static type checking.
 """
+
 import os
 from typing import (
     Any, List, Optional, Sequence, Tuple, Union,
@@ -51,8 +52,13 @@ default_float = mx.float32
 default_bool = mx.bool_ if hasattr(mx, 'bool_') else Any # type: ignore
 
 
-# Default type for dtype
-DType = Any
+# Runtime definitions (simplified)
+TensorTypes = Any # type: ignore
+ArrayLike = Any # type: ignore
+TensorLike = Any # type: ignore
+ScalarLike = Any # type: ignore
+DTypes = Any # type: ignore
+DType = Any # type: ignore
 
 # Conditional type definitions
 if TYPE_CHECKING == True:

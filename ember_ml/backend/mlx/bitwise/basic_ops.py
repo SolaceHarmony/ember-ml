@@ -6,11 +6,11 @@ This module provides MLX implementations of basic bitwise operations
 """
 
 import mlx.core as mx
-from typing import Any
 
 # Import MLXTensor dynamically within functions to avoid circular dependencies
 # from ember_ml.backend.mlx.tensor import MLXTensor
 from ember_ml.backend.mlx.types import TensorLike
+
 
 def bitwise_and(x: TensorLike, y: TensorLike) -> mx.array:
     """

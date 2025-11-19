@@ -4,8 +4,9 @@ Generic Type Detector
 This module provides a class for detecting column types in a dataframe without prior knowledge.
 """
 
-import pandas as pd
 from typing import Dict, List
+
+import pandas as pd
 
 
 class GenericTypeDetector:

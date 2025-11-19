@@ -5,12 +5,13 @@ This module provides an implementation of a forecasting model using liquid neura
 (CfC, LTC, ELTC, CTGRU, or CTRNN) for time series prediction with uncertainty estimation.
 """
 
-from typing import Dict, Any, Optional, List, Tuple, Union, Callable
+from typing import Dict, Any
 
 from ember_ml import ops, stats, tensor
 from ember_ml.nn.modules import Module, Parameter
-from ember_ml.nn.modules.rnn import CfC, LTC, ELTC, CTGRU, CTRNN
 from ember_ml.nn.modules.activations import Softplus
+from ember_ml.nn.modules.rnn import CfC, LTC, ELTC, CTGRU, CTRNN
+
 
 class LiquidForecaster(Module):
     """

@@ -6,12 +6,13 @@ using GUCE neurons with b-symplectic gradient flow, holographic error correction
 and theta-gamma oscillatory gating.
 """
 
-from typing import Optional, Tuple, Dict, Any, Union, List
+from typing import Optional, Tuple, Dict, Any, Union
 
 from ember_ml import ops, tensor
-from ember_ml.nn.modules.base_module import BaseModule as Module, Parameter
-from ember_ml.nn.modules.wiring import NeuronMap
+from ember_ml.nn.modules.base_module import BaseModule as Module
 from ember_ml.nn.modules.rnn import GUCE
+from ember_ml.nn.modules.wiring import NeuronMap
+
 
 class GUCENCP(Module):
     """

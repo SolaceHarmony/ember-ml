@@ -8,9 +8,10 @@ The BaseModule class is the base class for all neural network modules in ember_m
 """
 
 from collections import OrderedDict
-from typing import Dict, Iterator, Optional, Set, Tuple, Union, Any, List
+from typing import Dict, Iterator, Optional, Set, Tuple, Any, List
 
 from ember_ml import ops, tensor
+
 
 class Parameter:
     """
@@ -30,7 +31,7 @@ class Parameter:
         from ember_ml import tensor # Use lazy import
 
         # Convert data to EmberTensor first
-        ember_tensor = tensor.convert_to_tensor(data)
+        ember_tensor = tensor(data)
         
         # Get the underlying backend tensor (TensorLike, tensor.convert_to_tensor, TensorLike)
         # This ensures .data is the native backend tensor, which is what the tests expect
@@ -174,7 +175,7 @@ class BaseModule:
         if buffer is None:
             self._buffers.pop(name, None)
         else:
-            self._buffers[name] = tensor.convert_to_tensor(buffer)
+            self._buffers[name] = tensor(buffer)
     
     def add_module(self, name: str, module: Optional['BaseModule']) -> None:
         """

@@ -4,8 +4,9 @@ PyTorch decomposition operations for ember_ml.
 This module provides PyTorch implementations of matrix decomposition operations.
 """
 
+from typing import Union, Tuple, Any, Literal
+
 import torch
-from typing import Optional, Union, List, Tuple, Any, Literal
 
 from ember_ml.backend.torch.tensor.ops.utility import convert_to_tensor
 

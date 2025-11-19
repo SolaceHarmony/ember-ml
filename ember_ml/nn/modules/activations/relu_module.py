@@ -2,7 +2,6 @@
 """
 Rectified Linear Unit (ReLU) activation module.
 """
-from ember_ml import ops
 from ember_ml.nn.modules import Module
 from ember_ml.types import TensorLike
 

@@ -1,12 +1,14 @@
 """PyTorch backend implementation for loss operations."""
 
-from typing import Any, Optional, Union, Sequence
+from typing import Optional, Union, Sequence
+
 import torch
 import torch.nn.functional as F
 
 # from ember_ml.ops.loss_ops import LossOps # REMOVED inheritance
 # Removed top-level import: from ember_ml.backend.torch.tensor.tensor import TorchTensor as Tensor
 from ember_ml.backend.torch.tensor.tensor import TensorLike
+
 # from ember_ml.backend.torch import math_ops # REMOVED top-level import
 
 # Epsilon for numerical stability

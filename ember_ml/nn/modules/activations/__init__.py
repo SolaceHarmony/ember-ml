@@ -7,23 +7,21 @@ upon import.
 """
 import importlib
 import sys
-import os
-from typing import List, Optional, Callable, Any
+from typing import Optional, Callable
 
 # Import backend control functions
 from ember_ml.backend import get_backend, get_backend_module
-
+from ember_ml.nn.modules.activations.dropout_module import \
+    Dropout  # Assuming Dropout is also considered an activation module here
+from ember_ml.nn.modules.activations.lecun_tanh_module import LeCunTanh
 # Import Module base class and activation module classes using absolute paths
 # Import Module needs to be fixed later - potential circular dependency
 # from ember_ml.nn.modules import Module # Causes ImportError
 from ember_ml.nn.modules.activations.relu_module import ReLU
 from ember_ml.nn.modules.activations.sigmoid_module import Sigmoid
-from ember_ml.nn.modules.activations.tanh_module import Tanh
 from ember_ml.nn.modules.activations.softmax_module import Softmax
 from ember_ml.nn.modules.activations.softplus_module import Softplus
-from ember_ml.nn.modules.activations.lecun_tanh_module import LeCunTanh
-from ember_ml.nn.modules.activations.dropout_module import Dropout # Assuming Dropout is also considered an activation module here
-
+from ember_ml.nn.modules.activations.tanh_module import Tanh
 
 # --- Dynamic Backend Function Aliasing ---
 

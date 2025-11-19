@@ -5,50 +5,50 @@ This module provides math helper functions for wave processing,
 using the ops abstraction layer for backend-agnostic operations.
 """
 
-from ember_ml import ops, tensor
+from ember_ml import ops, stats, linearalg
 from ember_ml import tensor
 # Define math functions using ops abstraction layer
-sigmoid = lambda x: ops.sigmoid(tensor.convert_to_tensor(x))
-tanh = lambda x: ops.tanh(tensor.convert_to_tensor(x))
-relu = lambda x: ops.relu(tensor.convert_to_tensor(x))
+sigmoid = lambda x: ops.sigmoid(tensor(x))
+tanh = lambda x: ops.tanh(tensor(x))
+relu = lambda x: ops.relu(tensor(x))
 def leaky_relu(x, alpha=0.01):
     """Compute the leaky ReLU of a tensor."""
-    x_tensor = tensor.convert_to_tensor(x)
-    alpha_tensor = tensor.convert_to_tensor(alpha)
+    x_tensor = tensor(x)
+    alpha_tensor = tensor(alpha)
     return ops.where(
-        ops.greater(x_tensor, tensor.convert_to_tensor(0.0)),
+        ops.greater(x_tensor, tensor(0.0)),
         x_tensor,
         ops.multiply(alpha_tensor, x_tensor)
     )
-softmax = lambda x, axis=-1: ops.softmax(tensor.convert_to_tensor(x), axis=axis)
+softmax = lambda x, axis=-1: ops.softmax(tensor(x), axis=axis)
 
 def normalize(x, axis=-1):
     """Normalize a tensor along the specified axis."""
-    x_tensor = tensor.convert_to_tensor(x)
+    x_tensor = tensor(x)
     norm = ops.sqrt(stats.sum(ops.square(x_tensor), axis=axis, keepdims=True))
-    return ops.divide(x_tensor, ops.add(norm, tensor.convert_to_tensor(1e-8)))
+    return ops.divide(x_tensor, ops.add(norm, tensor(1e-8)))
 
 def standardize(x, axis=-1):
     """Standardize a tensor to have zero mean and unit variance."""
-    x_tensor = tensor.convert_to_tensor(x)
+    x_tensor = tensor(x)
     mean = stats.mean(x_tensor, axis=axis, keepdims=True)
     std = ops.sqrt(stats.mean(ops.square(ops.subtract(x_tensor, mean)), axis=axis, keepdims=True))
-    return ops.divide(ops.subtract(x_tensor, mean), ops.add(std, tensor.convert_to_tensor(1e-8)))
+    return ops.divide(ops.subtract(x_tensor, mean), ops.add(std, tensor(1e-8)))
 
 def euclidean_distance(x, y):
     """Compute the Euclidean distance between two vectors."""
-    x_tensor = tensor.convert_to_tensor(x)
-    y_tensor = tensor.convert_to_tensor(y)
+    x_tensor = tensor(x)
+    y_tensor = tensor(y)
     return ops.sqrt(stats.sum(ops.square(ops.subtract(x_tensor, y_tensor))))
 
 def cosine_similarity(x, y):
     """Compute the cosine similarity between two vectors."""
-    x_tensor = tensor.convert_to_tensor(x)
-    y_tensor = tensor.convert_to_tensor(y)
+    x_tensor = tensor(x)
+    y_tensor = tensor(y)
     dot_product = stats.sum(ops.multiply(x_tensor, y_tensor))
     norm_x = ops.sqrt(stats.sum(ops.square(x_tensor)))
     norm_y = ops.sqrt(stats.sum(ops.square(y_tensor)))
-    return ops.divide(dot_product, ops.add(ops.multiply(norm_x, norm_y), tensor.convert_to_tensor(1e-8)))
+    return ops.divide(dot_product, ops.add(ops.multiply(norm_x, norm_y), tensor(1e-8)))
 
 def exponential_decay(initial_value, decay_rate, time_step):
     """Compute exponential decay."""
@@ -56,12 +56,12 @@ def exponential_decay(initial_value, decay_rate, time_step):
 
 def gaussian(x, mu=0.0, sigma=1.0):
     """Compute the Gaussian function."""
-    x_tensor = tensor.convert_to_tensor(x)
-    mu_tensor = tensor.convert_to_tensor(mu)
-    sigma_tensor = tensor.convert_to_tensor(sigma)
+    x_tensor = tensor(x)
+    mu_tensor = tensor(mu)
+    sigma_tensor = tensor(sigma)
     return ops.divide(
-        ops.exp(ops.multiply(tensor.convert_to_tensor(-0.5), ops.square(ops.divide(ops.subtract(x_tensor, mu_tensor), sigma_tensor)))),
-        ops.multiply(sigma_tensor, ops.sqrt(ops.multiply(tensor.convert_to_tensor(2.0), ops.pi)))
+        ops.exp(ops.multiply(tensor(-0.5), ops.square(ops.divide(ops.subtract(x_tensor, mu_tensor), sigma_tensor)))),
+        ops.multiply(sigma_tensor, ops.sqrt(ops.multiply(tensor(2.0), ops.pi)))
     )
 
 def normalize_vector(vector):
@@ -87,25 +87,25 @@ def compute_energy_stability(wave, window_size: int = 100) -> float:
     Returns:
         Energy stability metric
     """
-    wave_tensor = tensor.convert_to_tensor(wave)
+    wave_tensor = tensor(wave)
     wave_length = tensor.shape(wave_tensor)[0]
     
     if wave_length < window_size:
         return 1.0  # Perfectly stable for short signals
         
     # Compute energy in windows
-    num_windows = tensor.cast(ops.floor_divide(wave_length, tensor.convert_to_tensor(window_size)), tensor.int32)
+    num_windows = tensor.cast(ops.floor_divide(wave_length, tensor(window_size)), tensor.int32)
     energies = []
     
     for i in range(tensor.item(num_windows)):
-        start = ops.multiply(tensor.convert_to_tensor(i), tensor.convert_to_tensor(window_size))
-        end = ops.add(start, tensor.convert_to_tensor(window_size))
+        start = ops.multiply(tensor(i), tensor(window_size))
+        end = ops.add(start, tensor(window_size))
         window = wave_tensor[start:end]
         energy = stats.sum(ops.square(window))
         energies.append(tensor.item(energy))
     
     # Convert energies to tensor
-    energies_tensor = tensor.convert_to_tensor(energies)
+    energies_tensor = tensor(energies)
     
     # Compute stability as inverse of energy variance
     if len(energies) <= 1:

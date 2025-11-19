@@ -8,6 +8,7 @@ allowing type checkers to recognize them properly.
 from typing import List, Optional, Any, Union, Tuple, Literal
 
 from ember_ml.backend.mlx.types import TensorLike
+
 type Tensor = Any
 
 # Matrix decomposition functions

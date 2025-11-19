@@ -3,14 +3,13 @@ Client interface for the Ray-based neuromorphic computing system,
 integrated with Ember ML's asynchronous capabilities.
 """
 
-import ray
-import asyncio
 import time
-from typing import Dict, List, Any, Optional
- 
+from typing import Any
+
+import ray
+
 # Import EmberTensor
-from ember_ml import tensor
- 
+
 # Assuming actors will be moved/adapted to this new structure
 # from .actors.ray_metal_kernel import MetalKernelActor
 # from .actors.ray_sequence_processor import SequenceProcessorActor

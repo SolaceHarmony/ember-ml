@@ -7,12 +7,13 @@ abstraction system for optimal performance across different hardware.
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple # Removed Union, Callable
+from typing import Any, Dict, List, Optional, Tuple  # Removed Union, Callable
+
 import pandas as pd
 
-from ember_ml import tensor
 from ember_ml import ops
 from ember_ml import stats
+from ember_ml import tensor
 
 # Set up logging
 logger = logging.getLogger(__name__)

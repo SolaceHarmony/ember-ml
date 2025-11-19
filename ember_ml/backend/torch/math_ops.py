@@ -4,10 +4,12 @@ PyTorch math operations for ember_ml.
 This module provides PyTorch implementations of math operations.
 """
 
-import torch
 from typing import Union, Optional, List, Tuple, Any
 
+import torch
+
 from ember_ml.backend.torch.types import TensorLike, ShapeLike
+
 
 # We avoid creating global instances to prevent circular imports
 # Each function will create its own instances when needed

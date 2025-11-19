@@ -5,10 +5,9 @@ This module provides a backend-agnostic implementation of the MSE loss
 that works with any backend (NumPy, PyTorch, MLX).
 """
 
-from typing import Dict, List, Optional, Union, Any, Callable
-
 from ember_ml import ops
 from ember_ml.training.loss.base import Loss
+
 
 class MSELoss(Loss):
     """

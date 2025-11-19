@@ -5,15 +5,15 @@ This module provides implementations of StrideAwareWiredCfCCell and StrideAwareC
 which are specialized recurrent neural network components for multi-timescale processing.
 """
 
-from typing import Union, Optional, Dict, Any # Added Dict, Any
+from typing import Dict, Any  # Added Dict, Any
 
 from ember_ml import ops, tensor
-from ember_ml.nn.modules import Parameter # Module removed, inheriting from ModuleWiredCell instead
-from ember_ml.nn.modules.wiring import NeuronMap # Use renamed base class
-from ember_ml.nn.modules import Module # Import parent class
 from ember_ml.nn.initializers import glorot_uniform, orthogonal, BinomialInitializer
-from ember_ml.nn.modules import activations # Import activations module
-from ember_ml.nn.modules.activations import get_activation # Import the new helper
+from ember_ml.nn.modules import Module  # Import parent class
+from ember_ml.nn.modules import Parameter  # Module removed, inheriting from ModuleWiredCell instead
+from ember_ml.nn.modules.activations import get_activation  # Import the new helper
+from ember_ml.nn.modules.wiring import NeuronMap  # Use renamed base class
+
 
 # Local lecun_tanh function removed, use activations.lecun_tanh instead
 

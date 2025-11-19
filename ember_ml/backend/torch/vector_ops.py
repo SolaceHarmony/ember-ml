@@ -5,8 +5,10 @@ This module provides PyTorch implementations of vector operations including FFT 
 and wave signal analysis functions.
 """
 
+from typing import Optional, Tuple, Sequence  # Remove unused List, Union, Any
+
 import torch
-from typing import Optional, Tuple, Sequence # Remove unused List, Union, Any
+
 from ember_ml.backend.torch.types import TensorLike, Shape, Axis, default_float
 
 
@@ -237,7 +239,6 @@ def compute_phase_coherence(input_wave1: TensorLike, input_wave2: TensorLike,
         A PyTorch scalar tensor representing the phase coherence metric (0.0 to 1.0).
     """
     from ember_ml.backend.torch.tensor import TorchTensor
-    from ember_ml.backend.torch.math_ops import pi
     tensor_ops = TorchTensor()
     wave1_tensor = tensor_ops.convert_to_tensor(input_wave1)
     wave2_tensor = tensor_ops.convert_to_tensor(input_wave2)

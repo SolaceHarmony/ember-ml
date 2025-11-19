@@ -4,15 +4,17 @@ Metrics utilities for the ember_ml library.
 This module provides metrics utilities for the ember_ml library.
 """
 
-from typing import Union, List, Tuple, Optional, Dict, Any
-from ember_ml import tensor, ops
-from ember_ml.types import TensorLike
-from ember_ml import stats
+from typing import Tuple, Dict
 
 # Import sklearn metrics that we haven't implemented yet
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score, r2_score
 )
+
+from ember_ml import stats
+from ember_ml import tensor, ops
+from ember_ml.types import TensorLike
+
 
 def classification_metrics(y_true: TensorLike, y_pred: TensorLike) -> Dict[str, float]:
     """

@@ -8,6 +8,8 @@ from typing import Tuple, Optional, Any
 
 from ember_ml import ops, tensor
 from ember_ml.types import TensorLike
+
+
 class BinomialInitializer:
     """
     Initializer that generates a binary mask with given probability.

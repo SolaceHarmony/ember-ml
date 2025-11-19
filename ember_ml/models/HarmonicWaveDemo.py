@@ -1,12 +1,16 @@
+from typing import List
+
 import matplotlib.pyplot as plt
 from transformers import AutoTokenizer, AutoModel
+
 # Removed: import torch
 # Removed: from sklearn.metrics.pairwise import cosine_similarity (unused)
 from ember_ml import ops, stats
 # Ensure stats ops are accessible if stats.mean is used later
 # from ember_ml.ops import stats # Or access via stats.mean
 from ember_ml import tensor
-from typing import List, Optional
+
+
 def harmonic_wave(params, t, batch_size: int):
     """
     Generate a harmonic wave based on parameters.

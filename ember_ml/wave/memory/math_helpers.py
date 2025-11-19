@@ -4,10 +4,11 @@ Provides core operations for vector manipulation and wave calculations.
 """
 
 import math
-from typing import List, Tuple, Union, Optional
+from typing import List
 
 from ember_ml import ops, tensor
 from ember_ml.types import TensorLike
+
 
 def _to_scalar(value) -> float:
     try:

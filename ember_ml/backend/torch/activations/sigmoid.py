@@ -1,7 +1,10 @@
 # ember_ml/backend/torch/activations/sigmoid.py
-import torch
 from typing import Optional
+
+import torch
+
 from ember_ml.backend.torch.types import TensorLike, DType
+
 
 def sigmoid(x: TensorLike, dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
     """

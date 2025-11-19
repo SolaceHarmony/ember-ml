@@ -1,12 +1,13 @@
 """NumPy tensor creation operations."""
 
-from typing import Any, List, Literal, Optional, Union
+from typing import List, Literal, Optional, Union
 
 import numpy as np
 
-from ember_ml.backend.numpy.types import DType, TensorLike, Shape, ShapeLike, ScalarLike
 # Default dtypes will be handled by _create_new_tensor
-from ember_ml.backend.numpy.tensor.ops.utility import _create_new_tensor # Import the helper
+from ember_ml.backend.numpy.tensor.ops.utility import _create_new_tensor  # Import the helper
+from ember_ml.backend.numpy.types import DType, TensorLike, Shape, ShapeLike, ScalarLike
+
 
 def zeros(shape: Shape, dtype: Optional[DType] = None, device: Optional[str] = None) -> np.ndarray:
     """Create a NumPy array of zeros using the helper."""

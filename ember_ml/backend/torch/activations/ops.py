@@ -1,8 +1,8 @@
 # ember_ml/backend/torch/activations/ops.py
 import torch
-from typing import Any
 
 from ember_ml.backend.torch.types import TensorLike
+
 # Removed ActivationOps import as class wrapper is being removed
 # from ember_ml.nn.modules.activations.ops.activation_ops import ActivationOps
 

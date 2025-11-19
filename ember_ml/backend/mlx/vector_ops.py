@@ -4,9 +4,12 @@ MLX implementation of vector operations.
 This module provides MLX implementations of vector operations.
 """
 
+from typing import Optional, Tuple, List, Union, Any  # Keep Any for now
+
 import mlx.core as mx
-from typing import Optional, Tuple, List, Union, Any # Keep Any for now
-from ember_ml.backend.mlx.types import TensorLike, Shape, Axis, default_float # Remove unused default_int
+
+from ember_ml.backend.mlx.types import TensorLike, Shape, Axis, default_float  # Remove unused default_int
+
 
 # We avoid creating global instances to prevent circular imports
 # Each function will create its own instances when needed

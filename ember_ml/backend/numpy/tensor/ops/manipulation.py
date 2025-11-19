@@ -1,9 +1,11 @@
 """NumPy tensor manipulation operations."""
 
-import numpy as np
 from typing import Optional, Union, List
 
+import numpy as np
+
 from ember_ml.backend.numpy.types import TensorLike, ShapeLike, Shape
+
 
 def reshape(tensor: TensorLike, shape: ShapeLike) -> np.ndarray:
     """

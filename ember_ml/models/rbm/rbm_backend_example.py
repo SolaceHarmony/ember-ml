@@ -5,16 +5,19 @@ This script shows how to use the RBM implementation with different backends
 (NumPy, PyTorch, MLX) and compares their performance.
 """
 
+import importlib.util
 import time
+
 import matplotlib.pyplot as plt
 from sklearn import datasets
-from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
-import importlib.util
-from ember_ml import tensor
+from sklearn.preprocessing import MinMaxScaler
+
 # Import our neural library
 import ember_ml as nl
+from ember_ml import tensor
 from ember_ml.models.rbm_backend import RBM
+
 
 def is_backend_available(backend_name):
     """Check if a backend is available."""

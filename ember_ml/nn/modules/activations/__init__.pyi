@@ -5,7 +5,7 @@ This provides explicit type hints for all dynamically aliased activation operati
 allowing type checkers to recognize the proper signatures of activation functions.
 """
 
-from typing import Optional, Callable, Any, Union, Tuple, List
+from typing import Callable, Any
 
 from ember_ml.types import TensorLike
 

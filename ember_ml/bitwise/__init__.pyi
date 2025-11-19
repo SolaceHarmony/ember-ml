@@ -7,11 +7,12 @@ Follows the pattern in ember_ml/ops/__init__.pyi using TensorLike for inputs
 and a generic Tensor (Any) for the backend-specific return type.
 """
 
-from typing import List, Optional, Any, Union, Tuple, Literal
+from typing import List, Any, Union
 
 # Import common types used across ops
 # Assuming TensorLike is defined to accept various inputs and Tensor is Any for backend type
 from ember_ml.types import TensorLike
+
 type Tensor = Any # Represents the backend-specific tensor type (e.g., mx.array)
 
 # Basic bitwise operations

@@ -93,7 +93,7 @@ def register_op(name, categories=None):
 Update the main module to expose all operations at the top level:
 
 ```python
-# ember_ml/__init__.py
+# ember_ml/tensor.py
 
 from ember_ml.backend import get_backend, auto_select_backend, set_backend
 
@@ -220,7 +220,7 @@ def ones(shape, dtype=None):
 Create a module for each category:
 
 ```python
-# ember_ml/linalg/__init__.py
+# ember_ml/linalg/tensor.py
 
 from ember_ml.backend.registry import EnhancedBackendRegistry
 
@@ -270,7 +270,7 @@ Here are the primary function categories:
 ### Linear Algebra Module
 
 ```python
-# ember_ml/linalg/__init__.py
+# ember_ml/linalg/tensor.py
 
 """
 Linear algebra functions for Ember ML.
@@ -297,7 +297,7 @@ __all__ = list(_linalg_functions.keys())
 ### Stats Module
 
 ```python
-# ember_ml/stats/__init__.py
+# ember_ml/stats/tensor.py
 
 """
 Statistical functions for Ember ML.
@@ -324,7 +324,7 @@ __all__ = list(_stats_functions.keys())
 ### Activations Module
 
 ```python
-# ember_ml/activations/__init__.py
+# ember_ml/activations/tensor.py
 
 """
 Activation functions for Ember ML.
@@ -388,7 +388,7 @@ Ensure test coverage for:
 Create a compatibility layer to transition users:
 
 ```python
-# ember_ml/nn/tensor/__init__.py
+# ember_ml/nn/tensor/tensor.py
 
 import warnings
 
@@ -409,7 +409,7 @@ from ember_ml import reshape, transpose, concatenate, stack, split
 Add warnings to deprecated functions:
 
 ```python
-# ember_ml/nn/tensor/common/__init__.py
+# ember_ml/nn/tensor/common/tensor.py
 
 def array(data, dtype=None):
     """Create a tensor array (DEPRECATED)."""

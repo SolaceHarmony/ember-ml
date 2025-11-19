@@ -1,7 +1,6 @@
 # ember_ml/backend/mlx/activations/ops.py
 import mlx.core as mx
 import mlx.nn as mx_nn
-from typing import Any
 
 from ember_ml.backend.mlx.types import TensorLike
 

@@ -2,11 +2,13 @@
 """
 Dropout regularization module.
 """
-from typing import Dict, Any # Added imports
+from typing import Dict, Any  # Added imports
+
 from ember_ml import ops
-from ember_ml.nn.modules import Module
 from ember_ml import tensor
+from ember_ml.nn.modules import Module
 from ember_ml.types import TensorLike
+
 
 class Dropout(Module):
     """

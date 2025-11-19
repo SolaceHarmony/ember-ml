@@ -3,9 +3,9 @@
 from typing import Optional, Tuple
 
 from ember_ml import ops, tensor
+from ember_ml.nn.initializers import glorot_uniform
 from ember_ml.nn.modules import Module, Parameter
 from ember_ml.nn.modules.activations import get_activation
-from ember_ml.nn.initializers import glorot_uniform
 
 
 class StrideAwareCell(Module):

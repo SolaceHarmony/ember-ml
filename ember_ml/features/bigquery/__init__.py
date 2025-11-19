@@ -10,7 +10,10 @@ from ember_ml.features.bigquery.client import (
     execute_query,
     fetch_table_schema
 )
-
+from ember_ml.features.bigquery.encoding import (
+    hash_encode,
+    one_hot_encode
+)
 from ember_ml.features.bigquery.feature_processing import (
     process_numeric_features,
     process_categorical_features,
@@ -19,12 +22,6 @@ from ember_ml.features.bigquery.feature_processing import (
     remove_outliers,
     normalize_robust
 )
-
-from ember_ml.features.bigquery.encoding import (
-    hash_encode,
-    one_hot_encode
-)
-
 from ember_ml.features.bigquery.visualization import (
     create_sample_table,
     create_sample_table_from_tensor,

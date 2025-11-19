@@ -5,10 +5,12 @@ This module provides a class for processing data into multi-stride temporal repr
 """
 
 from typing import Dict, List, Optional, Any
+
 from ember_ml import ops, stats
 from ember_ml import tensor
 from ember_ml.features.pca_features import PCA
 from ember_ml.types import TensorLike
+
 
 class TemporalStrideProcessor:
     """

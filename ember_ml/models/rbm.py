@@ -5,13 +5,16 @@ This module provides an efficient implementation of Restricted Boltzmann Machine
 optimized for CPU usage with minimal computational requirements.
 """
 
+import os
 import time
 from datetime import datetime
-import os
-from typing import Dict, List, Optional, Tuple, Union, Any
+from typing import Dict, List, Optional, Union, Any
+
 from ember_ml import stats, ops, tensor
-from ember_ml.types import TensorLike # Corrected import for TensorLike
 from ember_ml.nn.modules.activations import sigmoid as sigmoid_activation
+from ember_ml.types import TensorLike  # Corrected import for TensorLike
+
+
 class RestrictedBoltzmannMachine:
     """
     CPU-friendly implementation of a Restricted Boltzmann Machine.

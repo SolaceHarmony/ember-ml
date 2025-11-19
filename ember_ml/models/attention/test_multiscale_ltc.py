@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+
 import ember_ml as nl
 from ember_ml import ops, tensor
 from ember_ml.models.attention.multiscale_ltc import (
@@ -7,7 +8,6 @@ from ember_ml.models.attention.multiscale_ltc import (
     visualize_feature_extraction,
     visualize_multiscale_dynamics
 )
-from ember_ml.nn.modules import AutoNCP # Updated import path
 
 
 def generate_synthetic_data(num_samples=1000, num_features=10, seed=42):

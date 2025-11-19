@@ -1,7 +1,5 @@
 import math
-from typing import List, Tuple, Optional
 from array import array
-import math
 
 from ember_ml import ops, tensor
 from ember_ml.types import TensorLike

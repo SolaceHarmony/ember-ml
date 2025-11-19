@@ -2,17 +2,18 @@
 Analysis metrics and measurement utilities for wave memory systems.
 """
 
-from dataclasses import dataclass
-from typing import List, Dict, Optional
 import time
+from dataclasses import dataclass
+from typing import List, Dict
 
-from ember_ml import ops, tensor
+from ember_ml import tensor
 from ember_ml.types import TensorLike
 from ..utils.math_helpers import (
     compute_energy_stability,
     compute_interference_strength,
     compute_phase_coherence
 )
+
 
 @dataclass
 class AnalysisMetrics:

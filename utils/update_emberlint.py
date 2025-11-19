@@ -4,7 +4,7 @@ Update EmberLint to improve backend consistency checking.
 
 This script enhances the EmberLint tool with the following improvements:
 1. Check for functions in monolithic backend files that haven't been moved to the folder structure
-2. Check ops/__init__.py for proper exposure of functions and interfaces
+2. Check ops/tensor.py for proper exposure of functions and interfaces
 3. Check for direct backend imports in ops files (e.g., "import backend as K")
 4. Improved backend consistency checking across the new folder structure
 """
@@ -81,12 +81,12 @@ def check_monolithic_backend_files() -> Dict[str, Dict[str, Any]]:
     # The monolithic backend files no longer exist, so we return an empty dictionary
     return {}
 
-def check_ops_init_exposure(ops_init_path: str = "ember_ml/ops/__init__.py") -> Dict[str, Any]:
+def check_ops_init_exposure(ops_init_path: str = "ember_ml/ops/tensor.py") -> Dict[str, Any]:
     """
-    Check ops/__init__.py for proper exposure of functions and interfaces.
+    Check ops/tensor.py for proper exposure of functions and interfaces.
     
     Args:
-        ops_init_path: Path to the ops/__init__.py file
+        ops_init_path: Path to the ops/tensor.py file
         
     Returns:
         Dict containing:
@@ -106,7 +106,7 @@ def check_ops_init_exposure(ops_init_path: str = "ember_ml/ops/__init__.py") -> 
             interface_class = ''.join(word.capitalize() for word in interface_name.split('_'))
             interfaces.add(interface_class)
     
-    # Extract exposed interfaces and functions from ops/__init__.py
+    # Extract exposed interfaces and functions from ops/tensor.py
     exposed_interfaces = set()
     exposed_functions = set()
     
@@ -389,8 +389,8 @@ def main():
     #     print(f"  Functions in folder structure: {len(result['folder_functions'])}")
     #     print(f"  Unmigrated functions: {len(result['unmigrated_functions'])}")
     
-    # Check ops/__init__.py for proper exposure
-    print("\nChecking ops/__init__.py for proper exposure...")
+    # Check ops/tensor.py for proper exposure
+    print("\nChecking ops/tensor.py for proper exposure...")
     ops_init_results = check_ops_init_exposure()
     
     print(f"  Exposed interfaces: {len(ops_init_results['exposed_interfaces'])}")

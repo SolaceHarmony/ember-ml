@@ -6,12 +6,14 @@ using mlx.array with dtype=uint16 as the underlying representation for
 binary wave and bitwise operations.
 """
 
-import mlx.core as mx
-from typing import Tuple, Union, List, Optional, Any
 from enum import Enum
+from typing import Union, List
+
+import mlx.core as mx
 
 # Import the base class from the same directory
 from .mega_number import MLXMegaNumber
+
 
 class InterferenceMode(Enum):
     """Interference modes for binary wave operations."""

@@ -4,19 +4,18 @@ Column-based Feature Extraction Library
 This module provides tools for feature extraction on a per-column basis,
 which can be useful for handling heterogeneous data types and structures.
 """
+from typing import Dict, Optional, Any
+
 import pandas as pd
-from typing import Dict, List, Optional, Tuple, Any, Union
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
-from ember_ml.features.pca_features import PCA
-from ember_ml.features.tensor_features import one_hot
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+
 # Import ember_ml ops for backend-agnostic operations
 from ember_ml import ops, stats
 from ember_ml import tensor
-
-
-from sklearn.pipeline import Pipeline
+from ember_ml.features.pca_features import PCA
 
 
 class ColumnFeatureExtractor:
@@ -319,27 +318,27 @@ class ColumnFeatureExtractor:
             
             # Use ops with numpy arrays
             # Hour of day (0-23)
-            two_pi = ops.multiply(tensor.convert_to_tensor(2.0), tensor.convert_to_tensor(ops.pi))
-            hour_tensor = tensor.convert_to_tensor(hour_array)
-            result[f"{column}_sin_hour"] = ops.sin(ops.divide(ops.multiply(two_pi, hour_tensor), tensor.convert_to_tensor(23.0)))
-            result[f"{column}_cos_hour"] = ops.cos(ops.divide(ops.multiply(two_pi, hour_tensor), tensor.convert_to_tensor(23.0)))
+            two_pi = ops.multiply(tensor(2.0), tensor(ops.pi))
+            hour_tensor = tensor(hour_array)
+            result[f"{column}_sin_hour"] = ops.sin(ops.divide(ops.multiply(two_pi, hour_tensor), tensor(23.0)))
+            result[f"{column}_cos_hour"] = ops.cos(ops.divide(ops.multiply(two_pi, hour_tensor), tensor(23.0)))
             
             # Day of week (0-6)
-            dayofweek_tensor = tensor.convert_to_tensor(dayofweek_array)
-            result[f"{column}_sin_dayofweek"] = ops.sin(ops.divide(ops.multiply(two_pi, dayofweek_tensor), tensor.convert_to_tensor(6.0)))
-            result[f"{column}_cos_dayofweek"] = ops.cos(ops.divide(ops.multiply(two_pi, dayofweek_tensor), tensor.convert_to_tensor(6.0)))
+            dayofweek_tensor = tensor(dayofweek_array)
+            result[f"{column}_sin_dayofweek"] = ops.sin(ops.divide(ops.multiply(two_pi, dayofweek_tensor), tensor(6.0)))
+            result[f"{column}_cos_dayofweek"] = ops.cos(ops.divide(ops.multiply(two_pi, dayofweek_tensor), tensor(6.0)))
             
             # Day of month (1-31)
-            day_tensor = tensor.convert_to_tensor(day_array)
-            day_minus_one = ops.subtract(day_tensor, tensor.convert_to_tensor(1.0))
-            result[f"{column}_sin_day"] = ops.sin(ops.divide(ops.multiply(two_pi, day_minus_one), tensor.convert_to_tensor(30.0)))
-            result[f"{column}_cos_day"] = ops.cos(ops.divide(ops.multiply(two_pi, day_minus_one), tensor.convert_to_tensor(30.0)))
+            day_tensor = tensor(day_array)
+            day_minus_one = ops.subtract(day_tensor, tensor(1.0))
+            result[f"{column}_sin_day"] = ops.sin(ops.divide(ops.multiply(two_pi, day_minus_one), tensor(30.0)))
+            result[f"{column}_cos_day"] = ops.cos(ops.divide(ops.multiply(two_pi, day_minus_one), tensor(30.0)))
             
             # Month (1-12)
-            month_tensor = tensor.convert_to_tensor(month_array)
-            month_minus_one = ops.subtract(month_tensor, tensor.convert_to_tensor(1.0))
-            result[f"{column}_sin_month"] = ops.sin(ops.divide(ops.multiply(two_pi, month_minus_one), tensor.convert_to_tensor(11.0)))
-            result[f"{column}_cos_month"] = ops.cos(ops.divide(ops.multiply(two_pi, month_minus_one), tensor.convert_to_tensor(11.0)))
+            month_tensor = tensor(month_array)
+            month_minus_one = ops.subtract(month_tensor, tensor(1.0))
+            result[f"{column}_sin_month"] = ops.sin(ops.divide(ops.multiply(two_pi, month_minus_one), tensor(11.0)))
+            result[f"{column}_cos_month"] = ops.cos(ops.divide(ops.multiply(two_pi, month_minus_one), tensor(11.0)))
         
         if strategy in ['components', 'both']:
             # Direct components
@@ -353,8 +352,8 @@ class ColumnFeatureExtractor:
             result[f"{column}_quarter"] = dt.quarter
             
             # Time since epoch - use tensor.cast instead of direct int64 cast
-            timestamp_tensor = tensor.convert_to_tensor(df[column].astype('int64').to_numpy())
-            divisor = tensor.convert_to_tensor(10**9)
+            timestamp_tensor = tensor(df[column].astype('int64').to_numpy())
+            divisor = tensor(10**9)
             result[f"{column}_timestamp"] = tensor.cast(ops.floor_divide(timestamp_tensor, divisor), dtype=tensor.int32)
         
         return pd.DataFrame(result, index=df.index)
@@ -380,31 +379,31 @@ class ColumnFeatureExtractor:
                 f"{column}_length": text_data.str.len(),
                 f"{column}_word_count": text_data.str.split().str.len(),
                 f"{column}_char_per_word": ops.divide(
-                    tensor.convert_to_tensor(text_data.str.len().to_numpy()),
+                    tensor(text_data.str.len().to_numpy()),
                     ops.add(
-                        tensor.convert_to_tensor(text_data.str.split().str.len().to_numpy()),
-                        tensor.convert_to_tensor(1.0)
+                        tensor(text_data.str.split().str.len().to_numpy()),
+                        tensor(1.0)
                     )
                 ),
                 f"{column}_uppercase_ratio": ops.divide(
-                    tensor.convert_to_tensor(text_data.str.count(r'[A-Z]').to_numpy()),
+                    tensor(text_data.str.count(r'[A-Z]').to_numpy()),
                     ops.add(
-                        tensor.convert_to_tensor(text_data.str.len().to_numpy()),
-                        tensor.convert_to_tensor(1.0)
+                        tensor(text_data.str.len().to_numpy()),
+                        tensor(1.0)
                     )
                 ),
                 f"{column}_digit_ratio": ops.divide(
-                    tensor.convert_to_tensor(text_data.str.count(r'[0-9]').to_numpy()),
+                    tensor(text_data.str.count(r'[0-9]').to_numpy()),
                     ops.add(
-                        tensor.convert_to_tensor(text_data.str.len().to_numpy()),
-                        tensor.convert_to_tensor(1.0)
+                        tensor(text_data.str.len().to_numpy()),
+                        tensor(1.0)
                     )
                 ),
                 f"{column}_special_ratio": ops.divide(
-                    tensor.convert_to_tensor(text_data.str.count(r'[^a-zA-Z0-9\s]').to_numpy()),
+                    tensor(text_data.str.count(r'[^a-zA-Z0-9\s]').to_numpy()),
                     ops.add(
-                        tensor.convert_to_tensor(text_data.str.len().to_numpy()),
-                        tensor.convert_to_tensor(1.0)
+                        tensor(text_data.str.len().to_numpy()),
+                        tensor(1.0)
                     )
                 )
             }

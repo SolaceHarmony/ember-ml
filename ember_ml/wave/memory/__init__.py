@@ -32,11 +32,11 @@ Components:
 All implementations maintain backend independence through ops abstraction.
 """
 
-from ember_ml.wave.memory.metrics import *
-from ember_ml.wave.memory.visualizer import *
 from ember_ml.wave.memory.math_helpers import *
+from ember_ml.wave.memory.metrics import *
 from ember_ml.wave.memory.multi_sphere import *
 from ember_ml.wave.memory.sphere_overlap import *
+from ember_ml.wave.memory.visualizer import *
 
 __all__ = [
     'metrics',

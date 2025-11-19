@@ -9,9 +9,9 @@ operations from :mod:`ember_ml.ops`.
 from typing import Dict, Any, List
 
 from ember_ml import tensor, ops
-from ember_ml.types import TensorLike
 from ember_ml.nn.modules import Module, activations
 from ember_ml.nn.modules.rnn import LSTM
+from ember_ml.types import TensorLike
 
 
 class AttentionLayer(Module):
@@ -155,11 +155,11 @@ class HybridNeuron(Module):
         self.tau = state_dict['tau']
         self.dt = state_dict['dt']
         self.hidden_size = state_dict['hidden_size']
-        # tensor.convert_to_tensor returns backend tensors
-        self.memory_buffer = [tensor.convert_to_tensor(m) for m in state_dict['memory_buffer']]
+        # tensor(...) returns backend tensors
+        self.memory_buffer = [tensor(m) for m in state_dict['memory_buffer']]
         self.max_memory_size = state_dict['max_memory_size']
-        self.state = tensor.convert_to_tensor(state_dict['state'])
-        self.history = [tensor.convert_to_tensor(h) for h in state_dict['history']]
+        self.state = tensor(state_dict['state'])
+        self.history = [tensor(h) for h in state_dict['history']]
 
 
 
@@ -223,8 +223,8 @@ class HybridLNNModel(Module):
             t_end_val = tensor.item(times[t_idx + 1])
             
             t_span_list = [t_start_val, t_end_val]
-            # tensor.convert_to_tensor returns backend tensor
-            t_span = tensor.convert_to_tensor(t_span_list, dtype=input_dtype, device=current_device)
+            # tensor(...) returns backend tensor
+            t_span = tensor(t_span_list, dtype=input_dtype, device=current_device)
             
             u = input_sequence[:, t_idx, :] # u is a backend tensor slice
             

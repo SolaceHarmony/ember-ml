@@ -5,11 +5,8 @@ This script demonstrates how to use the RBMModule and RBMVisualizer
 classes to visualize an RBM on a simple dataset.
 """
 
-import random
-import matplotlib.pyplot as plt
 import os
-import time
-from datetime import datetime
+import random
 
 # Import our modules
 from ember_ml import tensor

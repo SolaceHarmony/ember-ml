@@ -2,13 +2,14 @@
 MLX descriptive statistical operations for ember_ml.
 """
 
-import mlx.core as mx
-from typing import Optional, List, Tuple
-
 # Assuming TensorLike and ShapeLike are defined appropriately elsewhere,
 # potentially in a types module or directly using Union types.
 # For now, using Any for simplicity until types module is confirmed.
 from typing import Any
+from typing import Optional
+
+import mlx.core as mx
+
 TensorLike = Any
 ShapeLike = Any
 

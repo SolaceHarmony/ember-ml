@@ -6,12 +6,13 @@ specifically designed for Apple Silicon hardware, leveraging MLX's
 unified memory architecture.
 """
 
-from typing import Dict, Any, Optional, List, Tuple, Union, Callable
 import time
+from typing import Any, Optional, List, Tuple, Callable
 
 from ember_ml import ops
-from ember_ml.nn.modules import Module, Parameter
 from ember_ml import tensor
+from ember_ml.nn.modules import Module
+
 
 class MemoryOptimizedTrainer:
     """

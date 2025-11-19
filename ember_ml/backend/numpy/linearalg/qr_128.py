@@ -6,8 +6,10 @@ particularly effective for non-square matrices. It uses High-Performance Computi
 (HPC) techniques to ensure numerical stability.
 """
 
-import numpy as np
 from typing import Tuple
+
+import numpy as np
+
 
 def qr_128(a: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     """

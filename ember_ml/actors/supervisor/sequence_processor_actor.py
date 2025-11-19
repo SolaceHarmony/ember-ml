@@ -2,17 +2,16 @@
 Ray implementation of the SequenceProcessorActor, integrated into the ember_ml.actors package.
 """
 
-import ray
-import asyncio
 import time
 import uuid
-from ember_ml.types import TensorLike
-# Import EmberTensor and ops
-from ember_ml import tensor
-from ember_ml import ops
 
+import ray
+
+# Import EmberTensor and ops
+from ember_ml import ops
 # Import the MetalKernelActor from its new location
 from ember_ml.actors.task.metal_kernel_actor import MetalKernelActor
+from ember_ml.types import TensorLike
 
 
 @ray.remote

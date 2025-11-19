@@ -2,21 +2,23 @@
 Base attention mechanisms and multi-head attention implementations.
 """
 
-from typing import Optional
 from abc import ABC, abstractmethod
-from ember_ml.types import TensorLike
-from ember_ml import ops, tensor
-from ember_ml import float32, shape, full_like, expand_dims, arange, transpose, full_like
+from typing import Optional
+
 from ember_ml import concatenate, cast, tile, reshape
-from ember_ml.nn.modules import Module
-from ember_ml.nn.layers import Linear
-from ember_ml.nn.layers import Dropout
+from ember_ml import float32, shape, full_like, expand_dims, arange, transpose, full_like
+from ember_ml import ops
 from ember_ml import tensor
+from ember_ml.nn.layers import Dropout
+from ember_ml.nn.layers import Linear
+from ember_ml.nn.modules import Module
 from ember_ml.nn.modules.activations import tanh, softmax
+from ember_ml.types import TensorLike
+
 # Removed problematic global assignment
 
 # Constants
-NINF = tensor.convert_to_tensor([(-1.0e38,)],float32)  # Approximation of negative infinity
+NINF = ember_ml.tensor([(-1.0e38,)], float32)  # Approximation of negative infinity
 
 class BaseAttention(Module, ABC):
     """Abstract base class for attention mechanisms."""

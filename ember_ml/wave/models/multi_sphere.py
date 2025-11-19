@@ -5,13 +5,15 @@ This module provides a multi-sphere model for wave-based neural processing,
 which represents data points on multiple hyperspheres for enhanced representation.
 """
 
+import math
+from typing import List, Dict, Any
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Optional, Tuple, List, Dict, Any
-from ember_ml import tensor # Added import
-from ember_ml.types import TensorLike # Added import
-import math
+
+from ember_ml import tensor  # Added import
+
 
 class SphereProjection(nn.Module):
     """

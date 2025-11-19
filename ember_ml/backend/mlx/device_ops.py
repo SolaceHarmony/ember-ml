@@ -1,6 +1,6 @@
-"""Device helpers for the MLX backend."""
-
-from __future__ import annotations
+"""
+MLX device operations for ember_ml.
+"""
 
 from typing import Any, Dict, List, Optional
 

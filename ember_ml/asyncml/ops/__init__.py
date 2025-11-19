@@ -7,8 +7,6 @@ attribute access to the appropriate backend module, wrapping functions in asynch
 wrappers using asyncio.to_thread.
 """
 
-from typing import Any, List
-
 # Import the async ops module from the proxy module
 from ember_ml.asyncml.ops.proxy import async_ops_module
 

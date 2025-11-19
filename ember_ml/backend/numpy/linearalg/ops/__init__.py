@@ -1,9 +1,3 @@
-from ember_ml.backend.numpy.linearalg.ops.matrix_ops import (
-    norm,
-    det,
-    diag,
-    diagonal
-)
 from ember_ml.backend.numpy.linearalg.ops.decomp_ops import (
     cholesky,
     svd,
@@ -14,7 +8,12 @@ from ember_ml.backend.numpy.linearalg.ops.decomp_ops import (
 from ember_ml.backend.numpy.linearalg.ops.inverses_ops import (
     inv
 )
-
+from ember_ml.backend.numpy.linearalg.ops.matrix_ops import (
+    norm,
+    det,
+    diag,
+    diagonal
+)
 from ember_ml.backend.numpy.linearalg.ops.solvers_ops import (
     solve,
     lstsq

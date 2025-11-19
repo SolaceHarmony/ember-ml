@@ -5,19 +5,20 @@ This script demonstrates how to use the RBM-based anomaly detector
 with the generic feature extraction library to detect anomalies in data.
 """
 
-import pandas as pd
-import matplotlib.pyplot as plt
 import os
 import time
 from datetime import datetime
 
+import matplotlib.pyplot as plt
+import pandas as pd
+
+from ember_ml import stats
 # Import our modules from ember_ml
 from ember_ml.data import GenericCSVLoader, GenericTypeDetector
-from ember_ml.features.temporal_processor import TemporalStrideProcessor
 from ember_ml.features.feature_engineer import GenericFeatureEngineer
 from ember_ml.models.rbm_anomaly_detector import RBMBasedAnomalyDetector
 from ember_ml.visualization.rbm_visualizer import RBMVisualizer
-from ember_ml import stats
+
 
 def generate_telemetry_data(n_samples=1000, n_features=10, anomaly_fraction=0.05):
     """

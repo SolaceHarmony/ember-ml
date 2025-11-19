@@ -1,5 +1,7 @@
-from ember_ml import ops, tensor
 from typing import Optional
+
+from ember_ml import ops, tensor
+
 
 class WaveFeatureExtractor:
     """Extract features from waveform data using backend-agnostic operations.

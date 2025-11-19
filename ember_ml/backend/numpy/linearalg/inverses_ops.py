@@ -5,11 +5,10 @@ This module provides NumPy operations.
 """
 
 import numpy as np
-from typing import Union, Tuple, Optional
 
+from ember_ml.backend.numpy.tensor import NumpyDType
 # Import from tensor_ops
 from ember_ml.backend.numpy.types import TensorLike
-from ember_ml.backend.numpy.tensor import NumpyDType
 
 dtype_obj = NumpyDType()
 

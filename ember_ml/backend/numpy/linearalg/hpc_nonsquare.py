@@ -1,6 +1,6 @@
 """NumPy implementation for non-square orthogonal matrices."""
 import numpy as np
-from typing import Tuple, Optional
+
 
 def orthogonalize_nonsquare(a: np.ndarray, max_block_size: int = 32) -> np.ndarray:
     """

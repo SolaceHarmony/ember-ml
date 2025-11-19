@@ -4,12 +4,15 @@ Wave visualization utilities.
 This module provides utilities for visualizing wave signals.
 """
 
+from typing import List, Dict
+
 import matplotlib.pyplot as plt
-from typing import Union, List, Tuple, Optional, Dict
 from matplotlib.figure import Figure
-from ember_ml.types import TensorLike # Added import
-from .wave_analysis import compute_fft, compute_stft
+
 from ember_ml import ops, stats
+from ember_ml.types import TensorLike  # Added import
+from .wave_analysis import compute_fft, compute_stft
+
 # Try to import librosa, but don't fail if it's not available
 try:
     import librosa # type: ignore

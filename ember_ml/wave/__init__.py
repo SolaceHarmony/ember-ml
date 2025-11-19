@@ -18,14 +18,13 @@ class WaveSynthesizer:
     """Wave synthesizer for wave-based neural processing."""
     pass
 
-# Import the rest of the modules
-from ember_ml.wave.binary import *
-from ember_ml.wave.memory import *
-from ember_ml.wave.audio import *
-from ember_ml.wave.limb import *
-
 # Import the harmonic module itself
 import ember_ml.wave.harmonic
+from ember_ml.wave.audio import *
+# Import the rest of the modules
+from ember_ml.wave.binary import *
+from ember_ml.wave.limb import *
+from ember_ml.wave.memory import *
 
 __all__ = [
     'binary',

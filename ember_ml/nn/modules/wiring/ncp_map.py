@@ -8,10 +8,10 @@ which divides neurons into sensory, inter, and motor neurons.
 from typing import Optional, Tuple, List, Dict, Any
 
 from ember_ml import ops, tensor
-from ember_ml.types import TensorLike
-
 # Already imports NeuronMap correctly
 from ember_ml.nn.modules.wiring.neuron_map import NeuronMap  # Explicit path
+from ember_ml.types import TensorLike
+
 
 class NCPMap(NeuronMap): # Name is already correct
     """

@@ -7,9 +7,11 @@ This module provides a backend-agnostic implementation of a fully connected
 
 from typing import Optional, Union, Tuple, Any, Dict, List
 
-from ember_ml import ops, stats
-from ember_ml.nn.modules import Module, Parameter
+from ember_ml import ops
 from ember_ml import tensor
+from ember_ml.nn.modules import Module, Parameter
+
+
 class Linear(Module):
     """
     Applies a linear transformation to the incoming data: y = x @ W.T + b
@@ -64,7 +66,7 @@ class Linear(Module):
             Output tensor of shape (..., out_features)
         """
         # Ensure x is a tensor
-        x = tensor.convert_to_tensor(x)
+        x = tensor(x)
         
         # Compute the linear transformation
         output = ops.matmul(x, tensor.transpose(self.weight))

@@ -2,14 +2,15 @@
 
 # import torch # Removed
 import matplotlib.pyplot as plt
+
+from ember_ml import ops  # For ops.multiply, ops.sin, ops.pi, ops.linearalg.norm etc.
+from ember_ml import tensor  # For tensor.EmberTensor, tensor.zeros etc.
 # Updated import path for Spherical LTC components
 from ember_ml.nn.modules.rnn.spherical_ltc import (
     SphericalLTCConfig,
     SphericalLTCChain
 )
 
-from ember_ml import tensor # For tensor.EmberTensor, tensor.zeros etc.
-from ember_ml import ops # For ops.multiply, ops.sin, ops.pi, ops.linearalg.norm etc.
 
 def generate_input_signal(
     total_time: float = 10.0,

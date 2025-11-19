@@ -1,9 +1,11 @@
 """NumPy tensor casting operations."""
 
-import numpy as np
 from typing import Any, Optional
 
+import numpy as np
+
 from ember_ml.backend.numpy.types import DType, TensorLike
+
 
 def _validate_dtype(dtype: DType) -> Optional[Any]:
     """

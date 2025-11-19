@@ -5,15 +5,14 @@ This script demonstrates how to use the RestrictedBoltzmannMachine and RBMVisual
 classes to train an RBM on a simple dataset and visualize the results.
 """
 
-import random
-import matplotlib.pyplot as plt
 import os
+import random
 import time
 from datetime import datetime
 
 # Import our modules
 from ember_ml import tensor
-from ember_ml.models.rbm import RBMModule, train_rbm, save_rbm, load_rbm
+from ember_ml.models.rbm import RBMModule, train_rbm, save_rbm
 from ember_ml.visualization.rbm_visualizer import RBMVisualizer
 
 

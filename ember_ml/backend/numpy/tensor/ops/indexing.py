@@ -2,13 +2,14 @@
 
 
 
-import numpy as np
+from typing import Literal, Optional, Union
 
-from typing import Any, List, Literal, Optional, Sequence, Union
+import numpy as np
 
 from ember_ml.backend.numpy.types import (
     TensorLike, Shape
 )
+
 
 def slice_tensor(tensor: TensorLike, starts: Shape, sizes: Shape) -> np.ndarray:
     """

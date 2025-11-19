@@ -5,9 +5,6 @@ This module provides a backend-agnostic implementation of the base loss class
 that works with any backend (NumPy, PyTorch, MLX).
 """
 
-from typing import Dict, List, Optional, Union, Any, Callable
-
-from ember_ml import ops
 
 class Loss:
     """

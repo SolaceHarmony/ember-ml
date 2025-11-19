@@ -5,16 +5,17 @@ This module provides an implementation of the RNN layer,
 which wraps an RNNCell to create a recurrent layer.
 """
 
-from typing import Optional, List, Dict, Any, Union, Tuple
+from typing import Dict, Any
 
 from ember_ml import ops
-from ember_ml import ops
-from ember_ml.nn.modules import Module, Parameter
 from ember_ml import tensor
 from ember_ml.nn.initializers import glorot_uniform, orthogonal
-from ember_ml.nn.modules.activations import get_activation
+from ember_ml.nn.modules import Module, Parameter
 # Import Dropout module from its new location
 from ember_ml.nn.modules.activations import Dropout
+from ember_ml.nn.modules.activations import get_activation
+
+
 class RNN(Module):
     """
     Recurrent Neural Network (RNN) layer.

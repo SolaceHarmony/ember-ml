@@ -4,11 +4,14 @@ Wave Transformer model.
 This module provides a transformer model for wave-based neural processing.
 """
 
+from typing import Optional
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Optional, Tuple, List
-from ember_ml import tensor # Added import
+
+from ember_ml import tensor  # Added import
+
 
 class WaveMultiHeadAttention(nn.Module):
     """

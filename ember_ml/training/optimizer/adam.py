@@ -8,8 +8,9 @@ that works with any backend (NumPy, PyTorch, MLX).
 # No specific typing imports needed currently
 
 from ember_ml import ops
-from ember_ml.training.optimizer.base import Optimizer
 from ember_ml import tensor
+from ember_ml.training.optimizer.base import Optimizer
+
 
 class Adam(Optimizer):
     """

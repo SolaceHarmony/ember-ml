@@ -8,11 +8,12 @@ which integrates spatial embedding with continuous-time dynamics.
 # (Removed unused typing imports)
 # (Removed unused numpy import)
 
-from ember_ml import ops, tensor
-from ember_ml.nn.modules import Module, Parameter
-from ember_ml.nn.modules.wiring import EnhancedNeuronMap
-from ember_ml.nn.modules.activations import get_activation
+from ember_ml import ops, tensor, stats
 from ember_ml.nn.initializers import glorot_uniform, orthogonal
+from ember_ml.nn.modules import Module, Parameter
+from ember_ml.nn.modules.activations import get_activation
+from ember_ml.nn.modules.wiring import EnhancedNeuronMap
+
 
 class seCfC(Module):
     """
@@ -122,12 +123,12 @@ class seCfC(Module):
 
         # Initialize learnable time_scale parameter
         ones = tensor.ones((units,))  # shape: (units,)
-        scale_val = tensor.convert_to_tensor(self.time_scale_factor, dtype=ones.dtype)
+        scale_val = tensor(self.time_scale_factor, dtype=ones.dtype)
         self.time_scale = Parameter(ops.multiply(ones, scale_val))
 
         # Convert spatial matrices to tensors
-        self.distance_tensor = tensor.convert_to_tensor(self.distance_matrix)
-        self.communicability_tensor = tensor.convert_to_tensor(self.communicability_matrix)
+        self.distance_tensor = tensor(self.distance_matrix)
+        self.communicability_tensor = tensor(self.communicability_matrix)
 
         # Mark as built
         self.built = True
@@ -180,9 +181,9 @@ class seCfC(Module):
         
         # Convert masks to tensors
         # Convert masks to tensors with float32 dtype to ensure compatibility with matmul
-        input_mask = tensor.convert_to_tensor(input_mask, dtype=tensor.float32)
-        recurrent_mask = tensor.convert_to_tensor(recurrent_mask, dtype=tensor.float32)
-        output_mask = tensor.convert_to_tensor(output_mask, dtype=tensor.float32)
+        input_mask = tensor(input_mask, dtype=tensor.float32)
+        recurrent_mask = tensor(recurrent_mask, dtype=tensor.float32)
+        output_mask = tensor(output_mask, dtype=tensor.float32)
         
         # Process sequence in reverse if go_backwards is True
         time_indices = range(time_steps - 1, -1, -1) if self.go_backwards else range(time_steps)

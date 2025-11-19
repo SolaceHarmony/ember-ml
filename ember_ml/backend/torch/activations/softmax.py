@@ -1,7 +1,10 @@
 # ember_ml/backend/torch/activations/softmax.py
-import torch
 from typing import Optional
+
+import torch
+
 from ember_ml.backend.torch.types import TensorLike, DType
+
 
 def softmax(x: TensorLike, axis: int = -1, dtype: Optional[DType] = None, device: Optional[str] = None) -> torch.Tensor:
     """

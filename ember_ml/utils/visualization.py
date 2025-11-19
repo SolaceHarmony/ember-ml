@@ -4,12 +4,14 @@ Visualization utilities for the ember_ml library.
 This module provides visualization utilities for the ember_ml library.
 """
 
-import matplotlib.pyplot as plt
+import io
 from typing import List, Optional
+
+import matplotlib.pyplot as plt
+from PIL import Image as PILImage
+
 from ember_ml import ops, tensor
 from ember_ml.types import TensorLike
-import io
-from PIL import Image as PILImage
 
 
 def plot_wave(wave: TensorLike, sample_rate: int = 44100, title: str = "Wave Plot") -> plt.Figure:
@@ -64,7 +66,6 @@ def plot_spectrogram(wave: TensorLike, sample_rate: int = 44100,
     return fig
 
 def plot_confusion_matrix(cm: TensorLike, class_names: Optional[List[str]] = None, title: str = "Confusion Matrix") -> plt.Figure:
-    from typing import Optional  # Import inside function to avoid unused import
     """
     Plot a confusion matrix.
     

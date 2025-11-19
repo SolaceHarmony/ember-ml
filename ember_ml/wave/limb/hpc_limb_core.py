@@ -4,7 +4,6 @@ Implements exact 64-bit chunked arithmetic for wave computations.
 """
 
 from array import array
-from typing import List, Union, Optional
 
 # Constants for limb arithmetic
 CHUNK_BITS = 64

@@ -6,14 +6,12 @@ These type aliases ensure consistent type annotations across the codebase and
 help with static type checking.
 """
 
-from typing import (
-    Any, List, Optional, Sequence, Tuple, Union, Literal,
-    TYPE_CHECKING
-)
 import os
+from typing import (
+    Any, List, Optional, Sequence, Tuple, Union, TYPE_CHECKING
+)
 
 import numpy as np
-
 
 # Basic type aliases that don't require imports
 Numeric = Union[int, float]
@@ -27,6 +25,23 @@ DimSize = Union[int, 'np.ndarray']
 Axis = Optional[Union[int, Sequence[int]]]
 IndexType = Union[int, Sequence[int], 'np.ndarray']
 Indices = Union[Sequence[int], 'np.ndarray']
+TensorLike = Optional[Union[ # type: ignore
+    Numeric,
+    bool,
+    List[Any],
+    Tuple[Any, ...],
+    'NumpyArray',
+    'numpy.ndarray',
+]]
+
+ScalarLike = Optional[Union[ # type: ignore
+    Numeric,
+    bool,
+    'NumpyArray',
+    'mx.array',
+    'numpy.ndarray',
+]]
+
 # Numpy specific
 NumpyArray = np.ndarray
 DTypeClass = np.dtype
@@ -43,7 +58,7 @@ ArrayLike = Any # type: ignore
 TensorLike = Any # type: ignore
 ScalarLike = Any # type: ignore
 DTypes = Any # type: ignore
-DType = Any
+DType = Any # type: ignore
 
 # Conditional type definitions
 if TYPE_CHECKING == True:
@@ -93,6 +108,7 @@ if TYPE_CHECKING == True:
 
 __all__ = [
     'Numeric',
+    'DType'
     'TensorLike',
     'Shape',
     'ShapeType', 

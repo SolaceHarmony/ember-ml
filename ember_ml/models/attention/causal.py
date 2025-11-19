@@ -5,14 +5,14 @@ Causal attention mechanisms incorporating temporal, causal, and novelty factors.
 from dataclasses import dataclass
 from typing import Optional, Dict, List, Tuple, Any
 
-from ember_ml import types, ops, tensor, stats, linearalg
-from ember_ml import tensor, float32, cast, zeros_like
 from ember_ml import full_like, copy, reshape, shape, zeros, transpose, expand_dims
 from ember_ml import item, int32, concatenate, slice_tensor
-from ember_ml.nn.layers import Linear, Sequential, Dropout
-from ember_ml.nn.modules import Tanh # Updated import path
-from ember_ml.nn.modules.activations import sigmoid
+from ember_ml import ops, stats, linearalg
+from ember_ml import tensor, float32, cast, zeros_like
 from ember_ml.models.attention.base import BaseAttention
+from ember_ml.nn.layers import Linear, Sequential, Dropout
+from ember_ml.nn.modules import Tanh  # Updated import path
+from ember_ml.nn.modules.activations import sigmoid
 from ember_ml.types import TensorLike
 
 # Constants

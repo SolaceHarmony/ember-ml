@@ -5,11 +5,11 @@ This module provides a specialized wiring pattern for robotics applications,
 implementing sensor processing, state estimation, and control layers.
 """
 
-from typing import Dict, Any, Optional, List, Tuple, Union, Callable
+from typing import Dict, Any, Optional
 
-from ember_ml import ops
-from ember_ml.nn.modules.wiring import NeuronMap
 from ember_ml import tensor
+from ember_ml.nn.modules.wiring import NeuronMap
+
 
 class RoboticsWiring(NeuronMap):
     """
@@ -112,7 +112,7 @@ class RoboticsWiring(NeuronMap):
             # Randomly select target state neurons
             for _ in range(self.sensor_fanout):
                 dest = tensor.random_choice(
-                    tensor.convert_to_tensor(list(self.state_range))
+                    tensor(list(self.state_range))
                 )
                 self.adjacency_matrix = tensor.with_value(
                     self.adjacency_matrix, src, dest, 1.0
@@ -121,7 +121,7 @@ class RoboticsWiring(NeuronMap):
             # Direct sensor-to-motor connections (reflexes)
             if tensor.random_uniform(()) < self.reflex_probability:
                 dest = tensor.random_choice(
-                    tensor.convert_to_tensor(list(self.control_range))
+                    tensor(list(self.control_range))
                 )
                 self.adjacency_matrix = tensor.with_value(
                     self.adjacency_matrix, src, dest, 1.0
@@ -132,10 +132,10 @@ class RoboticsWiring(NeuronMap):
         # Recurrent connections for state memory
         for _ in range(self.state_recurrent):
             src = tensor.random_choice(
-                tensor.convert_to_tensor(list(self.state_range))
+                tensor(list(self.state_range))
             )
             dest = tensor.random_choice(
-                tensor.convert_to_tensor(list(self.state_range))
+                tensor(list(self.state_range))
             )
             self.adjacency_matrix = tensor.with_value(
                 self.adjacency_matrix, src, dest, 1.0
@@ -148,7 +148,7 @@ class RoboticsWiring(NeuronMap):
             # Randomly select source state neurons
             for _ in range(self.control_fanin):
                 src = tensor.random_choice(
-                    tensor.convert_to_tensor(list(self.state_range))
+                    tensor(list(self.state_range))
                 )
                 self.adjacency_matrix = tensor.with_value(
                     self.adjacency_matrix, src, dest, 1.0

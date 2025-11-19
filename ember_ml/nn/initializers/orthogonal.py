@@ -1,7 +1,9 @@
 """Orthogonal initializer."""
 
 from typing import Sequence
-from ember_ml import ops, tensor # Import tensor for type hint
+
+from ember_ml import ops, tensor  # Import tensor for type hint
+
 
 def orthogonal(shape: Sequence[int], gain: float = 1.0) -> tensor.EmberTensor: # Use EmberTensor type hint
     """

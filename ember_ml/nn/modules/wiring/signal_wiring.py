@@ -5,11 +5,11 @@ This module provides a specialized wiring pattern for signal processing tasks,
 implementing multiple frequency bands and cross-band interactions.
 """
 
-from typing import Dict, Any, Optional, List, Tuple, Union, Callable
+from typing import Dict, Any, Optional
 
-from ember_ml import ops
-from ember_ml.nn.modules.wiring import NeuronMap
 from ember_ml import tensor
+from ember_ml.nn.modules.wiring import NeuronMap
+
 
 class SignalWiring(NeuronMap):
     """

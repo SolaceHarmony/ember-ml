@@ -9,9 +9,10 @@ for multi-timescale processing.
 
 # Removed numpy import
 from ember_ml import ops
-from ember_ml.nn.modules import Module, Parameter
 # Removed stride_aware_cell import
 from ember_ml import tensor
+from ember_ml.nn.modules import Module, Parameter
+
 
 class StrideAware(Module):
     """

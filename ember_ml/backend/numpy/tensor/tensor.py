@@ -1,12 +1,13 @@
 """NumPy tensor class and operations."""
 
-import numpy as np
-from typing import Union, Optional, Sequence, Any, Literal, List, TYPE_CHECKING, Tuple
-from ember_ml.backend.numpy.tensor.dtype import NumpyDType
-from ember_ml.backend.numpy.types import TensorLike, DType, Shape, ShapeLike
+from typing import Union, Optional, Sequence, Any, Literal, List
 
 # Conditionally import backend types for type checking only
 import numpy
+import numpy as np
+
+from ember_ml.backend.numpy.tensor.dtype import NumpyDType
+from ember_ml.backend.numpy.types import TensorLike, DType, Shape
 
 # Basic type aliases
 Numeric = Union[int, float]

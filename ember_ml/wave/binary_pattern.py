@@ -2,8 +2,9 @@
 Pattern recognition using wave interference and binary pattern matching.
 """
 
-from typing import Optional, List, Dict, Tuple, Any, TypeVar
 from dataclasses import dataclass
+from typing import Optional, List, Dict, Tuple, Any, TypeVar
+
 from ember_ml import ops, tensor
 from ember_ml.nn import modules
 from .binary_wave import WaveConfig, BinaryWave

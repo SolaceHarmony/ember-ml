@@ -7,14 +7,15 @@ This implementation directly uses NeuronMap for both structure and dynamics.
 """
 
 from enum import Enum
-from typing import Dict, Any, Optional, List, Tuple, Union, Callable
+from typing import Dict, Any, Union
 
 from ember_ml import ops
+from ember_ml import tensor
 from ember_ml.nn.initializers import glorot_uniform, orthogonal
 from ember_ml.nn.modules import Module, Parameter
-from ember_ml.nn.modules.wiring import NeuronMap, NCPMap
-from ember_ml import tensor
 from ember_ml.nn.modules.activations import get_activation
+from ember_ml.nn.modules.wiring import NeuronMap, NCPMap
+
 
 class ODESolver(Enum):
     """ODE solver types for continuous-time neural networks.

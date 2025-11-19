@@ -6,10 +6,12 @@ This module provides MLX implementations of matrix decomposition operations
 like Cholesky and Eigendecomposition. QR has been moved to qr_ops.py.
 SVD has been moved to svd_ops.py.
 """
-from typing import Union, Tuple, Literal, List, Optional
+from typing import Union, Tuple
+
 import mlx.core as mx
 
 from ember_ml.backend.mlx.types import TensorLike
+
 
 def _update_array(arr: mx.array, indices: Union[int, Tuple[int, ...], slice], value: mx.array) -> mx.array:
     """Helper function for MLX array updates."""

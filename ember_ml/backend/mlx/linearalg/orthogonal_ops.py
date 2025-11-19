@@ -4,10 +4,11 @@ MLX implementation of orthogonal matrix operations.
 This module provides MLX-specific implementation of orthogonal matrix operations.
 """
 
+import logging  # Import logging
 import math
-import mlx.core as mx
-import logging # Import logging
 from typing import Tuple, Optional, Any, Union
+
+import mlx.core as mx
 
 # Removed HPC16x8 import as it's no longer used here for QR
 from ember_ml.backend.mlx.types import TensorLike

@@ -6,9 +6,11 @@ for all wiring configurations.
 """
 
 from typing import Optional, Tuple, Dict, Any
+
 from ember_ml import ops, tensor
 from ember_ml.ops import stats  # Import stats module for sum operation
 from ember_ml.types import TensorLike
+
 
 class NeuronMap: # Renamed from Wiring
     """

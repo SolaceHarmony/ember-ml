@@ -5,13 +5,13 @@ This module provides an enhanced neuron map implementation that supports
 arbitrary neuron types and dynamics, with a focus on spatial embedding.
 """
 
-from typing import Optional, List, Dict, Any, Union, Tuple
+from typing import Optional, List, Dict, Any, Tuple
 
 import mlx.core as mx
 
+from ember_ml import tensor
 from ember_ml.types import TensorLike  # Corrected import
-from ember_ml import ops, tensor
-from ember_ml.nn.modules import Module, Parameter
+
 
 class EnhancedNeuronMap:
     """

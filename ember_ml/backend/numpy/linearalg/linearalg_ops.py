@@ -1,13 +1,14 @@
 """NumPy linear algebra operations."""
 
-from typing import Any, Optional, Union, Tuple
+from typing import Optional, Union, Tuple
 
 import numpy as np
 
-from ember_ml.backend.numpy.types import TensorLike
 from ember_ml.backend.numpy.linearalg.ops import (
     solve, inv, det, norm, qr, svd, cholesky, lstsq, eig, eigvals, diag, diagonal
 )
+from ember_ml.backend.numpy.types import TensorLike
+
 
 class NumpyLinearAlgOps:
     """NumPy linear algebra operations."""

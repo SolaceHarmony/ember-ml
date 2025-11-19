@@ -1,6 +1,8 @@
-"""Configuration helpers for the MLX backend."""
+"""
+MLX backend configuration for ember_ml.
 
-from __future__ import annotations
+This module provides configuration settings for the MLX backend.
+"""
 
 import mlx.core as mx
 

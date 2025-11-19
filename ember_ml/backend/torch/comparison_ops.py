@@ -4,9 +4,12 @@ PyTorch comparison operations for ember_ml.
 This module provides PyTorch implementations of comparison operations.
 """
 
-import torch
 from typing import Any
+
+import torch
+
 from ember_ml.backend.torch.types import TensorLike
+
 
 # We avoid creating global instances to prevent circular imports
 # Each function will create its own instances when needed

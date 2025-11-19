@@ -1,6 +1,7 @@
-import mlx.core as mx
 import time
-import os
+
+import mlx.core as mx
+
 
 def is_spd(A):
     """Check if matrix is symmetric positive definite"""

@@ -4,10 +4,9 @@ from typing import List, Optional, Tuple, Any
 
 import pandas as pd
 
-from ember_ml.features.column_feature_extraction import ColumnFeatureExtractor
-from ember_ml.features import bigquery
 from ember_ml import tensor
-from ember_ml import ops
+from ember_ml.features import bigquery
+from ember_ml.features.column_feature_extraction import ColumnFeatureExtractor
 
 
 class BigQueryFeatureExtractor(ColumnFeatureExtractor):

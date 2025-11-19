@@ -4,6 +4,7 @@ MLX solver operations for ember_ml.
 This module provides MLX implementations of solver operations.
 """
 from typing import Union, Tuple, Literal
+
 import mlx.core as mx
 
 # Import from tensor_ops
@@ -84,7 +85,7 @@ def svd(a: TensorLike,
         a more sophisticated algorithm.
     """
     # Convert input to MLX array with float32 dtype
-    from ember_ml.backend.mlx.tensor import MLXTensor, MLXDType
+    from ember_ml.backend.mlx.tensor import MLXTensor
     Tensor = MLXTensor()
     a_array = Tensor.convert_to_tensor(a, dtype=dtype_obj.float32)
     

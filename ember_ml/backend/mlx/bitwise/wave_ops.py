@@ -5,15 +5,14 @@ This module provides MLX implementations of operations specific to
 binary wave processing, such as interference and propagation.
 """
 
-import mlx.core as mx
-from typing import List, Union
-
 # Import MLXTensor dynamically within functions
 # from ember_ml.backend.mlx.tensor import MLXTensor
-from ember_ml.backend.mlx.types import TensorLike
-from typing import List, Union
+from typing import List
+
 import mlx.core as mx
+
 from ember_ml.backend.mlx.types import TensorLike
+
 
 def binary_wave_interference(waves: List[TensorLike], mode: str = 'xor') -> mx.array:
     """
@@ -69,7 +68,6 @@ def binary_wave_propagate(wave: TensorLike, shift: TensorLike) -> mx.array:
     Returns:
         MLX array representing the propagated wave pattern.
     """
-    from ember_ml.backend.mlx.tensor import MLXTensor
     from ember_ml.backend.mlx.tensor import MLXTensor
     from .shift_ops import left_shift, right_shift # Import from sibling
     tensor_ops = MLXTensor()

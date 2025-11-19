@@ -7,18 +7,20 @@ and the "dreaming" capabilities of RBMs.
 """
 
 import math
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-from matplotlib.colors import LinearSegmentedColormap
 import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Union
-import time
+
+import matplotlib.animation as animation
+import matplotlib.pyplot as plt
 import pandas as pd
+from matplotlib.colors import LinearSegmentedColormap
+
 from ember_ml import ops, tensor
+from ember_ml import stats
 from ember_ml.models.rbm.rbm_module import RBMModule
 from ember_ml.types import TensorLike
-from ember_ml import stats
+
 
 def _to_list(values) -> List[float]:
     if hasattr(values, 'tolist'):
@@ -1711,8 +1713,7 @@ class RBMVisualizer:
         """
         # Import necessary modules
         from ember_ml import tensor
-        from ember_ml import ops
-        
+
         # Convert inputs to numpy for visualization if they're tensors
         if hasattr(data, 'numpy'):
             data_np = tensor.to_numpy(data)
