@@ -336,9 +336,8 @@ def compute_interference_strength(input_wave1: TensorLike, input_wave2: TensorLi
         A NumPy scalar representing the interference strength metric.
     """
     from ember_ml.backend.numpy.tensor import NumpyTensor
-    from ember_ml.backend.numpy.math_ops import NumpyMathOps # Import for pi
+    import ember_ml.backend.numpy.math_ops as math_ops
     tensor_ops = NumpyTensor()
-    math_ops = NumpyMathOps() # Instance for pi
     wave1_tensor = tensor_ops.convert_to_tensor(input_wave1)
     wave2_tensor = tensor_ops.convert_to_tensor(input_wave2)
 

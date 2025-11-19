@@ -497,4 +497,3 @@ def qr(a: TensorLike,
         raise ValueError("Mode 'raw' is not implemented in this simplified version")
     else:
         return q, r
-        return q, r
